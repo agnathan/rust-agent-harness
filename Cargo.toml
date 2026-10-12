@@ -1,0 +1,7 @@
+[workspace]
+resolver = "3"
+members = [
+    "steps/ch01-first-contact/crates/harness-core",
+    "steps/ch01-first-contact/crates/harness-cli",
+    "my-harness",
+]

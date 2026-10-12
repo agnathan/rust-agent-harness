@@ -2,11 +2,12 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 jobs:
-  starter:
-    name: starter fmt, build, clippy
+  fmt-clippy:
+    name: fmt and clippy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,28 +16,80 @@ jobs:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: ./starter
+          workspaces: .
       - name: cargo fmt --check
-        working-directory: starter
         run: cargo fmt --all -- --check
-      - name: cargo build
-        working-directory: starter
-        run: cargo build --locked
       - name: cargo clippy
-        working-directory: starter
-        run: cargo clippy --all-targets --locked
+        run: cargo clippy --workspace --all-targets --locked
 
-  lesson-report:
-    name: starter lesson report
+  list-steps:
+    name: List steps
     runs-on: ubuntu-latest
+    outputs:
+      steps: ${{ steps.list.outputs.steps }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: list
+        run: python3 .github/scripts/list_steps.py --github-output "$GITHUB_OUTPUT"
+
+  test-ubuntu:
+    name: ubuntu / ${{ matrix.step }}
+    needs: list-steps
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        step: ${{ fromJSON(needs.list-steps.outputs.steps) }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: ./starter
-      - name: Per-lesson test report
-        run: bash .github/scripts/starter_lesson_report.sh
+          workspaces: .
+      - name: cargo test -p step packages
+        run: bash .github/scripts/test_step.sh "${{ matrix.step }}"
+
+  changed-steps:
+    name: Steps touched by this change
+    runs-on: ubuntu-latest
+    outputs:
+      steps: ${{ steps.pick.outputs.steps }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: .github/path-filters.yml
+      - id: pick
+        shell: bash
+        run: |
+          steps=()
+          [[ "${{ steps.filter.outputs.ch01-first-contact }}" == "true" ]] && steps+=("ch01-first-contact")
+          json=$(printf '%s\n' "${steps[@]+"${steps[@]}"}" | python3 -c 'import json,sys; print(json.dumps([line.strip() for line in sys.stdin if line.strip()]))')
+          echo "steps=$json" >> "$GITHUB_OUTPUT"
+          echo "changed steps: $json"
+
+  test-os-matrix:
+    name: ${{ matrix.os }} / ${{ matrix.step }}
+    needs: changed-steps
+    if: needs.changed-steps.outputs.steps != '[]'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        step: ${{ fromJSON(needs.changed-steps.outputs.steps) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: .
+      - name: cargo test -p step packages
+        shell: bash
+        run: bash .github/scripts/test_step.sh "${{ matrix.step }}"
 
   book:
     name: mdBook
@@ -46,7 +99,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: ./starter
+          workspaces: .
       - uses: taiki-e/install-action@v2
         with:
           tool: mdbook

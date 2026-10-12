@@ -1,0 +1,5 @@
+# Keys are step directory names. Cargo.toml and Cargo.lock rebuild every step.
+ch01-first-contact:
+  - "steps/ch01-first-contact/**"
+  - "Cargo.toml"
+  - "Cargo.lock"

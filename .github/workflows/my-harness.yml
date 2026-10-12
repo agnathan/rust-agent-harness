@@ -1,0 +1,124 @@
+name: My harness
+
+on:
+  workflow_dispatch:
+    inputs:
+      chapters:
+        description: "Chapters to test: 1, 1-2, 1,2, or all"
+        required: true
+        default: all
+        type: string
+      os:
+        description: "Operating systems to run"
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - ubuntu
+          - macos
+          - windows
+  push:
+    branches: [main]
+    paths:
+      - "my-harness/**"
+      - ".github/workflows/my-harness.yml"
+      - ".github/scripts/**"
+      - ".config/nextest.toml"
+  pull_request:
+    paths:
+      - "my-harness/**"
+      - ".github/workflows/my-harness.yml"
+      - ".github/scripts/**"
+      - ".config/nextest.toml"
+
+jobs:
+  plan:
+    name: Select chapters
+    runs-on: ubuntu-latest
+    outputs:
+      chapters: ${{ steps.plan.outputs.chapters }}
+      has_chapters: ${{ steps.plan.outputs.has_chapters }}
+      oses: ${{ steps.plan.outputs.oses }}
+      fail_workflow: ${{ steps.plan.outputs.fail_workflow }}
+      selection: ${{ steps.plan.outputs.selection }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Choose chapters and operating systems
+        id: plan
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          CHAPTERS_INPUT: ${{ github.event.inputs.chapters }}
+          OS_INPUT: ${{ github.event.inputs.os }}
+          BEFORE: ${{ github.event.before }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: bash .github/scripts/plan_chapters.sh
+
+  test:
+    name: ${{ matrix.os }}
+    needs: plan
+    if: needs.plan.outputs.has_chapters == 'true'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ fromJSON(needs.plan.outputs.oses) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: .
+      - name: Install cargo-nextest
+        continue-on-error: true
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+      - name: Test selected chapters
+        id: run
+        shell: bash
+        env:
+          RESULTS_DIR: ${{ github.workspace }}/chapter-results
+          CHAPTERS: ${{ needs.plan.outputs.chapters }}
+        run: printf '%s\n' "$CHAPTERS" | bash .github/scripts/run_chapters.sh
+      - name: Upload JUnit reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chapter-results-${{ matrix.os }}
+          path: chapter-results
+          if-no-files-found: error
+      - name: Fail explicit selection
+        if: needs.plan.outputs.fail_workflow == 'true' && steps.run.outputs.any_failed == 'true'
+        shell: bash
+        run: exit 1
+
+  summary:
+    name: Chapter summary
+    needs: [plan, test]
+    if: ${{ !cancelled() && needs.plan.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download results
+        if: needs.plan.outputs.has_chapters == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          pattern: chapter-results-*
+          path: all-results
+      - name: Write the chapter by OS table
+        shell: bash
+        env:
+          SELECTION: ${{ needs.plan.outputs.selection }}
+          FAIL_WORKFLOW: ${{ needs.plan.outputs.fail_workflow }}
+          HAS_CHAPTERS: ${{ needs.plan.outputs.has_chapters }}
+        run: |
+          args=(--selection "$SELECTION" --fail-workflow "$FAIL_WORKFLOW" --summary "$GITHUB_STEP_SUMMARY")
+          if [[ "$HAS_CHAPTERS" == "true" ]]; then
+            args+=(--expect-results)
+          fi
+          python3 .github/scripts/summarize_chapters.py all-results "${args[@]}"

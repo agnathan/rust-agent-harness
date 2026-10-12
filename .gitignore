@@ -1,5 +1,7 @@
 target/
 book/_build/
 lesson-results/
+chapter-results/
+solutions/
 __pycache__/
 *.pyc
