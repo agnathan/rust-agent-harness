@@ -11,39 +11,52 @@
 - [Chapter 4: MCP Client]()
 - [Chapter 5: The Agent Loop]()
 - [Chapter 6: MCP Server]()
-- [Chapter 7: When Things Fail]()
-- [Chapter 8: Streaming]()
+- [Chapter 7: Approvals and Guardrails]()
+- [Chapter 8: Hooks and Plugins]()
+- [Chapter 9: Sandboxed Execution]()
+- [Chapter 10: When Things Fail]()
+- [Chapter 11: Providers]()
+- [Chapter 12: Streaming]()
 
 # Part II: Learning
 
-- [Chapter 9: Sessions on Disk]()
-- [Chapter 10: Memory Files]()
-- [Chapter 11: Recall]()
-- [Chapter 12: Using Skills]()
-- [Chapter 13: Writing Skills]()
-- [Chapter 14: The Reflection Loop]()
-- [Chapter 15: Curation]()
+- [Chapter 13: Sessions on Disk]()
+- [Chapter 14: Memory Files]()
+- [Chapter 15: Recall]()
+- [Chapter 16: Using Skills]()
+- [Chapter 17: Writing Skills]()
+- [Chapter 18: The Reflection Loop]()
+- [Chapter 19: Curation]()
 
 # Part III: The team patterns
 
-- [Chapter 16: The Sequential Pipeline]()
-- [Chapter 17: The Supervisor]()
-- [Chapter 18: Handoffs]()
-- [Chapter 19: Fan-out and Gather]()
-- [Chapter 20: The Critic]()
-- [Chapter 21: Composing Patterns]()
+- [Chapter 20: The Sequential Pipeline]()
+- [Chapter 21: The Supervisor]()
+- [Chapter 22: Handoffs]()
+- [Chapter 23: Fan-out and Gather]()
+- [Chapter 24: The Critic]()
+- [Chapter 25: Composing Patterns]()
 
 # Part IV: Making it robust
 
-- [Chapter 22: The Turn State Machine]()
-- [Chapter 23: Managing Context]()
-- [Chapter 24: Agents as Actors]()
-- [Chapter 25: Cancellation and Supervision]()
+- [Chapter 26: The Turn State Machine]()
+- [Chapter 27: Managing Context]()
+- [Chapter 28: Agents as Actors]()
+- [Chapter 29: Cancellation and Supervision]()
 
-# Part V: Loosely coupled teams
+# Part V: Running as a service
 
-- [Chapter 26: The Blackboard]()
-- [Chapter 27: The Message Bus]()
-- [Chapter 28: Shared Team Skills]()
-- [Chapter 29: A2A for External Agents]()
-- [Chapter 30: Seeing Inside]()
+- [Chapter 30: Profiles]()
+- [Chapter 31: The Gateway]()
+- [Chapter 32: Cron]()
+- [Chapter 33: Editor Integration]()
+
+# Part VI: Loosely coupled teams
+
+- [Chapter 34: The Blackboard]()
+- [Chapter 35: The Kanban Board]()
+- [Chapter 36: The Message Bus]()
+- [Chapter 37: Shared Team Skills]()
+- [Chapter 38: A2A for External Agents]()
+- [Chapter 39: Seeing Inside]()
+- [Chapter 40: Evals]()

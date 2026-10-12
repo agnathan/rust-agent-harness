@@ -1,7 +1,7 @@
 # Filter names for real steps match steps/ directory names.
 # `shared` means "retest every step that exists". Planned steps are listed so a
 # new steps/chNN-* directory is picked up without editing the workflow.
-# The chapter plan itself is .github/chapters.json (30 chapters, parts I–V).
+# The chapter plan itself is .github/chapters.json (chapters 0–40, parts I–VI).
 shared:
   - "Cargo.toml"
   - "Cargo.lock"
@@ -25,51 +25,71 @@ ch05-agent-loop:
   - "steps/ch05-agent-loop/**"
 ch06-mcp-server:
   - "steps/ch06-mcp-server/**"
-ch07-when-things-fail:
-  - "steps/ch07-when-things-fail/**"
-ch08-streaming:
-  - "steps/ch08-streaming/**"
-ch09-sessions:
-  - "steps/ch09-sessions/**"
-ch10-memory:
-  - "steps/ch10-memory/**"
-ch11-recall:
-  - "steps/ch11-recall/**"
-ch12-skills:
-  - "steps/ch12-skills/**"
-ch13-skill-writing:
-  - "steps/ch13-skill-writing/**"
-ch14-reflection:
-  - "steps/ch14-reflection/**"
-ch15-curation:
-  - "steps/ch15-curation/**"
-ch16-pipeline:
-  - "steps/ch16-pipeline/**"
-ch17-supervisor:
-  - "steps/ch17-supervisor/**"
-ch18-handoffs:
-  - "steps/ch18-handoffs/**"
-ch19-fan-out:
-  - "steps/ch19-fan-out/**"
-ch20-critic:
-  - "steps/ch20-critic/**"
-ch21-composition:
-  - "steps/ch21-composition/**"
-ch22-turn-state:
-  - "steps/ch22-turn-state/**"
-ch23-context:
-  - "steps/ch23-context/**"
-ch24-actors:
-  - "steps/ch24-actors/**"
-ch25-supervision:
-  - "steps/ch25-supervision/**"
-ch26-blackboard:
-  - "steps/ch26-blackboard/**"
-ch27-message-bus:
-  - "steps/ch27-message-bus/**"
-ch28-team-skills:
-  - "steps/ch28-team-skills/**"
-ch29-a2a:
-  - "steps/ch29-a2a/**"
-ch30-tracing:
-  - "steps/ch30-tracing/**"
+ch07-approvals:
+  - "steps/ch07-approvals/**"
+ch08-hooks:
+  - "steps/ch08-hooks/**"
+ch09-sandbox:
+  - "steps/ch09-sandbox/**"
+ch10-when-things-fail:
+  - "steps/ch10-when-things-fail/**"
+ch11-providers:
+  - "steps/ch11-providers/**"
+ch12-streaming:
+  - "steps/ch12-streaming/**"
+ch13-sessions:
+  - "steps/ch13-sessions/**"
+ch14-memory:
+  - "steps/ch14-memory/**"
+ch15-recall:
+  - "steps/ch15-recall/**"
+ch16-skills:
+  - "steps/ch16-skills/**"
+ch17-skill-writing:
+  - "steps/ch17-skill-writing/**"
+ch18-reflection:
+  - "steps/ch18-reflection/**"
+ch19-curation:
+  - "steps/ch19-curation/**"
+ch20-pipeline:
+  - "steps/ch20-pipeline/**"
+ch21-supervisor:
+  - "steps/ch21-supervisor/**"
+ch22-handoffs:
+  - "steps/ch22-handoffs/**"
+ch23-fan-out:
+  - "steps/ch23-fan-out/**"
+ch24-critic:
+  - "steps/ch24-critic/**"
+ch25-composition:
+  - "steps/ch25-composition/**"
+ch26-turn-state:
+  - "steps/ch26-turn-state/**"
+ch27-context:
+  - "steps/ch27-context/**"
+ch28-actors:
+  - "steps/ch28-actors/**"
+ch29-supervision:
+  - "steps/ch29-supervision/**"
+ch30-profiles:
+  - "steps/ch30-profiles/**"
+ch31-gateway:
+  - "steps/ch31-gateway/**"
+ch32-cron:
+  - "steps/ch32-cron/**"
+ch33-acp:
+  - "steps/ch33-acp/**"
+ch34-blackboard:
+  - "steps/ch34-blackboard/**"
+ch35-kanban:
+  - "steps/ch35-kanban/**"
+ch36-message-bus:
+  - "steps/ch36-message-bus/**"
+ch37-team-skills:
+  - "steps/ch37-team-skills/**"
+ch38-a2a:
+  - "steps/ch38-a2a/**"
+ch39-tracing:
+  - "steps/ch39-tracing/**"
+ch40-evals:
+  - "steps/ch40-evals/**"

@@ -23,11 +23,11 @@ Principles and the way to choose a team shape live next to this page: [team patt
 
 **Bounded channels.** Inboxes and bus subscriptions have a capacity (64 on an agent inbox). A slow consumer applies backpressure. Queues do not grow without a limit.
 
-**Fan-out as soon as there is a team.** The supervisor (chapter 17) calls specialists concurrently under the worker limit. Chapter 19 is the dedicated gather, not the first time two agents run at once.
+**Fan-out as soon as there is a team.** The supervisor (chapter 21) calls specialists concurrently under the worker limit. Chapter 23 is the dedicated gather, not the first time two agents run at once.
 
 **Learning stays off the hot path.** Reflection, skill writes the model did not ask for, memory writes, index rebuilds, FTS updates, and curation are background tasks. The turn awaits the model and the tools the model actually called. Spawning a reviewer, enqueueing a proposal, or swapping an `Arc` index is the cost on the request path.
 
-**Measure, and do not fail the build on a number yet.** Chapter 1 is three sections, each with a criterion bench: serde of 50 messages, one mock call and 100 concurrent mock calls, and request build plus response parse. Chapter 5 extends that idea to the agent loop. On pull requests and on every push to `main`, [Benchmarks](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml) runs those benches on Ubuntu and writes the means to the job summary. A regression does not fail the job.
+**Measure, and do not fail the build on a number yet.** Chapter 1 is three sections, each with a criterion bench: serde of 50 messages, one mock call and 100 concurrent mock calls, and request build plus response parse. Chapter 5 extends that idea to the agent loop. Chapter 40 runs those benches across a batch of trajectories. On pull requests and on every push to `main`, [Benchmarks](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml) runs the chapter 1 benches on Ubuntu and writes the means to the job summary. A regression does not fail the job.
 
 ## Performance budget
 
@@ -36,31 +36,41 @@ Principles and the way to choose a team shape live next to this page: [team patt
 | 0 | Introduction | State the rule: overhead is measured without model latency. |
 | 1 | First Contact | 1.1: serde of 50 messages **< 1 ms** (measured 6.96 µs). 1.2: one mock call **< 1 ms** (measured 135 ns) and 100 concurrent calls **< 50 ms** (measured 105 µs). 1.3: build and parse **< 1 ms** (measured 1.74 µs). One pooled client, HTTP/2 enabled. |
 | 2 | Conversations | System-prompt bytes identical across the turns of a session. Per-turn overhead still **< 1 ms**. The model is called with a borrow, not a clone of the history. |
-| 3 | Tools | **8** read-only tools in one batch finish in about one call, not eight, on the latency mock. A write runs alone. |
+| 3 | Tools | **8** read-only tools in one batch finish in about one call, not eight, on the latency mock. A write runs alone. The available-tool list for a **50**-tool registry is **< 1 ms**. |
 | 4 | MCP Client | MCP calls use that same bound. **8** concurrent mock MCP calls finish in about one round trip. |
 | 5 | The Agent Loop | Loop-iteration overhead **< 1 ms** excluding the model. A safe tool starts while tokens are still arriving. The criterion bench covers both. |
 | 6 | MCP Server | **32** in-flight calls accepted; **8** executed at once. |
-| 7 | When Things Fail | A timeout cancels the in-flight call and releases its permit. Retries stay inside the bound. |
-| 8 | Streaming | Assembling a streamed reply adds **< 1 ms** versus a buffered reply, excluding model time. |
-| 9 | Sessions on Disk | One local WAL append of a turn **< 1 ms**. FTS updates run in the background. |
-| 10 | Memory Files | The frozen snapshot is built once and shared by `Arc`. A memory write does not rewrite the system prompt. Enqueue of a background write **< 1 ms**. |
-| 11 | Recall | Discover over **10,000** messages **< 20 ms**. Search runs only when the model calls the tool. |
-| 12 | Using Skills | Load and render **500** skills **< 10 ms**, once per session. The rendered index is `Arc` and byte-stable. |
-| 13 | Writing Skills | Security scan of one skill **< 5 ms**. A write the model did not ask for is a background task. |
-| 14 | The Reflection Loop | Spawning the reviewer adds **< 1 ms** to turn finalize. Cancelling it when the user returns takes **< 50 ms**. |
-| 15 | Curation | The curator never runs on the request path. |
-| 16 | The Sequential Pipeline | The next stage receives `Arc` context. No full transcript copy. |
-| 17 | The Supervisor | Up to **8** specialists at once, each with `Arc` context. Eight latency-mock specialists finish in about one specialist's time. |
-| 18 | Handoffs | Filtering a **100**-message transcript for a handoff **< 1 ms**. |
-| 19 | Fan-out and Gather | The worker limit holds. **100** mock subagents can be scheduled without an unbounded queue. |
-| 20 | The Critic | The critic shares `Arc` context and takes one permit from the same bound. |
-| 21 | Composing Patterns | Nested fan-out cannot exceed the worker limit. |
-| 22 | The Turn State Machine | A transition **< 1 µs**. Turn overhead still **< 1 ms**. |
-| 23 | Managing Context | Compression and the memory flush run between turns or in the background. The hot path sends the `Arc` snapshot. |
-| 24 | Agents as Actors | Inbox capacity **64**. **100+** mock agents at once. A full inbox applies backpressure. |
-| 25 | Cancellation and Supervision | Cancel the root and **100** mock children stop in **< 50 ms**. |
-| 26 | The Blackboard | A claim **< 1 ms** with **100** waiters. The lock is not held across a model call. |
-| 27 | The Message Bus | Publish of one small envelope **< 1 ms** at **100** agents. Slow subscribers hit a bounded channel. |
-| 28 | Shared Team Skills | `skill_propose` enqueues in **< 1 ms**. The index swap is an `Arc` swap. Workers do not wait on the librarian. |
-| 29 | A2A for External Agents | Remote calls use the HTTP pool and the same bound. Cancel reaches an in-flight call in **< 50 ms**. |
-| 30 | Seeing Inside | A span per turn adds **< 0.1 ms**. The chapter 1 bench still meets its budget with tracing on. The capstone runs **100+** concurrent mock agents. |
+| 7 | Approvals and Guardrails | A skip decision is **< 1 µs**. Concurrent approvals serialize onto one prompt. Waiting on a human releases the tool permit. |
+| 8 | Hooks and Plugins | An empty before/after hook adds **< 0.1 ms**. An API-request hook does not copy the conversation. A memory-backend record enqueues in **< 1 ms**. |
+| 9 | Sandboxed Execution | A warm sandbox accepts a job in **< 50 ms**. Checkpoint and rewind of a **1,000**-path manifest are each **< 10 ms**. |
+| 10 | When Things Fail | A timeout cancels the in-flight call and releases its permit. Retries stay inside the bound. |
+| 11 | Providers | Choosing the next adapter adds **< 1 ms**, excluding the failed call. Rotation reuses the pooled client. A side-model summary stays off the user turn unless that turn asked for it. |
+| 12 | Streaming | Assembling a streamed reply adds **< 1 ms** versus a buffered reply, excluding model time. |
+| 13 | Sessions on Disk | One local WAL append of a turn **< 1 ms**. FTS updates run in the background. |
+| 14 | Memory Files | The frozen snapshot is built once and shared by `Arc`. A memory write does not rewrite the system prompt. Enqueue of a background write **< 1 ms**. |
+| 15 | Recall | Discover over **10,000** messages **< 20 ms**. Search runs only when the model calls the tool. |
+| 16 | Using Skills | Load and render **500** skills **< 10 ms**, once per session. The rendered index is `Arc` and byte-stable. |
+| 17 | Writing Skills | Security scan of one skill **< 5 ms**. A write the model did not ask for is a background task. |
+| 18 | The Reflection Loop | Spawning the reviewer adds **< 1 ms** to turn finalize. Cancelling it when the user returns takes **< 50 ms**. |
+| 19 | Curation | The curator never runs on the request path. |
+| 20 | The Sequential Pipeline | The next stage receives `Arc` context. No full transcript copy. |
+| 21 | The Supervisor | Up to **8** specialists at once, each with `Arc` context. Eight latency-mock specialists finish in about one specialist's time. |
+| 22 | Handoffs | Filtering a **100**-message transcript for a handoff **< 1 ms**. |
+| 23 | Fan-out and Gather | The worker limit holds. **100** mock subagents can be scheduled without an unbounded queue. |
+| 24 | The Critic | The critic shares `Arc` context and takes one permit from the same bound. |
+| 25 | Composing Patterns | Nested fan-out cannot exceed the worker limit. |
+| 26 | The Turn State Machine | A transition **< 1 µs**. Turn overhead still **< 1 ms**. |
+| 27 | Managing Context | Compression and the memory flush run between turns or in the background. The hot path sends the `Arc` snapshot. |
+| 28 | Agents as Actors | Inbox capacity **64**. **100+** mock agents at once. A full inbox applies backpressure. |
+| 29 | Cancellation and Supervision | Cancel the root and **100** mock children stop in **< 50 ms**. |
+| 30 | Profiles | Resolving a profile and its secrets is **< 1 ms**. Secrets are not copied into the prompt. |
+| 31 | The Gateway | Enqueue of a platform message is **< 1 ms**. A steer is a push onto a bounded queue. Streaming updates one message. |
+| 32 | Cron | A crash retries a claimed job at most once. Scanning **1,000** due jobs is **< 10 ms**. The watchdog and a chained job stay off the request path. |
+| 33 | Editor Integration | Translating an ACP update onto the session queue is **< 1 ms**. |
+| 34 | The Blackboard | A claim **< 1 ms** with **100** waiters. The lock is not held across a model call. |
+| 35 | The Kanban Board | Claim, complete, review, or block is one transaction **< 5 ms**. Two processes cannot hold the same task. |
+| 36 | The Message Bus | Publish of one small envelope **< 1 ms** at **100** agents. Slow subscribers hit a bounded channel. |
+| 37 | Shared Team Skills | `skill_propose` enqueues in **< 1 ms**. The index swap is an `Arc` swap. Workers do not wait on the librarian. |
+| 38 | A2A for External Agents | Remote calls use the HTTP pool and the same bound. Cancel reaches an in-flight call in **< 50 ms**. |
+| 39 | Seeing Inside | A span per turn adds **< 0.1 ms**. The chapter 1 bench still meets its budget with tracing on. The capstone runs **100+** concurrent mock agents. |
+| 40 | Evals | **100** mock trajectories stay inside the worker bound. Appending one trajectory event is **< 1 ms**. |
