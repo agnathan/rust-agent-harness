@@ -14,26 +14,36 @@
 - [Chapter 7: When Things Fail]()
 - [Chapter 8: Streaming]()
 
-# Part II: The team patterns
+# Part II: Learning
 
-- [Chapter 9: The Sequential Pipeline]()
-- [Chapter 10: The Supervisor]()
-- [Chapter 11: Handoffs]()
-- [Chapter 12: Fan-out and Gather]()
-- [Chapter 13: The Critic]()
-- [Chapter 14: Composing Patterns]()
+- [Chapter 9: Sessions on Disk]()
+- [Chapter 10: Memory Files]()
+- [Chapter 11: Recall]()
+- [Chapter 12: Using Skills]()
+- [Chapter 13: Writing Skills]()
+- [Chapter 14: The Reflection Loop]()
+- [Chapter 15: Curation]()
 
-# Part III: Making it robust and fast
+# Part III: The team patterns
 
-- [Chapter 15: The Turn State Machine]()
-- [Chapter 16: Managing Context]()
-- [Chapter 17: Remembering]()
-- [Chapter 18: Agents as Actors]()
-- [Chapter 19: Cancellation and Supervision]()
+- [Chapter 16: The Sequential Pipeline]()
+- [Chapter 17: The Supervisor]()
+- [Chapter 18: Handoffs]()
+- [Chapter 19: Fan-out and Gather]()
+- [Chapter 20: The Critic]()
+- [Chapter 21: Composing Patterns]()
 
-# Part IV: Loosely coupled teams
+# Part IV: Making it robust and fast
 
-- [Chapter 20: The Blackboard]()
-- [Chapter 21: The Message Bus]()
-- [Chapter 22: A2A for External Agents]()
-- [Chapter 23: Seeing Inside]()
+- [Chapter 22: The Turn State Machine]()
+- [Chapter 23: Managing Context]()
+- [Chapter 24: Agents as Actors]()
+- [Chapter 25: Cancellation and Supervision]()
+
+# Part V: Loosely coupled teams
+
+- [Chapter 26: The Blackboard]()
+- [Chapter 27: The Message Bus]()
+- [Chapter 28: Shared Team Skills]()
+- [Chapter 29: A2A for External Agents]()
+- [Chapter 30: Seeing Inside]()

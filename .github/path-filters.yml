@@ -1,7 +1,7 @@
 # Filter names for real steps match steps/ directory names.
 # `shared` means "retest every step that exists". Planned steps are listed so a
 # new steps/chNN-* directory is picked up without editing the workflow.
-# The chapter plan itself is .github/chapters.json (23 chapters, parts I–IV).
+# The chapter plan itself is .github/chapters.json (30 chapters, parts I–V).
 shared:
   - "Cargo.toml"
   - "Cargo.lock"
@@ -25,33 +25,47 @@ ch07-when-things-fail:
   - "steps/ch07-when-things-fail/**"
 ch08-streaming:
   - "steps/ch08-streaming/**"
-ch09-pipeline:
-  - "steps/ch09-pipeline/**"
-ch10-supervisor:
-  - "steps/ch10-supervisor/**"
-ch11-handoffs:
-  - "steps/ch11-handoffs/**"
-ch12-fan-out:
-  - "steps/ch12-fan-out/**"
-ch13-critic:
-  - "steps/ch13-critic/**"
-ch14-composition:
-  - "steps/ch14-composition/**"
-ch15-turn-state:
-  - "steps/ch15-turn-state/**"
-ch16-context:
-  - "steps/ch16-context/**"
-ch17-remembering:
-  - "steps/ch17-remembering/**"
-ch18-actors:
-  - "steps/ch18-actors/**"
-ch19-supervision:
-  - "steps/ch19-supervision/**"
-ch20-blackboard:
-  - "steps/ch20-blackboard/**"
-ch21-message-bus:
-  - "steps/ch21-message-bus/**"
-ch22-a2a:
-  - "steps/ch22-a2a/**"
-ch23-tracing:
-  - "steps/ch23-tracing/**"
+ch09-sessions:
+  - "steps/ch09-sessions/**"
+ch10-memory:
+  - "steps/ch10-memory/**"
+ch11-recall:
+  - "steps/ch11-recall/**"
+ch12-skills:
+  - "steps/ch12-skills/**"
+ch13-skill-writing:
+  - "steps/ch13-skill-writing/**"
+ch14-reflection:
+  - "steps/ch14-reflection/**"
+ch15-curation:
+  - "steps/ch15-curation/**"
+ch16-pipeline:
+  - "steps/ch16-pipeline/**"
+ch17-supervisor:
+  - "steps/ch17-supervisor/**"
+ch18-handoffs:
+  - "steps/ch18-handoffs/**"
+ch19-fan-out:
+  - "steps/ch19-fan-out/**"
+ch20-critic:
+  - "steps/ch20-critic/**"
+ch21-composition:
+  - "steps/ch21-composition/**"
+ch22-turn-state:
+  - "steps/ch22-turn-state/**"
+ch23-context:
+  - "steps/ch23-context/**"
+ch24-actors:
+  - "steps/ch24-actors/**"
+ch25-supervision:
+  - "steps/ch25-supervision/**"
+ch26-blackboard:
+  - "steps/ch26-blackboard/**"
+ch27-message-bus:
+  - "steps/ch27-message-bus/**"
+ch28-team-skills:
+  - "steps/ch28-team-skills/**"
+ch29-a2a:
+  - "steps/ch29-a2a/**"
+ch30-tracing:
+  - "steps/ch30-tracing/**"

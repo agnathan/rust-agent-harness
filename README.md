@@ -39,7 +39,7 @@ A step is the code as of that chapter, library plus CLI, with its tests. Later c
 
 `OPENAI_API_KEY`, `OPENAI_BASE_URL` (default `https://api.openai.com/v1`), and `HARNESS_MODEL` (default `gpt-4o-mini`) configure a real server. `--mock` uses the offline provider.
 
-Twenty-three chapters in four parts. MCP is first-class: tools are MCP-shaped (chapter 3), the harness is an MCP client (chapter 4, via `rmcp`) and an MCP server (chapter 6). Which team pattern to use is [docs/team-patterns.md](docs/team-patterns.md). The default is a supervisor that calls specialists as tools.
+Thirty chapters in five parts. MCP is first-class: tools are MCP-shaped (chapter 3), the harness is an MCP client (chapter 4, via `rmcp`) and an MCP server (chapter 6). Part II is learning: sessions, memory, recall, skills, reflection, and curation. The design is [docs/self-improvement.md](docs/self-improvement.md). Which team pattern to use is [docs/team-patterns.md](docs/team-patterns.md). The default is a supervisor that calls specialists as tools.
 
 **Part I: One agent**
 
@@ -51,39 +51,51 @@ Twenty-three chapters in four parts. MCP is first-class: tools are MCP-shaped (c
 | 3 | Tools | `steps/ch03-tools` | a tool trait shaped like MCP: name, description, input schema, content results |
 | 4 | MCP Client | `steps/ch04-mcp-client` | `rmcp` over stdio and streamable HTTP; MCP and native tools in one registry |
 | 5 | The Agent Loop | `steps/ch05-agent-loop` | model, native and MCP tools, results, repeat, with a budget |
-| 6 | MCP Server | `steps/ch06-mcp-server` | expose this harness's tools, and later whole agents, to other clients |
+| 6 | MCP Server | `steps/ch06-mcp-server` | expose this harness's tools, and later agents and skills, to other clients |
 | 7 | When Things Fail | `steps/ch07-when-things-fail` | classify failures, retry, fall back, including MCP crashes and reconnects |
 | 8 | Streaming | `steps/ch08-streaming` | tokens as they arrive |
 
-**Part II: The team patterns**
+**Part II: Learning**
 
 | Ch | Title | Step | You add |
 |---|---|---|---|
-| 9 | The Sequential Pipeline | `steps/ch09-pipeline` | outline, draft, critique, revise; an agent as a reusable value |
-| 10 | The Supervisor | `steps/ch10-supervisor` | the default team: manager, agents-as-tools, a shared context object |
-| 11 | Handoffs | `steps/ch11-handoffs` | ownership transfer, handoff-as-tool, max-handoff limit, context filtering |
-| 12 | Fan-out and Gather | `steps/ch12-fan-out` | parallel specialists, a worker limit, an aggregator |
-| 13 | The Critic | `steps/ch13-critic` | an evaluator as a tool and as a final gate |
-| 14 | Composing Patterns | `steps/ch14-composition` | a supervisor that fans out and hands off only when ownership moves |
+| 9 | Sessions on Disk | `steps/ch09-sessions` | SQLite sessions (append-only, WAL) and resume |
+| 10 | Memory Files | `steps/ch10-memory` | `MEMORY.md` / `USER.md`, the `memory` tool, a frozen system-prompt snapshot |
+| 11 | Recall | `steps/ch11-recall` | FTS5 `session_search`: discover, scroll, read, browse |
+| 12 | Using Skills | `steps/ch12-skills` | `SKILL.md`, a cache-stable index, `skills_list` / `skill_view` |
+| 13 | Writing Skills | `steps/ch13-skill-writing` | create, patch, delete, a scanner, approval, read-before-write |
+| 14 | The Reflection Loop | `steps/ch14-reflection` | nudge counters and a forked reviewer with only skill and memory tools |
+| 15 | Curation | `steps/ch15-curation` | stale to archived, pinning, backups, optional consolidation |
 
-**Part III: Making it robust and fast**
-
-| Ch | Title | Step | You add |
-|---|---|---|---|
-| 15 | The Turn State Machine | `steps/ch15-turn-state` | an explicit turn |
-| 16 | Managing Context | `steps/ch16-context` | compression, and structured summaries between agents |
-| 17 | Remembering | `steps/ch17-remembering` | SQLite sessions and memory files |
-| 18 | Agents as Actors | `steps/ch18-actors` | one task per agent, an inbox, steering |
-| 19 | Cancellation and Supervision | `steps/ch19-supervision` | cancel trees and restarts |
-
-**Part IV: Loosely coupled teams**
+**Part III: The team patterns**
 
 | Ch | Title | Step | You add |
 |---|---|---|---|
-| 20 | The Blackboard | `steps/ch20-blackboard` | shared state, condition-triggered agents, a thin scheduler |
-| 21 | The Message Bus | `steps/ch21-message-bus` | peer-to-peer messaging |
-| 22 | A2A for External Agents | `steps/ch22-a2a` | A2A only for agents outside this process |
-| 23 | Seeing Inside | `steps/ch23-tracing` | tracing, benchmarks, a capstone research team on MCP servers |
+| 16 | The Sequential Pipeline | `steps/ch16-pipeline` | outline, draft, critique, revise; an agent as a reusable value |
+| 17 | The Supervisor | `steps/ch17-supervisor` | the default team: manager, agents-as-tools, a shared context object |
+| 18 | Handoffs | `steps/ch18-handoffs` | ownership transfer, handoff-as-tool, max-handoff limit, context filtering |
+| 19 | Fan-out and Gather | `steps/ch19-fan-out` | parallel specialists, a worker limit, an aggregator |
+| 20 | The Critic | `steps/ch20-critic` | an evaluator as a tool and as a final gate |
+| 21 | Composing Patterns | `steps/ch21-composition` | a supervisor that fans out and hands off only when ownership moves |
+
+**Part IV: Making it robust and fast**
+
+| Ch | Title | Step | You add |
+|---|---|---|---|
+| 22 | The Turn State Machine | `steps/ch22-turn-state` | an explicit turn |
+| 23 | Managing Context | `steps/ch23-context` | compression, summaries, `[SKILL_PRUNED]`, a memory flush |
+| 24 | Agents as Actors | `steps/ch24-actors` | one task per agent, an inbox, steering |
+| 25 | Cancellation and Supervision | `steps/ch25-supervision` | cancel trees and restarts |
+
+**Part V: Loosely coupled teams**
+
+| Ch | Title | Step | You add |
+|---|---|---|---|
+| 26 | The Blackboard | `steps/ch26-blackboard` | shared state, condition-triggered agents, a thin scheduler |
+| 27 | The Message Bus | `steps/ch27-message-bus` | peer-to-peer messaging |
+| 28 | Shared Team Skills | `steps/ch28-team-skills` | a layered store, `skill_propose`, a librarian as the single writer |
+| 29 | A2A for External Agents | `steps/ch29-a2a` | A2A only for agents outside this process |
+| 30 | Seeing Inside | `steps/ch30-tracing` | tracing, benchmarks, a capstone team that learns across runs |
 
 Chapters 1 and 2 are the only step crates in the tree. The rest are added when those chapters are written. The same list drives CI (`.github/chapters.json`).
 
@@ -110,7 +122,7 @@ The workflow installs `cargo-nextest` and runs `cargo nextest run -p my-harness 
 
 | Input | Values |
 |---|---|
-| `chapters` | `all` (default), `1`, `1-23`, or `3,4,6`. Chapters 1–23 are the plan; a chapter runs only after its `tests/chNN.rs` exists (today: 1 and 2) |
+| `chapters` | `all` (default), `1`, `1-30`, or `9,12,14`. Chapters 1–30 are the plan; a chapter runs only after its `tests/chNN.rs` exists (today: 1 and 2) |
 | `os` | `all` (default), `ubuntu`, `macos`, or `windows` |
 
 A manual run fails if any selected chapter fails.
