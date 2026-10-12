@@ -102,7 +102,63 @@ The test builds 50 messages, serializes a `ChatRequest`, and parses it back into
 > **Performance budget**
 >
 > - **Target:** serialize and deserialize a 50-message request in under 1 ms.
-> - **Measured:** `serde_50_message_request` mean **6.96 µs** (criterion, sample size 10, warm-up 1 s, measurement 2 s). CI reprints the current mean in the Benchmarks job summary.
+> - **Measured:** `serde_50_message_request` mean **6.937 µs** (criterion, sample size 10, warm-up 1 s, measurement 2 s). The run is pasted below. CI reprints the current mean in the Benchmarks job summary.
+
+### Build, run, and benchmark
+
+From the repository root. This step is the library crate `ch01-1-harness-core`. A binary shows up in section 1.3.
+
+```bash
+cargo build -p ch01-1-harness-core
+cargo nextest run -p ch01-1-harness-core
+cargo bench -p ch01-1-harness-core --bench serde_messages -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+```
+
+Nothing in this step reads an API key or opens a socket.
+
+I ran those commands on a 4-vCPU Intel Xeon guest under KVM, with 16 GiB of RAM, Linux, rustc 1.99.0, and cargo-nextest 0.9.148. The build finished with:
+
+```text
+   Compiling ch01-1-harness-core v0.1.0 (/workspace/steps/ch01-1-messages/crates/harness-core)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.19s
+```
+
+Nextest, after it finished compiling the tests:
+
+```text
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.39s
+────────────
+ Nextest run ID 733dee03-0cb6-4c6c-ac97-14ec7ef9c8c6 with nextest profile: default
+    Starting 2 tests across 2 binaries
+        PASS [   0.003s] (1/2) ch01-1-harness-core::message message_serializes_to_openai_shape
+        PASS [   0.003s] (2/2) ch01-1-harness-core::message request_round_trips_fifty_messages
+────────────
+     Summary [   0.004s] 2 tests run: 2 passed, 0 skipped
+```
+
+Criterion prints a slope on the `time:` line. The mean in the table is the mean point estimate from that same run. The "change" line is a comparison with a previous baseline on this machine.
+
+```text
+    Finished `bench` profile [optimized] target(s) in 0.04s
+     Running benches/serde_messages.rs (target/release/deps/serde_messages-359541fb9d74961e)
+Gnuplot not found, using plotters backend
+Benchmarking serde_50_message_request
+Benchmarking serde_50_message_request: Warming up for 1.0000 s
+Benchmarking serde_50_message_request: Collecting 10 samples in estimated 2.0003 s (320k iterations)
+Benchmarking serde_50_message_request: Analyzing
+serde_50_message_request
+                        time:   [6.9286 µs 6.9349 µs 6.9442 µs]
+                        change: [-0.3709% +0.0062% +0.3353%] (p = 0.98 > 0.05)
+                        No change in performance detected.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+```
+
+| Benchmark | Mean | Target | Machine |
+|---|---|---|---|
+| `serde_50_message_request` | 6.937 µs | < 1 ms | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0 |
+
+CI runs this step's tests on Ubuntu, macOS, and Windows. Criterion runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml), and each run writes the means into the job summary. The green summary for this branch is [run 38213430828](https://github.com/agnathan/rust-agent-harness/actions/runs/38213430828).
 
 ## 1.2 Provider
 
@@ -177,7 +233,70 @@ A blanket impl makes `Arc<MockProvider>` a provider too. The concurrency test wr
 > **Performance budget**
 >
 > - **Target:** harness overhead for one zero-latency mock call under 1 ms. One hundred concurrent zero-latency calls under 50 ms.
-> - **Measured:** `mock_turn_overhead` mean **135 ns**. `mock_100_concurrent` mean **105 µs** (same criterion settings as section 1.1).
+> - **Measured:** `mock_turn_overhead` mean **190.9 ns**. `mock_100_concurrent` mean **103.8 µs** (same criterion settings as section 1.1). The single-call samples on this guest spread out; both means are still inside the targets.
+
+### Build, run, and benchmark
+
+From the repository root. Still a library crate: `ch01-2-harness-core`.
+
+```bash
+cargo build -p ch01-2-harness-core
+cargo nextest run -p ch01-2-harness-core
+cargo bench -p ch01-2-harness-core --bench mock_calls -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+```
+
+The mock never contacts a network, so there is no API key to set.
+
+Same machine as section 1.1. The build finished with:
+
+```text
+   Compiling ch01-2-harness-core v0.1.0 (/workspace/steps/ch01-2-provider/crates/harness-core)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.88s
+```
+
+Nextest:
+
+```text
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.09s
+────────────
+ Nextest run ID 3efce048-4401-446d-9d56-6a660e627e55 with nextest profile: default
+    Starting 3 tests across 2 binaries
+        PASS [   0.003s] (1/3) ch01-2-harness-core::provider mock_provider_answers_and_records
+        PASS [   0.044s] (2/3) ch01-2-harness-core::provider mock_latency_is_configurable
+        PASS [   0.085s] (3/3) ch01-2-harness-core::provider one_hundred_mock_calls_run_concurrently
+────────────
+     Summary [   0.085s] 3 tests run: 3 passed, 0 skipped
+```
+
+The bench again. `mock_turn_overhead` moved relative to an older baseline on this machine; the mean below is from this run.
+
+```text
+    Finished `bench` profile [optimized] target(s) in 0.07s
+     Running benches/mock_calls.rs (target/release/deps/mock_calls-d656576a78ecd511)
+Gnuplot not found, using plotters backend
+Benchmarking mock_turn_overhead
+Benchmarking mock_turn_overhead: Warming up for 1.0000 s
+Benchmarking mock_turn_overhead: Collecting 10 samples in estimated 2.0000 s (12M iterations)
+Benchmarking mock_turn_overhead: Analyzing
+mock_turn_overhead      time:   [148.23 ns 176.46 ns 211.46 ns]
+                        change: [+26.886% +48.340% +64.246%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+
+Benchmarking mock_100_concurrent
+Benchmarking mock_100_concurrent: Warming up for 1.0000 s
+Benchmarking mock_100_concurrent: Collecting 10 samples in estimated 2.0058 s (19k iterations)
+Benchmarking mock_100_concurrent: Analyzing
+mock_100_concurrent     time:   [102.54 µs 103.34 µs 104.16 µs]
+                        change: [-1.5468% +0.0114% +1.6063%] (p = 0.99 > 0.05)
+                        No change in performance detected.
+```
+
+| Benchmark | Mean | Target | Machine |
+|---|---|---|---|
+| `mock_turn_overhead` | 190.9 ns | < 1 ms | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0 |
+| `mock_100_concurrent` | 103.8 µs | < 50 ms | same machine |
+
+CI runs these tests on Ubuntu, macOS, and Windows. Criterion runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml), and the means land in the job summary ([run 38213430828](https://github.com/agnathan/rust-agent-harness/actions/runs/38213430828)).
 
 ## 1.3 The client and `harness ask`
 
@@ -241,7 +360,118 @@ The integration test does not use a real key. The `wiremock` crate starts a loca
 > **Performance budget**
 >
 > - **Target:** build a 50-message request and parse a response in under 1 ms, with no network in the measurement.
-> - **Measured:** `build_request_and_parse_response` mean **1.74 µs** (same criterion settings). The wiremock test checks behavior, not this number.
+> - **Measured:** `build_request_and_parse_response` mean **1.746 µs** (same criterion settings). The wiremock test checks behavior, not this number.
+
+### Build, run, and benchmark
+
+From the repository root. Two packages: the library `ch01-3-harness-core` and the binary crate `ch01-3-harness-cli`. The executable name is `ch01-harness`.
+
+```bash
+cargo build -p ch01-3-harness-core
+cargo build -p ch01-3-harness-cli
+cargo nextest run -p ch01-3-harness-core
+cargo nextest run -p ch01-3-harness-cli
+cargo run -p ch01-3-harness-cli -- --mock ask "Say hello"
+cargo bench -p ch01-3-harness-core --bench request_parse -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+```
+
+`--mock` stays on this machine and prints a canned reply. A live call is the same command without `--mock`. The key and the optional base URL and model name come from the environment, or from the matching flags:
+
+```bash
+OPENAI_API_KEY=sk-... OPENAI_BASE_URL=https://api.openai.com/v1 HARNESS_MODEL=gpt-4o-mini \
+  cargo run -p ch01-3-harness-cli -- ask "Say hello"
+```
+
+I did not make that live call. The run below is the mock. `--help` is how the binary reports the same variables:
+
+```text
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.06s
+     Running `target/debug/ch01-harness --help`
+A tiny agent harness
+
+Usage: ch01-harness [OPTIONS] <COMMAND>
+
+Commands:
+  ask   Send one prompt and print the reply
+  help  Print this message or the help of the given subcommand(s)
+
+Options:
+      --base-url <BASE_URL>  Base URL of an OpenAI-compatible API [env: OPENAI_BASE_URL=] [default: https://api.openai.com/v1]
+      --api-key <API_KEY>    API key. A local fake server accepts any value [env: OPENAI_API_KEY=] [default: ""]
+      --model <MODEL>        Model name [env: HARNESS_MODEL=] [default: gpt-4o-mini]
+      --mock                 Use the offline mock provider instead of HTTP
+  -h, --help                 Print help
+```
+
+The library build and the binary build:
+
+```text
+   Compiling ch01-3-harness-core v0.1.0 (/workspace/steps/ch01-3-cli/crates/harness-core)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 6.18s
+```
+
+```text
+   Compiling ch01-3-harness-cli v0.1.0 (/workspace/steps/ch01-3-cli/crates/harness-cli)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 4.64s
+```
+
+Nextest on the library, then on the binary. Both talk to a local wiremock server, still with no API key.
+
+```text
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.03s
+────────────
+ Nextest run ID 44f76dcf-ec41-4106-9bb9-b6969e129b69 with nextest profile: default
+    Starting 3 tests across 2 binaries
+        PASS [   0.004s] (1/3) ch01-3-harness-core::provider response_deserializes_from_openai_shape
+        PASS [   0.005s] (2/3) ch01-3-harness-core::provider http_error_is_classified
+        PASS [   0.005s] (3/3) ch01-3-harness-core::provider two_calls_share_the_client_against_a_local_server
+────────────
+     Summary [   0.006s] 3 tests run: 3 passed, 0 skipped
+```
+
+```text
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.70s
+────────────
+ Nextest run ID 25c9fdc9-dcb0-4b40-a58d-e8e66ab2d5a8 with nextest profile: default
+    Starting 2 tests across 2 binaries
+        PASS [   0.005s] (1/2) ch01-3-harness-cli::ask mock_ask_prints_the_canned_reply
+        PASS [   0.009s] (2/2) ch01-3-harness-cli::ask ask_talks_to_a_local_fake_server
+────────────
+     Summary [   0.009s] 2 tests run: 2 passed, 0 skipped
+```
+
+The mock ask:
+
+```text
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.06s
+     Running `target/debug/ch01-harness --mock ask 'Say hello'`
+(mock) I heard you.
+```
+
+And the bench. The `time:` line is Criterion's slope. The mean in the table is the mean point estimate from the same run.
+
+```text
+    Finished `bench` profile [optimized] target(s) in 0.12s
+     Running benches/request_parse.rs (target/release/deps/request_parse-359f4e4892eb2854)
+Gnuplot not found, using plotters backend
+Benchmarking build_request_and_parse_response
+Benchmarking build_request_and_parse_response: Warming up for 1.0000 s
+Benchmarking build_request_and_parse_response: Collecting 10 samples in estimated 2.0001 s (1.1M iterations)
+Benchmarking build_request_and_parse_response: Analyzing
+build_request_and_parse_response
+                        time:   [1.7411 µs 1.7474 µs 1.7568 µs]
+                        change: [+0.0489% +0.4928% +0.9420%] (p = 0.05 < 0.05)
+                        Change within noise threshold.
+Found 2 outliers among 10 measurements (20.00%)
+  1 (10.00%) high mild
+  1 (10.00%) high severe
+```
+
+| Benchmark | Mean | Target | Machine |
+|---|---|---|---|
+| `build_request_and_parse_response` | 1.746 µs | < 1 ms | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0 |
+
+CI runs these tests on Ubuntu, macOS, and Windows. Criterion runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml), and the means land in the job summary ([run 38213430828](https://github.com/agnathan/rust-agent-harness/actions/runs/38213430828)).
 
 ## What you implement
 

@@ -646,19 +646,19 @@ The test I like most is `multi_turn_chat_sends_full_history`. It checks that the
 
 ## Did it work?
 
-`cargo build` is clean and `cargo test` passes everything: the 3 provider tests from Chapter 1, 4 conversation tests and 4 chat tests.
+`cargo nextest run -p ch02-harness-core` runs 12 tests: 4 chat, 4 conversation, and 4 provider. The summary from the run on this machine:
 
-```
-test result: ok. 4 passed; 0 failed   (chat)
-test result: ok. 4 passed; 0 failed   (conversation)
-test result: ok. 3 passed; 0 failed   (provider)
+```text
+     Summary [   0.051s] 12 tests run: 12 passed, 0 skipped
 ```
 
-Then a scripted session, with the input piped in and the mock provider:
+Then a scripted session, with the input piped in and `--mock` so nothing leaves the machine:
 
-```
+```text
 $ printf 'hello there\n/history\n/save /tmp/c2.json\n/reset\n/history\n/load /tmp/c2.json\n/bogus\nsecond message\n/quit\n' \
-    | harness --mock chat
+    | cargo run -p ch02-harness-cli -- --mock chat
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.05s
+     Running `target/debug/ch02-harness --mock chat`
 Chatting. Type /help for commands, /quit to leave.
 you> assistant> (mock) I heard you.
 you> [system] You are a helpful assistant.
@@ -675,19 +675,25 @@ you> assistant> (mock) I heard you.
 you> Bye.
 ```
 
-The saved file is plain, readable JSON:
+The saved file is the JSON `save` actually wrote:
 
 ```json
 {
   "system": "You are a helpful assistant.",
   "history": [
-    { "role": "user", "content": "hello there" },
-    { "role": "assistant", "content": "(mock) I heard you." }
+    {
+      "role": "user",
+      "content": "hello there"
+    },
+    {
+      "role": "assistant",
+      "content": "(mock) I heard you."
+    }
   ]
 }
 ```
 
-Against a real model, it's the same command without `--mock`, using the environment variables from Chapter 1.
+Against a real model, drop `--mock` and set `OPENAI_API_KEY` (and, if you want, `OPENAI_BASE_URL` and `HARNESS_MODEL`). I did not make that call. The commands, the full test log, and `cargo bench` are in the next section.
 
 [personal note: a real chat session, e.g. testing whether the model remembers something said three turns earlier]
 
@@ -704,6 +710,180 @@ Against a real model, it's the same command without `--mock`, using the environm
 New Rust along the way: private fields as a way to enforce rules, borrowing slices, match guards, `Option` vs `Result`, generics with trait bounds, blanket implementations, and the basics of terminal input.
 
 [personal note: which Rust idea finally made sense in this chapter, and which still feels shaky]
+
+## Build, run, and benchmark
+
+From the repository root. The library is `ch02-harness-core`. The binary crate is `ch02-harness-cli`, and the executable name is `ch02-harness`.
+
+```bash
+cargo build -p ch02-harness-core
+cargo build -p ch02-harness-cli
+cargo nextest run -p ch02-harness-core
+cargo nextest run -p ch02-harness-cli --no-tests=pass
+cargo run -p ch02-harness-cli -- --mock ask "Say hello"
+printf 'hello there\n/history\n/save /tmp/c2.json\n/reset\n/history\n/load /tmp/c2.json\n/bogus\nsecond message\n/quit\n' \
+  | cargo run -p ch02-harness-cli -- --mock chat
+cargo bench -p ch02-harness-core
+cargo bench -p ch02-harness-cli
+```
+
+`--mock` is the offline provider. A live chat is the same `cargo run` without `--mock`:
+
+```bash
+OPENAI_API_KEY=sk-... OPENAI_BASE_URL=https://api.openai.com/v1 HARNESS_MODEL=gpt-4o-mini \
+  cargo run -p ch02-harness-cli -- chat
+```
+
+I did not make that live call. The session below is the mock. `--help` lists the same variables:
+
+```text
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.05s
+     Running `target/debug/ch02-harness --help`
+A tiny agent harness
+
+Usage: ch02-harness [OPTIONS] <COMMAND>
+
+Commands:
+  ask   Send one prompt and print the reply
+  chat  Start an interactive chat
+  help  Print this message or the help of the given subcommand(s)
+
+Options:
+      --base-url <BASE_URL>  Base URL of an OpenAI-compatible API [env: OPENAI_BASE_URL=] [default: https://api.openai.com/v1]
+      --api-key <API_KEY>    API key (local servers like Ollama accept any value) [env: OPENAI_API_KEY=] [default: ""]
+      --model <MODEL>        Model name [env: HARNESS_MODEL=] [default: gpt-4o-mini]
+      --mock                 Use the offline mock provider instead of a real API
+      --system <SYSTEM>      System prompt [default: "You are a helpful assistant."]
+  -h, --help                 Print help
+```
+
+The two builds, on the same 4-vCPU Intel Xeon guest (KVM, 16 GiB, Linux, rustc 1.99.0, cargo-nextest 0.9.148):
+
+```text
+   Compiling ch02-harness-core v0.2.0 (/workspace/steps/ch02-conversations/crates/harness-core)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.27s
+```
+
+```text
+   Compiling ch02-harness-cli v0.2.0 (/workspace/steps/ch02-conversations/crates/harness-cli)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.76s
+```
+
+The library tests:
+
+```text
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.05s
+────────────
+ Nextest run ID bbce41f9-cfbb-478f-9606-5af583b59138 with nextest profile: default
+    Starting 12 tests across 4 binaries
+        PASS [   0.003s] ( 1/12) ch02-harness-core::chat parses_slash_commands
+        PASS [   0.003s] ( 2/12) ch02-harness-core::chat multi_turn_chat_sends_full_history
+        PASS [   0.003s] ( 3/12) ch02-harness-core::chat failed_call_rolls_back_the_user_turn
+        PASS [   0.004s] ( 4/12) ch02-harness-core::chat reset_and_quit
+        PASS [   0.003s] ( 5/12) ch02-harness-core::conversation roles_must_alternate
+        PASS [   0.003s] ( 6/12) ch02-harness-core::conversation system_prompt_stays_first_and_unchanged
+        PASS [   0.004s] ( 7/12) ch02-harness-core::conversation save_and_load_round_trip
+        PASS [   0.003s] ( 8/12) ch02-harness-core::conversation trimming_drops_oldest_pairs_but_keeps_latest
+        PASS [   0.003s] ( 9/12) ch02-harness-core::provider mock_provider_answers_and_records
+        PASS [   0.003s] (10/12) ch02-harness-core::provider request_serializes_to_openai_shape
+        PASS [   0.003s] (11/12) ch02-harness-core::provider response_deserializes_from_openai_shape
+        PASS [   0.045s] (12/12) ch02-harness-core::provider mock_latency_is_configurable
+────────────
+     Summary [   0.051s] 12 tests run: 12 passed, 0 skipped
+```
+
+The CLI crate has no test targets. Nextest's default treats that as a failure (exit 4). `--no-tests=pass` is the command that succeeds, and it is what CI passes:
+
+```text
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.05s
+────────────
+ Nextest run ID e154626e-b26d-485c-853c-e34ae3a5b52f with nextest profile: default
+    Starting 0 tests across 1 binary
+────────────
+     Summary [   0.000s] 0 tests run: 0 passed, 0 skipped
+error: no tests to run
+(hint: use `--no-tests` to customize)
+```
+
+```text
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.05s
+────────────
+ Nextest run ID 8b239caa-2bac-46c0-afd7-42f51121752e with nextest profile: default
+    Starting 0 tests across 1 binary
+────────────
+     Summary [   0.000s] 0 tests run: 0 passed, 0 skipped
+```
+
+One mock ask:
+
+```text
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.05s
+     Running `target/debug/ch02-harness --mock ask 'Say hello'`
+(mock) I heard you.
+```
+
+The piped chat, and the file it wrote:
+
+```text
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.05s
+     Running `target/debug/ch02-harness --mock chat`
+Chatting. Type /help for commands, /quit to leave.
+you> assistant> (mock) I heard you.
+you> [system] You are a helpful assistant.
+[user] hello there
+[assistant] (mock) I heard you.
+(~15 tokens)
+you> Saved to /tmp/c2.json
+you> Conversation cleared.
+you> [system] You are a helpful assistant.
+(~7 tokens)
+you> Loaded 2 messages from /tmp/c2.json
+you> Unknown command /bogus. Try /help.
+you> assistant> (mock) I heard you.
+you> Bye.
+```
+
+```json
+{
+  "system": "You are a helpful assistant.",
+  "history": [
+    {
+      "role": "user",
+      "content": "hello there"
+    },
+    {
+      "role": "assistant",
+      "content": "(mock) I heard you."
+    }
+  ]
+}
+```
+
+This step has no Criterion target. `cargo bench` compiles the crates and then reports zero measured tests. There is no mean to set next to a target.
+
+```text
+    Finished `bench` profile [optimized] target(s) in 5.03s
+     Running unittests src/lib.rs (target/release/deps/harness_core-ebb4dd47bbe8e39d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+```
+
+```text
+    Finished `bench` profile [optimized] target(s) in 14.53s
+     Running unittests src/main.rs (target/release/deps/ch02_harness-8a54c367c77696f6)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+```
+
+| Benchmark | Mean | Target | Machine |
+|---|---|---|---|
+| none in this step | — | — | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0 |
+
+CI runs these tests on Ubuntu, macOS, and Windows. Criterion for the chapter 1 sections runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml), and the means land in the job summary ([run 38213430828](https://github.com/agnathan/rust-agent-harness/actions/runs/38213430828)).
 
 ## What's next
 
