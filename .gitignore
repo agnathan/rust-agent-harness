@@ -1,0 +1,5 @@
+target/
+book/_build/
+lesson-results/
+__pycache__/
+*.pyc

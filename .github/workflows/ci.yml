@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  starter:
+    name: starter fmt, build, clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ./starter
+      - name: cargo fmt --check
+        working-directory: starter
+        run: cargo fmt --all -- --check
+      - name: cargo build
+        working-directory: starter
+        run: cargo build --locked
+      - name: cargo clippy
+        working-directory: starter
+        run: cargo clippy --all-targets --locked
+
+  lesson-report:
+    name: starter lesson report
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ./starter
+      - name: Per-lesson test report
+        run: bash .github/scripts/starter_lesson_report.sh
+
+  book:
+    name: mdBook
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ./starter
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: mdbook
+      - name: Build the book
+        working-directory: book
+        run: mdbook build
