@@ -39,7 +39,7 @@
 | 16 | Observe, Measure, Capstone | — | tracing | a span around the turn, a small benchmark, a team demo |
 | 17 | Epilogue: What I'd build next | — | — | sandboxes, plugins, more than one machine |
 
-Only chapter 1 has a step crate so far. Later rows are the plan, not empty crates.
+Only chapters 1 and 2 have step crates so far. Later rows are the plan, not empty crates.
 
 **Recurring sidebars:**
 

@@ -3,3 +3,7 @@ ch01-first-contact:
   - "steps/ch01-first-contact/**"
   - "Cargo.toml"
   - "Cargo.lock"
+ch02-conversations:
+  - "steps/ch02-conversations/**"
+  - "Cargo.toml"
+  - "Cargo.lock"

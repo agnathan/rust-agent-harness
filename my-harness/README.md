@@ -4,10 +4,12 @@ This is the crate to implement, one chapter at a time. `steps/` holds a finished
 
 ```bash
 cargo test -p my-harness --test ch01
+cargo test -p my-harness --test ch02
 ```
 
 | Test file | Chapter | Replace |
 |---|---|---|
 | `tests/ch01.rs` | First Contact | `Message` serialization, `ChatResponse` parsing, `MockProvider::complete` |
+| `tests/ch02.rs` | Conversations | `Conversation`, `ChatCommand::parse`, `ChatSession::handle_line` |
 
 A push runs these tests and records the table. Unimplemented chapters fail the tests and do not fail that workflow. A manual run of the My harness workflow fails if a chapter you selected fails.

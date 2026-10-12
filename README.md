@@ -16,7 +16,7 @@ book/                mdBook source and social drafts
 
 A step is the code as of that chapter, library plus CLI, with its tests. Later chapters are new copies under `steps/`, so chapter 1 still builds after chapter 2 exists. They share one cargo workspace at the repo root. Package names carry the chapter (`ch01-harness-core`, `ch02-harness-cli`) and the binaries are `ch01-harness` and `ch02-harness`, so two steps can be built together. The library each test imports is still `harness_core`.
 
-`my-harness/` is where the implementation happens. `tests/ch01.rs` is the first milestone. It compiles, then panics with `not yet implemented: chapter 01` until you replace the `todo!()` stubs. Finished snapshots stay in `steps/`. There is no solutions directory.
+`my-harness/` is where the implementation happens. `tests/ch01.rs` and `tests/ch02.rs` are the milestones. They compile, then panic with `not yet implemented: chapter NN` until you replace the `todo!()` stubs. Finished snapshots stay in `steps/`. There is no solutions directory.
 
 ## How to start
 
@@ -35,11 +35,14 @@ A step is the code as of that chapter, library plus CLI, with its tests. Later c
    cargo run -p ch01-harness-cli -- --mock ask "Say hello"
    ```
 
+5. Chapter 2 is the same shape: `cargo test -p my-harness --test ch02`, and `cargo run -p ch02-harness-cli -- --mock chat`.
+
 `OPENAI_API_KEY`, `OPENAI_BASE_URL` (default `https://api.openai.com/v1`), and `HARNESS_MODEL` (default `gpt-4o-mini`) configure a real server. `--mock` uses the offline provider.
 
 | Chapter | Step | You add |
 |---|---|---|
 | 1 | `steps/ch01-first-contact` | one prompt, a provider trait, a mock, `ask` |
+| 2 | `steps/ch02-conversations` | a real conversation and a `chat` REPL |
 
 The book outline lists the later chapters. Their step crates are added when the chapters are written.
 

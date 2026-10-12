@@ -3,5 +3,7 @@ resolver = "3"
 members = [
     "steps/ch01-first-contact/crates/harness-core",
     "steps/ch01-first-contact/crates/harness-cli",
+    "steps/ch02-conversations/crates/harness-core",
+    "steps/ch02-conversations/crates/harness-cli",
     "my-harness",
 ]
