@@ -46,7 +46,11 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: .
-      - name: cargo test -p step packages
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+      - name: cargo nextest -p step packages
         run: bash .github/scripts/test_step.sh "${{ matrix.step }}"
 
   changed-steps:
@@ -84,7 +88,11 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: .
-      - name: cargo test -p step packages
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+      - name: cargo nextest -p step packages
         shell: bash
         run: bash .github/scripts/test_step.sh "${{ matrix.step }}"
 

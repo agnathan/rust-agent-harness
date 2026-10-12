@@ -1,6 +1,6 @@
-use crate::message::Message;
+use crate::message::{ChatRequest, Message};
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::sync::Mutex;
 use std::time::Duration;
 
@@ -20,8 +20,8 @@ pub trait Provider: Send + Sync {
     async fn complete(&self, messages: &[Message]) -> Result<Message, ProviderError>;
 }
 
-// ---------- OpenAI-compatible provider ----------
-
+/// One shared `reqwest::Client`: connections are pooled, and HTTP/2 is enabled
+/// for servers that negotiate it (ALPN on TLS, or prior knowledge).
 pub struct OpenAiCompatible {
     client: reqwest::Client,
     base_url: String,
@@ -31,8 +31,13 @@ pub struct OpenAiCompatible {
 
 impl OpenAiCompatible {
     pub fn new(base_url: &str, api_key: &str, model: &str) -> Self {
+        let client = reqwest::Client::builder()
+            .pool_max_idle_per_host(8)
+            .http2_adaptive_window(true)
+            .build()
+            .expect("HTTP client");
         Self {
-            client: reqwest::Client::new(),
+            client,
             base_url: base_url.trim_end_matches('/').to_string(),
             api_key: api_key.to_string(),
             model: model.to_string(),
@@ -40,18 +45,12 @@ impl OpenAiCompatible {
     }
 }
 
-#[derive(Serialize)]
-pub struct ChatRequest<'a> {
-    pub model: &'a str,
-    pub messages: &'a [Message],
-}
-
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct ChatResponse {
     pub choices: Vec<Choice>,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct Choice {
     pub message: Message,
 }
@@ -92,12 +91,9 @@ impl Provider for OpenAiCompatible {
     }
 }
 
-// ---------- Mock provider for tests ----------
-
-/// Returns a canned reply and records every conversation it was sent.
+/// Returns a canned reply after an optional wait, and records every conversation.
 ///
-/// `latency` is the stand-in for model time. Benchmarks that measure harness
-/// overhead use [`Duration::ZERO`] and exclude this wait from the target.
+/// `latency` stands in for model time. Overhead benchmarks use [`Duration::ZERO`].
 pub struct MockProvider {
     reply: String,
     latency: Duration,
@@ -124,7 +120,14 @@ impl Provider for MockProvider {
         if !self.latency.is_zero() {
             tokio::time::sleep(self.latency).await;
         }
-        self.seen.lock().unwrap().push(messages.to_vec());
+        self.seen.lock().expect("seen").push(messages.to_vec());
         Ok(Message::assistant(self.reply.clone()))
+    }
+}
+
+#[async_trait]
+impl<P: Provider + ?Sized> Provider for std::sync::Arc<P> {
+    async fn complete(&self, messages: &[Message]) -> Result<Message, ProviderError> {
+        (**self).complete(messages).await
     }
 }

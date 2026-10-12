@@ -5,7 +5,7 @@ use std::process::ExitCode;
 #[derive(Parser)]
 #[command(name = "harness", about = "A tiny agent harness")]
 struct Cli {
-    /// Base URL of an OpenAI-compatible API
+    /// Base URL of an OpenAI-compatible API.
     #[arg(
         long,
         env = "OPENAI_BASE_URL",
@@ -13,15 +13,15 @@ struct Cli {
     )]
     base_url: String,
 
-    /// API key (local servers like Ollama accept any value)
+    /// API key. A local fake server accepts any value.
     #[arg(long, env = "OPENAI_API_KEY", default_value = "")]
     api_key: String,
 
-    /// Model name
+    /// Model name.
     #[arg(long, env = "HARNESS_MODEL", default_value = "gpt-4o-mini")]
     model: String,
 
-    /// Use the offline mock provider instead of a real API
+    /// Use the offline mock provider instead of HTTP.
     #[arg(long)]
     mock: bool,
 
@@ -31,7 +31,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
-    /// Send one prompt and print the reply
+    /// Send one prompt and print the reply.
     Ask { prompt: String },
 }
 
@@ -40,8 +40,8 @@ async fn main() -> ExitCode {
     let cli = Cli::parse();
     match run(cli).await {
         Ok(()) => ExitCode::SUCCESS,
-        Err(e) => {
-            eprintln!("error: {e}");
+        Err(error) => {
+            eprintln!("error: {error}");
             ExitCode::FAILURE
         }
     }

@@ -15,7 +15,12 @@ while IFS= read -r package; do
   fi
   found=1
   echo "::group::${package}"
-  cargo test -p "$package" --locked
+  if command -v cargo-nextest >/dev/null 2>&1; then
+    cargo nextest run --locked -p "$package"
+  else
+    echo "cargo-nextest is not installed; falling back to cargo test for ${package}"
+    cargo test -p "$package" --locked
+  fi
   echo "::endgroup::"
 done < <(python3 "$root/.github/scripts/list_steps.py" --root "$root" --packages "$step")
 

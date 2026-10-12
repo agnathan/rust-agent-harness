@@ -15,7 +15,8 @@ import re
 import sys
 from pathlib import Path
 
-CHAPTER_FILE = re.compile(r"(?:^|/)my-harness/tests/(ch(\d+))\.rs$")
+CHAPTER_FILE = re.compile(r"(?:^|/)my-harness/tests/(ch(\d+)(?:_\d+)?)\.rs$")
+STEM = re.compile(r"ch(\d+)(?:_\d+)?")
 HARNESS_SRC = re.compile(r"(?:^|/)my-harness/(?:src/|Cargo\.toml$|README\.md$)")
 
 
@@ -33,30 +34,28 @@ def planned_chapters(root: Path) -> dict[int, str]:
     return planned
 
 
-def chapter_map(root: Path) -> dict[int, str]:
+def chapter_map(root: Path) -> dict[int, list[str]]:
     tests = root / "my-harness" / "tests"
     if not tests.is_dir():
         raise SystemExit(f"missing test directory: {tests}")
-    mapping: dict[int, str] = {}
+    mapping: dict[int, list[str]] = {}
     for path in sorted(tests.glob("ch*.rs")):
-        match = re.fullmatch(r"ch(\d+)", path.stem)
+        match = STEM.fullmatch(path.stem)
         if not match:
             continue
         number = int(match.group(1))
-        if number in mapping:
-            raise SystemExit(f"two tests share chapter {number}")
-        mapping[number] = path.stem
+        mapping.setdefault(number, []).append(path.stem)
     if not mapping:
         raise SystemExit(f"no chapter tests found in {tests}")
     return mapping
 
 
-def parse_spec(spec: str, mapping: dict[int, str], planned: dict[int, str]) -> list[str]:
+def parse_spec(spec: str, mapping: dict[int, list[str]], planned: dict[int, str]) -> list[str]:
     text = spec.strip()
     if not text:
         raise SystemExit("empty chapter spec")
     if text.lower() == "all":
-        return [mapping[number] for number in sorted(mapping)]
+        return [name for number in sorted(mapping) for name in mapping[number]]
 
     selected: list[str] = []
     seen: set[int] = set()
@@ -90,14 +89,14 @@ def parse_spec(spec: str, mapping: dict[int, str], planned: dict[int, str]) -> l
                 )
             if number not in seen:
                 seen.add(number)
-                selected.append(mapping[number])
+                selected.extend(mapping[number])
     if not selected:
         raise SystemExit("no chapters selected")
     return selected
 
 
-def from_paths(lines: list[str], mapping: dict[int, str]) -> list[str]:
-    by_name = {name: number for number, name in mapping.items()}
+def from_paths(lines: list[str], mapping: dict[int, list[str]]) -> list[str]:
+    by_name = {name: number for number, names in mapping.items() for name in names}
     found: list[tuple[int, str]] = []
     seen: set[str] = set()
 
@@ -111,7 +110,8 @@ def from_paths(lines: list[str], mapping: dict[int, str]) -> list[str]:
         path = line.strip().replace("\\", "/")
         if HARNESS_SRC.search(path):
             for number in sorted(mapping):
-                add(mapping[number])
+                for name in mapping[number]:
+                    add(name)
             continue
         match = CHAPTER_FILE.search(path)
         if match:

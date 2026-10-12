@@ -14,9 +14,9 @@ my-harness/          your crate; milestone tests start out failing
 book/                mdBook source and social drafts
 ```
 
-A step is the code as of that chapter, library plus CLI, with its tests. Later chapters are new copies under `steps/`, so chapter 1 still builds after chapter 2 exists. They share one cargo workspace at the repo root. Package names carry the chapter (`ch01-harness-core`, `ch02-harness-cli`) and the binaries are `ch01-harness` and `ch02-harness`, so two steps can be built together. The library each test imports is still `harness_core`.
+A step is the code as of that chapter, library plus CLI, with its tests. Later chapters are new copies under `steps/`, so chapter 1 still builds after chapter 2 exists. They share one cargo workspace at the repo root. Package names carry the section (`ch01-1-harness-core`, `ch01-3-harness-cli`, `ch02-harness-cli`) and the binaries are `ch01-harness` and `ch02-harness`, so two steps can be built together. The library each test imports is still `harness_core`.
 
-`my-harness/` is where the implementation happens. `tests/ch01.rs` and `tests/ch02.rs` are the milestones. They compile, then panic with `not yet implemented: chapter NN` until you replace the `todo!()` stubs. Finished snapshots stay in `steps/`. There is no solutions directory.
+`my-harness/` is where the implementation happens. `tests/ch01_1.rs`, `ch01_2.rs`, `ch01_3.rs`, and `tests/ch02.rs` are the milestones. They compile, then panic with `todo!` until you replace the stubs. Finished snapshots stay in `steps/`. There is no solutions directory.
 
 ## How to start
 
@@ -25,14 +25,16 @@ A step is the code as of that chapter, library plus CLI, with its tests. Later c
 3. Read [Chapter 1](book/chapter-01-first-contact.md), then make the milestone fail for the right reason and replace the stubs:
 
    ```bash
-   cargo test -p my-harness --test ch01
+   cargo test -p my-harness --test ch01_1 --test ch01_2 --test ch01_3
    ```
 
 4. Run the finished chapter if you want to see the behavior:
 
    ```bash
-   cargo test -p ch01-harness-core
-   cargo run -p ch01-harness-cli -- --mock ask "Say hello"
+   cargo test -p ch01-1-harness-core
+   cargo test -p ch01-2-harness-core
+   cargo test -p ch01-3-harness-core -p ch01-3-harness-cli
+   cargo run -p ch01-3-harness-cli -- --mock ask "Say hello"
    ```
 
 5. Chapter 2 is the same shape: `cargo test -p my-harness --test ch02`, and `cargo run -p ch02-harness-cli -- --mock chat`.
@@ -46,7 +48,7 @@ Thirty chapters in five parts. Performance is a budget on every chapter, startin
 | Ch | Title | Step | You add |
 |---|---|---|---|
 | 0 | Introduction | — | why a harness, and what Hermes is |
-| 1 | First Contact | `steps/ch01-first-contact` | tokio, one reused HTTP client, a latency-configurable mock, a criterion bench, `ask` |
+| 1 | First Contact | `steps/ch01-1-messages`, `ch01-2-provider`, `ch01-3-cli` | messages, a latency mock on tokio, one pooled HTTP client, `ask` |
 | 2 | Conversations | `steps/ch02-conversations` | a real conversation, a cache-stable system prompt, and a `chat` REPL |
 | 3 | Tools | `steps/ch03-tools` | an MCP-shaped tool trait; read-only calls run concurrently, writes run alone |
 | 4 | MCP Client | `steps/ch04-mcp-client` | `rmcp` over stdio and streamable HTTP; MCP and native tools share one scheduler |
@@ -110,7 +112,7 @@ The book builds with [mdBook](https://rust-lang.github.io/mdBook/): `mdbook buil
 - the same tests on Ubuntu, macOS, and Windows for steps whose files changed ([paths-filter](https://github.com/dorny/paths-filter))
 - an mdBook build of `book/`
 
-[Benchmarks](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml) run on pushes to `main` only. They execute `cargo bench -p ch01-harness-core --bench turn_overhead` and write the Criterion means to the job summary. A slow result does not fail the run.
+[Benchmarks](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml) run on pull requests and on pushes to `main`. They execute the three chapter 1 criterion benches on Ubuntu and write the means to the job summary. A slow result does not fail the run.
 
 `my-harness` milestone tests are not part of that required build. They run in [My harness](https://github.com/agnathan/rust-agent-harness/actions/workflows/my-harness.yml).
 

@@ -1,6 +1,6 @@
 [
   {"n": 0, "title": "Introduction", "step": null, "part": "I"},
-  {"n": 1, "title": "First Contact", "step": "ch01-first-contact", "part": "I"},
+  {"n": 1, "title": "First Contact", "step": "ch01-3-cli", "sections": ["ch01-1-messages", "ch01-2-provider", "ch01-3-cli"], "part": "I"},
   {"n": 2, "title": "Conversations", "step": "ch02-conversations", "part": "I"},
   {"n": 3, "title": "Tools", "step": "ch03-tools", "part": "I"},
   {"n": 4, "title": "MCP Client", "step": "ch04-mcp-client", "part": "I"},

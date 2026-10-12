@@ -36,3 +36,17 @@ impl Message {
         }
     }
 }
+
+/// A chat-completions body that borrows the messages it sends.
+#[derive(Debug, Serialize)]
+pub struct ChatRequest<'a> {
+    pub model: &'a str,
+    pub messages: &'a [Message],
+}
+
+/// Owned form of [`ChatRequest`], used when a body is parsed back from JSON.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct OwnedChatRequest {
+    pub model: String,
+    pub messages: Vec<Message>,
+}

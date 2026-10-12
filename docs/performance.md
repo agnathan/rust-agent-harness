@@ -27,14 +27,14 @@ Principles and the way to choose a team shape live next to this page: [team patt
 
 **Learning stays off the hot path.** Reflection, skill writes the model did not ask for, memory writes, index rebuilds, FTS updates, and curation are background tasks. The turn awaits the model and the tools the model actually called. Spawning a reviewer, enqueueing a proposal, or swapping an `Arc` index is the cost on the request path.
 
-**Measure, and do not fail the build on a number yet.** Chapter 1 adds criterion and `MockProvider::with_latency`. Chapter 5 extends that bench to concurrent tools and streaming overlap. On every push to `main`, [Benchmarks](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml) runs `cargo bench -p ch01-harness-core --bench turn_overhead` and writes the mean to the job summary. A regression does not fail the job.
+**Measure, and do not fail the build on a number yet.** Chapter 1 is three sections, each with a criterion bench: serde of 50 messages, one mock call and 100 concurrent mock calls, and request build plus response parse. Chapter 5 extends that idea to the agent loop. On pull requests and on every push to `main`, [Benchmarks](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml) runs those benches on Ubuntu and writes the means to the job summary. A regression does not fail the job.
 
 ## Performance budget
 
 | Ch | Chapter | Target |
 |---|---|---|
 | 0 | Introduction | State the rule: overhead is measured without model latency. |
-| 1 | First Contact | Mean harness overhead **< 1 ms** per `complete` on the zero-latency mock. One `reqwest::Client` per provider. |
+| 1 | First Contact | 1.1: serde of 50 messages **< 1 ms** (measured 6.96 µs). 1.2: one mock call **< 1 ms** (measured 135 ns) and 100 concurrent calls **< 50 ms** (measured 105 µs). 1.3: build and parse **< 1 ms** (measured 1.74 µs). One pooled client, HTTP/2 enabled. |
 | 2 | Conversations | System-prompt bytes identical across the turns of a session. Per-turn overhead still **< 1 ms**. The model is called with a borrow, not a clone of the history. |
 | 3 | Tools | **8** read-only tools in one batch finish in about one call, not eight, on the latency mock. A write runs alone. |
 | 4 | MCP Client | MCP calls use that same bound. **8** concurrent mock MCP calls finish in about one round trip. |

@@ -25,7 +25,7 @@ The book is five parts and thirty chapters. Performance is a budget on every cha
 | Ch | Title | Step | Rust, just in time | What the harness gains |
 |---|---|---|---|---|
 | 0 | Introduction | — | why Rust | what a harness is, and what Hermes is |
-| 1 | First Contact | `steps/ch01-first-contact` | tokio, structs, enums, traits, serde | `Message`, `Provider`, one reused HTTP client, a mock with configurable latency, a criterion bench, `ask` |
+| 1 | First Contact | `steps/ch01-1-messages`, `ch01-2-provider`, `ch01-3-cli` | tokio, structs, enums, traits, serde | 1.1 messages and serde; 1.2 `Provider` and a latency mock; 1.3 one reused HTTP client, HTTP/2, and `ask` |
 | 2 | Conversations | `steps/ch02-conversations` | ownership, private fields, `Result` | alternating history, a system prompt that stays byte-stable for prompt caching, trim, JSON save/load, `chat` REPL |
 | 3 | Tools | `steps/ch03-tools` | traits, JSON Schema, a semaphore | a tool trait and registry shaped like MCP; read-only calls run concurrently, writes run alone, both under a bound |
 | 4 | MCP Client | `steps/ch04-mcp-client` | `rmcp`, stdio, HTTP | connect to MCP servers over stdio and streamable HTTP; MCP tools and native tools share one registry and one scheduler |
@@ -37,7 +37,7 @@ The book is five parts and thirty chapters. Performance is a budget on every cha
 **Performance budget**
 
 - **Chapter 0.** State the rule: overhead is measured without model latency.
-- **Chapter 1.** Mean harness overhead < 1 ms per `complete` on the zero-latency mock. One HTTP client per provider. Mock latency is configurable and is not counted in that number.
+- **Chapter 1.** Three benches, each under 1 ms. 1.1: serde of 50 messages (measured 6.96 µs). 1.2: one mock call (measured 135 ns) and 100 concurrent calls (measured 105 µs, target < 50 ms). 1.3: build a request and parse a response (measured 1.74 µs). One HTTP client, pooled, HTTP/2 enabled.
 - **Chapter 2.** The system prompt is byte-identical across the turns of a session. Per-turn overhead stays < 1 ms. The provider borrows the history.
 - **Chapter 3.** Eight read-only tools in one batch finish in about one call on the latency mock. A write runs alone.
 - **Chapter 4.** Eight concurrent mock MCP calls finish in about one round trip, on the same bound as native tools.
@@ -122,7 +122,7 @@ The book is five parts and thirty chapters. Performance is a budget on every cha
 - **Chapter 29.** Remote calls use the HTTP pool and the same bound. Cancel reaches an in-flight call in < 50 ms.
 - **Chapter 30.** A span per turn adds < 0.1 ms. The chapter 1 bench still meets its budget with tracing on. The capstone runs 100 or more concurrent mock agents.
 
-Only chapters 1 and 2 have step crates so far. Chapter 1 already carries the criterion bench (`cargo bench -p ch01-harness-core --bench turn_overhead`). Chapter 5 extends it. Pushes to `main` report that bench in the Benchmarks workflow, with no fail threshold. Later rows are the plan, not empty crates. The same list is `.github/chapters.json`, which CI uses. Draft rows in `book/SUMMARY.md` are the chapters that are not written yet.
+Only chapters 1 and 2 have step crates so far. Chapter 1 is three cumulative sections, each with a criterion bench. Chapter 5 extends that bench to the agent loop. Pull requests and pushes to `main` report the means in the Benchmarks workflow, with no fail threshold. Later rows are the plan, not empty crates. The same list is `.github/chapters.json`, which CI uses. Draft rows in `book/SUMMARY.md` are the chapters that are not written yet.
 
 **Recurring sidebars:**
 

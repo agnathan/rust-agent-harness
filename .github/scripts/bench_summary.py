@@ -13,7 +13,7 @@ def main() -> None:
     estimates = sorted(root.glob("*/new/estimates.json")) if root.is_dir() else []
     print("## Benchmarks")
     print()
-    print("Criterion on the chapter 1 zero-latency mock. Informational only: no fail threshold.")
+    print("Criterion for chapter 1 sections 1.1–1.3. Informational only: no fail threshold.")
     print()
     if not estimates:
         print("No Criterion estimates were written.")

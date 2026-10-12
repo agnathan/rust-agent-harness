@@ -9,8 +9,12 @@ shared:
   - ".github/workflows/ci.yml"
   - ".github/path-filters.yml"
   - ".github/chapters.json"
-ch01-first-contact:
-  - "steps/ch01-first-contact/**"
+ch01-1-messages:
+  - "steps/ch01-1-messages/**"
+ch01-2-provider:
+  - "steps/ch01-2-provider/**"
+ch01-3-cli:
+  - "steps/ch01-3-cli/**"
 ch02-conversations:
   - "steps/ch02-conversations/**"
 ch03-tools:
