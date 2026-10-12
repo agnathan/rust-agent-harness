@@ -1,7 +1,7 @@
 # Filter names for real steps match steps/ directory names.
 # `shared` means "retest every step that exists". Planned steps are listed so a
 # new steps/chNN-* directory is picked up without editing the workflow.
-# The chapter plan itself is .github/chapters.json.
+# The chapter plan itself is .github/chapters.json (23 chapters, parts I–IV).
 shared:
   - "Cargo.toml"
   - "Cargo.lock"
@@ -15,33 +15,43 @@ ch02-conversations:
   - "steps/ch02-conversations/**"
 ch03-tools:
   - "steps/ch03-tools/**"
-ch04-agent-loop:
-  - "steps/ch04-agent-loop/**"
-ch05-handoffs:
-  - "steps/ch05-handoffs/**"
-ch06-agents-as-tools:
-  - "steps/ch06-agents-as-tools/**"
+ch04-mcp-client:
+  - "steps/ch04-mcp-client/**"
+ch05-agent-loop:
+  - "steps/ch05-agent-loop/**"
+ch06-mcp-server:
+  - "steps/ch06-mcp-server/**"
 ch07-when-things-fail:
   - "steps/ch07-when-things-fail/**"
 ch08-streaming:
   - "steps/ch08-streaming/**"
-ch09-turn-state:
-  - "steps/ch09-turn-state/**"
-ch10-parallel-tools:
-  - "steps/ch10-parallel-tools/**"
-ch11-context:
-  - "steps/ch11-context/**"
-ch12-remembering:
-  - "steps/ch12-remembering/**"
-ch13-actors:
-  - "steps/ch13-actors/**"
-ch14-supervision:
-  - "steps/ch14-supervision/**"
-ch15-blackboard:
-  - "steps/ch15-blackboard/**"
-ch16-message-bus:
-  - "steps/ch16-message-bus/**"
-ch17-mcp-a2a:
-  - "steps/ch17-mcp-a2a/**"
-ch18-tracing:
-  - "steps/ch18-tracing/**"
+ch09-pipeline:
+  - "steps/ch09-pipeline/**"
+ch10-supervisor:
+  - "steps/ch10-supervisor/**"
+ch11-handoffs:
+  - "steps/ch11-handoffs/**"
+ch12-fan-out:
+  - "steps/ch12-fan-out/**"
+ch13-critic:
+  - "steps/ch13-critic/**"
+ch14-composition:
+  - "steps/ch14-composition/**"
+ch15-turn-state:
+  - "steps/ch15-turn-state/**"
+ch16-context:
+  - "steps/ch16-context/**"
+ch17-remembering:
+  - "steps/ch17-remembering/**"
+ch18-actors:
+  - "steps/ch18-actors/**"
+ch19-supervision:
+  - "steps/ch19-supervision/**"
+ch20-blackboard:
+  - "steps/ch20-blackboard/**"
+ch21-message-bus:
+  - "steps/ch21-message-bus/**"
+ch22-a2a:
+  - "steps/ch22-a2a/**"
+ch23-tracing:
+  - "steps/ch23-tracing/**"

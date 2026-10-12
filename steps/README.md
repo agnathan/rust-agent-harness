@@ -15,4 +15,4 @@ cargo run -p ch02-harness-cli -- --mock chat
 | ch01-first-contact | 1 | Message/Role, Provider, OpenAI-compatible and mock providers, `ask` |
 | ch02-conversations | 2 | Conversation, scripted mock, JSON save/load, `chat` REPL |
 
-Your own copy is `my-harness/` at the repo root. Milestone tests there start failing until you implement each chapter. The course plan is 18 chapters, listed in `book/book-outline.md` and `.github/chapters.json`. Only the steps in the table above exist so far.
+Your own copy is `my-harness/` at the repo root. Milestone tests there start failing until you implement each chapter. The course plan is 23 chapters in four parts, listed in `book/book-outline.md` and `.github/chapters.json`. MCP is a first-class tool boundary from chapter 3. How the team patterns fit together is `docs/team-patterns.md`. Only the steps in the table above exist so far.
