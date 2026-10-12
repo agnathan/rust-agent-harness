@@ -46,7 +46,7 @@ def main() -> None:
         if not step.is_dir():
             raise SystemExit(f"unknown step {args.packages}")
         for name in packages(step):
-            print(name)
+            sys.stdout.write(name + "\n")
         return
     names = [path.name for path in step_dirs(root)]
     if not names:

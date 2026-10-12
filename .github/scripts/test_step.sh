@@ -9,6 +9,7 @@ cd "$root"
 
 found=0
 while IFS= read -r package; do
+  package=${package//$'\r'/}
   if [[ -z "$package" ]]; then
     continue
   fi
