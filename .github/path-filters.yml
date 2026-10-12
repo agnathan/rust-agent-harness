@@ -3,7 +3,13 @@ ch01-first-contact:
   - "steps/ch01-first-contact/**"
   - "Cargo.toml"
   - "Cargo.lock"
+  - ".github/scripts/**"
+  - ".github/workflows/ci.yml"
+  - ".github/path-filters.yml"
 ch02-conversations:
   - "steps/ch02-conversations/**"
   - "Cargo.toml"
   - "Cargo.lock"
+  - ".github/scripts/**"
+  - ".github/workflows/ci.yml"
+  - ".github/path-filters.yml"
