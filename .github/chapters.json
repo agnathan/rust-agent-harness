@@ -1,0 +1,21 @@
+[
+  {"n": 0, "title": "Introduction", "step": null},
+  {"n": 1, "title": "First Contact", "step": "ch01-first-contact"},
+  {"n": 2, "title": "Conversations", "step": "ch02-conversations"},
+  {"n": 3, "title": "Tools", "step": "ch03-tools"},
+  {"n": 4, "title": "The Agent Loop", "step": "ch04-agent-loop"},
+  {"n": 5, "title": "Handoffs", "step": "ch05-handoffs"},
+  {"n": 6, "title": "Agents as Tools", "step": "ch06-agents-as-tools"},
+  {"n": 7, "title": "When Things Fail", "step": "ch07-when-things-fail"},
+  {"n": 8, "title": "Streaming", "step": "ch08-streaming"},
+  {"n": 9, "title": "Turn State Machine", "step": "ch09-turn-state"},
+  {"n": 10, "title": "Parallel Tools and Fan-out/Gather", "step": "ch10-parallel-tools"},
+  {"n": 11, "title": "Managing Context", "step": "ch11-context"},
+  {"n": 12, "title": "Remembering", "step": "ch12-remembering"},
+  {"n": 13, "title": "Agents as Actors", "step": "ch13-actors"},
+  {"n": 14, "title": "Cancellation and Supervision", "step": "ch14-supervision"},
+  {"n": 15, "title": "The Blackboard", "step": "ch15-blackboard"},
+  {"n": 16, "title": "The Message Bus", "step": "ch16-message-bus"},
+  {"n": 17, "title": "MCP and A2A", "step": "ch17-mcp-a2a"},
+  {"n": 18, "title": "Tracing, Benchmarks, Capstone", "step": "ch18-tracing"}
+]

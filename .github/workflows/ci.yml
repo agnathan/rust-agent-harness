@@ -64,13 +64,9 @@ jobs:
           filters: .github/path-filters.yml
       - id: pick
         shell: bash
-        run: |
-          steps=()
-          [[ "${{ steps.filter.outputs.ch01-first-contact }}" == "true" ]] && steps+=("ch01-first-contact")
-          [[ "${{ steps.filter.outputs.ch02-conversations }}" == "true" ]] && steps+=("ch02-conversations")
-          json=$(printf '%s\n' "${steps[@]+"${steps[@]}"}" | python3 -c 'import json,sys; print(json.dumps([line.strip() for line in sys.stdin if line.strip()]))')
-          echo "steps=$json" >> "$GITHUB_OUTPUT"
-          echo "changed steps: $json"
+        env:
+          CHANGES: ${{ steps.filter.outputs.changes }}
+        run: python3 .github/scripts/changed_steps.py
 
   test-os-matrix:
     name: ${{ matrix.os }} / ${{ matrix.step }}

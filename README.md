@@ -39,12 +39,29 @@ A step is the code as of that chapter, library plus CLI, with its tests. Later c
 
 `OPENAI_API_KEY`, `OPENAI_BASE_URL` (default `https://api.openai.com/v1`), and `HARNESS_MODEL` (default `gpt-4o-mini`) configure a real server. `--mock` uses the offline provider.
 
-| Chapter | Step | You add |
-|---|---|---|
-| 1 | `steps/ch01-first-contact` | one prompt, a provider trait, a mock, `ask` |
-| 2 | `steps/ch02-conversations` | a real conversation and a `chat` REPL |
+| Ch | Title | Step | You add |
+|---|---|---|---|
+| 0 | Introduction | — | why a harness, and what Hermes is |
+| 1 | First Contact | `steps/ch01-first-contact` | one prompt, a provider trait, a mock, `ask` |
+| 2 | Conversations | `steps/ch02-conversations` | a real conversation and a `chat` REPL |
+| 3 | Tools | `steps/ch03-tools` | a tool trait and a registry |
+| 4 | The Agent Loop | `steps/ch04-agent-loop` | model, tools, results, repeat, with a budget |
+| 5 | Handoffs | `steps/ch05-handoffs` | agent = instructions + tools + handoff targets; handoff-as-tool; current-agent pointer; max-handoff limit; context filtering |
+| 6 | Agents as Tools | `steps/ch06-agents-as-tools` | a manager calls specialists and synthesizes |
+| 7 | When Things Fail | `steps/ch07-when-things-fail` | classify failures, retry, fall back |
+| 8 | Streaming | `steps/ch08-streaming` | tokens as they arrive |
+| 9 | Turn State Machine | `steps/ch09-turn-state` | an explicit turn |
+| 10 | Parallel Tools and Fan-out/Gather | `steps/ch10-parallel-tools` | safe batches, fan-out and gather |
+| 11 | Managing Context | `steps/ch11-context` | keep the prefix, compress the middle |
+| 12 | Remembering | `steps/ch12-remembering` | SQLite sessions and memory files |
+| 13 | Agents as Actors | `steps/ch13-actors` | one task per agent, an inbox |
+| 14 | Cancellation and Supervision | `steps/ch14-supervision` | cancel trees and restarts |
+| 15 | The Blackboard | `steps/ch15-blackboard` | a shared task board |
+| 16 | The Message Bus | `steps/ch16-message-bus` | topics, peers, team topologies |
+| 17 | MCP and A2A | `steps/ch17-mcp-a2a` | MCP for tools, A2A for remote agents |
+| 18 | Tracing, Benchmarks, Capstone | `steps/ch18-tracing` | spans, a benchmark, a team demo |
 
-The book outline lists the later chapters. Their step crates are added when the chapters are written.
+Chapters 1 and 2 are the only step crates in the tree. The rest are added when those chapters are written. The same list drives CI (`.github/chapters.json`).
 
 The book builds with [mdBook](https://rust-lang.github.io/mdBook/): `mdbook build` in `book/` (output in `book/_build/`, not committed).
 
@@ -69,7 +86,7 @@ The workflow installs `cargo-nextest` and runs `cargo nextest run -p my-harness 
 
 | Input | Values |
 |---|---|
-| `chapters` | `all` (default), `1`, `1-2`, or `1,2` |
+| `chapters` | `all` (default), `1`, `1-18`, or `3,6,12`. Chapters 1–18 are the plan; a chapter runs only after its `tests/chNN.rs` exists (today: 1 and 2) |
 | `os` | `all` (default), `ubuntu`, `macos`, or `windows` |
 
 A manual run fails if any selected chapter fails.

@@ -1,19 +1,36 @@
 #!/usr/bin/env python3
 """Resolve my-harness milestone test targets.
 
-Specs: all | 1 | 1-2 | 1,2
-Changed paths: my-harness/tests/chNN.rs, and any my-harness/src change selects every chapter.
+The plan is chapters 1-18 in .github/chapters.json. A spec may name any of
+those chapters; a chapter with no tests/chNN.rs yet is an error.
+Specs: all | 1 | 1-18 | 3,6,12
+Changed paths: my-harness/tests/chNN.rs, and any my-harness/src change selects every chapter that has a test.
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from pathlib import Path
 
 CHAPTER_FILE = re.compile(r"(?:^|/)my-harness/tests/(ch(\d+))\.rs$")
 HARNESS_SRC = re.compile(r"(?:^|/)my-harness/(?:src/|Cargo\.toml$|README\.md$)")
+
+
+def planned_chapters(root: Path) -> dict[int, str]:
+    path = root / ".github" / "chapters.json"
+    if not path.is_file():
+        raise SystemExit(f"missing chapter plan: {path}")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    planned: dict[int, str] = {}
+    for item in data:
+        number = int(item["n"])
+        if number == 0:
+            continue
+        planned[number] = str(item["title"])
+    return planned
 
 
 def chapter_map(root: Path) -> dict[int, str]:
@@ -34,7 +51,7 @@ def chapter_map(root: Path) -> dict[int, str]:
     return mapping
 
 
-def parse_spec(spec: str, mapping: dict[int, str]) -> list[str]:
+def parse_spec(spec: str, mapping: dict[int, str], planned: dict[int, str]) -> list[str]:
     text = spec.strip()
     if not text:
         raise SystemExit("empty chapter spec")
@@ -57,10 +74,20 @@ def parse_spec(spec: str, mapping: dict[int, str]) -> list[str]:
         elif re.fullmatch(r"\d+", part):
             numbers = [int(part)]
         else:
-            raise SystemExit(f"invalid chapter spec '{part}'. Use 1, 1-2, 1,2, or all.")
+            raise SystemExit(
+                f"invalid chapter spec '{part}'. Use 1, 1-18, 3,6,12, or all."
+            )
         for number in numbers:
             if number not in mapping:
-                raise SystemExit(f"no chapter {number} (known chapters: {known})")
+                title = planned.get(number)
+                if title:
+                    raise SystemExit(
+                        f"chapter {number} ({title}) has no milestone test yet "
+                        f"(tests exist for: {known})"
+                    )
+                raise SystemExit(
+                    f"no chapter {number} in the plan (chapters are 1-18; tests exist for: {known})"
+                )
             if number not in seen:
                 seen.add(number)
                 selected.append(mapping[number])
@@ -97,12 +124,14 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path("."))
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--spec", help="Chapter spec: all, 1, 1-2, or 1,2")
+    group.add_argument("--spec", help="Chapter spec: all, 1, 1-18, or 3,6,12")
     group.add_argument("--changed-from", type=argparse.FileType("r"))
     args = parser.parse_args()
-    mapping = chapter_map(args.root.resolve())
+    root = args.root.resolve()
+    mapping = chapter_map(root)
+    planned = planned_chapters(root)
     if args.spec is not None:
-        names = parse_spec(args.spec, mapping)
+        names = parse_spec(args.spec, mapping, planned)
     else:
         names = from_paths(args.changed_from.readlines(), mapping)
     for name in names:

@@ -1,15 +1,47 @@
-# Keys are step directory names. Cargo.toml and Cargo.lock rebuild every step.
+# Filter names for real steps match steps/ directory names.
+# `shared` means "retest every step that exists". Planned steps are listed so a
+# new steps/chNN-* directory is picked up without editing the workflow.
+# The chapter plan itself is .github/chapters.json.
+shared:
+  - "Cargo.toml"
+  - "Cargo.lock"
+  - ".github/scripts/**"
+  - ".github/workflows/ci.yml"
+  - ".github/path-filters.yml"
+  - ".github/chapters.json"
 ch01-first-contact:
   - "steps/ch01-first-contact/**"
-  - "Cargo.toml"
-  - "Cargo.lock"
-  - ".github/scripts/**"
-  - ".github/workflows/ci.yml"
-  - ".github/path-filters.yml"
 ch02-conversations:
   - "steps/ch02-conversations/**"
-  - "Cargo.toml"
-  - "Cargo.lock"
-  - ".github/scripts/**"
-  - ".github/workflows/ci.yml"
-  - ".github/path-filters.yml"
+ch03-tools:
+  - "steps/ch03-tools/**"
+ch04-agent-loop:
+  - "steps/ch04-agent-loop/**"
+ch05-handoffs:
+  - "steps/ch05-handoffs/**"
+ch06-agents-as-tools:
+  - "steps/ch06-agents-as-tools/**"
+ch07-when-things-fail:
+  - "steps/ch07-when-things-fail/**"
+ch08-streaming:
+  - "steps/ch08-streaming/**"
+ch09-turn-state:
+  - "steps/ch09-turn-state/**"
+ch10-parallel-tools:
+  - "steps/ch10-parallel-tools/**"
+ch11-context:
+  - "steps/ch11-context/**"
+ch12-remembering:
+  - "steps/ch12-remembering/**"
+ch13-actors:
+  - "steps/ch13-actors/**"
+ch14-supervision:
+  - "steps/ch14-supervision/**"
+ch15-blackboard:
+  - "steps/ch15-blackboard/**"
+ch16-message-bus:
+  - "steps/ch16-message-bus/**"
+ch17-mcp-a2a:
+  - "steps/ch17-mcp-a2a/**"
+ch18-tracing:
+  - "steps/ch18-tracing/**"
