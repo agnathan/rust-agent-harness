@@ -33,7 +33,7 @@
 - [Chapter 20: The Critic]()
 - [Chapter 21: Composing Patterns]()
 
-# Part IV: Making it robust and fast
+# Part IV: Making it robust
 
 - [Chapter 22: The Turn State Machine]()
 - [Chapter 23: Managing Context]()

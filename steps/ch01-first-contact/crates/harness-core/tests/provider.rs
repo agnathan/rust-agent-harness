@@ -1,5 +1,6 @@
 use harness_core::provider::{ChatRequest, ChatResponse};
 use harness_core::{Message, MockProvider, Provider, Role};
+use std::time::{Duration, Instant};
 
 #[tokio::test]
 async fn mock_provider_answers_and_records() {
@@ -13,6 +14,15 @@ async fn mock_provider_answers_and_records() {
     let seen = mock.seen.lock().unwrap();
     assert_eq!(seen.len(), 1);
     assert_eq!(seen[0][1].content, "Say hi");
+}
+
+#[tokio::test]
+async fn mock_latency_is_configurable() {
+    let mock = MockProvider::with_latency("ok", Duration::from_millis(40));
+    let started = Instant::now();
+    let reply = mock.complete(&[]).await.unwrap();
+    assert_eq!(reply.content, "ok");
+    assert!(started.elapsed() >= Duration::from_millis(40));
 }
 
 #[test]

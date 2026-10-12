@@ -4,6 +4,8 @@ How one agent gets better with use, and how a team keeps one shared library. The
 
 The shape follows Hermes Agent's closed learning loop: skills, memory, session search, a background review, and a curator. Two agents in this process still collaborate through the [team patterns](team-patterns.md). Learning writes into stores. It does not replace the supervisor.
 
+Reflection, skill writes the model did not ask for, memory writes, index rebuilds, and FTS updates run as background tasks. The hot path awaits the model and the tools the model called. Spawning the reviewer, enqueueing a proposal, and swapping an `Arc` index are the costs that stay on the turn. The budgets are in [performance](performance.md).
+
 ## What goes where
 
 | Store | Holds | When it enters context |

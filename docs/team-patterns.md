@@ -10,13 +10,13 @@ Inside one process, agents talk through these patterns. **A2A is only for an age
 
 A supervisor is an agent with a job: decide what to do next, call a specialist, read what came back, and either call another specialist or answer.
 
-Each specialist is a tool. The supervisor's tool list is the team. Calling the tool runs that agent and returns its result. The supervisor writes the final answer. Specialists do not talk to each other, and they do not see the supervisor's whole transcript.
+Each specialist is a tool. The supervisor's tool list is the team. Calling the tool runs that agent and returns its result. Independent specialists run together, under the same concurrency bound as tools (default 8). The supervisor writes the final answer. Specialists do not talk to each other, and they do not see the supervisor's whole transcript.
 
-This is Chapter 17. The specialists it calls may be native tools or tools from an MCP server. An agent used as a tool can later be published as an MCP tool so a client outside this process can call that same specialist. After a team run, the same reflection loop from Chapter 14 decides what the team should keep. Use the supervisor unless a later pattern fits better.
+This is Chapter 17, and it is the first fan-out, not a later one. The specialists it calls may be native tools or tools from an MCP server. An agent used as a tool can later be published as an MCP tool so a client outside this process can call that same specialist. After a team run, the reflection loop from Chapter 14 decides what the team should keep, as a background task. Use the supervisor unless a later pattern fits better.
 
 ## Shared context object
 
-The team shares one explicit object: the task, the constraints, and the facts collected so far. It is not the message list.
+The team shares one explicit object: the task, the constraints, and the facts collected so far. It is not the message list. Specialists hold `Arc` to that object. The hot path does not clone the transcript to hand work off.
 
 The supervisor owns it. A specialist receives the slice it needs, and its reply is written back onto the object by the supervisor. That is the same idea as context filtering on a handoff, applied to every tool call.
 
@@ -38,9 +38,9 @@ Handoffs are Chapter 18. They are not the default team. A supervisor that must c
 
 ## Fan-out and gather
 
-When several specialists can work at the same time, the supervisor (or a small aggregator) starts them together, waits, and folds the results. tokio runs the tasks. A worker limit caps how many run at once.
+When several specialists can work at the same time, the supervisor starts them together, waits, and folds the results. tokio runs the tasks. A worker limit caps how many run at once. That parallel call is already how the supervisor works in Chapter 17.
 
-Each worker gets its own slice of the shared context. The aggregator is the only one that sees every reply. This is Chapter 19. Fan-out is a way the supervisor works, not a second kind of team.
+Each worker gets an `Arc` to its slice of the shared context. The aggregator is the only one that sees every reply. Chapter 19 is the dedicated gather: the worker-limit tests and the aggregator. Fan-out is a way the supervisor works, not a second kind of team. One hundred mock subagents must be schedulable without an unbounded queue. The budgets are in [performance](performance.md).
 
 ## Critic
 

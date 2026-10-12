@@ -3,6 +3,7 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 use std::sync::Mutex;
+use std::time::Duration;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ProviderError {
@@ -99,15 +100,22 @@ impl Provider for OpenAiCompatible {
 pub struct MockProvider {
     script: Mutex<VecDeque<Result<String, String>>>,
     default_reply: String,
+    latency: Duration,
     pub seen: Mutex<Vec<Vec<Message>>>,
 }
 
 impl MockProvider {
     /// Always answers with `reply`.
     pub fn new(reply: impl Into<String>) -> Self {
+        Self::with_latency(reply, Duration::ZERO)
+    }
+
+    /// `latency` stands in for model time. Overhead benchmarks use zero.
+    pub fn with_latency(reply: impl Into<String>, latency: Duration) -> Self {
         Self {
             script: Mutex::new(VecDeque::new()),
             default_reply: reply.into(),
+            latency,
             seen: Mutex::new(Vec::new()),
         }
     }
@@ -140,6 +148,9 @@ impl MockProvider {
 #[async_trait]
 impl Provider for MockProvider {
     async fn complete(&self, messages: &[Message]) -> Result<Message, ProviderError> {
+        if !self.latency.is_zero() {
+            tokio::time::sleep(self.latency).await;
+        }
         self.seen.lock().unwrap().push(messages.to_vec());
         match self.script.lock().unwrap().pop_front() {
             Some(Ok(reply)) => Ok(Message::assistant(reply)),

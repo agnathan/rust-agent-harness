@@ -39,18 +39,18 @@ A step is the code as of that chapter, library plus CLI, with its tests. Later c
 
 `OPENAI_API_KEY`, `OPENAI_BASE_URL` (default `https://api.openai.com/v1`), and `HARNESS_MODEL` (default `gpt-4o-mini`) configure a real server. `--mock` uses the offline provider.
 
-Thirty chapters in five parts. MCP is first-class: tools are MCP-shaped (chapter 3), the harness is an MCP client (chapter 4, via `rmcp`) and an MCP server (chapter 6). Part II is learning: sessions, memory, recall, skills, reflection, and curation. The design is [docs/self-improvement.md](docs/self-improvement.md). Which team pattern to use is [docs/team-patterns.md](docs/team-patterns.md). The default is a supervisor that calls specialists as tools.
+Thirty chapters in five parts. Performance is a budget on every chapter, starting with tokio in chapter 1. The targets are [docs/performance.md](docs/performance.md). MCP is first-class: tools are MCP-shaped (chapter 3), the harness is an MCP client (chapter 4, via `rmcp`) and an MCP server (chapter 6). Part II is learning, and that work stays off the hot path: sessions, memory, recall, skills, reflection, and curation. The design is [docs/self-improvement.md](docs/self-improvement.md). Which team pattern to use is [docs/team-patterns.md](docs/team-patterns.md). The default is a supervisor that calls specialists as tools and fans them out under a bound.
 
 **Part I: One agent**
 
 | Ch | Title | Step | You add |
 |---|---|---|---|
 | 0 | Introduction | — | why a harness, and what Hermes is |
-| 1 | First Contact | `steps/ch01-first-contact` | one prompt, a provider trait, a mock, `ask` |
-| 2 | Conversations | `steps/ch02-conversations` | a real conversation and a `chat` REPL |
-| 3 | Tools | `steps/ch03-tools` | a tool trait shaped like MCP: name, description, input schema, content results |
-| 4 | MCP Client | `steps/ch04-mcp-client` | `rmcp` over stdio and streamable HTTP; MCP and native tools in one registry |
-| 5 | The Agent Loop | `steps/ch05-agent-loop` | model, native and MCP tools, results, repeat, with a budget |
+| 1 | First Contact | `steps/ch01-first-contact` | tokio, one reused HTTP client, a latency-configurable mock, a criterion bench, `ask` |
+| 2 | Conversations | `steps/ch02-conversations` | a real conversation, a cache-stable system prompt, and a `chat` REPL |
+| 3 | Tools | `steps/ch03-tools` | an MCP-shaped tool trait; read-only calls run concurrently, writes run alone |
+| 4 | MCP Client | `steps/ch04-mcp-client` | `rmcp` over stdio and streamable HTTP; MCP and native tools share one scheduler |
+| 5 | The Agent Loop | `steps/ch05-agent-loop` | model, tools, results, repeat; streaming overlaps safe tool calls |
 | 6 | MCP Server | `steps/ch06-mcp-server` | expose this harness's tools, and later agents and skills, to other clients |
 | 7 | When Things Fail | `steps/ch07-when-things-fail` | classify failures, retry, fall back, including MCP crashes and reconnects |
 | 8 | Streaming | `steps/ch08-streaming` | tokens as they arrive |
@@ -72,19 +72,19 @@ Thirty chapters in five parts. MCP is first-class: tools are MCP-shaped (chapter
 | Ch | Title | Step | You add |
 |---|---|---|---|
 | 16 | The Sequential Pipeline | `steps/ch16-pipeline` | outline, draft, critique, revise; an agent as a reusable value |
-| 17 | The Supervisor | `steps/ch17-supervisor` | the default team: manager, agents-as-tools, a shared context object |
+| 17 | The Supervisor | `steps/ch17-supervisor` | the default team: manager, agents-as-tools, fan-out under a bound, `Arc` context |
 | 18 | Handoffs | `steps/ch18-handoffs` | ownership transfer, handoff-as-tool, max-handoff limit, context filtering |
 | 19 | Fan-out and Gather | `steps/ch19-fan-out` | parallel specialists, a worker limit, an aggregator |
 | 20 | The Critic | `steps/ch20-critic` | an evaluator as a tool and as a final gate |
 | 21 | Composing Patterns | `steps/ch21-composition` | a supervisor that fans out and hands off only when ownership moves |
 
-**Part IV: Making it robust and fast**
+**Part IV: Making it robust**
 
 | Ch | Title | Step | You add |
 |---|---|---|---|
 | 22 | The Turn State Machine | `steps/ch22-turn-state` | an explicit turn |
 | 23 | Managing Context | `steps/ch23-context` | compression, summaries, `[SKILL_PRUNED]`, a memory flush |
-| 24 | Agents as Actors | `steps/ch24-actors` | one task per agent, an inbox, steering |
+| 24 | Agents as Actors | `steps/ch24-actors` | one task per agent, a bounded inbox, backpressure |
 | 25 | Cancellation and Supervision | `steps/ch25-supervision` | cancel trees and restarts |
 
 **Part V: Loosely coupled teams**
@@ -109,6 +109,8 @@ The book builds with [mdBook](https://rust-lang.github.io/mdBook/): `mdbook buil
 - `cargo test -p …` for every step, each step as its own job, on Ubuntu
 - the same tests on Ubuntu, macOS, and Windows for steps whose files changed ([paths-filter](https://github.com/dorny/paths-filter))
 - an mdBook build of `book/`
+
+[Benchmarks](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml) run on pushes to `main` only. They execute `cargo bench -p ch01-harness-core --bench turn_overhead` and write the Criterion means to the job summary. A slow result does not fail the run.
 
 `my-harness` milestone tests are not part of that required build. They run in [My harness](https://github.com/agnathan/rust-agent-harness/actions/workflows/my-harness.yml).
 

@@ -2,6 +2,7 @@ use crate::message::Message;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
+use std::time::Duration;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ProviderError {
@@ -94,15 +95,24 @@ impl Provider for OpenAiCompatible {
 // ---------- Mock provider for tests ----------
 
 /// Returns a canned reply and records every conversation it was sent.
+///
+/// `latency` is the stand-in for model time. Benchmarks that measure harness
+/// overhead use [`Duration::ZERO`] and exclude this wait from the target.
 pub struct MockProvider {
     reply: String,
+    latency: Duration,
     pub seen: Mutex<Vec<Vec<Message>>>,
 }
 
 impl MockProvider {
     pub fn new(reply: impl Into<String>) -> Self {
+        Self::with_latency(reply, Duration::ZERO)
+    }
+
+    pub fn with_latency(reply: impl Into<String>, latency: Duration) -> Self {
         Self {
             reply: reply.into(),
+            latency,
             seen: Mutex::new(Vec::new()),
         }
     }
@@ -111,6 +121,9 @@ impl MockProvider {
 #[async_trait]
 impl Provider for MockProvider {
     async fn complete(&self, messages: &[Message]) -> Result<Message, ProviderError> {
+        if !self.latency.is_zero() {
+            tokio::time::sleep(self.latency).await;
+        }
         self.seen.lock().unwrap().push(messages.to_vec());
         Ok(Message::assistant(self.reply.clone()))
     }

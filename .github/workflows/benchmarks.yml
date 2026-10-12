@@ -1,0 +1,23 @@
+name: Benchmarks
+
+# Informational only. Push to main reports Criterion estimates in the job
+# summary. There are no fail thresholds yet.
+on:
+  push:
+    branches: [main]
+
+jobs:
+  bench:
+    name: criterion
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: .
+      - name: cargo bench
+        run: cargo bench -p ch01-harness-core --bench turn_overhead --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+      - name: Write the job summary
+        if: always()
+        run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"
