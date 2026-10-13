@@ -25,48 +25,48 @@ ch04-mcp-client:
   - "steps/ch04-mcp-client/**"
 ch05-agent-loop:
   - "steps/ch05-agent-loop/**"
-ch06-mcp-server:
-  - "steps/ch06-mcp-server/**"
-ch07-approvals:
-  - "steps/ch07-approvals/**"
-ch08-hooks:
-  - "steps/ch08-hooks/**"
-ch09-sandbox:
-  - "steps/ch09-sandbox/**"
-ch10-when-things-fail:
-  - "steps/ch10-when-things-fail/**"
-ch11-providers:
-  - "steps/ch11-providers/**"
-ch12-streaming:
-  - "steps/ch12-streaming/**"
-ch13-sessions:
-  - "steps/ch13-sessions/**"
-ch14-memory:
-  - "steps/ch14-memory/**"
-ch15-recall:
-  - "steps/ch15-recall/**"
-ch16-skills:
-  - "steps/ch16-skills/**"
-ch17-skill-writing:
-  - "steps/ch17-skill-writing/**"
-ch18-reflection:
-  - "steps/ch18-reflection/**"
-ch19-curation:
-  - "steps/ch19-curation/**"
-ch20-pipeline:
-  - "steps/ch20-pipeline/**"
-ch21-supervisor:
-  - "steps/ch21-supervisor/**"
-ch22-handoffs:
-  - "steps/ch22-handoffs/**"
-ch23-fan-out:
-  - "steps/ch23-fan-out/**"
-ch24-critic:
-  - "steps/ch24-critic/**"
-ch25-composition:
-  - "steps/ch25-composition/**"
-ch26-turn-state:
-  - "steps/ch26-turn-state/**"
+ch06-turn-state:
+  - "steps/ch06-turn-state/**"
+ch07-mcp-server:
+  - "steps/ch07-mcp-server/**"
+ch08-approvals:
+  - "steps/ch08-approvals/**"
+ch09-hooks:
+  - "steps/ch09-hooks/**"
+ch10-sandbox:
+  - "steps/ch10-sandbox/**"
+ch11-when-things-fail:
+  - "steps/ch11-when-things-fail/**"
+ch12-providers:
+  - "steps/ch12-providers/**"
+ch13-streaming:
+  - "steps/ch13-streaming/**"
+ch14-sessions:
+  - "steps/ch14-sessions/**"
+ch15-memory:
+  - "steps/ch15-memory/**"
+ch16-recall:
+  - "steps/ch16-recall/**"
+ch17-skills:
+  - "steps/ch17-skills/**"
+ch18-skill-writing:
+  - "steps/ch18-skill-writing/**"
+ch19-reflection:
+  - "steps/ch19-reflection/**"
+ch20-curation:
+  - "steps/ch20-curation/**"
+ch21-pipeline:
+  - "steps/ch21-pipeline/**"
+ch22-supervisor:
+  - "steps/ch22-supervisor/**"
+ch23-handoffs:
+  - "steps/ch23-handoffs/**"
+ch24-fan-out:
+  - "steps/ch24-fan-out/**"
+ch25-critic:
+  - "steps/ch25-critic/**"
+ch26-composition:
+  - "steps/ch26-composition/**"
 ch27-context:
   - "steps/ch27-context/**"
 ch28-actors:

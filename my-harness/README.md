@@ -10,7 +10,7 @@ cargo test -p my-harness --test ch02
 | Test file | Chapter | Replace |
 |---|---|---|
 | `tests/ch01_1.rs` | 1.1 Messages | `Message` and `ChatRequest` serialize to OpenAI JSON |
-| `tests/ch01_2.rs` | 1.2 Provider | `MockProvider::complete`, including configurable latency |
+| `tests/ch01_2.rs` | 1.2 Provider | `MockProvider::complete`, configurable latency, and `buffered_events` |
 | `tests/ch01_3.rs` | 1.3 CLI | `ChatResponse` parsing and `OpenAiCompatible::new` |
 | `tests/ch01_4.rs` | 1.4 Errors | `timeout_after`: a slow request is a timeout, not a retry |
 | `tests/ch02.rs` | Conversations | `Conversation`, `ChatCommand::parse`, `ChatSession::handle_line` |

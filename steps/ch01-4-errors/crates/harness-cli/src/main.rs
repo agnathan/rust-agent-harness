@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 use harness_core::{
-    resolve_endpoint, DetailedCompletion, EndpointInput, Message, MockProvider, OpenAiCompatible,
-    Provider, ProviderError, DEFAULT_MODEL, OPENROUTER_BASE_URL,
+    format_cost, resolve_endpoint, AgentUsage, EndpointInput, Event, Message, MockProvider,
+    OpenAiCompatible, Provider, ProviderError, DEFAULT_MODEL, OPENROUTER_BASE_URL,
 };
 use std::process::ExitCode;
 
@@ -59,6 +59,7 @@ async fn main() -> ExitCode {
     match run(cli).await {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
+            eprintln!("{}", Event::error(&error).report_line());
             eprintln!("error: {error}");
             ExitCode::FAILURE
         }
@@ -92,22 +93,54 @@ async fn run(cli: Cli) -> Result<(), ProviderError> {
                 Message::system("You are a helpful assistant."),
                 Message::user(prompt),
             ];
-            let detailed = provider.complete_detailed(&messages).await?;
-            print_completion(&detailed);
+            let events = provider.complete_events(&messages).await?;
+            print_events(&events);
         }
     }
     Ok(())
 }
 
-fn print_completion(detailed: &DetailedCompletion) {
-    println!("{}", detailed.message.content);
-    if let Some(model) = &detailed.model {
+fn print_events(events: &[Event]) {
+    let mut ledger = AgentUsage::default();
+    let mut content = String::new();
+    let mut model = None;
+    for event in events {
+        match event {
+            Event::TextDelta(text) => content.clone_from(text),
+            Event::Done {
+                message,
+                model: answered,
+            } => {
+                content.clone_from(&message.content);
+                model.clone_from(answered);
+            }
+            Event::Usage(usage) => ledger.record(usage),
+            Event::ToolCall { .. } | Event::Error(_) => {}
+        }
+    }
+    println!("{content}");
+    if let Some(model) = model {
         println!("model: {model}");
     }
-    if let Some(usage) = &detailed.usage {
+    if ledger.calls > 0 {
         println!(
             "tokens: prompt={} completion={} total={}",
-            usage.prompt_tokens, usage.completion_tokens, usage.total_tokens
+            ledger.prompt_tokens, ledger.completion_tokens, ledger.total_tokens
         );
+        if ledger.cost_known {
+            println!("cost: {}", format_cost(ledger.cost_usd));
+        }
+        let cost = if ledger.cost_known {
+            format!(" cost={}", format_cost(ledger.cost_usd))
+        } else {
+            String::new()
+        };
+        println!(
+            "agent: calls={} prompt={} completion={} total={}{cost}",
+            ledger.calls, ledger.prompt_tokens, ledger.completion_tokens, ledger.total_tokens
+        );
+    }
+    for event in events {
+        println!("{}", event.report_line());
     }
 }

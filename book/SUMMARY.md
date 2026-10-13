@@ -10,39 +10,39 @@
 - [Chapter 3: Tools]()
 - [Chapter 4: MCP Client]()
 - [Chapter 5: The Agent Loop]()
-- [Chapter 6: MCP Server]()
-- [Chapter 7: Approvals and Guardrails]()
-- [Chapter 8: Hooks and Plugins]()
-- [Chapter 9: Sandboxed Execution]()
-- [Chapter 10: When Things Fail]()
-- [Chapter 11: Providers]()
-- [Chapter 12: Streaming]()
+- [Chapter 6: The Turn State Machine]()
+- [Chapter 7: MCP Server]()
+- [Chapter 8: Approvals and Guardrails]()
+- [Chapter 9: Hooks and Plugins]()
+- [Chapter 10: Sandboxed Execution]()
+- [Chapter 11: When Things Fail]()
+- [Chapter 12: Providers]()
+- [Chapter 13: Streaming]()
 
 # Part II: Learning
 
-- [Chapter 13: Sessions on Disk]()
-- [Chapter 14: Memory Files]()
-- [Chapter 15: Recall]()
-- [Chapter 16: Using Skills]()
-- [Chapter 17: Writing Skills]()
-- [Chapter 18: The Reflection Loop]()
-- [Chapter 19: Curation]()
+- [Chapter 14: Sessions on Disk]()
+- [Chapter 15: Memory Files]()
+- [Chapter 16: Recall]()
+- [Chapter 17: Using Skills]()
+- [Chapter 18: Writing Skills]()
+- [Chapter 19: The Reflection Loop]()
+- [Chapter 20: Curation]()
 
 # Part III: The team patterns
 
-- [Chapter 20: The Sequential Pipeline]()
-- [Chapter 21: The Supervisor]()
-- [Chapter 22: Handoffs]()
-- [Chapter 23: Fan-out and Gather]()
-- [Chapter 24: The Critic]()
-- [Chapter 25: Composing Patterns]()
+- [Chapter 21: The Sequential Pipeline]()
+- [Chapter 22: The Supervisor]()
+- [Chapter 23: Handoffs]()
+- [Chapter 24: Fan-out and Gather]()
+- [Chapter 25: The Critic]()
+- [Chapter 26: Composing Patterns]()
 
 # Part IV: Making it robust
 
-- [Chapter 26: The Turn State Machine]()
 - [Chapter 27: Managing Context]()
 - [Chapter 28: Agents as Actors]()
-- [Chapter 29: Cancellation and Supervision]()
+- [Chapter 29: Supervision and Restart]()
 
 # Part V: Running as a service
 

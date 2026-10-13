@@ -1,3 +1,4 @@
+use crate::event::{events_for_reply, Event};
 use crate::message::Message;
 use async_trait::async_trait;
 use std::sync::Mutex;
@@ -17,6 +18,13 @@ pub enum ProviderError {
 pub trait Provider: Send + Sync {
     /// Send the conversation, get back the assistant's reply.
     async fn complete(&self, messages: &[Message]) -> Result<Message, ProviderError>;
+
+    /// The same call, as the events every later consumer folds.
+    /// The mock has no usage and no answered-model id.
+    async fn complete_events(&self, messages: &[Message]) -> Result<Vec<Event>, ProviderError> {
+        let message = self.complete(messages).await?;
+        Ok(events_for_reply(&message, None, None))
+    }
 }
 
 /// Returns a canned reply after an optional wait, and records every conversation.
@@ -57,5 +65,9 @@ impl Provider for MockProvider {
 impl<P: Provider + ?Sized> Provider for std::sync::Arc<P> {
     async fn complete(&self, messages: &[Message]) -> Result<Message, ProviderError> {
         (**self).complete(messages).await
+    }
+
+    async fn complete_events(&self, messages: &[Message]) -> Result<Vec<Event>, ProviderError> {
+        (**self).complete_events(messages).await
     }
 }

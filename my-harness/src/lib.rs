@@ -5,10 +5,12 @@
 
 pub mod chat;
 pub mod conversation;
+pub mod event;
 pub mod message;
 pub mod provider;
 
 pub use chat::{ChatCommand, ChatSession, Outcome};
 pub use conversation::{Conversation, ConversationError};
+pub use event::{buffered_events, Event};
 pub use message::{Message, Role};
 pub use provider::{timeout_after, MockProvider, OpenAiCompatible, Provider, ProviderError};

@@ -11,11 +11,15 @@ The code lives in four directories:
 | Section | Step | What it adds |
 |---|---|---|
 | 1.1 | `steps/ch01-1-messages` | `Message` and `Role`, serialized to OpenAI JSON |
-| 1.2 | `steps/ch01-2-provider` | `Provider` and a latency-configurable `MockProvider` on tokio |
-| 1.3 | `steps/ch01-3-cli` | one pooled client, OpenRouter by default, and `harness ask` |
+| 1.2 | `steps/ch01-2-provider` | `Provider`, one `Event` enum, and a latency-configurable mock |
+| 1.3 | `steps/ch01-3-cli` | OpenRouter by default, the same events, usage and cost |
 | 1.4 | `steps/ch01-4-errors` | a request timeout, and the edges of a buffered reply |
 
-I'm copying three ideas from Hermes Agent (Nous Research): OpenAI-style messages are the internal format, "talk to a model" sits behind one interface, and the rest of the harness never needs to know which provider it is talking to. The client speaks that one JSON shape, and OpenRouter is the default server, so a model id such as `openai/gpt-4o-mini` or `anthropic/claude-3.5-sonnet` is a flag, not a new adapter. Native Anthropic and Bedrock adapters, OpenRouter routing, key rotation, and streaming wait until later chapters.
+I'm copying three ideas from Hermes Agent (Nous Research): OpenAI-style messages are the internal format, "talk to a model" sits behind one interface, and the rest of the harness never needs to know which provider it is talking to. The client speaks that one JSON shape, and OpenRouter is the default server, so a model id such as `openai/gpt-4o-mini` or `anthropic/claude-3.5-sonnet` is a flag, not a new adapter. Native Anthropic and Bedrock adapters, OpenRouter routing, and key rotation wait until the providers chapter. Streaming folds the events this chapter already emits.
+
+> **How Hermes does it**
+>
+> Hermes puts each provider behind one profile (`providers/base.py`). The agent loop (`agent/conversation_loop.py`) is that call, repeated: messages in, a message out, then tools, until the model stops. This chapter's `Provider` is that profile. The Rust side adds one `Event` enum (`TextDelta`, `ToolCall`, `Usage`, `Done`, `Error`). The mock and the buffered OpenRouter client emit it now, so later streaming, the gateway, and tracing consume the same values. Hermes's credential pools and failover stay in the providers chapter.
 
 ## 1.1 Messages
 
@@ -159,7 +163,21 @@ Found 1 outliers among 10 measurements (10.00%)
 |---|---|---|---|
 | `serde_50_message_request` | 6.937 µs | < 1 ms | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0 |
 
-CI runs this step's tests on Ubuntu, macOS, and Windows. Criterion runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml), and each run writes the means into the job summary. The green summary for this branch is [run 38213430828](https://github.com/agnathan/rust-agent-harness/actions/runs/38213430828).
+CI runs this step's tests on Ubuntu, macOS, and Windows. Criterion runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml). Each run uploads a JSON artifact of the means and, when the job can publish, charts them. The table above is from this machine.
+
+### Milestone demo
+
+Mock is the whole demo. There is no model call in this section.
+
+```bash
+cargo run -p ch01-1-harness-core --example demo
+```
+
+```text
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.03s
+     Running `target/debug/examples/demo`
+{"model":"openai/gpt-4o-mini","messages":[{"role":"system","content":"You are a helpful assistant."},{"role":"user","content":"Say hello"}]}
+```
 
 ## 1.2 Provider
 
@@ -173,8 +191,24 @@ cargo bench -p ch01-2-harness-core --bench mock_calls
 ```rust
 #[async_trait]
 pub trait Provider: Send + Sync {
-    /// Send the conversation, get back the assistant's reply.
     async fn complete(&self, messages: &[Message]) -> Result<Message, ProviderError>;
+
+    async fn complete_events(&self, messages: &[Message]) -> Result<Vec<Event>, ProviderError> {
+        let message = self.complete(messages).await?;
+        Ok(events_for_reply(&message, None, None))
+    }
+}
+```
+
+`complete` is still the reply. `complete_events` is the same call as the events every later chapter folds. The mock emits two: `TextDelta` with the canned text, then `Done`. It does not invent usage or a model id. `ToolCall` is in the enum so tool-calling does not create a second event type. `Error` is how a failure is reported to the same consumer. Nothing in this section emits those two yet.
+
+```rust
+pub enum Event {
+    TextDelta(String),
+    ToolCall { id: String, name: String, arguments: String },
+    Usage(Usage),
+    Done { message: Message, model: Option<String> },
+    Error(String),
 }
 ```
 
@@ -234,7 +268,7 @@ A blanket impl makes `Arc<MockProvider>` a provider too. The concurrency test wr
 > **Performance budget**
 >
 > - **Target:** harness overhead for one zero-latency mock call under 1 ms. One hundred concurrent zero-latency calls under 50 ms.
-> - **Measured:** `mock_turn_overhead` mean **190.9 ns**. `mock_100_concurrent` mean **103.8 µs** (same criterion settings as section 1.1). The single-call samples on this guest spread out; both means are still inside the targets.
+> - **Measured:** `mock_turn_overhead` mean **235.7 ns** (the bench now builds the event list). `mock_100_concurrent` mean **108.9 µs**. Both are inside the targets.
 
 ### Build, run, and benchmark
 
@@ -243,61 +277,69 @@ From the repository root. Still a library crate: `ch01-2-harness-core`.
 ```bash
 cargo build -p ch01-2-harness-core
 cargo nextest run -p ch01-2-harness-core
+cargo run -p ch01-2-harness-core --example demo
 cargo bench -p ch01-2-harness-core --bench mock_calls -- --warm-up-time 1 --measurement-time 2 --sample-size 10
 ```
 
 The mock never contacts a network, so there is no API key to set.
 
-Same machine as section 1.1. The build finished with:
+The milestone demo is the mock. It prints the two events and does not call OpenRouter.
 
 ```text
-   Compiling ch01-2-harness-core v0.1.0 (/workspace/steps/ch01-2-provider/crates/harness-core)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.88s
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.04s
+     Running `target/debug/examples/demo`
+event: text-delta (mock) I heard you.
+event: done
 ```
 
 Nextest:
 
 ```text
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.09s
+   Compiling ch01-2-harness-core v0.1.0 (/workspace/steps/ch01-2-provider/crates/harness-core)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.64s
 ────────────
- Nextest run ID 3efce048-4401-446d-9d56-6a660e627e55 with nextest profile: default
-    Starting 3 tests across 2 binaries
-        PASS [   0.003s] (1/3) ch01-2-harness-core::provider mock_provider_answers_and_records
-        PASS [   0.044s] (2/3) ch01-2-harness-core::provider mock_latency_is_configurable
-        PASS [   0.085s] (3/3) ch01-2-harness-core::provider one_hundred_mock_calls_run_concurrently
+ Nextest run ID 0ce6d5a2-f8b6-492c-a3f5-a61396c8fe3f with nextest profile: default
+    Starting 4 tests across 2 binaries
+        PASS [   0.003s] (1/4) ch01-2-harness-core::provider mock_provider_answers_and_records
+        PASS [   0.003s] (2/4) ch01-2-harness-core::provider mock_emits_text_then_done
+        PASS [   0.044s] (3/4) ch01-2-harness-core::provider mock_latency_is_configurable
+        PASS [   0.085s] (4/4) ch01-2-harness-core::provider one_hundred_mock_calls_run_concurrently
 ────────────
-     Summary [   0.085s] 3 tests run: 3 passed, 0 skipped
+     Summary [   0.086s] 4 tests run: 4 passed, 0 skipped
 ```
 
-The bench again. `mock_turn_overhead` moved relative to an older baseline on this machine; the mean below is from this run.
+The bench. `mock_turn_overhead` builds the event list. The `time:` line is the slope. The means are the point estimates from this run: 235.7 ns and 108.9 µs.
 
 ```text
-    Finished `bench` profile [optimized] target(s) in 0.07s
+   Compiling ch01-2-harness-core v0.1.0 (/workspace/steps/ch01-2-provider/crates/harness-core)
+    Finished `bench` profile [optimized] target(s) in 1.46s
      Running benches/mock_calls.rs (target/release/deps/mock_calls-d656576a78ecd511)
 Gnuplot not found, using plotters backend
 Benchmarking mock_turn_overhead
 Benchmarking mock_turn_overhead: Warming up for 1.0000 s
-Benchmarking mock_turn_overhead: Collecting 10 samples in estimated 2.0000 s (12M iterations)
+Benchmarking mock_turn_overhead: Collecting 10 samples in estimated 2.0000 s (7.0M iterations)
 Benchmarking mock_turn_overhead: Analyzing
-mock_turn_overhead      time:   [148.23 ns 176.46 ns 211.46 ns]
-                        change: [+26.886% +48.340% +64.246%] (p = 0.00 < 0.05)
+mock_turn_overhead      time:   [216.00 ns 230.26 ns 242.65 ns]
+                        change: [+10.092% +23.448% +42.103%] (p = 0.00 < 0.05)
                         Performance has regressed.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
 
 Benchmarking mock_100_concurrent
 Benchmarking mock_100_concurrent: Warming up for 1.0000 s
-Benchmarking mock_100_concurrent: Collecting 10 samples in estimated 2.0058 s (19k iterations)
+Benchmarking mock_100_concurrent: Collecting 10 samples in estimated 2.0026 s (19k iterations)
 Benchmarking mock_100_concurrent: Analyzing
-mock_100_concurrent     time:   [102.54 µs 103.34 µs 104.16 µs]
-                        change: [-1.5468% +0.0114% +1.6063%] (p = 0.99 > 0.05)
-                        No change in performance detected.
+mock_100_concurrent     time:   [107.23 µs 110.51 µs 112.81 µs]
+                        change: [+1.1333% +4.9393% +8.5429%] (p = 0.02 < 0.05)
+                        Performance has regressed.
 ```
 
 | Benchmark | Mean | Target | Machine |
 |---|---|---|---|
-| `mock_turn_overhead` | 190.9 ns | < 1 ms | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0 |
-| `mock_100_concurrent` | 103.8 µs | < 50 ms | same machine |
+| `mock_turn_overhead` | 235.7 ns | < 1 ms | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0 |
+| `mock_100_concurrent` | 108.9 µs | < 50 ms | same machine |
 
-CI runs these tests on Ubuntu, macOS, and Windows. Criterion runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml), and the means land in the job summary ([run 38213430828](https://github.com/agnathan/rust-agent-harness/actions/runs/38213430828)).
+CI runs these tests on Ubuntu, macOS, and Windows. Criterion runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml), and the means land in the job summary and in a per-commit JSON artifact. The table is from this machine.
 
 ## 1.3 OpenRouter, the client, and `harness ask`
 
@@ -319,7 +361,7 @@ Which key is required depends on the host:
 
 OpenRouter also accepts two optional attribution headers, `HTTP-Referer` and `X-Title`, from `--http-referer` / `OPENROUTER_HTTP_REFERER` and `--title` / `OPENROUTER_TITLE`. They are sent only when set.
 
-`OpenAiCompatible` owns one `reqwest::Client` for its whole life. reqwest pools idle connections per host (`pool_max_idle_per_host(8)`), so the second call can reuse the first connection. The `http2` feature and `http2_adaptive_window(true)` turn HTTP/2 on for servers that negotiate it: ALPN when the connection is TLS. A local fake speaks HTTP/1.1, and the same client talks to it without a separate code path. This section does not set a request timeout. Section 1.4 does. Retries are chapter 10.
+`OpenAiCompatible` owns one `reqwest::Client` for its whole life. reqwest pools idle connections per host (`pool_max_idle_per_host(8)`), so the second call can reuse the first connection. The `http2` feature and `http2_adaptive_window(true)` turn HTTP/2 on for servers that negotiate it: ALPN when the connection is TLS. A local fake speaks HTTP/1.1, and the same client talks to it without a separate code path. This section does not set a request timeout. Section 1.4 does. Retries are chapter 11.
 
 ```rust
 pub fn from_endpoint(endpoint: &Endpoint) -> Self {
@@ -353,7 +395,9 @@ pub struct ChatResponse {
 }
 ```
 
-The CLI prints the content, then `model: …` when the server sent one, then `tokens: prompt=N completion=N total=N` when `usage` is present. The mock prints only `(mock) I heard you.` It does not invent a model id or token counts.
+`complete_events` on the HTTP client is one request, then the same enum the mock uses: `TextDelta` for the whole reply, `Usage` when the server sent token counts, and `Done` carrying the answered model id. OpenRouter's `usage.cost` is USD. Other servers omit it, and the field stays `None`. `AgentUsage` adds those numbers across the calls one agent has made. A call that reports no cost does not wipe a cost already recorded.
+
+The CLI prints the content, then `model: …` when `Done` has one, then the ledger (`tokens:`, `cost:`, `agent:`), then one line per event. The mock prints the canned reply and two event lines. It does not invent a model id, token counts, or a cost.
 
 > **Rust sidebar: `Result` and `?`**
 > - A fallible function returns `Result<T, E>`. There are no exceptions.
@@ -368,7 +412,7 @@ The integration tests do not use a real key. `wiremock` starts a local server. O
 > **Performance budget**
 >
 > - **Target:** build a 50-message request and parse a response in under 1 ms, with no network in the measurement.
-> - **Measured:** `build_request_and_parse_response` mean **2.048 µs**. The body now includes `model` and `usage`. The wiremock tests check behavior, not this number.
+> - **Measured:** `build_request_and_parse_response` mean **2.133 µs**. The body includes `model`, `usage`, and `cost`, and the bench builds the event list. The wiremock tests check behavior, not this number.
 
 ### Build, run, and benchmark
 
@@ -451,20 +495,21 @@ Nextest on the library, then on the binary. The HTTP tests talk to a local wirem
 
 ```text
    Compiling ch01-3-harness-core v0.1.0 (/workspace/steps/ch01-3-cli/crates/harness-core)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.18s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.55s
 ────────────
- Nextest run ID 65934727-ab2b-46bd-91f2-0061770a7e96 with nextest profile: default
-    Starting 8 tests across 2 binaries
-        PASS [   0.004s] (1/8) ch01-3-harness-core::provider another_base_url_uses_the_openai_key
-        PASS [   0.006s] (2/8) ch01-3-harness-core::provider openrouter_headers_are_sent_when_set
-        PASS [   0.006s] (3/8) ch01-3-harness-core::provider http_error_is_classified
-        PASS [   0.006s] (4/8) ch01-3-harness-core::provider empty_choices_are_an_error
-        PASS [   0.004s] (5/8) ch01-3-harness-core::provider openrouter_is_the_default_and_names_its_key
-        PASS [   0.004s] (6/8) ch01-3-harness-core::provider response_deserializes_from_openai_shape
-        PASS [   0.004s] (7/8) ch01-3-harness-core::provider request_body_does_not_ask_for_a_stream
-        PASS [   0.005s] (8/8) ch01-3-harness-core::provider two_calls_share_the_client_against_a_local_server
+ Nextest run ID 16330b2f-dc91-4458-a6b4-72fe703c8a60 with nextest profile: default
+    Starting 9 tests across 2 binaries
+        PASS [   0.003s] (1/9) ch01-3-harness-core::provider openrouter_cost_accumulates_on_one_agent
+        PASS [   0.004s] (2/9) ch01-3-harness-core::provider another_base_url_uses_the_openai_key
+        PASS [   0.005s] (3/9) ch01-3-harness-core::provider http_error_is_classified
+        PASS [   0.005s] (4/9) ch01-3-harness-core::provider empty_choices_are_an_error
+        PASS [   0.003s] (5/9) ch01-3-harness-core::provider openrouter_is_the_default_and_names_its_key
+        PASS [   0.005s] (6/9) ch01-3-harness-core::provider openrouter_headers_are_sent_when_set
+        PASS [   0.003s] (7/9) ch01-3-harness-core::provider response_deserializes_from_openai_shape
+        PASS [   0.003s] (8/9) ch01-3-harness-core::provider request_body_does_not_ask_for_a_stream
+        PASS [   0.005s] (9/9) ch01-3-harness-core::provider two_calls_share_the_client_against_a_local_server
 ────────────
-     Summary [   0.012s] 8 tests run: 8 passed, 0 skipped
+     Summary [   0.013s] 9 tests run: 9 passed, 0 skipped
 ```
 
 ```text
@@ -484,39 +529,52 @@ Nextest on the library, then on the binary. The HTTP tests talk to a local wirem
 The mock ask, then the same command with no key and no `--mock`. That second process is supposed to fail.
 
 ```text
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.05s
+   Compiling ch01-3-harness-core v0.1.0 (/workspace/steps/ch01-3-cli/crates/harness-core)
+   Compiling ch01-3-harness-cli v0.1.0 (/workspace/steps/ch01-3-cli/crates/harness-cli)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.03s
      Running `target/debug/ch01-harness --mock ask 'Say hello'`
 (mock) I heard you.
+event: text-delta (mock) I heard you.
+event: done
 ```
 
 ```text
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.05s
      Running `target/debug/ch01-harness ask ping`
+event: error missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 ```
 
-And the bench. The `time:` line is Criterion's slope. The mean in the table is the mean point estimate from `target/criterion/build_request_and_parse_response/new/estimates.json` on this same run (2,047.7 ns).
+Cost accumulation, with no network. The first call reports `cost: 0.25` USD. The second reports tokens and no cost, so the ledger keeps 0.25.
+
+```text
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running `target/debug/examples/demo`
+agent: calls=2 prompt=6 completion=3 total=9 cost=0.25
+```
+
+An optional live OpenRouter call is the same `ask` without `--mock`, with `OPENROUTER_API_KEY` set. I did not make that call.
+
+And the bench. The `time:` line is Criterion's slope. The mean in the table is the mean point estimate from `target/criterion/build_request_and_parse_response/new/estimates.json` on this same run (2,133.0 ns).
 
 ```text
    Compiling ch01-3-harness-core v0.1.0 (/workspace/steps/ch01-3-cli/crates/harness-core)
-    Finished `bench` profile [optimized] target(s) in 1.96s
+    Finished `bench` profile [optimized] target(s) in 1.82s
      Running benches/request_parse.rs (target/release/deps/request_parse-359f4e4892eb2854)
 Gnuplot not found, using plotters backend
 Benchmarking build_request_and_parse_response
 Benchmarking build_request_and_parse_response: Warming up for 1.0000 s
-Benchmarking build_request_and_parse_response: Collecting 10 samples in estimated 2.0000 s (986k iterations)
+Benchmarking build_request_and_parse_response: Collecting 10 samples in estimated 2.0000 s (924k iterations)
 Benchmarking build_request_and_parse_response: Analyzing
 build_request_and_parse_response
-                        time:   [2.0422 µs 2.0439 µs 2.0464 µs]
-                        change: [+16.686% +17.293% +17.860%] (p = 0.00 < 0.05)
+                        time:   [2.1317 µs 2.1351 µs 2.1383 µs]
+                        change: [+3.8229% +4.1668% +4.4221%] (p = 0.00 < 0.05)
                         Performance has regressed.
-Found 1 outliers among 10 measurements (10.00%)
-  1 (10.00%) high severe
 ```
 
 | Benchmark | Mean | Target | Machine |
 |---|---|---|---|
-| `build_request_and_parse_response` | 2.048 µs | < 1 ms | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0 |
+| `build_request_and_parse_response` | 2.133 µs | < 1 ms | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0 |
 
 CI runs these tests on Ubuntu, macOS, and Windows. Criterion runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml), and the means land in the job summary. The table is from this machine.
 
@@ -530,7 +588,7 @@ cargo run -p ch01-4-harness-cli -- --mock ask "Say hello"
 cargo bench -p ch01-4-harness-core --bench edges
 ```
 
-The client now has a whole-request timeout, 60 seconds unless `--timeout-secs` says otherwise. reqwest's `timeout` covers connect and read. When `send` fails and `err.is_timeout()` is true, the error is `ProviderError::Timeout` and it carries the `Duration` we set. Anything else stays `ProviderError::Network`. This is one deadline, not a retry. Chapter 10 classifies failures, retries, and falls back. Chapter 12 is where a reply becomes a stream. The request body still has no `stream` field.
+The client now has a whole-request timeout, 60 seconds unless `--timeout-secs` says otherwise. reqwest's `timeout` covers connect and read. When `send` fails and `err.is_timeout()` is true, the error is `ProviderError::Timeout` and it carries the `Duration` we set. Anything else stays `ProviderError::Network`. This is one deadline, not a retry. Chapter 11 classifies failures, retries, and falls back. Chapter 13 is where a reply becomes a stream of the same events. The request body still has no `stream` field.
 
 ```rust
 #[error("request timed out after {timeout:?}")]
@@ -558,7 +616,7 @@ The parse edges are the ones a real OpenRouter body takes. `usage` may be absent
 > **Performance budget**
 >
 > - **Target:** parse a response that has `usage` and one that does not, in under 1 ms, with no network in the measurement.
-> - **Measured:** `parse_response_edges` mean **526.6 ns**.
+> - **Measured:** `parse_response_edges` mean **792.7 ns**. The bench now builds events for a body that has `cost` and one that has no usage.
 
 ### Build, run, and benchmark
 
@@ -574,31 +632,36 @@ cargo bench -p ch01-4-harness-core --bench edges -- --warm-up-time 1 --measureme
 Same rule as 1.3: the run below is the mock. `--help` on `ch01-4-harness` is the 1.3 help plus `--timeout-secs` (default 60). I did not call OpenRouter.
 
 ```text
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.06s
+   Compiling ch01-4-harness-core v0.1.0 (/workspace/steps/ch01-4-errors/crates/harness-core)
+   Compiling ch01-4-harness-cli v0.1.0 (/workspace/steps/ch01-4-errors/crates/harness-cli)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.01s
      Running `target/debug/ch01-4-harness --mock ask 'Say hello'`
 (mock) I heard you.
+event: text-delta (mock) I heard you.
+event: done
 ```
 
 Nextest. `slow_server_is_a_timeout` is the delayed wiremock. The other tests are the 1.3 cases plus a body that has a model and no usage.
 
 ```text
    Compiling ch01-4-harness-core v0.1.0 (/workspace/steps/ch01-4-errors/crates/harness-core)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.22s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.54s
 ────────────
- Nextest run ID 4b831135-4cbb-4819-8397-99989eadb1a6 with nextest profile: default
-    Starting 10 tests across 2 binaries
-        PASS [   0.003s] ( 1/10) ch01-4-harness-core::provider missing_usage_still_keeps_the_answered_model
-        PASS [   0.003s] ( 2/10) ch01-4-harness-core::provider another_base_url_uses_the_openai_key
-        PASS [   0.006s] ( 3/10) ch01-4-harness-core::provider http_error_is_classified
-        PASS [   0.006s] ( 4/10) ch01-4-harness-core::provider empty_choices_are_an_error
-        PASS [   0.005s] ( 5/10) ch01-4-harness-core::provider openrouter_headers_are_sent_when_set
-        PASS [   0.005s] ( 6/10) ch01-4-harness-core::provider openrouter_is_the_default_and_names_its_key
-        PASS [   0.003s] ( 7/10) ch01-4-harness-core::provider response_deserializes_from_openai_shape
-        PASS [   0.004s] ( 8/10) ch01-4-harness-core::provider request_body_does_not_ask_for_a_stream
-        PASS [   0.005s] ( 9/10) ch01-4-harness-core::provider two_calls_share_the_client_against_a_local_server
-        PASS [   0.205s] (10/10) ch01-4-harness-core::provider slow_server_is_a_timeout
+ Nextest run ID a8486731-255f-4ad9-8edb-52d2afebabb8 with nextest profile: default
+    Starting 11 tests across 2 binaries
+        PASS [   0.003s] ( 1/11) ch01-4-harness-core::provider missing_usage_still_keeps_the_answered_model
+        PASS [   0.004s] ( 2/11) ch01-4-harness-core::provider another_base_url_uses_the_openai_key
+        PASS [   0.005s] ( 3/11) ch01-4-harness-core::provider http_error_is_classified
+        PASS [   0.005s] ( 4/11) ch01-4-harness-core::provider empty_choices_are_an_error
+        PASS [   0.003s] ( 5/11) ch01-4-harness-core::provider openrouter_cost_accumulates_on_one_agent
+        PASS [   0.005s] ( 6/11) ch01-4-harness-core::provider openrouter_headers_are_sent_when_set
+        PASS [   0.004s] ( 7/11) ch01-4-harness-core::provider openrouter_is_the_default_and_names_its_key
+        PASS [   0.004s] ( 8/11) ch01-4-harness-core::provider request_body_does_not_ask_for_a_stream
+        PASS [   0.003s] ( 9/11) ch01-4-harness-core::provider response_deserializes_from_openai_shape
+        PASS [   0.005s] (10/11) ch01-4-harness-core::provider two_calls_share_the_client_against_a_local_server
+        PASS [   0.205s] (11/11) ch01-4-harness-core::provider slow_server_is_a_timeout
 ────────────
-     Summary [   0.214s] 10 tests run: 10 passed, 0 skipped
+     Summary [   0.215s] 11 tests run: 11 passed, 0 skipped
 ```
 
 ```text
@@ -615,29 +678,31 @@ Nextest. `slow_server_is_a_timeout` is the delayed wiremock. The other tests are
      Summary [   0.008s] 3 tests run: 3 passed, 0 skipped
 ```
 
-The bench. Mean point estimate from `target/criterion/parse_response_edges/new/estimates.json`: 526.6 ns.
+The bench. Mean point estimate from `target/criterion/parse_response_edges/new/estimates.json`: 792.7 ns.
 
 ```text
    Compiling ch01-4-harness-core v0.1.0 (/workspace/steps/ch01-4-errors/crates/harness-core)
-    Finished `bench` profile [optimized] target(s) in 1.77s
+    Finished `bench` profile [optimized] target(s) in 1.78s
      Running benches/edges.rs (target/release/deps/edges-c0d4ef48a4ad3704)
 Gnuplot not found, using plotters backend
 Benchmarking parse_response_edges
 Benchmarking parse_response_edges: Warming up for 1.0000 s
-Benchmarking parse_response_edges: Collecting 10 samples in estimated 2.0000 s (3.8M iterations)
+Benchmarking parse_response_edges: Collecting 10 samples in estimated 2.0000 s (2.5M iterations)
 Benchmarking parse_response_edges: Analyzing
-parse_response_edges    time:   [526.51 ns 527.40 ns 528.74 ns]
+parse_response_edges    time:   [785.72 ns 789.72 ns 797.38 ns]
+                        change: [+49.730% +50.530% +51.381%] (p = 0.00 < 0.05)
+                        Performance has regressed.
 ```
 
 | Benchmark | Mean | Target | Machine |
 |---|---|---|---|
-| `parse_response_edges` | 526.6 ns | < 1 ms | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0 |
+| `parse_response_edges` | 792.7 ns | < 1 ms | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0 |
 
 CI runs these tests on Ubuntu, macOS, and Windows. Criterion runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml), and the means land in the job summary. The table is from this machine.
 
 ## Chapter summary
 
-The harness can send one prompt and print one reply. Messages are OpenAI JSON. `Provider` hides the server. `MockProvider` answers with no network and no key. The HTTP client is created once, pools connections, and can speak HTTP/2. OpenRouter is the default endpoint, `--model` selects a model id, and another `--base-url` still works for OpenAI, Ollama, and a local fake. A successful reply can name the model that answered and the token counts. A slow call fails once, as a timeout, and is not retried here.
+The harness can send one prompt and print one reply. Messages are OpenAI JSON. `Provider` hides the server. Every call, including the mock, emits the same `Event` values. The HTTP client is created once, pools connections, and can speak HTTP/2. OpenRouter is the default endpoint, `--model` selects a model id, and another `--base-url` still works for OpenAI, Ollama, and a local fake. A successful reply can name the model that answered, the token counts, and a USD cost when the server sent one. Those numbers accumulate on one agent. A slow call fails once, as a timeout, and is not retried here.
 
 [personal note: a moment where the compiler stopped me, and how I worked out what it wanted]
 

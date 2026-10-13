@@ -1,6 +1,7 @@
 use harness_core::{
-    resolve_endpoint, ChatRequest, ChatResponse, EndpointInput, Message, OpenAiCompatible,
-    Provider, ProviderError, DEFAULT_MODEL, OPENROUTER_BASE_URL,
+    events_for_reply, resolve_endpoint, AgentUsage, ChatRequest, ChatResponse, EndpointInput,
+    Event, Message, OpenAiCompatible, Provider, ProviderError, Usage, DEFAULT_MODEL,
+    OPENROUTER_BASE_URL,
 };
 use std::time::Duration;
 
@@ -16,7 +17,7 @@ fn ok_body(content: &str) -> serde_json::Value {
             "message": { "role": "assistant", "content": content },
             "finish_reason": "stop"
         }],
-        "usage": { "prompt_tokens": 5, "completion_tokens": 2, "total_tokens": 7 }
+        "usage": { "prompt_tokens": 5, "completion_tokens": 2, "total_tokens": 7, "cost": 0.25 }
     })
 }
 
@@ -31,7 +32,41 @@ fn response_deserializes_from_openai_shape() {
     }"#;
     let parsed: ChatResponse = serde_json::from_str(body).unwrap();
     assert_eq!(parsed.choices[0].message, Message::assistant("Hi there"));
-    assert_eq!(parsed.usage.unwrap().prompt_tokens, 5);
+    let usage = parsed.usage.unwrap();
+    assert_eq!(usage.prompt_tokens, 5);
+    assert_eq!(usage.cost, None);
+}
+
+#[test]
+fn openrouter_cost_accumulates_on_one_agent() {
+    let parsed: ChatResponse = serde_json::from_value(ok_body("pong")).unwrap();
+    let message = parsed.choices[0].message.clone();
+    let events = events_for_reply(&message, parsed.usage.as_ref(), parsed.model.as_deref());
+    assert!(matches!(&events[0], Event::TextDelta(text) if text == "pong"));
+    assert!(matches!(&events[1], Event::Usage(usage) if usage.cost == Some(0.25)));
+    assert!(
+        matches!(&events[2], Event::Done { model: Some(model), .. } if model == "openai/gpt-4o-mini")
+    );
+
+    let mut ledger = AgentUsage::default();
+    ledger.record(&Usage {
+        prompt_tokens: 5,
+        completion_tokens: 2,
+        total_tokens: 7,
+        cost: Some(0.25),
+    });
+    ledger.record(&Usage {
+        prompt_tokens: 1,
+        completion_tokens: 1,
+        total_tokens: 2,
+        cost: None,
+    });
+    assert_eq!(ledger.calls, 2);
+    assert_eq!(ledger.prompt_tokens, 6);
+    assert_eq!(ledger.completion_tokens, 3);
+    assert_eq!(ledger.total_tokens, 9);
+    assert!(ledger.cost_known);
+    assert_eq!(ledger.cost_usd, 0.25);
 }
 
 #[test]
@@ -127,7 +162,7 @@ async fn two_calls_share_the_client_against_a_local_server() {
     let second = provider.complete(&messages).await.unwrap();
     assert_eq!(first.message.content, "pong");
     assert_eq!(first.model.as_deref(), Some("openai/gpt-4o-mini"));
-    assert_eq!(first.usage.unwrap().total_tokens, 7);
+    assert_eq!(first.usage.unwrap().cost, Some(0.25));
     assert_eq!(second.content, "pong");
 }
 

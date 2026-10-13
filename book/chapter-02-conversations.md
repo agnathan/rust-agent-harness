@@ -13,7 +13,13 @@ So this chapter is about that list. By the end I'll have:
 - saving and loading conversations as JSON
 - `harness chat`: an interactive chat loop (a REPL) with `/help`, `/reset`, `/history`, `/save`, `/load` and `/quit`
 
-Same rules as before: Rust is introduced just in time, in short sidebars.
+Same rules as before: Rust is introduced just in time, in short sidebars. The runnable demo is `--mock`. A live call is optional.
+
+> **How Hermes does it**
+>
+> Hermes writes the message-list rules down in `agent/AGENTS.md` ("Message-flow invariants"). Roles alternate (`agent/message_sanitization.py`). The system prompt is built once per session (`agent/system_prompt.py::build_system_prompt`) and stays byte-stable so a provider can cache that prefix. The only sanctioned rewrite of history is compression (`agent/context_compressor.py`). This chapter's `Conversation` is that list: private fields, a single `push` that refuses a bad alternation, and a system prompt the history cannot touch. Hermes stores the list in SQLite (`hermes_state.py`). I store JSON. The slash commands in Hermes live in one registry (`hermes_cli/commands.py`); mine are a small enum.
+>
+> The REPL in this snapshot still calls the provider directly. The plan for this chapter adds one session inbox in front of that call. The CLI, and later the gateway, cron, and the editor, submit turns to that inbox. They do not each grow their own queue.
 
 [personal note: how Chapter 1 went, whether you ran it against a real model, and what you wanted to do next]
 
@@ -693,7 +699,15 @@ The saved file is the JSON `save` actually wrote:
 }
 ```
 
-Against a real model, drop `--mock` and set `OPENAI_API_KEY` (and, if you want, `OPENAI_BASE_URL` and `HARNESS_MODEL`). I did not make that call. The commands, the full test log, and `cargo bench` are in the next section.
+### Milestone demo
+
+The demo is the mock. I did not make a live call.
+
+```bash
+cargo run -p ch02-harness-cli -- --mock chat
+```
+
+This snapshot's optional live call still uses `OPENAI_API_KEY` (and, if you want, `OPENAI_BASE_URL` and `HARNESS_MODEL`). OpenRouter is the chapter 1 client; this directory does not read `OPENROUTER_API_KEY`. The commands, the full test log, and `cargo bench` are in the next section.
 
 [personal note: a real chat session, e.g. testing whether the model remembers something said three turns earlier]
 

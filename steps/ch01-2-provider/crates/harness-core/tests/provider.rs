@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use harness_core::{Message, MockProvider, Provider};
+use harness_core::{Event, Message, MockProvider, Provider};
 use tokio::task::JoinSet;
 
 #[tokio::test]
@@ -15,6 +15,20 @@ async fn mock_provider_answers_and_records() {
     let seen = mock.seen.lock().unwrap();
     assert_eq!(seen.len(), 1);
     assert_eq!(seen[0][1].content, "Say hi");
+}
+
+#[tokio::test]
+async fn mock_emits_text_then_done() {
+    let mock = MockProvider::new("ok");
+    let events = mock.complete_events(&[Message::user("hi")]).await.unwrap();
+    assert!(matches!(&events[0], Event::TextDelta(text) if text == "ok"));
+    assert!(matches!(
+        &events[1],
+        Event::Done { message, model: None } if message.content == "ok"
+    ));
+    assert_eq!(events.len(), 2);
+    assert_eq!(events[0].report_line(), "event: text-delta ok");
+    assert_eq!(events[1].report_line(), "event: done");
 }
 
 #[tokio::test]

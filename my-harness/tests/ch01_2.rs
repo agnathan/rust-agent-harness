@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use my_harness::{Message, MockProvider, Provider, Role};
+use my_harness::{buffered_events, Message, MockProvider, Provider, Role};
 
 #[tokio::test]
 async fn mock_provider_answers_and_records() {
@@ -14,6 +14,12 @@ async fn mock_provider_answers_and_records() {
     let seen = mock.seen.lock().unwrap();
     assert_eq!(seen.len(), 1);
     assert_eq!(seen[0][1].content, "Say hi");
+}
+
+#[test]
+fn buffered_call_emits_text_then_done() {
+    let events = buffered_events(&Message::assistant("ok"));
+    assert!(events.len() >= 2, "a buffered reply emits text, then done");
 }
 
 #[tokio::test]

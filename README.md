@@ -43,66 +43,66 @@ A step is the code as of that chapter, library plus CLI, with its tests. Later c
 
 The chapter 1 client defaults to OpenRouter (`https://openrouter.ai/api/v1`), `OPENROUTER_API_KEY`, and `HARNESS_MODEL` (default `openai/gpt-4o-mini`). `--base-url` points the same client at another OpenAI-compatible server and then reads `OPENAI_API_KEY` (empty is allowed for Ollama). `--mock` uses the offline provider. The chapter 2 snapshot still uses `OPENAI_API_KEY` for its own binary.
 
-Chapters 0 through 40, in six parts. Performance is a budget on every chapter, starting with tokio in chapter 1. The targets are [docs/performance.md](docs/performance.md). MCP is first-class: tools are MCP-shaped (chapter 3), the harness is an MCP client (chapter 4, via `rmcp`) and an MCP server (chapter 6). Part II is learning, and that work stays off the hot path: sessions, memory, recall, skills, reflection, and curation. The design is [docs/self-improvement.md](docs/self-improvement.md). Which team pattern to use is [docs/team-patterns.md](docs/team-patterns.md). The default is a supervisor that calls specialists as tools and fans them out under a bound. Part V runs the harness as a service.
+Chapters 0 through 40, in six parts. Performance is a budget on every chapter, starting with tokio in chapter 1. The targets are [docs/performance.md](docs/performance.md). MCP is first-class: tools are MCP-shaped (chapter 3), the harness is an MCP client (chapter 4, via `rmcp`) and an MCP server (chapter 7). Part II is learning, and that work stays off the hot path: sessions, memory, recall, skills, reflection, and curation. The design is [docs/self-improvement.md](docs/self-improvement.md). Which team pattern to use is [docs/team-patterns.md](docs/team-patterns.md). The default is a supervisor that calls specialists as tools and fans them out under a bound. Part V runs the harness as a service.
 
 **Part I: One agent**
 
 | Ch | Title | Step | You add |
 |---|---|---|---|
 | 0 | Introduction | — | why a harness, and what Hermes is |
-| 1 | First Contact | `steps/ch01-1-messages`, `ch01-2-provider`, `ch01-3-cli`, `ch01-4-errors` | messages, a latency mock on tokio, OpenRouter as the default client, `ask`, a request timeout |
-| 2 | Conversations | `steps/ch02-conversations` | a real conversation, a cache-stable system prompt, and a `chat` REPL |
+| 1 | First Contact | `steps/ch01-1-messages`, `ch01-2-provider`, `ch01-3-cli`, `ch01-4-errors` | messages, one `Event` enum, OpenRouter as the default client, per-agent cost, `ask`, a request timeout |
+| 2 | Conversations | `steps/ch02-conversations` | a real conversation, a cache-stable system prompt, a `chat` REPL, and the session inbox |
 | 3 | Tools | `steps/ch03-tools` | an MCP-shaped tool trait, named toolsets gated on env and checks, concurrent reads and exclusive writes |
 | 4 | MCP Client | `steps/ch04-mcp-client` | `rmcp` over stdio and streamable HTTP; MCP and native tools share one scheduler |
-| 5 | The Agent Loop | `steps/ch05-agent-loop` | model, tools, results, repeat; streaming overlaps safe tool calls |
-| 6 | MCP Server | `steps/ch06-mcp-server` | expose this harness's tools, and later agents and skills, to other clients |
-| 7 | Approvals and Guardrails | `steps/ch07-approvals` | risk levels, human or second-model review or skip, one approval prompt at a time |
-| 8 | Hooks and Plugins | `steps/ch08-hooks` | before/after tool hooks, API-request hooks, rewritten tool results, a swappable memory backend |
-| 9 | Sandboxed Execution | `steps/ch09-sandbox` | a code tool outside the process, plus file checkpoint and rewind |
-| 10 | When Things Fail | `steps/ch10-when-things-fail` | classify failures, retry, fall back, including MCP crashes and reconnects |
-| 11 | Providers | `steps/ch11-providers` | native Anthropic and Bedrock adapters, OpenRouter fallback and routing, key rotation, a cheaper side model |
-| 12 | Streaming | `steps/ch12-streaming` | tokens as they arrive |
+| 5 | The Agent Loop | `steps/ch05-agent-loop` | model, tools, results, repeat; a cancellation token and a budget; a saved eval set |
+| 6 | The Turn State Machine | `steps/ch06-turn-state` | one explicit turn, right after the loop |
+| 7 | MCP Server | `steps/ch07-mcp-server` | expose this harness's tools, and later agents and skills, to other clients |
+| 8 | Approvals and Guardrails | `steps/ch08-approvals` | risk levels, human or second-model review or skip, one approval prompt at a time |
+| 9 | Hooks and Plugins | `steps/ch09-hooks` | before/after tool hooks, API-request hooks, rewritten tool results, a swappable memory backend |
+| 10 | Sandboxed Execution | `steps/ch10-sandbox` | a code tool outside the process, plus file checkpoint and rewind |
+| 11 | When Things Fail | `steps/ch11-when-things-fail` | classify failures, retry, fall back, including MCP crashes and reconnects |
+| 12 | Providers | `steps/ch12-providers` | native Anthropic and Bedrock adapters, OpenRouter fallback and routing, key rotation, a cheaper side model |
+| 13 | Streaming | `steps/ch13-streaming` | the same events, as tokens arrive |
 
 **Part II: Learning**
 
 | Ch | Title | Step | You add |
 |---|---|---|---|
-| 13 | Sessions on Disk | `steps/ch13-sessions` | SQLite sessions (append-only, WAL) and resume |
-| 14 | Memory Files | `steps/ch14-memory` | `MEMORY.md` / `USER.md`, the `memory` tool, a frozen system-prompt snapshot |
-| 15 | Recall | `steps/ch15-recall` | FTS5 `session_search`: discover, scroll, read, browse |
-| 16 | Using Skills | `steps/ch16-skills` | `SKILL.md`, a cache-stable index, `skills_list` / `skill_view` |
-| 17 | Writing Skills | `steps/ch17-skill-writing` | create, patch, delete, a scanner, the approval gate, read-before-write |
-| 18 | The Reflection Loop | `steps/ch18-reflection` | nudge counters and a forked reviewer with only skill and memory tools |
-| 19 | Curation | `steps/ch19-curation` | stale to archived, pinning, backups, optional consolidation |
+| 14 | Sessions on Disk | `steps/ch14-sessions` | SQLite sessions (append-only, WAL) and resume |
+| 15 | Memory Files | `steps/ch15-memory` | `MEMORY.md` / `USER.md`, the `memory` tool, a frozen system-prompt snapshot |
+| 16 | Recall | `steps/ch16-recall` | FTS5 `session_search`: discover, scroll, read, browse |
+| 17 | Using Skills | `steps/ch17-skills` | `SKILL.md`, a cache-stable index, `skills_list` / `skill_view` |
+| 18 | Writing Skills | `steps/ch18-skill-writing` | create, patch, delete, a scanner, the approval gate, read-before-write |
+| 19 | The Reflection Loop | `steps/ch19-reflection` | nudge counters and a forked reviewer with only skill and memory tools |
+| 20 | Curation | `steps/ch20-curation` | stale to archived, pinning, backups, optional consolidation |
 
 **Part III: The team patterns**
 
 | Ch | Title | Step | You add |
 |---|---|---|---|
-| 20 | The Sequential Pipeline | `steps/ch20-pipeline` | outline, draft, critique, revise; an agent as a reusable value |
-| 21 | The Supervisor | `steps/ch21-supervisor` | the default team: manager, agents-as-tools, fan-out under a bound, `Arc` context |
-| 22 | Handoffs | `steps/ch22-handoffs` | ownership transfer, handoff-as-tool, max-handoff limit, context filtering |
-| 23 | Fan-out and Gather | `steps/ch23-fan-out` | parallel specialists, a worker limit, an aggregator |
-| 24 | The Critic | `steps/ch24-critic` | an evaluator as a tool and as a final gate |
-| 25 | Composing Patterns | `steps/ch25-composition` | a supervisor that fans out and hands off only when ownership moves |
+| 21 | The Sequential Pipeline | `steps/ch21-pipeline` | outline, draft, critique, revise; an agent as a reusable value |
+| 22 | The Supervisor | `steps/ch22-supervisor` | the default team: manager, agents-as-tools, fan-out under a bound, `Arc` context |
+| 23 | Handoffs | `steps/ch23-handoffs` | ownership transfer, handoff-as-tool, max-handoff limit, context filtering |
+| 24 | Fan-out and Gather | `steps/ch24-fan-out` | parallel specialists, a worker limit, an aggregator |
+| 25 | The Critic | `steps/ch25-critic` | an evaluator as a tool and as a final gate |
+| 26 | Composing Patterns | `steps/ch26-composition` | a supervisor that fans out and hands off only when ownership moves |
 
 **Part IV: Making it robust**
 
 | Ch | Title | Step | You add |
 |---|---|---|---|
-| 26 | The Turn State Machine | `steps/ch26-turn-state` | an explicit turn |
 | 27 | Managing Context | `steps/ch27-context` | compression, summaries, `[SKILL_PRUNED]`, a memory flush |
-| 28 | Agents as Actors | `steps/ch28-actors` | one task per agent, a bounded inbox, backpressure |
-| 29 | Cancellation and Supervision | `steps/ch29-supervision` | cancel trees and restarts |
+| 28 | Agents as Actors | `steps/ch28-actors` | one task per agent, the session inbox, backpressure |
+| 29 | Supervision and Restart | `steps/ch29-supervision` | restart a failed child |
 
 **Part V: Running as a service**
 
 | Ch | Title | Step | You add |
 |---|---|---|---|
 | 30 | Profiles | `steps/ch30-profiles` | several personas, each with its own secrets |
-| 31 | The Gateway | `steps/ch31-gateway` | platform adapters, a per-session queue, interrupts and steers, one streaming message |
-| 32 | Cron | `steps/ch32-cron` | at-most-once runs across crashes, catch-up, a watchdog, chaining |
-| 33 | Editor Integration | `steps/ch33-acp` | ACP as another client of the same session queue |
+| 31 | The Gateway | `steps/ch31-gateway` | platform adapters into the session inbox; interrupts, steers, and chapter 1 events |
+| 32 | Cron | `steps/ch32-cron` | at-most-once runs across crashes, catch-up, a watchdog, chaining onto the same inbox |
+| 33 | Editor Integration | `steps/ch33-acp` | ACP as another client of the session inbox |
 
 **Part VI: Loosely coupled teams**
 
@@ -113,8 +113,8 @@ Chapters 0 through 40, in six parts. Performance is a budget on every chapter, s
 | 36 | The Message Bus | `steps/ch36-message-bus` | peer-to-peer messaging |
 | 37 | Shared Team Skills | `steps/ch37-team-skills` | a layered store, `skill_propose`, a librarian as the single writer |
 | 38 | A2A for External Agents | `steps/ch38-a2a` | A2A only for agents outside this process |
-| 39 | Seeing Inside | `steps/ch39-tracing` | tracing and a capstone team that learns across runs |
-| 40 | Evals | `steps/ch40-evals` | batch runs and trajectories, tied to the criterion benches |
+| 39 | Seeing Inside | `steps/ch39-tracing` | spans on the chapter 1 events, and a capstone team that learns across runs |
+| 40 | Evals | `steps/ch40-evals` | re-run the chapter 5 tasks, plus trajectories |
 
 Chapters 1 and 2 are the only step crates in the tree. The rest are added when those chapters are written. The same list drives CI (`.github/chapters.json`).
 

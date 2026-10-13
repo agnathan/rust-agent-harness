@@ -1,11 +1,17 @@
 name: Benchmarks
 
-# Informational only. Reports Criterion estimates in the job summary.
-# There are no fail thresholds yet.
+# Informational only. Reports Criterion estimates in the job summary,
+# uploads one JSON artifact per commit, and charts the series on gh-pages
+# when this token is allowed to publish. There are no fail thresholds.
 on:
   push:
     branches: [main]
   pull_request:
+
+permissions:
+  contents: write
+  pull-requests: write
+  deployments: write
 
 jobs:
   bench:
@@ -28,3 +34,27 @@ jobs:
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload the criterion summary
+        if: always() && hashFiles('target/criterion-summary.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: criterion-summary-${{ github.sha }}
+          path: |
+            target/criterion-summary.json
+            target/criterion-run.json
+      - name: Record the benchmark trend
+        if: always() && hashFiles('target/criterion-summary.json') != ''
+        continue-on-error: true
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          name: Chapter 1 criterion
+          tool: customSmallerIsBetter
+          output-file-path: target/criterion-summary.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          gh-pages-branch: gh-pages
+          benchmark-data-dir-path: dev/bench
+          comment-always: true
+          summary-always: true
+          fail-on-alert: false
+          alert-threshold: "200%"

@@ -1,4 +1,5 @@
 use crate::config::Endpoint;
+use crate::event::{events_for_reply, Event, Usage};
 use crate::message::{ChatRequest, Message};
 use async_trait::async_trait;
 use serde::Deserialize;
@@ -38,10 +39,20 @@ pub trait Provider: Send + Sync {
             usage: None,
         })
     }
+
+    /// The same call, as events. The default mock path has no usage and no model id.
+    async fn complete_events(&self, messages: &[Message]) -> Result<Vec<Event>, ProviderError> {
+        let detailed = self.complete_detailed(messages).await?;
+        Ok(events_for_reply(
+            &detailed.message,
+            detailed.usage.as_ref(),
+            detailed.model.as_deref(),
+        ))
+    }
 }
 
 /// What one buffered (non-streaming) completion came back as.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct DetailedCompletion {
     pub message: Message,
     pub model: Option<String>,
@@ -93,16 +104,6 @@ impl OpenAiCompatible {
             timeout,
         }
     }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct Usage {
-    #[serde(default)]
-    pub prompt_tokens: u64,
-    #[serde(default)]
-    pub completion_tokens: u64,
-    #[serde(default)]
-    pub total_tokens: u64,
 }
 
 #[derive(Debug, Deserialize)]
@@ -225,5 +226,9 @@ impl<P: Provider + ?Sized> Provider for std::sync::Arc<P> {
         messages: &[Message],
     ) -> Result<DetailedCompletion, ProviderError> {
         (**self).complete_detailed(messages).await
+    }
+
+    async fn complete_events(&self, messages: &[Message]) -> Result<Vec<Event>, ProviderError> {
+        (**self).complete_events(messages).await
     }
 }

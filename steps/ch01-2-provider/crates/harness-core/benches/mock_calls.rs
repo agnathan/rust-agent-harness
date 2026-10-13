@@ -20,8 +20,11 @@ fn mock_turn_overhead(c: &mut Criterion) {
     let messages = vec![Message::user("hello")];
     c.bench_function("mock_turn_overhead", |b| {
         b.to_async(&rt).iter(|| async {
-            let reply = provider.complete(black_box(&messages)).await.expect("mock");
-            black_box(reply);
+            let events = provider
+                .complete_events(black_box(&messages))
+                .await
+                .expect("mock");
+            black_box(events);
         });
     });
 }
