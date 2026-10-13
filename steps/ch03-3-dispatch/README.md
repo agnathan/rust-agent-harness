@@ -1,15 +1,16 @@
-# Step 02: Conversations
+# Step 03.3: Dispatch
 
-The harness as of Chapter 2. Everything from Chapter 1, plus `Conversation` (alternation, a stable system prompt, trimming, JSON save/load), a scripted mock, and `harness chat`.
+Read-only tool calls run together, up to a bound of 8. A write runs alone. The CLI can list the gated tools and call one.
 
-The book chapter is [Chapter 2: Conversations](../../book/chapter-02-conversations.md).
+The book chapter is [Chapter 3: Tools](../../book/chapter-03-tools.md).
 
 From the repository root:
 
 ```bash
-cargo test -p ch02-harness-core
-cargo run -p ch02-harness-cli -- --mock ask "Say hello"
-cargo run -p ch02-harness-cli -- --mock chat
+cargo test -p ch03-3-harness-core
+cargo run -p ch03-3-harness-core --example demo
+HARNESS_ECHO=1 cargo run -p ch03-3-harness-cli -- tools
+cargo bench -p ch03-3-harness-core --bench dispatch
 ```
 
-Inside `chat`, `/help`, `/reset`, `/history`, `/save`, `/load`, and `/quit` are the commands. The executable is named `ch02-harness` so it can live next to `ch01-harness` in one workspace.
+The executable is named `ch03-3-harness`.

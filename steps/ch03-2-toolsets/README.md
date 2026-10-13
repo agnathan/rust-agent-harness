@@ -1,15 +1,13 @@
-# Step 02: Conversations
+# Step 03.2: Toolsets
 
-The harness as of Chapter 2. Everything from Chapter 1, plus `Conversation` (alternation, a stable system prompt, trimming, JSON save/load), a scripted mock, and `harness chat`.
+Named toolsets on top of the registry. A set is visible only when its env var is set and its check accepts the value.
 
-The book chapter is [Chapter 2: Conversations](../../book/chapter-02-conversations.md).
+The book chapter is [Chapter 3: Tools](../../book/chapter-03-tools.md).
 
 From the repository root:
 
 ```bash
-cargo test -p ch02-harness-core
-cargo run -p ch02-harness-cli -- --mock ask "Say hello"
-cargo run -p ch02-harness-cli -- --mock chat
+cargo test -p ch03-2-harness-core
+cargo run -p ch03-2-harness-core --example demo
+cargo bench -p ch03-2-harness-core --bench toolset
 ```
-
-Inside `chat`, `/help`, `/reset`, `/history`, `/save`, `/load`, and `/quit` are the commands. The executable is named `ch02-harness` so it can live next to `ch01-harness` in one workspace.
