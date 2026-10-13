@@ -82,6 +82,31 @@ schema_tokens_10000     time:   [21.036 ms 21.061 ms 21.084 ms]
 
 The `time:` line is the slope. The table is the mean point estimate. Counting the tokens is cheap next to sending half a million of them on every turn.
 
+### Milestone demo
+
+The example prints the token estimate. It does not call a model.
+
+```bash
+cargo run -p ch05-1-harness-core --example demo
+```
+
+```text
+tools=50 bytes=10030 tokens=2508 mentions_rename_file=9
+tools=1000 bytes=204909 tokens=51228 mentions_rename_file=21
+tools=10000 bytes=2070285 tokens=517572 mentions_rename_file=192
+```
+
+This section has no HTTP client. The chapter's optional OpenRouter command is the section 5.5 binary. I did not make that call. With the key unset it stops first:
+
+```bash
+cargo run -p ch05-5-harness-cli -- ask "rename a file"
+```
+
+```text
+event: error missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
+error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
+```
+
 ## 5.2 A searchable index
 
 Build the index once. A query then walks the terms it actually used, instead of scanning every description in the prompt.
@@ -129,6 +154,32 @@ index_search_10000      time:   [146.60 µs 146.86 µs 147.12 µs]
 |---|---|---|---|
 | `index_build_10000` | 14.66 ms | < 50 ms, once per catalog | same machine as 5.1 |
 | `index_search_10000` | 146.8 µs | < 1 ms | same |
+
+### Milestone demo
+
+```bash
+cargo run -p ch05-2-harness-core --example demo
+```
+
+```text
+indexed=10000
+6.240 calendar_rename_file_1562 (calendar)
+6.240 calendar_rename_file_2074 (calendar)
+6.240 calendar_rename_file_2586 (calendar)
+6.240 calendar_rename_file_26 (calendar)
+6.240 calendar_rename_file_3098 (calendar)
+```
+
+The optional live command is still the section 5.5 CLI, and it was not run. With the key unset:
+
+```bash
+cargo run -p ch05-5-harness-cli -- ask "rename a file"
+```
+
+```text
+event: error missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
+error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
+```
 
 ## 5.3 search_tools and lazy loading
 
@@ -199,6 +250,41 @@ lazy_visible_prompt_10000
 | `full_schema_tokens_10000` | 18.59 ms | the cost of rendering every schema | same machine as 5.1 |
 | `lazy_visible_prompt_10000` | 12.26 µs | < 1 ms | same |
 
+### Milestone demo
+
+The listing is the harness, not a model reply.
+
+```bash
+cargo run -p ch05-3-harness-core --example demo
+```
+
+```text
+tools=2000
+all_schema_tokens=103063
+visible_tokens_before=55
+this_turn=search_tools
+search:
+calendar_rename_file_1562 — Use the calendar server to rename a file. Tool number 1562.
+calendar_rename_file_26 — Use the calendar server to rename a file. Tool number 26.
+calendar_rename_file_538 — Use the calendar server to rename a file. Tool number 538.
+db_rename_file_1567 — Use the db server to rename a file. Tool number 1567.
+db_rename_file_31 — Use the db server to rename a file. Tool number 31.
+next_turn=search_tools,calendar_rename_file_1562,calendar_rename_file_26,calendar_rename_file_538,db_rename_file_1567,db_rename_file_31
+visible_tokens_after=305
+core_prompt_unchanged=true
+```
+
+The optional live command was not run. With the key unset:
+
+```bash
+cargo run -p ch05-5-harness-cli -- ask "rename a file"
+```
+
+```text
+event: error missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
+error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
+```
+
 ## 5.4 Route, then shrink
 
 A one-line summary per server is the first level: `files: list, read, write, rename, and move a file`. The query is scored against those summaries. "rename a file" picks `files` because that summary contains both `rename` and `file`. "rename a branch" picks `git`. The second level runs BM25 only inside that server's index.
@@ -244,6 +330,34 @@ shrink_schemas_10000    time:   [31.204 ms 31.351 ms 31.452 ms]
 
 Routed search is about nine times faster than the full-index search in 5.2 (16.00 µs against 146.8 µs) because it scores one server, not eight.
 
+### Milestone demo
+
+```bash
+cargo run -p ch05-4-harness-core --example demo
+```
+
+```text
+route=files
+files_rename_file_1048 (files)
+files_rename_file_24 (files)
+files_rename_file_536 (files)
+files_rename_file_1560 (files)
+files_read_file_520 (files)
+full_bytes=412249
+shrunk_bytes=401057
+```
+
+The optional live command was not run. With the key unset:
+
+```bash
+cargo run -p ch05-5-harness-cli -- ask "rename a file"
+```
+
+```text
+event: error missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
+error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
+```
+
 ## 5.5 The registry at scale
 
 `SyntheticSource::list` clones the generated vec and counts the call. That clone is what an MCP `tools/list` costs: the server sends the catalog again. `ListCache` keeps an `Arc<[ToolCard]>`. A second `list` returns the same allocation and does not call the source. `notify_list_changed` sets the dirty flag. The next `list` calls the source again. Chapter 4's client is the code that will invoke those two methods when the real notification arrives.
@@ -279,7 +393,29 @@ list_calls_after_two_reads=1
 list_calls_after_invalidate=2
 ```
 
-The CLI mock is the milestone. `--mock` does not call a model. The `event:` lines are the harness reporting the search.
+The cold cache builds 10,000 cards and clones them once. That setup sits inside `cache_cold_10000`. The hit that follows only clones the `Arc`.
+
+```text
+cache_cold_10000        time:   [12.051 ms 12.077 ms 12.103 ms]
+cache_hit_10000         time:   [17.541 ns 17.571 ns 17.605 ns]
+agent_filter_10000      time:   [76.699 µs 76.885 µs 77.268 µs]
+```
+
+| Benchmark | Mean | Target | Machine |
+|---|---|---|---|
+| `cache_cold_10000` | 12.07 ms | one `tools/list` worth of cloning | same machine as 5.1 |
+| `cache_hit_10000` | 17.56 ns | < 1 µs | same |
+| `agent_filter_10000` | 77.00 µs | < 1 ms | same |
+
+CI runs these five steps on Ubuntu, macOS, and Windows. The benches run on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml).
+
+### Milestone demo
+
+`--mock` is the default. It does not call a model. The `event:` lines are the harness reporting the search.
+
+```bash
+cargo run -p ch05-5-harness-cli -- --mock ask "rename a file"
+```
 
 ```text
 $ cargo run -p ch05-5-harness-cli -- --mock ask "rename a file"
@@ -309,22 +445,6 @@ error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 ```
 
 A live call, when a key is present, posts to OpenRouter with the chapter 1 client and a single tool, `search_tools`. I did not make that call.
-
-The cold cache builds 10,000 cards and clones them once. That setup sits inside `cache_cold_10000`. The hit that follows only clones the `Arc`.
-
-```text
-cache_cold_10000        time:   [12.051 ms 12.077 ms 12.103 ms]
-cache_hit_10000         time:   [17.541 ns 17.571 ns 17.605 ns]
-agent_filter_10000      time:   [76.699 µs 76.885 µs 77.268 µs]
-```
-
-| Benchmark | Mean | Target | Machine |
-|---|---|---|---|
-| `cache_cold_10000` | 12.07 ms | one `tools/list` worth of cloning | same machine as 5.1 |
-| `cache_hit_10000` | 17.56 ns | < 1 µs | same |
-| `agent_filter_10000` | 77.00 µs | < 1 ms | same |
-
-CI runs these five steps on Ubuntu, macOS, and Windows. The benches run on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml).
 
 ## Chapter summary
 

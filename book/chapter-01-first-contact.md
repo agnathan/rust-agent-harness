@@ -341,6 +341,32 @@ mock_100_concurrent     time:   [107.23 µs 110.51 µs 112.81 µs]
 
 CI runs these tests on Ubuntu, macOS, and Windows. Criterion runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml), and the means land in the job summary and in a per-commit JSON artifact. The table is from this machine.
 
+### Milestone demo
+
+The demo is the mock. This section does not open a socket.
+
+```bash
+cargo run -p ch01-2-harness-core --example demo
+```
+
+```text
+event: text-delta (mock) I heard you.
+event: done
+```
+
+OpenRouter arrives in the next section. The optional live command, which I did not run, is:
+
+```bash
+cargo run -p ch01-3-harness-cli -- ask "Say hello"
+```
+
+With `OPENROUTER_API_KEY` unset, that command stops before any HTTP request:
+
+```text
+event: error missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
+error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
+```
+
 ## 1.3 OpenRouter, the client, and `harness ask`
 
 Section 1.3 copies 1.2 and adds the HTTP provider plus a thin binary. The package names are `ch01-3-harness-core` and `ch01-3-harness-cli`. The executable file is `ch01-harness` so it does not collide with chapter 2 in the shared workspace. The clap command name is still `harness`.
@@ -578,6 +604,36 @@ build_request_and_parse_response
 
 CI runs these tests on Ubuntu, macOS, and Windows. Criterion runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml), and the means land in the job summary. The table is from this machine.
 
+### Milestone demo
+
+`--mock` is the default path. The example adds two scripted usage records and prints the ledger. `0.25` is the test constant from the first record. It is not a bill from OpenRouter.
+
+```bash
+cargo run -p ch01-3-harness-core --example demo
+cargo run -p ch01-3-harness-cli -- --mock ask "Say hello"
+```
+
+```text
+agent: calls=2 prompt=6 completion=3 total=9 cost=0.25
+```
+
+```text
+(mock) I heard you.
+event: text-delta (mock) I heard you.
+event: done
+```
+
+The optional live command is the same binary without `--mock`. I did not make that call. With the key unset:
+
+```bash
+cargo run -p ch01-3-harness-cli -- ask "Say hello"
+```
+
+```text
+event: error missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
+error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
+```
+
 ## 1.4 Timeouts and what the reply may omit
 
 Section 1.4 copies 1.3 and names two things a buffered call can do besides succeed. The package names are `ch01-4-harness-core` and `ch01-4-harness-cli`. The executable is `ch01-4-harness`.
@@ -699,6 +755,31 @@ parse_response_edges    time:   [785.72 ns 789.72 ns 797.38 ns]
 | `parse_response_edges` | 792.7 ns | < 1 ms | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0 |
 
 CI runs these tests on Ubuntu, macOS, and Windows. Criterion runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml), and the means land in the job summary. The table is from this machine.
+
+### Milestone demo
+
+`--mock` still skips the network. The timeout is on the HTTP client, so this path does not exercise it.
+
+```bash
+cargo run -p ch01-4-harness-cli -- --mock ask "Say hello"
+```
+
+```text
+(mock) I heard you.
+event: text-delta (mock) I heard you.
+event: done
+```
+
+The optional live command is the same binary without `--mock`. I did not make that call. With the key unset it fails before a request, the same way section 1.3 does:
+
+```bash
+cargo run -p ch01-4-harness-cli -- ask "Say hello"
+```
+
+```text
+event: error missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
+error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
+```
 
 ## Chapter summary
 

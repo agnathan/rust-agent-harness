@@ -89,6 +89,38 @@ registry_lookup         time:   [13.845 ns 13.901 ns 14.012 ns]
 |---|---|---|---|
 | `registry_lookup` | 13.96 ns | < 1 µs | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0, sample size 10 |
 
+### Milestone demo
+
+The example registers `echo` and calls it. No model, no network.
+
+```bash
+cargo run -p ch03-1-harness-core --example demo
+cargo run -p ch03-1-harness-cli -- --mock ask "Say hello"
+```
+
+```text
+tools: 1
+schema: {"additionalProperties":false,"properties":{"text":{"type":"string"}},"required":["text"],"type":"object"}
+echo: hello
+```
+
+```text
+(mock) I heard you.
+event: text-delta (mock) I heard you.
+event: done
+```
+
+This copy of the CLI still speaks OpenRouter. The optional live command is the same binary without `--mock`. I did not make that call. With the key unset:
+
+```bash
+cargo run -p ch03-1-harness-cli -- ask "Say hello"
+```
+
+```text
+event: error missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
+error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
+```
+
 ## 3.2 Toolsets
 
 A registry of everything the process *could* call is not the list the model should see. Hermes hides tools behind toolsets. I do the same. A `Toolset` has a name, the environment variable that enables it, a check, and its tools. `Catalog::available` builds a registry of the sets that passed. A missing variable, an empty value, or a check that returns false leaves that set out.
@@ -134,6 +166,38 @@ available_tools_50      time:   [21.902 µs 21.945 µs 21.970 µs]
 | Benchmark | Mean | Target | Machine |
 |---|---|---|---|
 | `available_tools_50` | 21.89 µs | < 1 ms | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0, sample size 10 |
+
+### Milestone demo
+
+The example turns the time toolset on and leaves notes off. `--mock ask` is the offline model path in this copy.
+
+```bash
+cargo run -p ch03-2-harness-core --example demo
+cargo run -p ch03-2-harness-cli -- --mock ask "Say hello"
+```
+
+```text
+available: 1
+tool: clock — clock tool
+omitted: note (HARNESS_NOTES is unset)
+```
+
+```text
+(mock) I heard you.
+event: text-delta (mock) I heard you.
+event: done
+```
+
+The optional live command was not run. With `OPENROUTER_API_KEY` unset:
+
+```bash
+cargo run -p ch03-2-harness-cli -- ask "Say hello"
+```
+
+```text
+event: error missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
+error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
+```
 
 ## 3.3 Concurrent reads, exclusive writes
 
@@ -216,6 +280,50 @@ dispatch_8_reads_sequential
 Tokio's 1 ms sleep is a bit more than 1 ms on this guest, so one wave measured 2.362 ms and eight in a row measured 17.55 ms. That is about 7.4 times, which is the "one call, not eight" budget. The 20 ms demo above is the same comparison with a sleep that dominates the overhead: 21.4 ms versus 170.0 ms.
 
 CI runs these three steps on Ubuntu, macOS, and Windows. The benches run on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml).
+
+### Milestone demo
+
+Eight reads that each wait 20 ms. This run finished in 21.5 ms together and 168.6 ms one at a time. The earlier 21.4 ms / 170.0 ms figures are the previous run of the same example. `--mock ask` does not call those tools. It only prints the scripted reply.
+
+```bash
+cargo run -p ch03-3-harness-core --example demo
+HARNESS_ECHO=1 cargo run -p ch03-3-harness-cli -- tools
+cargo run -p ch03-3-harness-cli -- --mock ask "Say hello"
+```
+
+```text
+read-0
+read-1
+read-2
+read-3
+read-4
+read-5
+read-6
+read-7
+concurrent_ms: 21.5
+sequential_ms: 168.6
+```
+
+```text
+echo
+```
+
+```text
+(mock) I heard you.
+event: text-delta (mock) I heard you.
+event: done
+```
+
+The optional live command was not run. With the key unset:
+
+```bash
+cargo run -p ch03-3-harness-cli -- ask "Say hello"
+```
+
+```text
+event: error missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
+error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
+```
 
 ## Chapter summary
 
