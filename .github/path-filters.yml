@@ -1,7 +1,8 @@
 # Filter names for real steps match steps/ directory names.
 # `shared` means "retest every step that exists". Planned steps are listed so a
 # new steps/chNN-* directory is picked up without editing the workflow.
-# The chapter plan itself is .github/chapters.json (chapters 0–41, parts I–VI).
+# The chapter plan itself is .github/chapters.json (chapters 0–48, parts I–VI).
+# Server-track steps use the gw- prefix. Only gw-minimal-server exists today.
 shared:
   - "Cargo.toml"
   - "Cargo.lock"
@@ -81,10 +82,32 @@ ch06-9-outcome:
 ch06-10-evals:
   - "steps/ch06-10-evals/**"
   - "steps/ch04-fixture/**"
+gw-minimal-server:
+  - "steps/gw-minimal-server/**"
+  - "mcp-gateway/**"
+gw-catalog:
+  - "steps/gw-catalog/**"
+  - "mcp-gateway/**"
+gw-session-toolsets:
+  - "steps/gw-session-toolsets/**"
+  - "mcp-gateway/**"
+gw-limits:
+  - "steps/gw-limits/**"
+  - "mcp-gateway/**"
+gw-learned-tools:
+  - "steps/gw-learned-tools/**"
+  - "mcp-gateway/**"
+gw-balancing:
+  - "steps/gw-balancing/**"
+  - "mcp-gateway/**"
+gw-service:
+  - "steps/gw-service/**"
+  - "mcp-gateway/**"
+gw-capstone:
+  - "steps/gw-capstone/**"
+  - "mcp-gateway/**"
 ch07-turn-state:
   - "steps/ch07-turn-state/**"
-ch08-mcp-server:
-  - "steps/ch08-mcp-server/**"
 ch09-approvals:
   - "steps/ch09-approvals/**"
 ch10-hooks:

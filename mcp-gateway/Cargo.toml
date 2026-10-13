@@ -1,0 +1,10 @@
+[package]
+name = "mcp-gateway"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+description = "Standalone MCP gateway. The skeleton holds an empty catalog and binds no socket."
+
+[lib]
+name = "mcp_gateway"

@@ -27,20 +27,21 @@ cargo run -p ch02-harness-cli -- --mock chat
 | ch04-2-http | 4.2 | Streamable HTTP on `127.0.0.1`, HTTP round-trip bench |
 | ch04-3-registry | 4.3 | MCP tools in the chapter 3 registry and dispatcher |
 | ch04-4-cache | 4.4 | Cached `tools/list`, `list_changed`, `ask` |
-| ch05-1-schema-cost | 5.1 | Synthetic MCP-shaped catalog, schema-token estimate |
-| ch05-2-tool-index | 5.2 | BM25 index over names and descriptions, optional `Embedder` |
-| ch05-3-search-tool | 5.3 | `search_tools`, append-only reveal, cap and eviction |
-| ch05-4-routing | 5.4 | Route by server, trim descriptions, consistent names |
-| ch05-5-lazy-list | 5.5 | Cached `tools/list`, `tools/list_changed`, per-agent view, `cards_from_listed`, `ask` |
-| ch06-1-live | 6.1 | Optional `--live` OpenRouter call with echo and note. Mock is the default |
-| ch06-2-cancel | 6.2 | `CancellationToken`, soft stop and hard stop, raced with `select!` |
-| ch06-3-validate | 6.3 | Unknown-tool repair, JSON retry, timeouts as tool results |
-| ch06-4-stall | 6.4 | Identical-call stub and A,B cycle halt |
-| ch06-5-budget | 6.5 | Iteration warning, 80% time wrap-up, refund, subagent cap |
-| ch06-6-truncate | 6.6 | Per-tool output cap, head and tail kept |
-| ch06-7-steer | 6.7 | Session-inbox steer appended to the latest tool result |
-| ch06-8-canonical | 6.8 | Sorted, compact tool-call arguments on the send path |
-| ch06-9-outcome | 6.9 | `TurnOutcome` enum and a budget wrap-up call |
-| ch06-10-evals | 6.10 | Stress evals, optionally live, still keyless in CI |
+| ch05-1-schema-cost | 6 (section 5.1) | Synthetic MCP-shaped catalog, schema-token estimate |
+| ch05-2-tool-index | 6 (section 5.2) | BM25 index over names and descriptions, optional `Embedder` |
+| ch05-3-search-tool | 6 (section 5.3) | `search_tools`, append-only reveal, cap and eviction |
+| ch05-4-routing | 6 (section 5.4) | Route by server, trim descriptions, consistent names |
+| ch05-5-lazy-list | 6 (section 5.5) | Cached `tools/list`, `tools/list_changed`, per-agent view, `cards_from_listed`, `ask` |
+| ch06-1-live | 9 (section 6.1) | Optional `--live` OpenRouter call with echo and note. Mock is the default |
+| ch06-2-cancel | 9 (section 6.2) | `CancellationToken`, soft stop and hard stop, raced with `select!` |
+| ch06-3-validate | 9 (section 6.3) | Unknown-tool repair, JSON retry, timeouts as tool results |
+| ch06-4-stall | 9 (section 6.4) | Identical-call stub and A,B cycle halt |
+| ch06-5-budget | 9 (section 6.5) | Iteration warning, 80% time wrap-up, refund, subagent cap |
+| ch06-6-truncate | 9 (section 6.6) | Per-tool output cap, head and tail kept |
+| ch06-7-steer | 9 (section 6.7) | Session-inbox steer appended to the latest tool result |
+| ch06-8-canonical | 9 (section 6.8) | Sorted, compact tool-call arguments on the send path |
+| ch06-9-outcome | 9 (section 6.9) | `TurnOutcome` enum and a budget wrap-up call |
+| ch06-10-evals | 9 (section 6.10) | Stress evals, optionally live, still keyless in CI |
+| gw-minimal-server | 5 *(server)* | Empty `mcp-gateway` catalog. No socket |
 
-Your own copy is `my-harness/` at the repo root. Milestone tests there start failing until you implement each chapter. The course plan is chapters 0–41 in six parts, listed in `book/book-outline.md` and `.github/chapters.json`. Performance budgets for every chapter are `docs/performance.md`. MCP is a first-class tool boundary from chapter 3 (client in chapter 4, server in chapter 8). Part II is how one agent learns; the design is `docs/self-improvement.md`. How the team patterns fit together is `docs/team-patterns.md`. Only the steps in the table above exist so far.
+Your own copy is `my-harness/` at the repo root. Milestone tests there start failing until you implement each chapter. The course plan is chapters 0–48 in six parts, listed in `book/book-outline.md` and `.github/chapters.json`. Performance budgets for every chapter are `docs/performance.md`. MCP is a first-class tool boundary from chapter 3 (client in chapter 4, gateway server in chapter 5). The gateway design is `docs/mcp-gateway.md`. Part II is how one agent learns; the design is `docs/self-improvement.md`. How the team patterns fit together is `docs/team-patterns.md`. Only the steps in the table above exist so far. Later `gw-*` rows in the outline are the plan, not empty crates. Section numbers inside chapters 6 and 9 stay aligned with the `ch05-*` and `ch06-*` crate names.

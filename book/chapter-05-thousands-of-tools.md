@@ -1,6 +1,8 @@
-# Chapter 5: Thousands of Tools
+# Chapter 6: Thousands of Tools
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
+
+The section headings below stay 5.1–5.5. They match the `steps/ch05-*` crates. This is book chapter 6, the client half of the catalog.
 
 Chapter 3 can hold a few dozen tools. A registry lookup in that map was 13.96 ns, and the model was shown every schema that passed its gate. That stops working when the catalog is the size of a real MCP workspace: several servers, each with its own list, easily a thousand tools and sometimes ten thousand. Three things get worse together. The prompt grows by the schema text, so the provider bills more input tokens. The model has more near-matches to choose from, so it calls the wrong tool more often. And every turn pays that cost even when the user asked for one rename.
 
@@ -370,7 +372,7 @@ Chapter 4's `ToolListCache` is the connection that sees the real notification. T
 
 `AgentView` is the per-agent toolset: an agent name and the servers it may use. Two agents can hold the same cached `Arc` and see different servers. The loaded names, the core tool plus whatever `begin_turn` has revealed, are the ones chapter 3's registry would actually register. The other cards stay as data until a search reveals them.
 
-Two groupings use this same filter later, and this chapter does not build them. Code mode is one code tool plus the sandbox in chapter 11: the model sees that tool, and the sandbox runs the code, instead of seeing thousands of file tools. A specialist is a sub-agent with its own server set. The supervisor in chapter 23 is where that sub-agent is called. Both are a view over one catalog.
+Two groupings use this same filter later, and this chapter does not build them. Code mode is one code tool plus the sandbox in chapter 13: the model sees that tool, and the sandbox runs the code, instead of seeing thousands of file tools. A specialist is a sub-agent with its own server set. The supervisor in chapter 27 is where that sub-agent is called. Both are a view over one catalog.
 
 ### Build, run, and benchmark
 
@@ -462,4 +464,6 @@ A live call, when a key is present, posts to OpenRouter with the chapter 1 clien
 
 Chapter 4 is the MCP client. A session there lists tools and hears `list_changed`. `cards_from_listed` is how that list becomes the cards this chapter already caches. The generator stays for the benches.
 
-Chapter 6 is the agent loop: the model chooses a tool, the dispatcher runs it, and the result comes back as a message. `search_tools` is one of those choices. The loop is also where a cancellation token and a budget show up, and where the saved eval set starts.
+This chapter is the client half of the catalog. It decides what enters the prompt: the task, the budget, the cache, and which servers an agent may see. Chapter 5 is the process that will hold the catalog, a separate MCP server. The skeleton is `mcp-gateway/`. It offers no tools and binds no socket. The chapter text is not written yet.
+
+Chapter 7 is the server-side catalog and search, on that process. Chapter 9 is the agent loop: the model chooses a tool, the dispatcher runs it, and the result comes back as a message. `search_tools` is one of those choices. The loop is also where a cancellation token and a budget show up, and where the saved eval set starts.

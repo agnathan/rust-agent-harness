@@ -78,6 +78,6 @@ If you're new to Rust like me, read the chapters in order and do the exercises. 
 
 [personal note: first impressions of Rust after the setup chapter]
 
-If you already know Rust and are here for the agent architecture, skim to Chapter 6 (the loop), Chapter 7 (the turn state machine), and Chapters 23 and 29–30 (the supervisor, actors, and supervision). Each has a "How Hermes does it" section with file paths, so you can read the Python next to the Rust.
+If you already know Rust and are here for the agent architecture, skim to Chapter 9 (the loop), Chapter 10 (the turn state machine), and Chapters 27 and 33–34 (the supervisor, actors, and supervision). Each has a "How Hermes does it" section with file paths, so you can read the Python next to the Rust.
 
 Let's start with `cargo new`.

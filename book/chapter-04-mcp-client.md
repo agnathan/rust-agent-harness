@@ -13,7 +13,7 @@ The server in the tests is a fixture in this repo, `steps/ch04-fixture`. It does
 | 4.3 | `steps/ch04-3-registry` | remote tools in the chapter 3 registry and dispatcher |
 | 4.4 | `steps/ch04-4-cache` | a `tools/list` cache dropped by `list_changed` |
 
-Each step is its own copy. Section 4.1 still builds after 4.4 exists. The library crate in every copy is still named `harness_core`. Two of those crates cannot be dependencies of one package, which is why chapter 5 does not link `rmcp`. It takes a list of cards. The end of this chapter is where that list comes from.
+Each step is its own copy. Section 4.1 still builds after 4.4 exists. The library crate in every copy is still named `harness_core`. Two of those crates cannot be dependencies of one package, which is why chapter 6 does not link `rmcp`. It takes a list of cards. The end of this chapter is where that list comes from.
 
 `rmcp` 3.5.1 needs rustc 1.88. These four crates, and the fixture, set `rust-version = "1.88"`. The earlier chapters stay on 1.85. CI installs stable, which is past 1.88 on the runners I use.
 
@@ -39,7 +39,7 @@ Tests then see `CARGO_BIN_EXE_mcp_fixture`. Examples and benches do not, so `fix
 
 `readOnlyHint` absent means `Write`. MCP lets a server omit the hint. Treating the omission as a read would let a mutating tool overlap its neighbors. `note` omits the hint on purpose, and the registry records it as a write. `echo` sets the hint, and eight of those calls share the chapter 3 bound.
 
-The list cache is per session, and one notification drops it. Hermes coalesces. I want the notification to be visible in a test before I hide a burst. Chapter 5's `ListCache` is the place a large catalog is snapshotted for many agents. This chapter's `ToolListCache` is the place one connection remembers the last `tools/list`.
+The list cache is per session, and one notification drops it. Hermes coalesces. I want the notification to be visible in a test before I hide a burst. Chapter 6's `ListCache` is the place a large catalog is snapshotted for many agents. This chapter's `ToolListCache` is the place one connection remembers the last `tools/list`.
 
 No step calls OpenRouter. `--mock` on the 4.4 CLI runs the fixture. Without `--mock`, a missing `OPENROUTER_API_KEY` is the chapter 1 error, and a key that is present is refused with "this demo does not place a live OpenRouter call". The refusal is the whole live path.
 
@@ -264,7 +264,7 @@ tools: echo, grow, note, ping
 echo: hello
 ```
 
-## 4.4 A cache, and the chapter 5 seam
+## 4.4 A cache, and the chapter 6 seam
 
 `ToolListCache` holds the session and `Option<Arc<[RemoteTool]>>`. `list` calls `take_list_changed`. A `true` drops the cached `Arc`. A hit clones the `Arc` and does not call `list_tools`. A miss lists, stores the slice, and returns it.
 
@@ -285,7 +285,7 @@ pub async fn list(&mut self) -> Result<Arc<[RemoteTool]>, SessionError> {
 
 The test calls `grow`, then polls `list` until `extra` is present. `list_calls` is at least 2. The poll is there because the notify is spawned, so the flag can land a few milliseconds after `grew` returns.
 
-Chapter 5 does not depend on this crate. Two `harness_core` libraries cannot sit in one package. The seam is data. `ListedTool` is a name, a description, and a schema. `cards_from_listed(server, tools)` builds `ToolCard`s and sets `server`, which stays off the schema the model sees. `ListCache::from_cards` and `replace_cards` store that vec and mark the cache dirty. The synthetic generator is still what the 10,000-tool benches measure. A real list enters through the same two methods. The test `a_real_tools_list_uses_the_same_cache` builds an `echo` card, sees one `list` call and a shared `Arc` on the second read, then `replace_cards` adds `extra` and the next `list` returns both.
+Chapter 6 does not depend on this crate. Two `harness_core` libraries cannot sit in one package. The seam is data. `ListedTool` is a name, a description, and a schema. `cards_from_listed(server, tools)` builds `ToolCard`s and sets `server`, which stays off the schema the model sees. `ListCache::from_cards` and `replace_cards` store that vec and mark the cache dirty. The synthetic generator is still what the 10,000-tool benches measure. A real list enters through the same two methods. The test `a_real_tools_list_uses_the_same_cache` builds an `echo` card, sees one `list` call and a shared `Arc` on the second read, then `replace_cards` adds `extra` and the next `list` returns both.
 
 ### Build, run, and benchmark
 
@@ -318,7 +318,7 @@ mcp_list_hit            time:   [167.80 ns 168.07 ns 168.46 ns]
 | `mcp_list_cold` | 82.87 µs | one `tools/list` over stdio | same machine as 4.1 |
 | `mcp_list_hit` | 168.0 ns | < 1 µs | same |
 
-Chapter 5's synthetic hit was 17.56 ns because it clones an `Arc` and does no protocol. This hit is the same clone plus the atomic flag check, measured with `block_on` inside the iter, so the runtime setup is inside the sample. 168.0 ns is still under the 1 µs budget.
+Chapter 6's synthetic hit was 17.56 ns because it clones an `Arc` and does no protocol. This hit is the same clone plus the atomic flag check, measured with `block_on` inside the iter, so the runtime setup is inside the sample. 168.0 ns is still under the 1 µs budget.
 
 ### Milestone demo
 
@@ -364,12 +364,14 @@ The HTTP URL's port changes every run. A test that asserts a fixed port will fai
 - **HTTP.** The same three tools over streamable HTTP on `127.0.0.1`, JSON responses, port chosen by the OS. One round trip measured 215.7 µs.
 - **Registry.** Remote tools are `Arc<dyn Tool>`. A duplicate `echo` is rejected. `note` is a write because it has no read-only hint. Eight delayed reads overlapped. Fifty zero-delay calls measured 1.908 ms concurrent and 3.603 ms sequential.
 - **Cache.** Two reads of `tools/list` increment `list_calls` once. `grow` sends `list_changed`, and the next read sees `extra`. The cold list measured 82.87 µs. The hit measured 168.0 ns.
-- **Chapter 5.** `cards_from_listed`, `ListCache::from_cards`, and `replace_cards` take a real list without linking `rmcp`. The 10,000-tool benches still use the generator.
+- **Chapter 6.** `cards_from_listed`, `ListCache::from_cards`, and `replace_cards` take a real list without linking `rmcp`. The 10,000-tool benches still use the generator. The section crates for that chapter stay `steps/ch05-*`.
 
 [personal note: which part of MCP was harder than the protocol, the process lifetime or the list cache]
 
 ## What's next
 
-Chapter 5 already measured what happens when the list is thousands of tools long. The generator stays. A session from this chapter can feed that cache through `cards_from_listed`.
+Chapter 5 is a minimal MCP server, a separate process from this client. The skeleton is `mcp-gateway/`. It offers an empty catalog and binds no socket. The chapter is not written yet. That process is where the catalog will live.
 
-Chapter 6 is the agent loop. The model returns text or tool calls, the dispatcher runs native tools and these MCP tools, and the results come back as messages. A cancellation token and a budget sit on that loop, and a small saved eval set starts there.
+Chapter 6 already measured what happens when the list is thousands of tools long. The generator stays. A session from this chapter can feed that cache through `cards_from_listed`. That chapter is the client half: it decides what enters the prompt.
+
+Chapter 9 is the agent loop. The model returns text or tool calls, the dispatcher runs native tools and these MCP tools, and the results come back as messages. A cancellation token and a budget sit on that loop, and a small saved eval set starts there.

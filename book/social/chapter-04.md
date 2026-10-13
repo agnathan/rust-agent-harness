@@ -18,7 +18,7 @@ One stdio echo was 71.29 µs. The same call over streamable HTTP was 215.7 µs. 
 A cold tools/list was 82.87 µs. The cache hit was 168.0 ns. Every list_changed drops the cache. I did not coalesce a burst. Hermes does.
 
 5/
-Chapter 5's 10,000-tool benches still use a generator. A real list enters that cache through cards_from_listed. The demo is offline. --mock runs the fixture. Without a key the CLI prints the missing OPENROUTER_API_KEY error and stops. I did not paste a live model transcript.
+Chapter 6's 10,000-tool benches still use a generator. A real list enters that cache through cards_from_listed. The demo is offline. --mock runs the fixture. Without a key the CLI prints the missing OPENROUTER_API_KEY error and stops. I did not paste a live model transcript.
 
 [personal note]
 
@@ -42,6 +42,6 @@ The thousands-of-tools chapter still generates its catalog for the benches. A re
 
 [personal note: one takeaway from writing this chapter]
 
-Next up: the agent loop. Read Chapter 4: [link]
+Next up: a minimal MCP server (chapter 5), then thousands of tools (chapter 6). Read Chapter 4: [link]
 
 #Rust #AIAgents #LearningInPublic #SoftwareEngineering

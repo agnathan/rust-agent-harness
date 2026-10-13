@@ -1,0 +1,10 @@
+[package]
+name = "gw-minimal-mcp-gateway"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+description = "Chapter 5 step: the minimal MCP gateway skeleton."
+
+[dependencies]
+mcp-gateway = { path = "../../mcp-gateway" }

@@ -1,6 +1,6 @@
 # Self-improvement
 
-How one agent gets better with use, and how a team keeps one shared library. The book teaches the single-agent loop in Part II (chapters 15–21) and the shared library in Chapter 38. This page is the design those chapters implement.
+How one agent gets better with use, and how a team keeps one shared library. The book teaches the single-agent loop in Part II (chapters 18–25; chapter 21 is the server-side learned-tools row) and the shared library in Chapter 44. This page is the design those chapters implement.
 
 The shape follows Hermes Agent's closed learning loop: skills, memory, session search, a background review, and a curator. Two agents in this process still collaborate through the [team patterns](team-patterns.md). Learning writes into stores. It does not replace the supervisor.
 
@@ -94,7 +94,7 @@ Going over the budget returns how many characters to free, so the model consolid
 
 `snapshot()` is taken at session start and rendered into the system prompt. A write during the session takes effect next session. That keeps the prompt cache stable.
 
-`MemoryProvider` is the extension point for an external backend: `prefetch`, `sync_turn`, `on_pre_compress`, `on_delegation`. Chapter 10 defines the trait so a backend can be swapped. Chapter 16 is the file backend. Chapter 28 flushes memory before it compresses the conversation, so a fact that would otherwise be cut still has a chance to land in the file.
+`MemoryProvider` is the extension point for an external backend: `prefetch`, `sync_turn`, `on_pre_compress`, `on_delegation`. Chapter 12 defines the trait so a backend can be swapped. Chapter 19 is the file backend. Chapter 32 flushes memory before it compresses the conversation, so a fact that would otherwise be cut still has a chance to land in the file.
 
 ## Recall
 
@@ -133,7 +133,7 @@ The hook emits `ReviewReport` as a tracing event and, once the bus exists, on `l
 
 ## Team librarian
 
-Chapter 38 adds one more layer after the message bus exists. Each agent sees:
+Chapter 44 adds one more layer after the message bus exists. Each agent sees:
 
 - a team store, shared
 - an agent-local store, private
@@ -145,4 +145,4 @@ A child inherits a read-only snapshot of the parent's index and may load skills.
 
 The team library is versioned (a git-backed directory or a SQLite history) so a bad write can roll back. Each skill records who created it, which role, and which sessions contributed. `USER.md` stays per human. `MEMORY.md` stays per agent role. Facts about the team live in `TEAM.md`, writable only by the supervisor.
 
-The same library is what Chapter 8 serves over MCP, and what the capstone team (Chapter 40) accumulates across runs.
+The same library is what the MCP gateway serves once skills exist (the server starts in chapter 5; the service chapter is 38), and what the capstone team (Chapter 46) accumulates across runs.

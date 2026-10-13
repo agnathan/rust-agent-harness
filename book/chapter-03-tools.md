@@ -2,7 +2,7 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-A conversation that can only talk is still just a chat. The next thing the model needs is a way to *act*: look something up, write something down, and get a result back. This chapter adds that, in three steps. It does not add the loop that asks the model which tool to call. That is chapter 6. It also does not speak MCP on the wire. That is chapter 4. Loading thousands of tool schemas on demand, instead of putting every one in the prompt, is chapter 5. What it does add is the shape those later chapters will share.
+A conversation that can only talk is still just a chat. The next thing the model needs is a way to *act*: look something up, write something down, and get a result back. This chapter adds that, in three steps. It does not add the loop that asks the model which tool to call. That is chapter 9. It also does not speak MCP on the wire. That is chapter 4. Loading thousands of tool schemas on demand, instead of putting every one in the prompt, is chapter 6. What it does add is the shape those later chapters will share.
 
 By the end a tool has:
 
@@ -35,7 +35,7 @@ Each step is its own copy, the way chapter 1 was. Section 3.1 still builds after
 
 Four choices, before any of the code.
 
-The tool shape is MCP's shape now, while every tool is still a function in this process. Chapter 4 will list tools from another process and call them over stdio or HTTP. If the native tool and the remote tool were different types, the agent loop in chapter 6 would grow a match arm for each. One trait means the loop asks for a name and a JSON object, and the registry answers.
+The tool shape is MCP's shape now, while every tool is still a function in this process. Chapter 4 will list tools from another process and call them over stdio or HTTP. If the native tool and the remote tool were different types, the agent loop in chapter 9 would grow a match arm for each. One trait means the loop asks for a name and a JSON object, and the registry answers.
 
 The model is not in this chapter. `ask --mock` still prints the scripted reply from chapter 1. Nothing here sends a tool schema to OpenRouter. That split is what makes the registry tests able to run with no key and no wiremock. The CLI copies still know how to resolve an OpenRouter key, which is why each milestone includes the missing-key line, and why that line is an error from chapter 1 rather than a tool result.
 
@@ -88,7 +88,7 @@ pub enum ToolError {
 }
 ```
 
-`Failed` is the variant a tool uses when the work itself breaks: a missing file, a remote 500, a parse error inside the handler. Echo never returns it. `is_error: true` on a `ToolResult` is the milder form, a result the model should read. Chapter 6 is what turns either one into a `tool` message. This chapter only makes both representable, so a caller does not have to invent a third channel.
+`Failed` is the variant a tool uses when the work itself breaks: a missing file, a remote 500, a parse error inside the handler. Echo never returns it. `is_error: true` on a `ToolResult` is the milder form, a result the model should read. Chapter 9 is what turns either one into a `tool` message. This chapter only makes both representable, so a caller does not have to invent a third channel.
 
 `check_arguments` is the whole validator. If the schema has no `required` array, every argument object is accepted, including one the tool will ignore. If `required` is present, the arguments must be a JSON object, and every string in that array must be a key. A required entry that is not a string is skipped. Types, `additionalProperties`, enums, and nested objects are stored in the schema and not enforced. `EchoTool` then reads `text` with `as_str`. A number under that key passes the required check and becomes an empty string, because `as_str` returns none and the call uses `unwrap_or("")`. That is a hole. The tests cover the missing key and the non-object. They do not cover a present key of the wrong type, and I am leaving the hole visible rather than pretending `required` is a schema validator.
 
@@ -190,7 +190,7 @@ impl Tool for Arc<dyn Tool> {
 
 `Arc<dyn Tool>` is a `Tool`. A function that takes `impl Tool` can take the handle the registry stores, and `call` on the handle forwards to the concrete tool. The double deref is the `Arc`, then the trait object. Cloning the `Arc` shares the tool. It does not clone the handler.
 
-The registry is a `HashMap` from name to `Arc<dyn Tool>`. I picked a hash map over a `Vec` because dispatch looks up by the name the model will send, and a linear scan would show up once chapter 5 puts thousands of tools behind one registry. I picked it over an enum of every concrete tool because chapter 4 adds tools whose types do not exist in this crate.
+The registry is a `HashMap` from name to `Arc<dyn Tool>`. I picked a hash map over a `Vec` because dispatch looks up by the name the model will send, and a linear scan would show up once chapter 6 puts thousands of tools behind one registry. I picked it over an enum of every concrete tool because chapter 4 adds tools whose types do not exist in this crate.
 
 ```rust
 pub fn register(&mut self, tool: Arc<dyn Tool>) -> Result<(), ToolError> {
@@ -650,7 +650,7 @@ error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 - **The bound is per `call_reads`.** It is not a global cap on MCP calls, and it is not the session inbox bound of 64 from chapter 2. A second batch gets its own eight permits.
 - **An empty env value hides the set, and so does a missing key.** `"0"` hides notes only because that set's check says so. Time would treat `"0"` as on.
 - **One duplicate fails `available`.** The sets that passed earlier in the vec are not returned as a partial registry.
-- **`schemas()` sorts and clones.** Lookup is the 13.96 ns number. Building the prompt list is the 21.89 µs number, and chapter 5 is what happens when that list is thousands of tools long.
+- **`schemas()` sorts and clones.** Lookup is the 13.96 ns number. Building the prompt list is the 21.89 µs number, and chapter 6 is what happens when that list is thousands of tools long.
 - **The permit outlives the wait, on purpose.** Holding it across `tool.call` is what caps in-flight work. Holding a `Mutex` across that same wait would pin a worker. `LatencyTool` locks only to push the span, before and after the sleep.
 
 ## Chapter summary
@@ -666,4 +666,4 @@ error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 
 Chapter 4 is the MCP client, built with `rmcp`. It connects over stdio and streamable HTTP, lists tools, and calls them. Those tools land in this same registry, and this dispatcher is the scheduler they share with `echo`.
 
-Chapter 5 is what happens when that list is thousands of tools long. It keeps this registry. The 10,000-tool benches still use a synthetic generator. A real `tools/list` enters that cache through `cards_from_listed`. The loop that lets the model choose a tool, and the `tool` messages that carry the result, are chapter 6.
+Chapter 5 is a minimal MCP server in its own process. The skeleton offers no tools. Chapter 6 is what happens when that list is thousands of tools long. It keeps this registry. The 10,000-tool benches still use a synthetic generator. A real `tools/list` enters that cache through `cards_from_listed`. The loop that lets the model choose a tool, and the `tool` messages that carry the result, are chapter 9.

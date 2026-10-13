@@ -1,8 +1,8 @@
-# Social posts: Chapter 6, "The Agent Loop"
+# Social posts: Chapter 9, "The Agent Loop"
 
 ## X thread
 1/
-Chapter 6 of my "learning Rust by building a multi-agent harness" series is up: The Agent Loop.
+Chapter 9 of my "learning Rust by building a multi-agent harness" series is up: The Agent Loop.
 
 Ten sections. The model returns text or tool calls. The dispatcher runs them. The results become messages. Then it asks again, unless the turn has a reason to stop. 🧵
 
@@ -28,14 +28,14 @@ Seven mock evals pass: echo, a direct answer, eight overlapping reads, a tool th
 [personal note]
 
 7/
-Next, the turn state machine: TurnOutcome is already one variant per exit. That chapter is the transition table around it.
+Next, chapter 10, the turn state machine: TurnOutcome is already one variant per exit. That chapter is the transition table around it.
 
-Read Chapter 6: [link]
+Read Chapter 9: [link]
 
 #rustlang #AIagents
 
 ## LinkedIn
-Chapter 6 of my "learning Rust by building a multi-agent harness" series is out: The Agent Loop.
+Chapter 9 of my "learning Rust by building a multi-agent harness" series is out: The Agent Loop.
 
 The earlier chapters can talk to a model, store a conversation, run tools, and call an MCP server. They do not yet take a turn. This chapter is that turn, split into ten sections so each check has its own demo, tests, and bench.
 
@@ -47,6 +47,6 @@ The mock is the default. An optional `--live` flag calls OpenRouter with echo an
 
 [personal note: one takeaway from writing this chapter]
 
-Next up: the turn state machine. Read Chapter 6: [link]
+Next up: chapter 10, the turn state machine. Read Chapter 9: [link]
 
 #Rust #AIAgents #LearningInPublic #SoftwareEngineering

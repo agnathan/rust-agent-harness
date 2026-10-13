@@ -48,4 +48,6 @@ members = [
     "steps/ch06-10-evals/crates/harness-core",
     "steps/ch06-10-evals/crates/harness-cli",
     "my-harness",
+    "mcp-gateway",
+    "steps/gw-minimal-server",
 ]

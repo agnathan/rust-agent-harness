@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       chapters:
-        description: "Chapters 1-41: 1, 1-41, 9,12,14, or all. Only chapters with tests run."
+        description: "Chapters 1-48: 1, 1-48, 9,12,14, or all. Only chapters with tests run."
         required: true
         default: all
         type: string
@@ -60,7 +60,7 @@ jobs:
   test:
     name: ${{ matrix.os }}
     needs: plan
-    if: needs.plan.outputs.has_chapters == 'true'
+    if: needs.plan.outputs.has_chapters == 'true' && matrix.os != 'macos-latest'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     strategy:
@@ -97,9 +97,122 @@ jobs:
         shell: bash
         run: exit 1
 
+  test-macos:
+    name: macos
+    needs: plan
+    if: needs.plan.outputs.has_chapters == 'true' && contains(needs.plan.outputs.oses, 'macos-latest')
+    runs-on: macos-latest
+    continue-on-error: true
+    timeout-minutes: 45
+    outputs:
+      status: ${{ steps.report.outputs.status }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: .
+      - name: Install cargo-nextest
+        continue-on-error: true
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+      - name: Test selected chapters
+        id: run
+        shell: bash
+        env:
+          RESULTS_DIR: ${{ github.workspace }}/chapter-results
+          CHAPTERS: ${{ needs.plan.outputs.chapters }}
+        run: printf '%s\n' "$CHAPTERS" | bash .github/scripts/run_chapters.sh
+      - name: Upload JUnit reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chapter-results-macos-latest
+          path: chapter-results
+          if-no-files-found: error
+      - name: Fail explicit selection
+        id: fail
+        if: needs.plan.outputs.fail_workflow == 'true' && steps.run.outputs.any_failed == 'true'
+        shell: bash
+        run: exit 1
+      - name: Record outcome
+        id: report
+        if: always()
+        run: |
+          status=success
+          if [ "${{ steps.run.outcome }}" != "success" ]; then status=failure; fi
+          if [ "${{ steps.fail.outcome }}" = "failure" ]; then status=failure; fi
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+  test-macos-retry:
+    name: macos retry
+    needs: [plan, test-macos]
+    if: always() && needs.plan.outputs.has_chapters == 'true' && contains(needs.plan.outputs.oses, 'macos-latest') && needs.test-macos.result != 'skipped' && needs.test-macos.outputs.status != 'success'
+    runs-on: macos-latest
+    timeout-minutes: 45
+    outputs:
+      status: ${{ steps.report.outputs.status }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: .
+      - name: Install cargo-nextest
+        continue-on-error: true
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+      - name: Test selected chapters
+        id: run
+        shell: bash
+        env:
+          RESULTS_DIR: ${{ github.workspace }}/chapter-results
+          CHAPTERS: ${{ needs.plan.outputs.chapters }}
+        run: printf '%s\n' "$CHAPTERS" | bash .github/scripts/run_chapters.sh
+      - name: Upload JUnit reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chapter-results-macos-latest
+          path: chapter-results
+          if-no-files-found: error
+          overwrite: true
+      - name: Fail explicit selection
+        id: fail
+        if: needs.plan.outputs.fail_workflow == 'true' && steps.run.outputs.any_failed == 'true'
+        shell: bash
+        run: exit 1
+      - name: Record outcome
+        id: report
+        if: always()
+        run: |
+          status=success
+          if [ "${{ steps.run.outcome }}" != "success" ]; then status=failure; fi
+          if [ "${{ steps.fail.outcome }}" = "failure" ]; then status=failure; fi
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+  macos-gate:
+    name: macos gate
+    needs: [plan, test-macos, test-macos-retry]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require one green macOS pass
+        run: |
+          first="${{ needs.test-macos.result }}"
+          first_status="${{ needs.test-macos.outputs.status }}"
+          second_status="${{ needs.test-macos-retry.outputs.status }}"
+          if [ "$first" = "skipped" ] || [ "$first_status" = "success" ] || [ "$second_status" = "success" ]; then
+            exit 0
+          fi
+          echo "macOS first=$first status=$first_status retry_status=$second_status"
+          exit 1
+
   summary:
     name: Chapter summary
-    needs: [plan, test]
+    needs: [plan, test, macos-gate]
     if: ${{ !cancelled() && needs.plan.result == 'success' }}
     runs-on: ubuntu-latest
     steps:

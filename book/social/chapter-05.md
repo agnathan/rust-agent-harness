@@ -1,8 +1,8 @@
-# Social posts: Chapter 5, "Thousands of Tools"
+# Social posts: Chapter 6, "Thousands of Tools"
 
 ## X thread
 1/
-Chapter 5 of my "learning Rust by building a multi-agent harness" series is up: Thousands of Tools.
+Chapter 6 of my "learning Rust by building a multi-agent harness" series is up: Thousands of Tools.
 
 Ten thousand MCP-shaped schemas were 517,572 estimated tokens. A 50-tool registry was 2,508. The model does not need to see all of them. 🧵
 
@@ -31,12 +31,12 @@ No live model call. --mock is the demo. Without a key the CLI prints the missing
 6/
 Next, the agent loop: the model picks a tool, including search_tools, and the result comes back as a message.
 
-Read Chapter 5: [link]
+Read Chapter 6: [link]
 
 #rustlang #AIagents
 
 ## LinkedIn
-Chapter 5 of my "learning Rust by building a multi-agent harness" series is out: Thousands of Tools.
+Chapter 6 of my "learning Rust by building a multi-agent harness" series is out: Thousands of Tools.
 
 Putting every tool schema in the prompt gets expensive, and it makes the model worse at choosing. I measured a synthetic catalog in the same shape MCP uses. Ten thousand tools were 517,572 estimated tokens. Fifty tools were 2,508. The words "rename a file" still matched 192 of the ten thousand, so the model would be choosing among a crowd after reading everyone else.
 
@@ -50,6 +50,6 @@ The 10,000-tool benches still generate the catalog. Chapter 4's client hands a r
 
 [personal note: one takeaway from writing this chapter]
 
-Next up: the agent loop. Read Chapter 5: [link]
+Next up: the server-side catalog (chapter 7), then the agent loop (chapter 9). Read Chapter 6: [link]
 
 #Rust #AIAgents #LearningInPublic #SoftwareEngineering
