@@ -47,9 +47,9 @@ Open this repo in GitHub Codespaces. The dev container installs stable Rust (cli
 
 ```bash
 rustc --version
-cargo nextest run -p ch01-4-harness-core -p ch02-harness-core -p ch04-4-harness-core -p ch05-5-harness-core -p ch06-harness-core --locked
+cargo nextest run -p ch01-4-harness-core -p ch02-harness-core -p ch04-4-harness-core -p ch05-5-harness-core -p ch06-10-harness-core --locked
 cargo run -p ch04-4-harness-cli -- --mock ask "hello"
-cargo run -p ch06-harness-cli -- --mock ask "say hello"
+cargo run -p ch06-1-harness-cli -- ask "say hello"
 mdbook build book
 ```
 
@@ -67,7 +67,7 @@ Chapters 0 through 41, in six parts. Performance is a budget on every chapter, s
 | 3 | Tools | `steps/ch03-1-registry`, `ch03-2-toolsets`, `ch03-3-dispatch` | an MCP-shaped tool trait, named toolsets gated on env and checks, concurrent reads and exclusive writes |
 | 4 | MCP Client | `steps/ch04-1-stdio`, `ch04-2-http`, `ch04-3-registry`, `ch04-4-cache` | `rmcp` over stdio and streamable HTTP; MCP and native tools share one scheduler; a cached `tools/list` |
 | 5 | Thousands of Tools | `steps/ch05-1-schema-cost`, `ch05-2-tool-index`, `ch05-3-search-tool`, `ch05-4-routing`, `ch05-5-lazy-list` | load tools on demand: schema cost, a search index, `search_tools`, routing, a cached list |
-| 6 | The Agent Loop | `steps/ch06-agent-loop` | model, tools, results, repeat; a cancellation token and a budget; a saved eval set |
+| 6 | The Agent Loop | `steps/ch06-10-evals` | model, tools, results, repeat; cancellation; validation; stall; budget; truncation; steering; canonical args; a typed outcome; stress evals |
 | 7 | The Turn State Machine | `steps/ch07-turn-state` | one explicit turn, right after the loop |
 | 8 | MCP Server | `steps/ch08-mcp-server` | expose this harness's tools, and later agents and skills, to other clients |
 | 9 | Approvals and Guardrails | `steps/ch09-approvals` | risk levels, human or second-model review or skip, one approval prompt at a time |

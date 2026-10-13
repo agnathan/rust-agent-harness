@@ -537,28 +537,282 @@ dependencies = [
 ]
 
 [[package]]
-name = "ch06-harness-cli"
+name = "ch06-1-harness-cli"
 version = "0.1.0"
 dependencies = [
- "ch06-harness-core",
+ "ch06-1-harness-core",
  "clap",
  "serde_json",
  "tokio",
 ]
 
 [[package]]
-name = "ch06-harness-core"
+name = "ch06-1-harness-core"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
  "axum",
  "criterion",
+ "reqwest 0.12.28",
  "rmcp",
  "serde",
  "serde_json",
  "thiserror",
  "tokio",
+ "wiremock",
+]
+
+[[package]]
+name = "ch06-10-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch06-10-harness-core",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "ch06-10-harness-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "criterion",
+ "reqwest 0.12.28",
+ "rmcp",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch06-2-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch06-2-harness-core",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "ch06-2-harness-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "criterion",
+ "reqwest 0.12.28",
+ "rmcp",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch06-3-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch06-3-harness-core",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "ch06-3-harness-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "criterion",
+ "reqwest 0.12.28",
+ "rmcp",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch06-4-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch06-4-harness-core",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "ch06-4-harness-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "criterion",
+ "reqwest 0.12.28",
+ "rmcp",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch06-5-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch06-5-harness-core",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "ch06-5-harness-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "criterion",
+ "reqwest 0.12.28",
+ "rmcp",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch06-6-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch06-6-harness-core",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "ch06-6-harness-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "criterion",
+ "reqwest 0.12.28",
+ "rmcp",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch06-7-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch06-7-harness-core",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "ch06-7-harness-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "criterion",
+ "reqwest 0.12.28",
+ "rmcp",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch06-8-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch06-8-harness-core",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "ch06-8-harness-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "criterion",
+ "reqwest 0.12.28",
+ "rmcp",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch06-9-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch06-9-harness-core",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "ch06-9-harness-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "criterion",
+ "reqwest 0.12.28",
+ "rmcp",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
 ]
 
 [[package]]
@@ -2306,6 +2560,7 @@ dependencies = [
  "bytes",
  "futures-core",
  "futures-sink",
+ "futures-util",
  "libc",
  "pin-project-lite",
  "tokio",

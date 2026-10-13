@@ -57,8 +57,26 @@ jobs:
         run: cargo bench -p ch05-4-harness-core --bench routing --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
       - name: Section 5.5 lazy list
         run: cargo bench -p ch05-5-harness-core --bench lazy_list --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
-      - name: Chapter 6 agent loop
-        run: cargo bench -p ch06-harness-core --bench loop_iter --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+      - name: Section 6.1 live tool body
+        run: cargo bench -p ch06-1-harness-core --bench loop_iter --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+      - name: Section 6.2 cancellation
+        run: cargo bench -p ch06-2-harness-core --bench loop_iter --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+      - name: Section 6.3 validation
+        run: cargo bench -p ch06-3-harness-core --bench loop_iter --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+      - name: Section 6.4 stall
+        run: cargo bench -p ch06-4-harness-core --bench loop_iter --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+      - name: Section 6.5 budget notice
+        run: cargo bench -p ch06-5-harness-core --bench loop_iter --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+      - name: Section 6.6 truncation
+        run: cargo bench -p ch06-6-harness-core --bench loop_iter --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+      - name: Section 6.7 steering
+        run: cargo bench -p ch06-7-harness-core --bench loop_iter --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+      - name: Section 6.8 canonical args
+        run: cargo bench -p ch06-8-harness-core --bench loop_iter --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+      - name: Section 6.9 turn outcome
+        run: cargo bench -p ch06-9-harness-core --bench loop_iter --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+      - name: Section 6.10 stress eval
+        run: cargo bench -p ch06-10-harness-core --bench loop_iter --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"

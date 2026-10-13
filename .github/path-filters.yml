@@ -51,8 +51,36 @@ ch05-4-routing:
   - "steps/ch05-4-routing/**"
 ch05-5-lazy-list:
   - "steps/ch05-5-lazy-list/**"
-ch06-agent-loop:
-  - "steps/ch06-agent-loop/**"
+ch06-1-live:
+  - "steps/ch06-1-live/**"
+  - "steps/ch04-fixture/**"
+ch06-2-cancel:
+  - "steps/ch06-2-cancel/**"
+  - "steps/ch04-fixture/**"
+ch06-3-validate:
+  - "steps/ch06-3-validate/**"
+  - "steps/ch04-fixture/**"
+ch06-4-stall:
+  - "steps/ch06-4-stall/**"
+  - "steps/ch04-fixture/**"
+ch06-5-budget:
+  - "steps/ch06-5-budget/**"
+  - "steps/ch04-fixture/**"
+ch06-6-truncate:
+  - "steps/ch06-6-truncate/**"
+  - "steps/ch04-fixture/**"
+ch06-7-steer:
+  - "steps/ch06-7-steer/**"
+  - "steps/ch04-fixture/**"
+ch06-8-canonical:
+  - "steps/ch06-8-canonical/**"
+  - "steps/ch04-fixture/**"
+ch06-9-outcome:
+  - "steps/ch06-9-outcome/**"
+  - "steps/ch04-fixture/**"
+ch06-10-evals:
+  - "steps/ch06-10-evals/**"
+  - "steps/ch04-fixture/**"
 ch07-turn-state:
   - "steps/ch07-turn-state/**"
 ch08-mcp-server:

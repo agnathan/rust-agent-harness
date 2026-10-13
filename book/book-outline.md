@@ -31,13 +31,13 @@ The book is six parts and chapters 0 through 41. Performance is a budget on ever
 | 3 | Tools | `steps/ch03-1-registry`, `ch03-2-toolsets`, `ch03-3-dispatch` | traits, JSON Schema, a semaphore | 3.1 an MCP-shaped tool trait and registry; 3.2 named toolsets gated on env vars and checks, and the model is told only about tools that passed; 3.3 read-only calls run concurrently, writes run alone, both under a bound |
 | 4 | MCP Client | `steps/ch04-1-stdio`, `ch04-2-http`, `ch04-3-registry`, `ch04-4-cache` | `rmcp`, stdio, HTTP | 4.1 an `rmcp` session over stdio; 4.2 the same session over streamable HTTP; 4.3 MCP tools in the chapter 3 registry and dispatcher; 4.4 a `tools/list` cache dropped by `list_changed` |
 | 5 | Thousands of Tools | `steps/ch05-1-schema-cost`, `ch05-2-tool-index`, `ch05-3-search-tool`, `ch05-4-routing`, `ch05-5-lazy-list` | an inverted index, append-only prompts | 5.1 measure schema tokens for 1,000–10,000 tools; 5.2 a BM25 index, with embeddings behind a trait; 5.3 `search_tools` reveals schemas on the next turn, append-only, with a cap; 5.4 route by server, then shrink names and descriptions; 5.5 a cached `tools/list`, invalidated by `tools/list_changed`, a per-agent toolset, and `cards_from_listed` so chapter 4's real list uses the same cache. The 10,000-tool benches still use the synthetic catalog |
-| 6 | The Agent Loop | `steps/ch06-agent-loop` | enums for replies | model, native and MCP tools, results, repeat; a cancellation token and a budget (tokens, time, cost) on every call; a small saved eval set later chapters re-run |
+| 6 | The Agent Loop | `steps/ch06-10-evals` | enums for replies | ten sections: optional live OpenRouter, cancellation token with soft and hard stop, tool-call validation, stall detection, budget warning and wrap-up, output truncation, steering, canonical arguments, a typed turn outcome, and a stress eval set |
 | 7 | The Turn State Machine | `steps/ch07-turn-state` | enum state machines | one `TurnState` and a tested transition table, immediately after the loop |
 | 8 | MCP Server | `steps/ch08-mcp-server` | an MCP server | expose this harness's tools, and later agents and skills, so other clients can call them |
 | 9 | Approvals and Guardrails | `steps/ch09-approvals` | a mutex, risk as an enum | risk levels on a tool call; modes for a human, a second model, or skipping the check; concurrent calls wait on one approval prompt, and the wait does not hold a tool-concurrency permit |
 | 10 | Hooks and Plugins | `steps/ch10-hooks` | traits as extension points | before/after tool hooks, an API-request hook, rewriting a tool result, and a swappable memory backend; a hook may enable a toolset, and the availability check stays in the registry from chapter 3 |
 | 11 | Sandboxed Execution | `steps/ch11-sandbox` | a child process, a snapshot | a code tool that runs outside the harness process, plus a file checkpoint and rewind |
-| 12 | When Things Fail | `steps/ch12-when-things-fail` | matching on errors | classify failures, retry, fall back; MCP crashes, timeouts, reconnects; a timeout releases its concurrency permit |
+| 12 | When Things Fail | `steps/ch12-when-things-fail` | matching on errors | classify failures, retry, fall back; MCP crashes, timeouts, reconnects; a timeout releases its concurrency permit. Deferred from chapter 6: empty-response retries after tool calls (`agent/conversation_loop.py`), length continuation when a reply is cut off (`agent/turn_truncation.py`), and the repetition guard (`agent/repetition_guard.py`) |
 | 13 | Providers | `steps/ch13-providers` | another adapter behind the same trait | native Anthropic and Bedrock adapters beside the chapter 1 OpenRouter client; OpenRouter fallback and routing (a `models` array and provider preferences); key rotation on the pooled client; a cheaper side model for summaries |
 | 14 | Streaming | `steps/ch14-streaming` | folding a stream | server-sent deltas as the chapter 1 `Event` values, overlapped with safe tool execution, for each adapter |
 
@@ -49,13 +49,13 @@ The book is six parts and chapters 0 through 41. Performance is a budget on ever
 - **Chapter 3.** A lookup in a 50-tool registry is < 1 µs (measured 13.96 ns). The available-tool list for 50 tools is < 1 ms (measured 21.89 µs). Eight read-only tools that each sleep 1 ms finish together in 2.362 ms, against 17.55 ms one at a time. A write runs alone.
 - **Chapter 4.** Eight remote reads that each sleep 40 ms overlap on the chapter 3 bound. A stdio echo round trip measured 71.29 µs. Streamable HTTP on loopback measured 215.7 µs. Fifty zero-delay calls measured 1.908 ms concurrent and 3.603 ms sequential. A cold tools/list measured 82.87 µs, and the cache hit measured 168.0 ns.
 - **Chapter 5.** Schema-token estimate for 10,000 tools < 50 ms (measured 21.06 ms). Search over that index < 1 ms (measured 146.8 µs). The lazy prompt renders in 12.26 µs, and its core bytes stay identical when a result is revealed or evicted. A cache hit on `tools/list` is 17.56 ns. Filtering one agent's servers out of 10,000 tools is 77.00 µs.
-- **Chapter 6.** Loop-iteration overhead < 1 ms excluding the model (measured 263.9 ns). Checking the cancellation token or the budget is < 1 µs (measured 2.711 ns). A cancelled call does not start the next model request. Eight 1 ms reads in one turn measured 2.392 ms. Re-running the saved eval set on the mock stays inside the worker bound.
+- **Chapter 6.** Ten sections. Loop-iteration overhead < 1 ms excluding the model (measured 608.0 ns on the finished loop; 248.5 ns on the section 6.1 loop). Checking the cancellation token or the budget is < 1 µs (measured 11.92 ns). A cancelled call does not start the next model request. Eight 1 ms reads in one turn measured 2.421 ms. Name repair 188.8 ns, stall observe 100.0 ns, a budget notice 58.20 ns, truncation 3.174 µs, a steer append 47.12 ns, canonical arguments 771.0 ns. Re-running the saved eval set and the four stress evals on the mock stays inside the worker bound.
 - **Chapter 7.** A state transition < 1 µs. Turn overhead stays < 1 ms.
 - **Chapter 8.** Thirty-two in-flight calls accepted, eight executed at once.
 - **Chapter 9.** A skip decision is < 1 µs. Concurrent approvals serialize onto one prompt. Waiting on a human releases the tool permit.
 - **Chapter 10.** An empty before/after hook adds < 0.1 ms. An API-request hook does not copy the conversation. A memory-backend call that only records the turn enqueues in < 1 ms.
 - **Chapter 11.** A warm sandbox accepts a job in < 50 ms. Checkpoint and rewind of a 1,000-path manifest are each < 10 ms.
-- **Chapter 12.** A timeout cancels the in-flight call and releases its permit. Retries stay inside the bound.
+- **Chapter 12.** A timeout cancels the in-flight call and releases its permit. Retries stay inside the bound. Empty-response retries, length continuation, and the repetition guard, deferred from chapter 6, land here.
 - **Chapter 13.** Choosing the next native adapter, or the next OpenRouter route, adds < 1 ms, excluding the failed call. Rotation reuses the pooled client from chapter 1. A side-model summary does not run on the user turn unless that turn asked for it.
 - **Chapter 14.** Assembling a streamed reply from chapter 1 events adds < 1 ms versus a buffered reply, excluding model time.
 
@@ -105,13 +105,13 @@ The book is six parts and chapters 0 through 41. Performance is a budget on ever
 
 | Ch | Title | Step | Rust, just in time | What the harness gains |
 |---|---|---|---|---|
-| 28 | Managing Context | `steps/ch28-context` | slicing a `Vec` | compression, structured summaries from the side model in chapter 13, `[SKILL_PRUNED]` markers, a memory flush before compression |
+| 28 | Managing Context | `steps/ch28-context` | slicing a `Vec` | compression, structured summaries from the side model in chapter 13, `[SKILL_PRUNED]` markers, a memory flush before compression. Deferred from chapter 6: preflight compression before the model call (`agent/turn_context.py`, `agent/context_compressor.py`) |
 | 29 | Agents as Actors | `steps/ch29-actors` | bounded channels | one tokio task per agent; the mailbox is the session inbox from chapter 2; steering and backpressure |
 | 30 | Supervision and Restart | `steps/ch30-supervision` | atomics | restart a failed child. The cancellation token and the budget are already on the call from chapter 6 |
 
 **Performance budget**
 
-- **Chapter 28.** Compression and the memory flush run between turns or in the background. The hot path sends the `Arc` snapshot.
+- **Chapter 28.** Compression and the memory flush run between turns or in the background. The hot path sends the `Arc` snapshot. Preflight compression, deferred from chapter 6, runs before the model call.
 - **Chapter 29.** The session inbox capacity is 64. One hundred or more mock agents at once. A full inbox applies backpressure.
 - **Chapter 30.** Restarting a failed child adds < 1 ms, excluding the child's work.
 
@@ -153,7 +153,7 @@ The book is six parts and chapters 0 through 41. Performance is a budget on ever
 - **Chapter 40.** A span per event adds < 0.1 ms. The chapter 1 bench still meets its budget with tracing on. The capstone runs 100 or more concurrent mock agents.
 - **Chapter 41.** Re-running the saved eval set, and one hundred mock trajectories, stays inside the worker bound. Appending one trajectory event is < 1 ms.
 
-Chapters 1 through 6 have step crates so far. Chapters 1 and 4 are four sections each, and chapter 5 is five, each with a criterion bench. Chapter 5's 10,000-tool benches still use a synthetic catalog. A real `tools/list` enters that cache through `cards_from_listed`. Chapter 6 starts a saved eval set that later chapters re-run, and chapter 41 scores that set. Pull requests and pushes to `main` report the means in the Benchmarks workflow, upload one JSON artifact per commit, and chart the series when the job can publish to `gh-pages`. There is no fail threshold. Later rows are the plan, not empty crates. The same list is `.github/chapters.json`, which CI uses. Draft rows in `book/SUMMARY.md` are the chapters that are not written yet.
+Chapters 1 through 6 have step crates so far. Chapters 1 and 4 are four sections each, chapter 5 is five, and chapter 6 is ten, each with a criterion bench. Chapter 5's 10,000-tool benches still use a synthetic catalog. A real `tools/list` enters that cache through `cards_from_listed`. Chapter 6 starts a saved eval set that later chapters re-run, and chapter 41 scores that set. Pull requests and pushes to `main` report the means in the Benchmarks workflow, upload one JSON artifact per commit, and chart the series when the job can publish to `gh-pages`. There is no fail threshold. Later rows are the plan, not empty crates. The same list is `.github/chapters.json`, which CI uses. Draft rows in `book/SUMMARY.md` are the chapters that are not written yet.
 
 **Recurring sidebars:**
 

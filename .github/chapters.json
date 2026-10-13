@@ -5,7 +5,7 @@
   {"n": 3, "title": "Tools", "step": "ch03-3-dispatch", "sections": ["ch03-1-registry", "ch03-2-toolsets", "ch03-3-dispatch"], "part": "I"},
   {"n": 4, "title": "MCP Client", "step": "ch04-4-cache", "sections": ["ch04-1-stdio", "ch04-2-http", "ch04-3-registry", "ch04-4-cache"], "part": "I"},
   {"n": 5, "title": "Thousands of Tools", "step": "ch05-5-lazy-list", "sections": ["ch05-1-schema-cost", "ch05-2-tool-index", "ch05-3-search-tool", "ch05-4-routing", "ch05-5-lazy-list"], "part": "I"},
-  {"n": 6, "title": "The Agent Loop", "step": "ch06-agent-loop", "part": "I"},
+  {"n": 6, "title": "The Agent Loop", "step": "ch06-10-evals", "sections": ["ch06-1-live", "ch06-2-cancel", "ch06-3-validate", "ch06-4-stall", "ch06-5-budget", "ch06-6-truncate", "ch06-7-steer", "ch06-8-canonical", "ch06-9-outcome", "ch06-10-evals"], "part": "I"},
   {"n": 7, "title": "The Turn State Machine", "step": "ch07-turn-state", "part": "I"},
   {"n": 8, "title": "MCP Server", "step": "ch08-mcp-server", "part": "I"},
   {"n": 9, "title": "Approvals and Guardrails", "step": "ch09-approvals", "part": "I"},
