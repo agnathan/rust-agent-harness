@@ -335,6 +335,61 @@ dependencies = [
 ]
 
 [[package]]
+name = "ch05-1-harness-core"
+version = "0.2.0"
+dependencies = [
+ "criterion",
+ "serde_json",
+]
+
+[[package]]
+name = "ch05-2-harness-core"
+version = "0.2.0"
+dependencies = [
+ "criterion",
+ "serde_json",
+]
+
+[[package]]
+name = "ch05-3-harness-core"
+version = "0.2.0"
+dependencies = [
+ "criterion",
+ "serde_json",
+]
+
+[[package]]
+name = "ch05-4-harness-core"
+version = "0.2.0"
+dependencies = [
+ "criterion",
+ "serde_json",
+]
+
+[[package]]
+name = "ch05-5-harness-cli"
+version = "0.2.0"
+dependencies = [
+ "ch05-5-harness-core",
+ "clap",
+ "serde_json",
+ "tokio",
+ "wiremock",
+]
+
+[[package]]
+name = "ch05-5-harness-core"
+version = "0.2.0"
+dependencies = [
+ "async-trait",
+ "criterion",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "chacha20"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

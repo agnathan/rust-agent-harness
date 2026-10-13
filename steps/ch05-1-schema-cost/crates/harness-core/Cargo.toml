@@ -1,0 +1,19 @@
+[package]
+name = "ch05-1-harness-core"
+version = "0.2.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+
+[lib]
+name = "harness_core"
+
+[dependencies]
+serde_json = "1"
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "schema_cost"
+harness = false

@@ -2,7 +2,7 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-A conversation that can only talk is still just a chat. The next thing the model needs is a way to *act*: look something up, write something down, and get a result back. This chapter adds that, in three steps. It does not add the loop that asks the model which tool to call. That is chapter 5. It also does not speak MCP on the wire. That is chapter 4. What it does add is the shape those later chapters will share.
+A conversation that can only talk is still just a chat. The next thing the model needs is a way to *act*: look something up, write something down, and get a result back. This chapter adds that, in three steps. It does not add the loop that asks the model which tool to call. That is chapter 6. It also does not speak MCP on the wire. That is chapter 4. Loading thousands of tool schemas on demand, instead of putting every one in the prompt, is chapter 5. What it does add is the shape those later chapters will share.
 
 By the end a tool has:
 
@@ -228,4 +228,6 @@ CI runs these three steps on Ubuntu, macOS, and Windows. The benches run on Ubun
 
 ## What's next
 
-Chapter 4 is the MCP client, built with `rmcp`. It connects over stdio and streamable HTTP, lists tools, and calls them. Those tools land in this same registry, and this dispatcher is the scheduler they share with `echo`. The loop that lets the model choose a tool, and the `tool` messages that carry the result, are chapter 5.
+Chapter 4 is the MCP client, built with `rmcp`. It connects over stdio and streamable HTTP, lists tools, and calls them. Those tools land in this same registry, and this dispatcher is the scheduler they share with `echo`.
+
+Chapter 5 is what happens when that list is thousands of tools long. It keeps this registry, and until chapter 4 exists it fills the catalog with a synthetic generator instead of `tools/list`. The loop that lets the model choose a tool, and the `tool` messages that carry the result, are chapter 6.

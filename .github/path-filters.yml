@@ -1,7 +1,7 @@
 # Filter names for real steps match steps/ directory names.
 # `shared` means "retest every step that exists". Planned steps are listed so a
 # new steps/chNN-* directory is picked up without editing the workflow.
-# The chapter plan itself is .github/chapters.json (chapters 0–40, parts I–VI).
+# The chapter plan itself is .github/chapters.json (chapters 0–41, parts I–VI).
 shared:
   - "Cargo.toml"
   - "Cargo.lock"
@@ -27,75 +27,85 @@ ch03-3-dispatch:
   - "steps/ch03-3-dispatch/**"
 ch04-mcp-client:
   - "steps/ch04-mcp-client/**"
-ch05-agent-loop:
-  - "steps/ch05-agent-loop/**"
-ch06-turn-state:
-  - "steps/ch06-turn-state/**"
-ch07-mcp-server:
-  - "steps/ch07-mcp-server/**"
-ch08-approvals:
-  - "steps/ch08-approvals/**"
-ch09-hooks:
-  - "steps/ch09-hooks/**"
-ch10-sandbox:
-  - "steps/ch10-sandbox/**"
-ch11-when-things-fail:
-  - "steps/ch11-when-things-fail/**"
-ch12-providers:
-  - "steps/ch12-providers/**"
-ch13-streaming:
-  - "steps/ch13-streaming/**"
-ch14-sessions:
-  - "steps/ch14-sessions/**"
-ch15-memory:
-  - "steps/ch15-memory/**"
-ch16-recall:
-  - "steps/ch16-recall/**"
-ch17-skills:
-  - "steps/ch17-skills/**"
-ch18-skill-writing:
-  - "steps/ch18-skill-writing/**"
-ch19-reflection:
-  - "steps/ch19-reflection/**"
-ch20-curation:
-  - "steps/ch20-curation/**"
-ch21-pipeline:
-  - "steps/ch21-pipeline/**"
-ch22-supervisor:
-  - "steps/ch22-supervisor/**"
-ch23-handoffs:
-  - "steps/ch23-handoffs/**"
-ch24-fan-out:
-  - "steps/ch24-fan-out/**"
-ch25-critic:
-  - "steps/ch25-critic/**"
-ch26-composition:
-  - "steps/ch26-composition/**"
-ch27-context:
-  - "steps/ch27-context/**"
-ch28-actors:
-  - "steps/ch28-actors/**"
-ch29-supervision:
-  - "steps/ch29-supervision/**"
-ch30-profiles:
-  - "steps/ch30-profiles/**"
-ch31-gateway:
-  - "steps/ch31-gateway/**"
-ch32-cron:
-  - "steps/ch32-cron/**"
-ch33-acp:
-  - "steps/ch33-acp/**"
-ch34-blackboard:
-  - "steps/ch34-blackboard/**"
-ch35-kanban:
-  - "steps/ch35-kanban/**"
-ch36-message-bus:
-  - "steps/ch36-message-bus/**"
-ch37-team-skills:
-  - "steps/ch37-team-skills/**"
-ch38-a2a:
-  - "steps/ch38-a2a/**"
-ch39-tracing:
-  - "steps/ch39-tracing/**"
-ch40-evals:
-  - "steps/ch40-evals/**"
+ch05-1-schema-cost:
+  - "steps/ch05-1-schema-cost/**"
+ch05-2-tool-index:
+  - "steps/ch05-2-tool-index/**"
+ch05-3-search-tool:
+  - "steps/ch05-3-search-tool/**"
+ch05-4-routing:
+  - "steps/ch05-4-routing/**"
+ch05-5-lazy-list:
+  - "steps/ch05-5-lazy-list/**"
+ch06-agent-loop:
+  - "steps/ch06-agent-loop/**"
+ch07-turn-state:
+  - "steps/ch07-turn-state/**"
+ch08-mcp-server:
+  - "steps/ch08-mcp-server/**"
+ch09-approvals:
+  - "steps/ch09-approvals/**"
+ch10-hooks:
+  - "steps/ch10-hooks/**"
+ch11-sandbox:
+  - "steps/ch11-sandbox/**"
+ch12-when-things-fail:
+  - "steps/ch12-when-things-fail/**"
+ch13-providers:
+  - "steps/ch13-providers/**"
+ch14-streaming:
+  - "steps/ch14-streaming/**"
+ch15-sessions:
+  - "steps/ch15-sessions/**"
+ch16-memory:
+  - "steps/ch16-memory/**"
+ch17-recall:
+  - "steps/ch17-recall/**"
+ch18-skills:
+  - "steps/ch18-skills/**"
+ch19-skill-writing:
+  - "steps/ch19-skill-writing/**"
+ch20-reflection:
+  - "steps/ch20-reflection/**"
+ch21-curation:
+  - "steps/ch21-curation/**"
+ch22-pipeline:
+  - "steps/ch22-pipeline/**"
+ch23-supervisor:
+  - "steps/ch23-supervisor/**"
+ch24-handoffs:
+  - "steps/ch24-handoffs/**"
+ch25-fan-out:
+  - "steps/ch25-fan-out/**"
+ch26-critic:
+  - "steps/ch26-critic/**"
+ch27-composition:
+  - "steps/ch27-composition/**"
+ch28-context:
+  - "steps/ch28-context/**"
+ch29-actors:
+  - "steps/ch29-actors/**"
+ch30-supervision:
+  - "steps/ch30-supervision/**"
+ch31-profiles:
+  - "steps/ch31-profiles/**"
+ch32-gateway:
+  - "steps/ch32-gateway/**"
+ch33-cron:
+  - "steps/ch33-cron/**"
+ch34-acp:
+  - "steps/ch34-acp/**"
+ch35-blackboard:
+  - "steps/ch35-blackboard/**"
+ch36-kanban:
+  - "steps/ch36-kanban/**"
+ch37-message-bus:
+  - "steps/ch37-message-bus/**"
+ch38-team-skills:
+  - "steps/ch38-team-skills/**"
+ch39-a2a:
+  - "steps/ch39-a2a/**"
+ch40-tracing:
+  - "steps/ch40-tracing/**"
+ch41-evals:
+  - "steps/ch41-evals/**"

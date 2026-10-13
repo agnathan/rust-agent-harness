@@ -361,7 +361,7 @@ Which key is required depends on the host:
 
 OpenRouter also accepts two optional attribution headers, `HTTP-Referer` and `X-Title`, from `--http-referer` / `OPENROUTER_HTTP_REFERER` and `--title` / `OPENROUTER_TITLE`. They are sent only when set.
 
-`OpenAiCompatible` owns one `reqwest::Client` for its whole life. reqwest pools idle connections per host (`pool_max_idle_per_host(8)`), so the second call can reuse the first connection. The `http2` feature and `http2_adaptive_window(true)` turn HTTP/2 on for servers that negotiate it: ALPN when the connection is TLS. A local fake speaks HTTP/1.1, and the same client talks to it without a separate code path. This section does not set a request timeout. Section 1.4 does. Retries are chapter 11.
+`OpenAiCompatible` owns one `reqwest::Client` for its whole life. reqwest pools idle connections per host (`pool_max_idle_per_host(8)`), so the second call can reuse the first connection. The `http2` feature and `http2_adaptive_window(true)` turn HTTP/2 on for servers that negotiate it: ALPN when the connection is TLS. A local fake speaks HTTP/1.1, and the same client talks to it without a separate code path. This section does not set a request timeout. Section 1.4 does. Retries are chapter 12.
 
 ```rust
 pub fn from_endpoint(endpoint: &Endpoint) -> Self {
@@ -588,7 +588,7 @@ cargo run -p ch01-4-harness-cli -- --mock ask "Say hello"
 cargo bench -p ch01-4-harness-core --bench edges
 ```
 
-The client now has a whole-request timeout, 60 seconds unless `--timeout-secs` says otherwise. reqwest's `timeout` covers connect and read. When `send` fails and `err.is_timeout()` is true, the error is `ProviderError::Timeout` and it carries the `Duration` we set. Anything else stays `ProviderError::Network`. This is one deadline, not a retry. Chapter 11 classifies failures, retries, and falls back. Chapter 13 is where a reply becomes a stream of the same events. The request body still has no `stream` field.
+The client now has a whole-request timeout, 60 seconds unless `--timeout-secs` says otherwise. reqwest's `timeout` covers connect and read. When `send` fails and `err.is_timeout()` is true, the error is `ProviderError::Timeout` and it carries the `Duration` we set. Anything else stays `ProviderError::Network`. This is one deadline, not a retry. Chapter 12 classifies failures, retries, and falls back. Chapter 14 is where a reply becomes a stream of the same events. The request body still has no `stream` field.
 
 ```rust
 #[error("request timed out after {timeout:?}")]

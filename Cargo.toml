@@ -15,5 +15,11 @@ members = [
     "steps/ch03-2-toolsets/crates/harness-cli",
     "steps/ch03-3-dispatch/crates/harness-core",
     "steps/ch03-3-dispatch/crates/harness-cli",
+    "steps/ch05-1-schema-cost/crates/harness-core",
+    "steps/ch05-2-tool-index/crates/harness-core",
+    "steps/ch05-3-search-tool/crates/harness-core",
+    "steps/ch05-4-routing/crates/harness-core",
+    "steps/ch05-5-lazy-list/crates/harness-core",
+    "steps/ch05-5-lazy-list/crates/harness-cli",
     "my-harness",
 ]

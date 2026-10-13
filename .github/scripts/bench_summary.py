@@ -13,7 +13,7 @@ def main() -> None:
     estimates = sorted(root.glob("*/new/estimates.json")) if root.is_dir() else []
     print("## Benchmarks")
     print()
-    print("Criterion for chapter 1 sections 1.1–1.4. Informational only: no fail threshold.")
+    print("Criterion for the written chapters. Informational only: no fail threshold.")
     print("Each run also writes `target/criterion-summary.json` for the trend chart.")
     print()
     custom: list[dict[str, object]] = []

@@ -1,0 +1,23 @@
+[package]
+name = "ch05-5-harness-core"
+version = "0.2.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+
+[lib]
+name = "harness_core"
+
+[dependencies]
+async-trait = "0.1"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "http2"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "lazy_list"
+harness = false

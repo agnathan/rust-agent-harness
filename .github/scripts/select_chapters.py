@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Resolve my-harness milestone test targets.
 
-The plan is chapters 1-40 in .github/chapters.json. A spec may name any of
+The plan is chapters 1-41 in .github/chapters.json. A spec may name any of
 those chapters; a chapter with no tests/chNN.rs yet is an error.
-Specs: all | 1 | 1-40 | 3,6,12
+Specs: all | 1 | 1-41 | 3,6,12
 Changed paths: my-harness/tests/chNN.rs, and any my-harness/src change selects every chapter that has a test.
 """
 
@@ -74,7 +74,7 @@ def parse_spec(spec: str, mapping: dict[int, list[str]], planned: dict[int, str]
             numbers = [int(part)]
         else:
             raise SystemExit(
-                f"invalid chapter spec '{part}'. Use 1, 1-40, 3,6,12, or all."
+                f"invalid chapter spec '{part}'. Use 1, 1-41, 3,6,12, or all."
             )
         for number in numbers:
             if number not in mapping:
@@ -85,7 +85,7 @@ def parse_spec(spec: str, mapping: dict[int, list[str]], planned: dict[int, str]
                         f"(tests exist for: {known})"
                     )
                 raise SystemExit(
-                    f"no chapter {number} in the plan (chapters are 1-40; tests exist for: {known})"
+                    f"no chapter {number} in the plan (chapters are 1-41; tests exist for: {known})"
                 )
             if number not in seen:
                 seen.add(number)
@@ -124,7 +124,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path("."))
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--spec", help="Chapter spec: all, 1, 1-40, or 3,6,12")
+    group.add_argument("--spec", help="Chapter spec: all, 1, 1-41, or 3,6,12")
     group.add_argument("--changed-from", type=argparse.FileType("r"))
     args = parser.parse_args()
     root = args.root.resolve()

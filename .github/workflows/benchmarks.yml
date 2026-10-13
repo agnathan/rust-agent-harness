@@ -39,6 +39,16 @@ jobs:
         run: cargo bench -p ch03-2-harness-core --bench toolset --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
       - name: Section 3.3 dispatch
         run: cargo bench -p ch03-3-harness-core --bench dispatch --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+      - name: Section 5.1 schema cost
+        run: cargo bench -p ch05-1-harness-core --bench schema_cost --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+      - name: Section 5.2 tool index
+        run: cargo bench -p ch05-2-harness-core --bench tool_index --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+      - name: Section 5.3 search tool
+        run: cargo bench -p ch05-3-harness-core --bench search_tool --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+      - name: Section 5.4 routing
+        run: cargo bench -p ch05-4-harness-core --bench routing --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+      - name: Section 5.5 lazy list
+        run: cargo bench -p ch05-5-harness-core --bench lazy_list --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"
