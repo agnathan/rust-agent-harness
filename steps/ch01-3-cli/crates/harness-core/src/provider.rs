@@ -1,3 +1,4 @@
+use crate::config::Endpoint;
 use crate::message::{ChatRequest, Message};
 use async_trait::async_trait;
 use serde::Deserialize;
@@ -6,6 +7,10 @@ use std::time::Duration;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ProviderError {
+    #[error("missing {name}: pass --api-key, or run with --mock")]
+    MissingKey { name: &'static str },
+    #[error("model id is empty")]
+    EmptyModel,
     #[error("network error: {0}")]
     Network(#[from] reqwest::Error),
     #[error("API returned {status}: {body}")]
@@ -18,6 +23,27 @@ pub enum ProviderError {
 pub trait Provider: Send + Sync {
     /// Send the conversation, get back the assistant's reply.
     async fn complete(&self, messages: &[Message]) -> Result<Message, ProviderError>;
+
+    /// Same call, plus the model id and token counts the server reported.
+    /// The default has neither: a mock did not call a server.
+    async fn complete_detailed(
+        &self,
+        messages: &[Message],
+    ) -> Result<DetailedCompletion, ProviderError> {
+        Ok(DetailedCompletion {
+            message: self.complete(messages).await?,
+            model: None,
+            usage: None,
+        })
+    }
+}
+
+/// What one buffered (non-streaming) completion came back as.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DetailedCompletion {
+    pub message: Message,
+    pub model: Option<String>,
+    pub usage: Option<Usage>,
 }
 
 /// One shared `reqwest::Client`: connections are pooled, and HTTP/2 is enabled
@@ -27,10 +53,22 @@ pub struct OpenAiCompatible {
     base_url: String,
     api_key: String,
     model: String,
+    http_referer: Option<String>,
+    title: Option<String>,
 }
 
 impl OpenAiCompatible {
     pub fn new(base_url: &str, api_key: &str, model: &str) -> Self {
+        Self::from_endpoint(&Endpoint {
+            base_url: base_url.trim_end_matches('/').to_string(),
+            api_key: api_key.to_string(),
+            model: model.to_string(),
+            http_referer: None,
+            title: None,
+        })
+    }
+
+    pub fn from_endpoint(endpoint: &Endpoint) -> Self {
         let client = reqwest::Client::builder()
             .pool_max_idle_per_host(8)
             .http2_adaptive_window(true)
@@ -38,16 +76,33 @@ impl OpenAiCompatible {
             .expect("HTTP client");
         Self {
             client,
-            base_url: base_url.trim_end_matches('/').to_string(),
-            api_key: api_key.to_string(),
-            model: model.to_string(),
+            base_url: endpoint.base_url.trim_end_matches('/').to_string(),
+            api_key: endpoint.api_key.clone(),
+            model: endpoint.model.clone(),
+            http_referer: endpoint.http_referer.clone(),
+            title: endpoint.title.clone(),
         }
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct Usage {
+    #[serde(default)]
+    pub prompt_tokens: u64,
+    #[serde(default)]
+    pub completion_tokens: u64,
+    #[serde(default)]
+    pub total_tokens: u64,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct ChatResponse {
+    #[serde(default)]
+    pub model: Option<String>,
+    #[serde(default)]
     pub choices: Vec<Choice>,
+    #[serde(default)]
+    pub usage: Option<Usage>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -58,20 +113,31 @@ pub struct Choice {
 #[async_trait]
 impl Provider for OpenAiCompatible {
     async fn complete(&self, messages: &[Message]) -> Result<Message, ProviderError> {
+        Ok(self.complete_detailed(messages).await?.message)
+    }
+
+    async fn complete_detailed(
+        &self,
+        messages: &[Message],
+    ) -> Result<DetailedCompletion, ProviderError> {
         let url = format!("{}/chat/completions", self.base_url);
         let request = ChatRequest {
             model: &self.model,
             messages,
         };
 
-        let response = self
-            .client
-            .post(&url)
-            .bearer_auth(&self.api_key)
-            .json(&request)
-            .send()
-            .await?;
+        let mut builder = self.client.post(&url).json(&request);
+        if !self.api_key.is_empty() {
+            builder = builder.bearer_auth(&self.api_key);
+        }
+        if let Some(referer) = &self.http_referer {
+            builder = builder.header("HTTP-Referer", referer);
+        }
+        if let Some(title) = &self.title {
+            builder = builder.header("X-Title", title);
+        }
 
+        let response = builder.send().await?;
         let status = response.status();
         if !status.is_success() {
             let body = response.text().await.unwrap_or_default();
@@ -82,12 +148,17 @@ impl Provider for OpenAiCompatible {
         }
 
         let parsed: ChatResponse = response.json().await?;
-        parsed
+        let message = parsed
             .choices
             .into_iter()
             .next()
             .map(|choice| choice.message)
-            .ok_or(ProviderError::EmptyResponse)
+            .ok_or(ProviderError::EmptyResponse)?;
+        Ok(DetailedCompletion {
+            message,
+            model: parsed.model,
+            usage: parsed.usage,
+        })
     }
 }
 
@@ -129,5 +200,12 @@ impl Provider for MockProvider {
 impl<P: Provider + ?Sized> Provider for std::sync::Arc<P> {
     async fn complete(&self, messages: &[Message]) -> Result<Message, ProviderError> {
         (**self).complete(messages).await
+    }
+
+    async fn complete_detailed(
+        &self,
+        messages: &[Message],
+    ) -> Result<DetailedCompletion, ProviderError> {
+        (**self).complete_detailed(messages).await
     }
 }

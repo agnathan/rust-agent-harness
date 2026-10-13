@@ -25,7 +25,7 @@ The book is six parts and chapters 0 through 40. Performance is a budget on ever
 | Ch | Title | Step | Rust, just in time | What the harness gains |
 |---|---|---|---|---|
 | 0 | Introduction | — | why Rust | what a harness is, and what Hermes is |
-| 1 | First Contact | `steps/ch01-1-messages`, `ch01-2-provider`, `ch01-3-cli` | tokio, structs, enums, traits, serde | 1.1 messages and serde; 1.2 `Provider` and a latency mock; 1.3 one reused HTTP client, HTTP/2, and `ask` |
+| 1 | First Contact | `steps/ch01-1-messages`, `ch01-2-provider`, `ch01-3-cli`, `ch01-4-errors` | tokio, structs, enums, traits, serde | 1.1 messages and serde; 1.2 `Provider` and a latency mock; 1.3 OpenRouter as the default OpenAI-compatible client (`--model`, attribution headers, answered model, usage) and `ask`; 1.4 one request timeout and the edges of a buffered reply |
 | 2 | Conversations | `steps/ch02-conversations` | ownership, private fields, `Result` | alternating history, a system prompt that stays byte-stable for prompt caching, trim, JSON save/load, `chat` REPL |
 | 3 | Tools | `steps/ch03-tools` | traits, JSON Schema, a semaphore | a tool trait and registry shaped like MCP; named toolsets gated on env vars and checks; the model is told only about tools that passed; read-only calls run concurrently, writes run alone, both under a bound |
 | 4 | MCP Client | `steps/ch04-mcp-client` | `rmcp`, stdio, HTTP | connect to MCP servers over stdio and streamable HTTP; MCP tools and native tools share one registry and one scheduler |
@@ -35,13 +35,13 @@ The book is six parts and chapters 0 through 40. Performance is a budget on ever
 | 8 | Hooks and Plugins | `steps/ch08-hooks` | traits as extension points | before/after tool hooks, an API-request hook, rewriting a tool result, and a swappable memory backend; a hook may enable a toolset, and the availability check stays in the registry from chapter 3 |
 | 9 | Sandboxed Execution | `steps/ch09-sandbox` | a child process, a snapshot | a code tool that runs outside the harness process, plus a file checkpoint and rewind |
 | 10 | When Things Fail | `steps/ch10-when-things-fail` | matching on errors | classify failures, retry, fall back; MCP crashes, timeouts, reconnects; a timeout releases its concurrency permit |
-| 11 | Providers | `steps/ch11-providers` | another adapter behind the same trait | Anthropic and Bedrock adapters, a fallback chain, key rotation on the pooled client, and a cheaper side model for summaries |
+| 11 | Providers | `steps/ch11-providers` | another adapter behind the same trait | native Anthropic and Bedrock adapters beside the chapter 1 OpenRouter client; OpenRouter fallback and routing (a `models` array and provider preferences); key rotation on the pooled client; a cheaper side model for summaries |
 | 12 | Streaming | `steps/ch12-streaming` | folding a stream | server-sent deltas gathered into one reply, overlapped with safe tool execution, for each adapter |
 
 **Performance budget**
 
 - **Chapter 0.** State the rule: overhead is measured without model latency.
-- **Chapter 1.** Three benches, each under 1 ms. 1.1: serde of 50 messages (measured 6.96 µs). 1.2: one mock call (measured 135 ns) and 100 concurrent calls (measured 105 µs, target < 50 ms). 1.3: build a request and parse a response (measured 1.74 µs). One HTTP client, pooled, HTTP/2 enabled.
+- **Chapter 1.** Four benches, each under 1 ms. 1.1: serde of 50 messages (measured 6.96 µs). 1.2: one mock call (measured 135 ns) and 100 concurrent calls (measured 105 µs, target < 50 ms). 1.3: build an OpenRouter request and parse a response that carries `model` and `usage` (measured 2.048 µs). 1.4: parse a response with usage and one without (measured 526.6 ns). One HTTP client, pooled, HTTP/2 enabled. The default endpoint is OpenRouter.
 - **Chapter 2.** The system prompt is byte-identical across the turns of a session. Per-turn overhead stays < 1 ms. The provider borrows the history.
 - **Chapter 3.** Eight read-only tools in one batch finish in about one call on the latency mock. A write runs alone. Building the available-tool list for a 50-tool registry is < 1 ms.
 - **Chapter 4.** Eight concurrent mock MCP calls finish in about one round trip, on the same bound as native tools.
@@ -51,7 +51,7 @@ The book is six parts and chapters 0 through 40. Performance is a budget on ever
 - **Chapter 8.** An empty before/after hook adds < 0.1 ms. An API-request hook does not copy the conversation. A memory-backend call that only records the turn enqueues in < 1 ms.
 - **Chapter 9.** A warm sandbox accepts a job in < 50 ms. Checkpoint and rewind of a 1,000-path manifest are each < 10 ms.
 - **Chapter 10.** A timeout cancels the in-flight call and releases its permit. Retries stay inside the bound.
-- **Chapter 11.** Choosing the next adapter adds < 1 ms, excluding the failed call. Rotation reuses the pooled client. A side-model summary does not run on the user turn unless that turn asked for it.
+- **Chapter 11.** Choosing the next native adapter, or the next OpenRouter route, adds < 1 ms, excluding the failed call. Rotation reuses the pooled client from chapter 1. A side-model summary does not run on the user turn unless that turn asked for it.
 - **Chapter 12.** Assembling a streamed reply adds < 1 ms versus a buffered reply, excluding model time.
 
 ### Part II: Learning
@@ -150,7 +150,7 @@ The book is six parts and chapters 0 through 40. Performance is a budget on ever
 - **Chapter 39.** A span per turn adds < 0.1 ms. The chapter 1 bench still meets its budget with tracing on. The capstone runs 100 or more concurrent mock agents.
 - **Chapter 40.** One hundred mock trajectories stay inside the worker bound. Appending one trajectory event is < 1 ms.
 
-Only chapters 1 and 2 have step crates so far. Chapter 1 is three cumulative sections, each with a criterion bench. Chapter 5 extends that bench to the agent loop, and chapter 40 runs it across a batch. Pull requests and pushes to `main` report the means in the Benchmarks workflow, with no fail threshold. Later rows are the plan, not empty crates. The same list is `.github/chapters.json`, which CI uses. Draft rows in `book/SUMMARY.md` are the chapters that are not written yet.
+Only chapters 1 and 2 have step crates so far. Chapter 1 is four cumulative sections, each with a criterion bench. Chapter 5 extends that bench to the agent loop, and chapter 40 runs it across a batch. Pull requests and pushes to `main` report the means in the Benchmarks workflow, with no fail threshold. Later rows are the plan, not empty crates. The same list is `.github/chapters.json`, which CI uses. Draft rows in `book/SUMMARY.md` are the chapters that are not written yet.
 
 **Recurring sidebars:**
 

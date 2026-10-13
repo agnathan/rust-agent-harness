@@ -14,9 +14,9 @@ my-harness/          your crate; milestone tests start out failing
 book/                mdBook source and social drafts
 ```
 
-A step is the code as of that chapter, library plus CLI, with its tests. Later chapters are new copies under `steps/`, so chapter 1 still builds after chapter 2 exists. They share one cargo workspace at the repo root. Package names carry the section (`ch01-1-harness-core`, `ch01-3-harness-cli`, `ch02-harness-cli`) and the binaries are `ch01-harness` and `ch02-harness`, so two steps can be built together. The library each test imports is still `harness_core`.
+A step is the code as of that chapter, library plus CLI, with its tests. Later chapters are new copies under `steps/`, so chapter 1 still builds after chapter 2 exists. They share one cargo workspace at the repo root. Package names carry the section (`ch01-1-harness-core`, `ch01-3-harness-cli`, `ch01-4-harness-cli`, `ch02-harness-cli`) and the binaries are `ch01-harness`, `ch01-4-harness`, and `ch02-harness`, so two steps can be built together. The library each test imports is still `harness_core`.
 
-`my-harness/` is where the implementation happens. `tests/ch01_1.rs`, `ch01_2.rs`, `ch01_3.rs`, and `tests/ch02.rs` are the milestones. They compile, then panic with `todo!` until you replace the stubs. Finished snapshots stay in `steps/`. There is no solutions directory.
+`my-harness/` is where the implementation happens. `tests/ch01_1.rs`, `ch01_2.rs`, `ch01_3.rs`, `ch01_4.rs`, and `tests/ch02.rs` are the milestones. They compile, then panic with `todo!` until you replace the stubs. Finished snapshots stay in `steps/`. There is no solutions directory.
 
 ## How to start
 
@@ -25,7 +25,7 @@ A step is the code as of that chapter, library plus CLI, with its tests. Later c
 3. Read [Chapter 1](book/chapter-01-first-contact.md), then make the milestone fail for the right reason and replace the stubs:
 
    ```bash
-   cargo test -p my-harness --test ch01_1 --test ch01_2 --test ch01_3
+   cargo test -p my-harness --test ch01_1 --test ch01_2 --test ch01_3 --test ch01_4
    ```
 
 4. Run the finished chapter if you want to see the behavior:
@@ -35,11 +35,13 @@ A step is the code as of that chapter, library plus CLI, with its tests. Later c
    cargo test -p ch01-2-harness-core
    cargo test -p ch01-3-harness-core -p ch01-3-harness-cli
    cargo run -p ch01-3-harness-cli -- --mock ask "Say hello"
+   cargo test -p ch01-4-harness-core -p ch01-4-harness-cli
+   cargo run -p ch01-4-harness-cli -- --mock ask "Say hello"
    ```
 
 5. Chapter 2 is the same shape: `cargo test -p my-harness --test ch02`, and `cargo run -p ch02-harness-cli -- --mock chat`.
 
-`OPENAI_API_KEY`, `OPENAI_BASE_URL` (default `https://api.openai.com/v1`), and `HARNESS_MODEL` (default `gpt-4o-mini`) configure a real server. `--mock` uses the offline provider.
+The chapter 1 client defaults to OpenRouter (`https://openrouter.ai/api/v1`), `OPENROUTER_API_KEY`, and `HARNESS_MODEL` (default `openai/gpt-4o-mini`). `--base-url` points the same client at another OpenAI-compatible server and then reads `OPENAI_API_KEY` (empty is allowed for Ollama). `--mock` uses the offline provider. The chapter 2 snapshot still uses `OPENAI_API_KEY` for its own binary.
 
 Chapters 0 through 40, in six parts. Performance is a budget on every chapter, starting with tokio in chapter 1. The targets are [docs/performance.md](docs/performance.md). MCP is first-class: tools are MCP-shaped (chapter 3), the harness is an MCP client (chapter 4, via `rmcp`) and an MCP server (chapter 6). Part II is learning, and that work stays off the hot path: sessions, memory, recall, skills, reflection, and curation. The design is [docs/self-improvement.md](docs/self-improvement.md). Which team pattern to use is [docs/team-patterns.md](docs/team-patterns.md). The default is a supervisor that calls specialists as tools and fans them out under a bound. Part V runs the harness as a service.
 
@@ -48,7 +50,7 @@ Chapters 0 through 40, in six parts. Performance is a budget on every chapter, s
 | Ch | Title | Step | You add |
 |---|---|---|---|
 | 0 | Introduction | — | why a harness, and what Hermes is |
-| 1 | First Contact | `steps/ch01-1-messages`, `ch01-2-provider`, `ch01-3-cli` | messages, a latency mock on tokio, one pooled HTTP client, `ask` |
+| 1 | First Contact | `steps/ch01-1-messages`, `ch01-2-provider`, `ch01-3-cli`, `ch01-4-errors` | messages, a latency mock on tokio, OpenRouter as the default client, `ask`, a request timeout |
 | 2 | Conversations | `steps/ch02-conversations` | a real conversation, a cache-stable system prompt, and a `chat` REPL |
 | 3 | Tools | `steps/ch03-tools` | an MCP-shaped tool trait, named toolsets gated on env and checks, concurrent reads and exclusive writes |
 | 4 | MCP Client | `steps/ch04-mcp-client` | `rmcp` over stdio and streamable HTTP; MCP and native tools share one scheduler |
@@ -58,7 +60,7 @@ Chapters 0 through 40, in six parts. Performance is a budget on every chapter, s
 | 8 | Hooks and Plugins | `steps/ch08-hooks` | before/after tool hooks, API-request hooks, rewritten tool results, a swappable memory backend |
 | 9 | Sandboxed Execution | `steps/ch09-sandbox` | a code tool outside the process, plus file checkpoint and rewind |
 | 10 | When Things Fail | `steps/ch10-when-things-fail` | classify failures, retry, fall back, including MCP crashes and reconnects |
-| 11 | Providers | `steps/ch11-providers` | Anthropic and Bedrock adapters, fallback, key rotation, a cheaper side model |
+| 11 | Providers | `steps/ch11-providers` | native Anthropic and Bedrock adapters, OpenRouter fallback and routing, key rotation, a cheaper side model |
 | 12 | Streaming | `steps/ch12-streaming` | tokens as they arrive |
 
 **Part II: Learning**

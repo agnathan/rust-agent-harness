@@ -2,19 +2,20 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Every agent framework I've looked at comes down to one repeated act: send a list of messages to a language model and get a message back. This chapter builds that act in three small steps. Each step compiles, has its own tests, and has a criterion benchmark. Later steps copy the earlier code forward, so section 1.1 still builds after 1.3 exists.
+Every agent framework I've looked at comes down to one repeated act: send a list of messages to a language model and get a message back. This chapter builds that act in four small steps. Each step compiles, has its own tests, and has a criterion benchmark. Later steps copy the earlier code forward, so section 1.1 still builds after 1.4 exists.
 
 [personal note: where I was with Rust when I started this chapter]
 
-The code lives in three directories:
+The code lives in four directories:
 
 | Section | Step | What it adds |
 |---|---|---|
 | 1.1 | `steps/ch01-1-messages` | `Message` and `Role`, serialized to OpenAI JSON |
 | 1.2 | `steps/ch01-2-provider` | `Provider` and a latency-configurable `MockProvider` on tokio |
-| 1.3 | `steps/ch01-3-cli` | a shared `reqwest` client and `harness ask` |
+| 1.3 | `steps/ch01-3-cli` | one pooled client, OpenRouter by default, and `harness ask` |
+| 1.4 | `steps/ch01-4-errors` | a request timeout, and the edges of a buffered reply |
 
-I'm copying three ideas from Hermes Agent (Nous Research): OpenAI-style messages are the internal format, "talk to a model" sits behind one interface, and the rest of the harness never needs to know which provider it is talking to. Hermes's breadth (credential pools, failover, streaming) waits until a later chapter needs it.
+I'm copying three ideas from Hermes Agent (Nous Research): OpenAI-style messages are the internal format, "talk to a model" sits behind one interface, and the rest of the harness never needs to know which provider it is talking to. The client speaks that one JSON shape, and OpenRouter is the default server, so a model id such as `openai/gpt-4o-mini` or `anthropic/claude-3.5-sonnet` is a flag, not a new adapter. Native Anthropic and Bedrock adapters, OpenRouter routing, key rotation, and streaming wait until later chapters.
 
 ## 1.1 Messages
 
@@ -298,7 +299,7 @@ mock_100_concurrent     time:   [102.54 µs 103.34 µs 104.16 µs]
 
 CI runs these tests on Ubuntu, macOS, and Windows. Criterion runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml), and the means land in the job summary ([run 38213430828](https://github.com/agnathan/rust-agent-harness/actions/runs/38213430828)).
 
-## 1.3 The client and `harness ask`
+## 1.3 OpenRouter, the client, and `harness ask`
 
 Section 1.3 copies 1.2 and adds the HTTP provider plus a thin binary. The package names are `ch01-3-harness-core` and `ch01-3-harness-cli`. The executable file is `ch01-harness` so it does not collide with chapter 2 in the shared workspace. The clap command name is still `harness`.
 
@@ -308,59 +309,66 @@ cargo run -p ch01-3-harness-cli -- --mock ask "Say hello"
 cargo bench -p ch01-3-harness-core --bench request_parse
 ```
 
-`OpenAiCompatible` owns one `reqwest::Client` for its whole life. reqwest pools idle connections per host (`pool_max_idle_per_host(8)`), so the second call can reuse the first connection. The `http2` feature and `http2_adaptive_window(true)` turn HTTP/2 on for servers that negotiate it: ALPN when the connection is TLS. A local fake speaks HTTP/1.1, and the same client talks to it without a separate code path.
+The default server is OpenRouter, `https://openrouter.ai/api/v1`. The default model id is `openai/gpt-4o-mini`. `--model` takes any OpenRouter id (`anthropic/claude-3.5-sonnet`, `meta-llama/llama-3.1-8b-instruct`, and the rest of that catalog). The request body is still the OpenAI chat-completions shape, and it does not set `stream`. `--base-url` points the same client at another OpenAI-compatible server: OpenAI, a local Ollama at `http://127.0.0.1:11434/v1`, or the wiremock server in the tests.
+
+Which key is required depends on the host:
+
+- `openrouter.ai` reads `OPENROUTER_API_KEY`. A missing key is an error that names that variable. `--mock` is the offline path.
+- Any other host reads `OPENAI_API_KEY`, which may be empty. Ollama and the local fake accept that. An empty key omits `Authorization`.
+- `--api-key` overrides both variables.
+
+OpenRouter also accepts two optional attribution headers, `HTTP-Referer` and `X-Title`, from `--http-referer` / `OPENROUTER_HTTP_REFERER` and `--title` / `OPENROUTER_TITLE`. They are sent only when set.
+
+`OpenAiCompatible` owns one `reqwest::Client` for its whole life. reqwest pools idle connections per host (`pool_max_idle_per_host(8)`), so the second call can reuse the first connection. The `http2` feature and `http2_adaptive_window(true)` turn HTTP/2 on for servers that negotiate it: ALPN when the connection is TLS. A local fake speaks HTTP/1.1, and the same client talks to it without a separate code path. This section does not set a request timeout. Section 1.4 does. Retries are chapter 10.
 
 ```rust
-pub struct OpenAiCompatible {
-    client: reqwest::Client,
-    base_url: String,
-    api_key: String,
-    model: String,
-}
-
-impl OpenAiCompatible {
-    pub fn new(base_url: &str, api_key: &str, model: &str) -> Self {
-        let client = reqwest::Client::builder()
-            .pool_max_idle_per_host(8)
-            .http2_adaptive_window(true)
-            .build()
-            .expect("HTTP client");
-        Self {
-            client,
-            base_url: base_url.trim_end_matches('/').to_string(),
-            api_key: api_key.to_string(),
-            model: model.to_string(),
-        }
+pub fn from_endpoint(endpoint: &Endpoint) -> Self {
+    let client = reqwest::Client::builder()
+        .pool_max_idle_per_host(8)
+        .http2_adaptive_window(true)
+        .build()
+        .expect("HTTP client");
+    Self {
+        client,
+        base_url: endpoint.base_url.trim_end_matches('/').to_string(),
+        api_key: endpoint.api_key.clone(),
+        model: endpoint.model.clone(),
+        http_referer: endpoint.http_referer.clone(),
+        title: endpoint.title.clone(),
     }
 }
 ```
 
-`complete` POSTs `{base_url}/chat/completions`, parses `choices[0].message`, and turns a non-success status into `ProviderError::Api`. serde ignores the extra fields a real response carries (`id`, `usage`, `finish_reason`).
+`complete_detailed` POSTs `{base_url}/chat/completions`. A non-success status becomes `ProviderError::Api`. An empty `choices` array becomes `ProviderError::EmptyResponse`. The reply text is `choices[0].message`. The model that actually answered is the response's `model` field, which can differ from the id we sent. Token counts are the optional `usage` object. serde still ignores the other fields (`id`, `finish_reason`).
 
 ```rust
 #[derive(Debug, Deserialize)]
 pub struct ChatResponse {
+    #[serde(default)]
+    pub model: Option<String>,
+    #[serde(default)]
     pub choices: Vec<Choice>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct Choice {
-    pub message: Message,
+    #[serde(default)]
+    pub usage: Option<Usage>,
 }
 ```
+
+The CLI prints the content, then `model: …` when the server sent one, then `tokens: prompt=N completion=N total=N` when `usage` is present. The mock prints only `(mock) I heard you.` It does not invent a model id or token counts.
 
 > **Rust sidebar: `Result` and `?`**
 > - A fallible function returns `Result<T, E>`. There are no exceptions.
 > - `?` returns the error from the current function, or unwraps the value. `#[from]` on `ProviderError::Network` converts `reqwest::Error` so `.send().await?` type-checks.
 
-The binary parses flags and calls the provider once. `--mock` uses `MockProvider`. Otherwise it builds `OpenAiCompatible` from `--base-url`, `--api-key`, and `--model` (or the `OPENAI_BASE_URL`, `OPENAI_API_KEY`, and `HARNESS_MODEL` environment variables).
+> **Rust sidebar: `Option`**
+> - `Option<String>` is either `Some(value)` or `None`. It is the type for "the server might not have sent this."
+> - `if let Some(model) = &detailed.model` prints the line only when the field is present. A missing `usage` object stays `None` and the reply text is still kept.
 
-The integration test does not use a real key. The `wiremock` crate starts a local server, mounts `POST /chat/completions`, and the provider calls it twice on the same client. A second test points the `ch01-harness ask` binary at `POST /v1/chat/completions` on that same kind of server. Both run on Ubuntu, macOS, and Windows in CI.
+The integration tests do not use a real key. `wiremock` starts a local server. One test posts twice on the same client and checks the answered model and `usage`. Another checks that the request JSON has no `stream` field. Another checks the attribution headers. The CLI test points `ch01-harness ask` at `POST /v1/chat/completions` on that server and reads `model:` and `tokens:` from stdout. A missing `OPENROUTER_API_KEY` is a failed process whose stderr names the variable. All of this runs on Ubuntu, macOS, and Windows in CI.
 
 > **Performance budget**
 >
 > - **Target:** build a 50-message request and parse a response in under 1 ms, with no network in the measurement.
-> - **Measured:** `build_request_and_parse_response` mean **1.746 µs** (same criterion settings). The wiremock test checks behavior, not this number.
+> - **Measured:** `build_request_and_parse_response` mean **2.048 µs**. The body now includes `model` and `usage`. The wiremock tests check behavior, not this number.
 
 ### Build, run, and benchmark
 
@@ -375,17 +383,23 @@ cargo run -p ch01-3-harness-cli -- --mock ask "Say hello"
 cargo bench -p ch01-3-harness-core --bench request_parse -- --warm-up-time 1 --measurement-time 2 --sample-size 10
 ```
 
-`--mock` stays on this machine and prints a canned reply. A live call is the same command without `--mock`. The key and the optional base URL and model name come from the environment, or from the matching flags:
+`--mock` stays on this machine and prints a canned reply. I did not make a live call. A live OpenRouter call is the same command without `--mock`, with `OPENROUTER_API_KEY` set. Another server is a different base URL and `OPENAI_API_KEY`:
 
 ```bash
-OPENAI_API_KEY=sk-... OPENAI_BASE_URL=https://api.openai.com/v1 HARNESS_MODEL=gpt-4o-mini \
+OPENROUTER_API_KEY=sk-or-... HARNESS_MODEL=openai/gpt-4o-mini \
   cargo run -p ch01-3-harness-cli -- ask "Say hello"
+
+OPENAI_API_KEY=sk-... \
+  cargo run -p ch01-3-harness-cli -- \
+  --base-url https://api.openai.com/v1 --model gpt-4o-mini ask "Say hello"
+
+cargo run -p ch01-3-harness-cli -- \
+  --base-url http://127.0.0.1:11434/v1 --model llama3.2 ask "Say hello"
 ```
 
-I did not make that live call. The run below is the mock. `--help` is how the binary reports the same variables:
+Those three are the command shape. I did not run them. What I ran is `--help`, the mock, and one ask with no key.
 
 ```text
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.06s
      Running `target/debug/ch01-harness --help`
 A tiny agent harness
 
@@ -396,89 +410,241 @@ Commands:
   help  Print this message or the help of the given subcommand(s)
 
 Options:
-      --base-url <BASE_URL>  Base URL of an OpenAI-compatible API [env: OPENAI_BASE_URL=] [default: https://api.openai.com/v1]
-      --api-key <API_KEY>    API key. A local fake server accepts any value [env: OPENAI_API_KEY=] [default: ""]
-      --model <MODEL>        Model name [env: HARNESS_MODEL=] [default: gpt-4o-mini]
-      --mock                 Use the offline mock provider instead of HTTP
-  -h, --help                 Print help
+      --base-url <BASE_URL>
+          Base URL of an OpenAI-compatible API. Default is OpenRouter
+          
+          [env: OPENAI_BASE_URL=]
+          [default: https://openrouter.ai/api/v1]
+
+      --api-key <API_KEY>
+          API key. Overrides OPENROUTER_API_KEY or OPENAI_API_KEY
+
+      --model <MODEL>
+          OpenRouter model id, such as openai/gpt-4o-mini or anthropic/claude-3.5-sonnet
+          
+          [env: HARNESS_MODEL=]
+          [default: openai/gpt-4o-mini]
+
+      --http-referer <HTTP_REFERER>
+          Optional OpenRouter HTTP-Referer attribution header
+          
+          [env: OPENROUTER_HTTP_REFERER=]
+
+      --title <TITLE>
+          Optional OpenRouter X-Title attribution header
+          
+          [env: OPENROUTER_TITLE=]
+
+      --mock
+          Use the offline mock provider instead of HTTP
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+The default server is OpenRouter (https://openrouter.ai/api/v1).
+A live call reads OPENROUTER_API_KEY. Another --base-url reads OPENAI_API_KEY
+instead, which is how OpenAI, Ollama, and a local fake server are configured.
+--api-key overrides either variable. --mock never uses a key.
 ```
 
-The library build and the binary build:
+Nextest on the library, then on the binary. The HTTP tests talk to a local wiremock server and do not read a key.
 
 ```text
    Compiling ch01-3-harness-core v0.1.0 (/workspace/steps/ch01-3-cli/crates/harness-core)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 6.18s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.18s
+────────────
+ Nextest run ID 65934727-ab2b-46bd-91f2-0061770a7e96 with nextest profile: default
+    Starting 8 tests across 2 binaries
+        PASS [   0.004s] (1/8) ch01-3-harness-core::provider another_base_url_uses_the_openai_key
+        PASS [   0.006s] (2/8) ch01-3-harness-core::provider openrouter_headers_are_sent_when_set
+        PASS [   0.006s] (3/8) ch01-3-harness-core::provider http_error_is_classified
+        PASS [   0.006s] (4/8) ch01-3-harness-core::provider empty_choices_are_an_error
+        PASS [   0.004s] (5/8) ch01-3-harness-core::provider openrouter_is_the_default_and_names_its_key
+        PASS [   0.004s] (6/8) ch01-3-harness-core::provider response_deserializes_from_openai_shape
+        PASS [   0.004s] (7/8) ch01-3-harness-core::provider request_body_does_not_ask_for_a_stream
+        PASS [   0.005s] (8/8) ch01-3-harness-core::provider two_calls_share_the_client_against_a_local_server
+────────────
+     Summary [   0.012s] 8 tests run: 8 passed, 0 skipped
 ```
 
 ```text
+   Compiling ch01-3-harness-core v0.1.0 (/workspace/steps/ch01-3-cli/crates/harness-core)
    Compiling ch01-3-harness-cli v0.1.0 (/workspace/steps/ch01-3-cli/crates/harness-cli)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 4.64s
-```
-
-Nextest on the library, then on the binary. Both talk to a local wiremock server, still with no API key.
-
-```text
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.03s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.18s
 ────────────
- Nextest run ID 44f76dcf-ec41-4106-9bb9-b6969e129b69 with nextest profile: default
+ Nextest run ID 9b078687-2c7e-4404-b6dd-d0ed567573eb with nextest profile: default
     Starting 3 tests across 2 binaries
-        PASS [   0.004s] (1/3) ch01-3-harness-core::provider response_deserializes_from_openai_shape
-        PASS [   0.005s] (2/3) ch01-3-harness-core::provider http_error_is_classified
-        PASS [   0.005s] (3/3) ch01-3-harness-core::provider two_calls_share_the_client_against_a_local_server
+        PASS [   0.005s] (1/3) ch01-3-harness-cli::ask missing_openrouter_key_is_a_clear_error
+        PASS [   0.005s] (2/3) ch01-3-harness-cli::ask mock_ask_prints_the_canned_reply
+        PASS [   0.007s] (3/3) ch01-3-harness-cli::ask ask_talks_to_a_local_fake_server
 ────────────
-     Summary [   0.006s] 3 tests run: 3 passed, 0 skipped
+     Summary [   0.007s] 3 tests run: 3 passed, 0 skipped
 ```
 
-```text
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.70s
-────────────
- Nextest run ID 25c9fdc9-dcb0-4b40-a58d-e8e66ab2d5a8 with nextest profile: default
-    Starting 2 tests across 2 binaries
-        PASS [   0.005s] (1/2) ch01-3-harness-cli::ask mock_ask_prints_the_canned_reply
-        PASS [   0.009s] (2/2) ch01-3-harness-cli::ask ask_talks_to_a_local_fake_server
-────────────
-     Summary [   0.009s] 2 tests run: 2 passed, 0 skipped
-```
-
-The mock ask:
+The mock ask, then the same command with no key and no `--mock`. That second process is supposed to fail.
 
 ```text
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.06s
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.05s
      Running `target/debug/ch01-harness --mock ask 'Say hello'`
 (mock) I heard you.
 ```
 
-And the bench. The `time:` line is Criterion's slope. The mean in the table is the mean point estimate from the same run.
+```text
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.05s
+     Running `target/debug/ch01-harness ask ping`
+error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
+```
+
+And the bench. The `time:` line is Criterion's slope. The mean in the table is the mean point estimate from `target/criterion/build_request_and_parse_response/new/estimates.json` on this same run (2,047.7 ns).
 
 ```text
-    Finished `bench` profile [optimized] target(s) in 0.12s
+   Compiling ch01-3-harness-core v0.1.0 (/workspace/steps/ch01-3-cli/crates/harness-core)
+    Finished `bench` profile [optimized] target(s) in 1.96s
      Running benches/request_parse.rs (target/release/deps/request_parse-359f4e4892eb2854)
 Gnuplot not found, using plotters backend
 Benchmarking build_request_and_parse_response
 Benchmarking build_request_and_parse_response: Warming up for 1.0000 s
-Benchmarking build_request_and_parse_response: Collecting 10 samples in estimated 2.0001 s (1.1M iterations)
+Benchmarking build_request_and_parse_response: Collecting 10 samples in estimated 2.0000 s (986k iterations)
 Benchmarking build_request_and_parse_response: Analyzing
 build_request_and_parse_response
-                        time:   [1.7411 µs 1.7474 µs 1.7568 µs]
-                        change: [+0.0489% +0.4928% +0.9420%] (p = 0.05 < 0.05)
-                        Change within noise threshold.
-Found 2 outliers among 10 measurements (20.00%)
-  1 (10.00%) high mild
+                        time:   [2.0422 µs 2.0439 µs 2.0464 µs]
+                        change: [+16.686% +17.293% +17.860%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 1 outliers among 10 measurements (10.00%)
   1 (10.00%) high severe
 ```
 
 | Benchmark | Mean | Target | Machine |
 |---|---|---|---|
-| `build_request_and_parse_response` | 1.746 µs | < 1 ms | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0 |
+| `build_request_and_parse_response` | 2.048 µs | < 1 ms | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0 |
 
-CI runs these tests on Ubuntu, macOS, and Windows. Criterion runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml), and the means land in the job summary ([run 38213430828](https://github.com/agnathan/rust-agent-harness/actions/runs/38213430828)).
+CI runs these tests on Ubuntu, macOS, and Windows. Criterion runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml), and the means land in the job summary. The table is from this machine.
 
-## What you implement
+## 1.4 Timeouts and what the reply may omit
 
-`my-harness/tests/ch01_1.rs`, `ch01_2.rs`, and `ch01_3.rs` are the milestone specs. They compile, then panic in `todo!` until the stubs in `my-harness/src` match these steps. The snapshots under `steps/` stay as the reference.
+Section 1.4 copies 1.3 and names two things a buffered call can do besides succeed. The package names are `ch01-4-harness-core` and `ch01-4-harness-cli`. The executable is `ch01-4-harness`.
+
+```bash
+cargo test -p ch01-4-harness-core -p ch01-4-harness-cli
+cargo run -p ch01-4-harness-cli -- --mock ask "Say hello"
+cargo bench -p ch01-4-harness-core --bench edges
+```
+
+The client now has a whole-request timeout, 60 seconds unless `--timeout-secs` says otherwise. reqwest's `timeout` covers connect and read. When `send` fails and `err.is_timeout()` is true, the error is `ProviderError::Timeout` and it carries the `Duration` we set. Anything else stays `ProviderError::Network`. This is one deadline, not a retry. Chapter 10 classifies failures, retries, and falls back. Chapter 12 is where a reply becomes a stream. The request body still has no `stream` field.
+
+```rust
+#[error("request timed out after {timeout:?}")]
+Timeout { timeout: Duration },
+```
+
+```rust
+let response = builder.send().await.map_err(|err| {
+    if err.is_timeout() {
+        ProviderError::Timeout {
+            timeout: self.timeout,
+        }
+    } else {
+        ProviderError::Network(err)
+    }
+})?;
+```
+
+The parse edges are the ones a real OpenRouter body takes. `usage` may be absent, and the reply is still the assistant message. `model` may be a different id than the one we asked for (a router answered on another model). `choices` may be an empty array, which is `EmptyResponse` rather than a panic on index 0. A wiremock server that delays 2 seconds, against a client whose timeout is 200 ms, is the timeout test. It does not need a key.
+
+> **Rust sidebar: `Duration`**
+> - `std::time::Duration` is a span of time, not a clock reading. `Duration::from_secs(60)` and `Duration::from_millis(200)` are the two values this section uses.
+> - `{:?}` on a `Duration` is the debug form (`200ms`, `60s`). That is what the timeout error prints, so a short test timeout is not reported as one second.
+
+> **Performance budget**
+>
+> - **Target:** parse a response that has `usage` and one that does not, in under 1 ms, with no network in the measurement.
+> - **Measured:** `parse_response_edges` mean **526.6 ns**.
+
+### Build, run, and benchmark
+
+```bash
+cargo build -p ch01-4-harness-core
+cargo build -p ch01-4-harness-cli
+cargo nextest run -p ch01-4-harness-core
+cargo nextest run -p ch01-4-harness-cli
+cargo run -p ch01-4-harness-cli -- --mock ask "Say hello"
+cargo bench -p ch01-4-harness-core --bench edges -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+```
+
+Same rule as 1.3: the run below is the mock. `--help` on `ch01-4-harness` is the 1.3 help plus `--timeout-secs` (default 60). I did not call OpenRouter.
+
+```text
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.06s
+     Running `target/debug/ch01-4-harness --mock ask 'Say hello'`
+(mock) I heard you.
+```
+
+Nextest. `slow_server_is_a_timeout` is the delayed wiremock. The other tests are the 1.3 cases plus a body that has a model and no usage.
+
+```text
+   Compiling ch01-4-harness-core v0.1.0 (/workspace/steps/ch01-4-errors/crates/harness-core)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.22s
+────────────
+ Nextest run ID 4b831135-4cbb-4819-8397-99989eadb1a6 with nextest profile: default
+    Starting 10 tests across 2 binaries
+        PASS [   0.003s] ( 1/10) ch01-4-harness-core::provider missing_usage_still_keeps_the_answered_model
+        PASS [   0.003s] ( 2/10) ch01-4-harness-core::provider another_base_url_uses_the_openai_key
+        PASS [   0.006s] ( 3/10) ch01-4-harness-core::provider http_error_is_classified
+        PASS [   0.006s] ( 4/10) ch01-4-harness-core::provider empty_choices_are_an_error
+        PASS [   0.005s] ( 5/10) ch01-4-harness-core::provider openrouter_headers_are_sent_when_set
+        PASS [   0.005s] ( 6/10) ch01-4-harness-core::provider openrouter_is_the_default_and_names_its_key
+        PASS [   0.003s] ( 7/10) ch01-4-harness-core::provider response_deserializes_from_openai_shape
+        PASS [   0.004s] ( 8/10) ch01-4-harness-core::provider request_body_does_not_ask_for_a_stream
+        PASS [   0.005s] ( 9/10) ch01-4-harness-core::provider two_calls_share_the_client_against_a_local_server
+        PASS [   0.205s] (10/10) ch01-4-harness-core::provider slow_server_is_a_timeout
+────────────
+     Summary [   0.214s] 10 tests run: 10 passed, 0 skipped
+```
+
+```text
+   Compiling ch01-4-harness-core v0.1.0 (/workspace/steps/ch01-4-errors/crates/harness-core)
+   Compiling ch01-4-harness-cli v0.1.0 (/workspace/steps/ch01-4-errors/crates/harness-cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.89s
+────────────
+ Nextest run ID 2aae669c-eab5-434f-ad8f-38dd4878aac0 with nextest profile: default
+    Starting 3 tests across 2 binaries
+        PASS [   0.005s] (1/3) ch01-4-harness-cli::ask mock_ask_prints_the_canned_reply
+        PASS [   0.006s] (2/3) ch01-4-harness-cli::ask missing_openrouter_key_is_a_clear_error
+        PASS [   0.008s] (3/3) ch01-4-harness-cli::ask ask_talks_to_a_local_fake_server
+────────────
+     Summary [   0.008s] 3 tests run: 3 passed, 0 skipped
+```
+
+The bench. Mean point estimate from `target/criterion/parse_response_edges/new/estimates.json`: 526.6 ns.
+
+```text
+   Compiling ch01-4-harness-core v0.1.0 (/workspace/steps/ch01-4-errors/crates/harness-core)
+    Finished `bench` profile [optimized] target(s) in 1.77s
+     Running benches/edges.rs (target/release/deps/edges-c0d4ef48a4ad3704)
+Gnuplot not found, using plotters backend
+Benchmarking parse_response_edges
+Benchmarking parse_response_edges: Warming up for 1.0000 s
+Benchmarking parse_response_edges: Collecting 10 samples in estimated 2.0000 s (3.8M iterations)
+Benchmarking parse_response_edges: Analyzing
+parse_response_edges    time:   [526.51 ns 527.40 ns 528.74 ns]
+```
+
+| Benchmark | Mean | Target | Machine |
+|---|---|---|---|
+| `parse_response_edges` | 526.6 ns | < 1 ms | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0 |
+
+CI runs these tests on Ubuntu, macOS, and Windows. Criterion runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml), and the means land in the job summary. The table is from this machine.
+
+## Chapter summary
+
+The harness can send one prompt and print one reply. Messages are OpenAI JSON. `Provider` hides the server. `MockProvider` answers with no network and no key. The HTTP client is created once, pools connections, and can speak HTTP/2. OpenRouter is the default endpoint, `--model` selects a model id, and another `--base-url` still works for OpenAI, Ollama, and a local fake. A successful reply can name the model that answered and the token counts. A slow call fails once, as a timeout, and is not retried here.
 
 [personal note: a moment where the compiler stopped me, and how I worked out what it wanted]
 
+## What you implement
+
+`my-harness/tests/ch01_1.rs`, `ch01_2.rs`, `ch01_3.rs`, and `ch01_4.rs` are the milestone specs. They compile, then panic in `todo!` until the stubs in `my-harness/src` match these steps. The snapshots under `steps/` stay as the reference.
+
 ## What's next
 
-One question and one answer is not a conversation. Chapter 2 keeps history: a `Conversation` that owns its messages, and a `chat` REPL. The system prompt from this chapter stays byte-stable across those turns, which is what makes prompt caching possible later.
+One question and one answer is not a conversation. Chapter 2 keeps history: a `Conversation` that owns its messages, and a `chat` REPL. The system prompt from this chapter stays byte-stable across those turns, which is what makes prompt caching possible later. The chapter 2 snapshot is its own copy. It still configures a live call with `OPENAI_API_KEY`, and it does not yet carry the OpenRouter default from this chapter.

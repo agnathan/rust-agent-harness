@@ -5,6 +5,8 @@ members = [
     "steps/ch01-2-provider/crates/harness-core",
     "steps/ch01-3-cli/crates/harness-core",
     "steps/ch01-3-cli/crates/harness-cli",
+    "steps/ch01-4-errors/crates/harness-core",
+    "steps/ch01-4-errors/crates/harness-cli",
     "steps/ch02-conversations/crates/harness-core",
     "steps/ch02-conversations/crates/harness-cli",
     "my-harness",

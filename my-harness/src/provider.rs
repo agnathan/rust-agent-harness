@@ -99,6 +99,12 @@ impl Provider for MockProvider {
     }
 }
 
+/// Section 1.4. A whole-request timeout is its own error. Retries are a later chapter.
+pub fn timeout_after(timeout: Duration) -> ProviderError {
+    let _ = timeout;
+    todo!("chapter 01.4")
+}
+
 /// OpenAI-compatible client. Section 1.3 fills this in.
 pub struct OpenAiCompatible {
     pub base_url: String,

@@ -15,6 +15,8 @@ ch01-2-provider:
   - "steps/ch01-2-provider/**"
 ch01-3-cli:
   - "steps/ch01-3-cli/**"
+ch01-4-errors:
+  - "steps/ch01-4-errors/**"
 ch02-conversations:
   - "steps/ch02-conversations/**"
 ch03-tools:

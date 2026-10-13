@@ -17,7 +17,7 @@ Same rules as before: Rust is introduced just in time, in short sidebars.
 
 [personal note: how Chapter 1 went, whether you ran it against a real model, and what you wanted to do next]
 
-The code for this chapter lives in `steps/ch02-conversations/`. It's a complete copy of Chapter 1's workspace, extended.
+The code for this chapter lives in `steps/ch02-conversations/`. It starts from the messages, the provider trait, and one pooled client, then adds the conversation. This snapshot still configures a live call with `OPENAI_API_KEY`. The OpenRouter default from section 1.3 is not copied into this directory.
 
 ## What Hermes taught me about conversations
 

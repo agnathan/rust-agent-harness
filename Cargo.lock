@@ -210,6 +210,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "ch01-4-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch01-4-harness-core",
+ "clap",
+ "tokio",
+ "wiremock",
+]
+
+[[package]]
+name = "ch01-4-harness-core"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "criterion",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "wiremock",
+]
+
+[[package]]
 name = "ch02-harness-cli"
 version = "0.2.0"
 dependencies = [

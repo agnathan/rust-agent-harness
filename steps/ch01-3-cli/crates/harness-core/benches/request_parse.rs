@@ -7,11 +7,11 @@ fn build_request_and_parse_response(c: &mut Criterion) {
     let messages: Vec<Message> = (0..50)
         .map(|index| Message::user(format!("question {index}")))
         .collect();
-    let response = br#"{"id":"chatcmpl-bench","choices":[{"index":0,"message":{"role":"assistant","content":"ok"},"finish_reason":"stop"}]}"#;
+    let response = br#"{"id":"gen-bench","model":"openai/gpt-4o-mini","choices":[{"index":0,"message":{"role":"assistant","content":"ok"},"finish_reason":"stop"}],"usage":{"prompt_tokens":50,"completion_tokens":1,"total_tokens":51}}"#;
     c.bench_function("build_request_and_parse_response", |b| {
         b.iter(|| {
             let request = ChatRequest {
-                model: "gpt-4o-mini",
+                model: "openai/gpt-4o-mini",
                 messages: black_box(&messages),
             };
             let bytes = serde_json::to_vec(&request).expect("serialize");

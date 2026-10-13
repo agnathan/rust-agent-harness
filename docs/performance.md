@@ -27,14 +27,14 @@ Principles and the way to choose a team shape live next to this page: [team patt
 
 **Learning stays off the hot path.** Reflection, skill writes the model did not ask for, memory writes, index rebuilds, FTS updates, and curation are background tasks. The turn awaits the model and the tools the model actually called. Spawning a reviewer, enqueueing a proposal, or swapping an `Arc` index is the cost on the request path.
 
-**Measure, and do not fail the build on a number yet.** Chapter 1 is three sections, each with a criterion bench: serde of 50 messages, one mock call and 100 concurrent mock calls, and request build plus response parse. Chapter 5 extends that idea to the agent loop. Chapter 40 runs those benches across a batch of trajectories. On pull requests and on every push to `main`, [Benchmarks](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml) runs the chapter 1 benches on Ubuntu and writes the means to the job summary. A regression does not fail the job.
+**Measure, and do not fail the build on a number yet.** Chapter 1 is four sections, each with a criterion bench: serde of 50 messages, one mock call and 100 concurrent mock calls, request build plus response parse, and the edges of a buffered reply. Chapter 5 extends that idea to the agent loop. Chapter 40 runs those benches across a batch of trajectories. On pull requests and on every push to `main`, [Benchmarks](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml) runs the chapter 1 benches on Ubuntu and writes the means to the job summary. A regression does not fail the job.
 
 ## Performance budget
 
 | Ch | Chapter | Target |
 |---|---|---|
 | 0 | Introduction | State the rule: overhead is measured without model latency. |
-| 1 | First Contact | 1.1: serde of 50 messages **< 1 ms** (measured 6.96 µs). 1.2: one mock call **< 1 ms** (measured 135 ns) and 100 concurrent calls **< 50 ms** (measured 105 µs). 1.3: build and parse **< 1 ms** (measured 1.74 µs). One pooled client, HTTP/2 enabled. |
+| 1 | First Contact | 1.1: serde of 50 messages **< 1 ms** (measured 6.96 µs). 1.2: one mock call **< 1 ms** (measured 135 ns) and 100 concurrent calls **< 50 ms** (measured 105 µs). 1.3: build an OpenRouter request and parse `model` plus `usage` **< 1 ms** (measured 2.048 µs). 1.4: parse a reply with usage and one without **< 1 ms** (measured 526.6 ns). One pooled client, HTTP/2 enabled. Default endpoint is OpenRouter. |
 | 2 | Conversations | System-prompt bytes identical across the turns of a session. Per-turn overhead still **< 1 ms**. The model is called with a borrow, not a clone of the history. |
 | 3 | Tools | **8** read-only tools in one batch finish in about one call, not eight, on the latency mock. A write runs alone. The available-tool list for a **50**-tool registry is **< 1 ms**. |
 | 4 | MCP Client | MCP calls use that same bound. **8** concurrent mock MCP calls finish in about one round trip. |
@@ -44,7 +44,7 @@ Principles and the way to choose a team shape live next to this page: [team patt
 | 8 | Hooks and Plugins | An empty before/after hook adds **< 0.1 ms**. An API-request hook does not copy the conversation. A memory-backend record enqueues in **< 1 ms**. |
 | 9 | Sandboxed Execution | A warm sandbox accepts a job in **< 50 ms**. Checkpoint and rewind of a **1,000**-path manifest are each **< 10 ms**. |
 | 10 | When Things Fail | A timeout cancels the in-flight call and releases its permit. Retries stay inside the bound. |
-| 11 | Providers | Choosing the next adapter adds **< 1 ms**, excluding the failed call. Rotation reuses the pooled client. A side-model summary stays off the user turn unless that turn asked for it. |
+| 11 | Providers | Choosing the next native adapter, or the next OpenRouter route, adds **< 1 ms**, excluding the failed call. Rotation reuses the pooled client from chapter 1. A side-model summary stays off the user turn unless that turn asked for it. |
 | 12 | Streaming | Assembling a streamed reply adds **< 1 ms** versus a buffered reply, excluding model time. |
 | 13 | Sessions on Disk | One local WAL append of a turn **< 1 ms**. FTS updates run in the background. |
 | 14 | Memory Files | The frozen snapshot is built once and shared by `Arc`. A memory write does not rewrite the system prompt. Enqueue of a background write **< 1 ms**. |
