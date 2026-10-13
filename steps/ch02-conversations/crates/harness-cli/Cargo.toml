@@ -14,3 +14,7 @@ harness-core = { package = "ch02-harness-core", path = "../harness-core" }
 clap = { version = "4", features = ["derive", "env"] }
 rustyline = "14"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+wiremock = "0.6"

@@ -712,4 +712,4 @@ The harness can send one prompt and print one reply. Messages are OpenAI JSON. `
 
 ## What's next
 
-One question and one answer is not a conversation. Chapter 2 keeps history: a `Conversation` that owns its messages, and a `chat` REPL. The system prompt from this chapter stays byte-stable across those turns, which is what makes prompt caching possible later. The chapter 2 snapshot is its own copy. It still configures a live call with `OPENAI_API_KEY`, and it does not yet carry the OpenRouter default from this chapter.
+One question and one answer is not a conversation. Chapter 2 keeps history: a `Conversation` that owns its messages, a `chat` REPL, and one session inbox the CLI submits to before it calls the provider. The system prompt from this chapter stays byte-stable across those turns, which is what makes prompt caching possible later. That snapshot uses this chapter's OpenRouter client, the same `Event` values, and the same cost ledger.

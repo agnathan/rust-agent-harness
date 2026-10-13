@@ -31,6 +31,8 @@ jobs:
         run: cargo bench -p ch01-3-harness-core --bench request_parse --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
       - name: Section 1.4 response edges
         run: cargo bench -p ch01-4-harness-core --bench edges --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+      - name: Chapter 2 inbox
+        run: cargo bench -p ch02-harness-core --bench inbox --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"
@@ -47,7 +49,7 @@ jobs:
         continue-on-error: true
         uses: benchmark-action/github-action-benchmark@v1
         with:
-          name: Chapter 1 criterion
+          name: Harness criterion
           tool: customSmallerIsBetter
           output-file-path: target/criterion-summary.json
           github-token: ${{ secrets.GITHUB_TOKEN }}
