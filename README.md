@@ -41,6 +41,17 @@ A step is the code as of that chapter, library plus CLI, with its tests. Later c
 
 5. Chapter 2 is the same shape: `cargo test -p my-harness --test ch02`, and `cargo run -p ch02-harness-cli -- --mock chat`.
 
+## Run it in your browser
+
+Open this repo in GitHub Codespaces. The dev container installs stable Rust (clippy and rustfmt included), `cargo-nextest` 0.9.148, and mdBook 0.4.52, then runs `cargo fetch --locked`. Chapter 4's crates need rustc 1.88, which current stable provides. After the container finishes creating:
+
+```bash
+rustc --version
+cargo nextest run -p ch01-4-harness-core -p ch02-harness-core -p ch04-4-harness-core -p ch05-5-harness-core --locked
+cargo run -p ch04-4-harness-cli -- --mock ask "hello"
+mdbook build book
+```
+
 The chapter 1 and chapter 2 clients default to OpenRouter (`https://openrouter.ai/api/v1`), `OPENROUTER_API_KEY`, and `HARNESS_MODEL` (default `openai/gpt-4o-mini`). `--base-url` points the same client at another OpenAI-compatible server and then reads `OPENAI_API_KEY` (empty is allowed for Ollama). `--mock` uses the offline provider. Chapter 2 submits each turn to a session inbox before the provider runs.
 
 Chapters 0 through 41, in six parts. Performance is a budget on every chapter, starting with tokio in chapter 1. The targets are [docs/performance.md](docs/performance.md). MCP is first-class: tools are MCP-shaped (chapter 3), the harness is an MCP client (chapter 4, via `rmcp`) and an MCP server (chapter 8). Part II is learning, and that work stays off the hot path: sessions, memory, recall, skills, reflection, and curation. The design is [docs/self-improvement.md](docs/self-improvement.md). Which team pattern to use is [docs/team-patterns.md](docs/team-patterns.md). The default is a supervisor that calls specialists as tools and fans them out under a bound. Part V runs the harness as a service.
