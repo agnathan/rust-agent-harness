@@ -32,5 +32,6 @@ cargo run -p ch02-harness-cli -- --mock chat
 | ch05-3-search-tool | 5.3 | `search_tools`, append-only reveal, cap and eviction |
 | ch05-4-routing | 5.4 | Route by server, trim descriptions, consistent names |
 | ch05-5-lazy-list | 5.5 | Cached `tools/list`, `tools/list_changed`, per-agent view, `cards_from_listed`, `ask` |
+| ch06-agent-loop | 6 | Agent loop, cancellation and budget, saved eval set, loop bench |
 
 Your own copy is `my-harness/` at the repo root. Milestone tests there start failing until you implement each chapter. The course plan is chapters 0–41 in six parts, listed in `book/book-outline.md` and `.github/chapters.json`. Performance budgets for every chapter are `docs/performance.md`. MCP is a first-class tool boundary from chapter 3 (client in chapter 4, server in chapter 8). Part II is how one agent learns; the design is `docs/self-improvement.md`. How the team patterns fit together is `docs/team-patterns.md`. Only the steps in the table above exist so far.

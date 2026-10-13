@@ -47,8 +47,9 @@ Open this repo in GitHub Codespaces. The dev container installs stable Rust (cli
 
 ```bash
 rustc --version
-cargo nextest run -p ch01-4-harness-core -p ch02-harness-core -p ch04-4-harness-core -p ch05-5-harness-core --locked
+cargo nextest run -p ch01-4-harness-core -p ch02-harness-core -p ch04-4-harness-core -p ch05-5-harness-core -p ch06-harness-core --locked
 cargo run -p ch04-4-harness-cli -- --mock ask "hello"
+cargo run -p ch06-harness-cli -- --mock ask "say hello"
 mdbook build book
 ```
 
@@ -128,7 +129,7 @@ Chapters 0 through 41, in six parts. Performance is a budget on every chapter, s
 | 40 | Seeing Inside | `steps/ch40-tracing` | spans on the chapter 1 events, and a capstone team that learns across runs |
 | 41 | Evals | `steps/ch41-evals` | re-run the chapter 6 tasks, plus trajectories |
 
-Chapters 1 through 5 have step crates in the tree. The same list drives CI (`.github/chapters.json`).
+Chapters 1 through 6 have step crates in the tree. The same list drives CI (`.github/chapters.json`).
 
 The book builds with [mdBook](https://rust-lang.github.io/mdBook/): `mdbook build` in `book/` (output in `book/_build/`, not committed).
 

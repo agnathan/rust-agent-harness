@@ -10,7 +10,7 @@
 - [Chapter 3: Tools](chapter-03-tools.md)
 - [Chapter 4: MCP Client](chapter-04-mcp-client.md)
 - [Chapter 5: Thousands of Tools](chapter-05-thousands-of-tools.md)
-- [Chapter 6: The Agent Loop]()
+- [Chapter 6: The Agent Loop](chapter-06-agent-loop.md)
 - [Chapter 7: The Turn State Machine]()
 - [Chapter 8: MCP Server]()
 - [Chapter 9: Approvals and Guardrails]()

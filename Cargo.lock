@@ -537,6 +537,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "ch06-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch06-harness-core",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "ch06-harness-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "criterion",
+ "rmcp",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
 name = "chacha20"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
