@@ -19,8 +19,12 @@ ch01-4-errors:
   - "steps/ch01-4-errors/**"
 ch02-conversations:
   - "steps/ch02-conversations/**"
-ch03-tools:
-  - "steps/ch03-tools/**"
+ch03-1-registry:
+  - "steps/ch03-1-registry/**"
+ch03-2-toolsets:
+  - "steps/ch03-2-toolsets/**"
+ch03-3-dispatch:
+  - "steps/ch03-3-dispatch/**"
 ch04-mcp-client:
   - "steps/ch04-mcp-client/**"
 ch05-agent-loop:

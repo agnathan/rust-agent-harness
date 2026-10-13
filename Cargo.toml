@@ -9,5 +9,11 @@ members = [
     "steps/ch01-4-errors/crates/harness-cli",
     "steps/ch02-conversations/crates/harness-core",
     "steps/ch02-conversations/crates/harness-cli",
+    "steps/ch03-1-registry/crates/harness-core",
+    "steps/ch03-1-registry/crates/harness-cli",
+    "steps/ch03-2-toolsets/crates/harness-core",
+    "steps/ch03-2-toolsets/crates/harness-cli",
+    "steps/ch03-3-dispatch/crates/harness-core",
+    "steps/ch03-3-dispatch/crates/harness-cli",
     "my-harness",
 ]

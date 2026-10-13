@@ -52,7 +52,7 @@ Chapters 0 through 40, in six parts. Performance is a budget on every chapter, s
 | 0 | Introduction | — | why a harness, and what Hermes is |
 | 1 | First Contact | `steps/ch01-1-messages`, `ch01-2-provider`, `ch01-3-cli`, `ch01-4-errors` | messages, one `Event` enum, OpenRouter as the default client, per-agent cost, `ask`, a request timeout |
 | 2 | Conversations | `steps/ch02-conversations` | a real conversation, a cache-stable system prompt, a `chat` REPL, and the session inbox |
-| 3 | Tools | `steps/ch03-tools` | an MCP-shaped tool trait, named toolsets gated on env and checks, concurrent reads and exclusive writes |
+| 3 | Tools | `steps/ch03-1-registry`, `ch03-2-toolsets`, `ch03-3-dispatch` | an MCP-shaped tool trait, named toolsets gated on env and checks, concurrent reads and exclusive writes |
 | 4 | MCP Client | `steps/ch04-mcp-client` | `rmcp` over stdio and streamable HTTP; MCP and native tools share one scheduler |
 | 5 | The Agent Loop | `steps/ch05-agent-loop` | model, tools, results, repeat; a cancellation token and a budget; a saved eval set |
 | 6 | The Turn State Machine | `steps/ch06-turn-state` | one explicit turn, right after the loop |

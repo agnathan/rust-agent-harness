@@ -259,6 +259,82 @@ dependencies = [
 ]
 
 [[package]]
+name = "ch03-1-harness-cli"
+version = "0.2.0"
+dependencies = [
+ "ch03-1-harness-core",
+ "clap",
+ "rustyline",
+ "tokio",
+ "wiremock",
+]
+
+[[package]]
+name = "ch03-1-harness-core"
+version = "0.2.0"
+dependencies = [
+ "async-trait",
+ "criterion",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "wiremock",
+]
+
+[[package]]
+name = "ch03-2-harness-cli"
+version = "0.2.0"
+dependencies = [
+ "ch03-2-harness-core",
+ "clap",
+ "rustyline",
+ "tokio",
+ "wiremock",
+]
+
+[[package]]
+name = "ch03-2-harness-core"
+version = "0.2.0"
+dependencies = [
+ "async-trait",
+ "criterion",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "wiremock",
+]
+
+[[package]]
+name = "ch03-3-harness-cli"
+version = "0.2.0"
+dependencies = [
+ "ch03-3-harness-core",
+ "clap",
+ "rustyline",
+ "serde_json",
+ "tokio",
+ "wiremock",
+]
+
+[[package]]
+name = "ch03-3-harness-core"
+version = "0.2.0"
+dependencies = [
+ "async-trait",
+ "criterion",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "wiremock",
+]
+
+[[package]]
 name = "chacha20"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
