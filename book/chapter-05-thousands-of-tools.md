@@ -4,7 +4,7 @@
 
 Chapter 3 can hold a few dozen tools. A registry lookup in that map was 13.96 ns, and the model was shown every schema that passed its gate. That stops working when the catalog is the size of a real MCP workspace: several servers, each with its own list, easily a thousand tools and sometimes ten thousand. Three things get worse together. The prompt grows by the schema text, so the provider bills more input tokens. The model has more near-matches to choose from, so it calls the wrong tool more often. And every turn pays that cost even when the user asked for one rename.
 
-This chapter keeps the chapter 3 shape (a name, a description, a JSON Schema) and does not open an MCP connection. Chapter 4 is still the client. Until that client exists, a deterministic generator fills the catalog. `SyntheticSource::list` is the stand-in for `tools/list`. `ListCache::notify_list_changed` is the stand-in for `notifications/tools/list_changed`. When chapter 4 lands, those two calls are what get replaced. The cache, the per-agent filter, the index, and the chapter 3 dispatcher stay.
+This chapter keeps the chapter 3 shape (a name, a description, a JSON Schema) and does not open an MCP connection. Chapter 4 is the client that does. The benches here still need a catalog of 1,000 and 10,000 tools, so a deterministic generator fills that catalog. `SyntheticSource::list` is the stand-in those benches call. `ListCache::notify_list_changed` is the stand-in for the dirty flag. A real list from chapter 4 enters the same cache through `cards_from_listed`, `ListCache::from_cards`, and `replace_cards`, in section 5.5. The cache, the per-agent filter, the index, and the chapter 3 dispatcher stay.
 
 [personal note: the first time a tool list was too long to read]
 
@@ -360,7 +360,9 @@ error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 
 ## 5.5 The registry at scale
 
-`SyntheticSource::list` clones the generated vec and counts the call. That clone is what an MCP `tools/list` costs: the server sends the catalog again. `ListCache` keeps an `Arc<[ToolCard]>`. A second `list` returns the same allocation and does not call the source. `notify_list_changed` sets the dirty flag. The next `list` calls the source again. Chapter 4's client is the code that will invoke those two methods when the real notification arrives.
+`SyntheticSource::list` clones the generated vec and counts the call. That clone is what an MCP `tools/list` costs: the server sends the catalog again. `ListCache` keeps an `Arc<[ToolCard]>`. A second `list` returns the same allocation and does not call the source. `notify_list_changed` sets the dirty flag. The next `list` calls the source again.
+
+Chapter 4's `ToolListCache` is the connection that sees the real notification. This crate does not link `rmcp`, because both libraries are named `harness_core`. The handoff is a vec of cards. `ListedTool` is a name, a description, and a schema. `cards_from_listed` sets `server` on each `ToolCard` and leaves that field off the schema the model sees. `ListCache::from_cards` stores the vec. `replace_cards` is the refresh after `list_changed`: it replaces the source and marks the cache dirty. The test `a_real_tools_list_uses_the_same_cache` loads an `echo` card from the fixture's description, sees one list call and a shared `Arc` on the second read, then replaces the list with `echo` and `extra` and sees both on the next read. The 10,000-tool benches still call `ListCache::new`.
 
 > **Rust sidebar: Arc**
 > - `Arc<[ToolCard]>` is a shared slice. Cloning the `Arc` copies the pointer, not the 10,000 cards.
@@ -379,10 +381,10 @@ cargo run -p ch05-5-harness-cli -- --mock ask "rename a file"
 cargo bench -p ch05-5-harness-core --bench lazy_list -- --warm-up-time 1 --measurement-time 2 --sample-size 10
 ```
 
-Library, 3 tests. CLI, 3 tests. The CLI run includes a wiremock server that checks the live request body contains `search_tools` and does not contain `files_list_file_0`. That fake replies `from-fake`. It is not an OpenRouter transcript.
+Library, 4 tests. CLI, 3 tests. The CLI run includes a wiremock server that checks the live request body contains `search_tools` and does not contain `files_list_file_0`. That fake replies `from-fake`. It is not an OpenRouter transcript.
 
 ```text
-     Summary [   0.012s] 3 tests run: 3 passed, 0 skipped
+     Summary [   0.012s] 4 tests run: 4 passed, 0 skipped
      Summary [   0.011s] 3 tests run: 3 passed, 0 skipped
 ```
 
@@ -452,12 +454,12 @@ A live call, when a key is present, posts to OpenRouter with the chapter 1 clien
 - **Index.** BM25 over 10,000 tools built in 14.66 ms and answered a top-8 query in 146.8 µs. A `check_fn` keeps unavailable tools out of the index. `Embedder` is a seam. Ranking stays BM25.
 - **`search_tools`.** The first turn is 55 tokens. Five revealed schemas on the next turn bring it to 305, against 103,063 for all 2,000 tools. The core prefix stays byte-identical, including when the cap evicts the oldest revealed names. Rendering the lazy prompt took 12.26 µs.
 - **Routing.** "rename a file" stays on the files server. That search took 16.00 µs. Shrinking 2,000 short descriptions went from 412,249 bytes to 401,057. Sentences that name an unavailable tool are dropped.
-- **Cache.** Two reads of the stand-in `tools/list` call the source once. A stand-in `tools/list_changed` makes the next read call it again. The cache hit was 17.56 ns. One agent's server filter over 10,000 tools was 77.00 µs.
+- **Cache.** Two reads of the stand-in `tools/list` call the source once. A stand-in `tools/list_changed` makes the next read call it again. A real list uses the same cache through `from_cards` and `replace_cards`. The cache hit was 17.56 ns. One agent's server filter over 10,000 tools was 77.00 µs.
 
 [personal note: which number changed how you think about putting tools in the prompt]
 
 ## What's next
 
-Chapter 4 is still the MCP client. It replaces `SyntheticSource::list` and `notify_list_changed` with `rmcp`. The tools that come back land in this cache and, once revealed, in the chapter 3 registry.
+Chapter 4 is the MCP client. A session there lists tools and hears `list_changed`. `cards_from_listed` is how that list becomes the cards this chapter already caches. The generator stays for the benches.
 
 Chapter 6 is the agent loop: the model chooses a tool, the dispatcher runs it, and the result comes back as a message. `search_tools` is one of those choices. The loop is also where a cancellation token and a budget show up, and where the saved eval set starts.

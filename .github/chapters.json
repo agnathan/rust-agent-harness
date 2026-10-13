@@ -3,7 +3,7 @@
   {"n": 1, "title": "First Contact", "step": "ch01-4-errors", "sections": ["ch01-1-messages", "ch01-2-provider", "ch01-3-cli", "ch01-4-errors"], "part": "I"},
   {"n": 2, "title": "Conversations", "step": "ch02-conversations", "part": "I"},
   {"n": 3, "title": "Tools", "step": "ch03-3-dispatch", "sections": ["ch03-1-registry", "ch03-2-toolsets", "ch03-3-dispatch"], "part": "I"},
-  {"n": 4, "title": "MCP Client", "step": "ch04-mcp-client", "part": "I"},
+  {"n": 4, "title": "MCP Client", "step": "ch04-4-cache", "sections": ["ch04-1-stdio", "ch04-2-http", "ch04-3-registry", "ch04-4-cache"], "part": "I"},
   {"n": 5, "title": "Thousands of Tools", "step": "ch05-5-lazy-list", "sections": ["ch05-1-schema-cost", "ch05-2-tool-index", "ch05-3-search-tool", "ch05-4-routing", "ch05-5-lazy-list"], "part": "I"},
   {"n": 6, "title": "The Agent Loop", "step": "ch06-agent-loop", "part": "I"},
   {"n": 7, "title": "The Turn State Machine", "step": "ch07-turn-state", "part": "I"},

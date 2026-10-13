@@ -22,7 +22,7 @@ BM25 over 10,000 tools answered in 146.8 µs. Routing to one server first, then 
 A cached tools/list hit was 17.56 ns. The cold clone of 10,000 cards was 12.07 ms. Filtering one agent's servers was 77.00 µs.
 
 5/
-Chapter 4 (the MCP client) is not written yet, so this chapter generates the catalog. list() stands in for tools/list. A notification stands in for tools/list_changed. Those two calls are what the real client will replace.
+Chapter 4 is the MCP client. The 10,000-tool benches here still generate the catalog. A real tools/list enters the same cache through cards_from_listed.
 
 No live model call. --mock is the demo. Without a key the CLI prints the missing OPENROUTER_API_KEY error and stops.
 
@@ -46,7 +46,7 @@ The model starts with one meta-tool, search_tools. Matched schemas are appended 
 
 Search over 10,000 tools was 146.8 µs. Routing by server first brought that to 16.00 µs. A cached tool list hit was 17.56 ns, against 12.07 ms to clone the catalog the first time.
 
-The MCP client is still the next unwritten chapter, so a generator stands in for tools/list. I'm new to Rust, so the inverted index, the append-only prefix, and Arc show up in short sidebars when they're needed. The demo is offline. I did not paste a live model transcript.
+The 10,000-tool benches still generate the catalog. Chapter 4's client hands a real list to the same cache. I'm new to Rust, so the inverted index, the append-only prefix, and Arc show up in short sidebars when they're needed. The demo is offline. I did not paste a live model transcript.
 
 [personal note: one takeaway from writing this chapter]
 

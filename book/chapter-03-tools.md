@@ -666,4 +666,4 @@ error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 
 Chapter 4 is the MCP client, built with `rmcp`. It connects over stdio and streamable HTTP, lists tools, and calls them. Those tools land in this same registry, and this dispatcher is the scheduler they share with `echo`.
 
-Chapter 5 is what happens when that list is thousands of tools long. It keeps this registry, and until chapter 4 exists it fills the catalog with a synthetic generator instead of `tools/list`. The loop that lets the model choose a tool, and the `tool` messages that carry the result, are chapter 6.
+Chapter 5 is what happens when that list is thousands of tools long. It keeps this registry. The 10,000-tool benches still use a synthetic generator. A real `tools/list` enters that cache through `cards_from_listed`. The loop that lets the model choose a tool, and the `tool` messages that carry the result, are chapter 6.

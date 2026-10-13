@@ -8,7 +8,7 @@
 - [Chapter 1: First Contact](chapter-01-first-contact.md)
 - [Chapter 2: Conversations](chapter-02-conversations.md)
 - [Chapter 3: Tools](chapter-03-tools.md)
-- [Chapter 4: MCP Client]()
+- [Chapter 4: MCP Client](chapter-04-mcp-client.md)
 - [Chapter 5: Thousands of Tools](chapter-05-thousands-of-tools.md)
 - [Chapter 6: The Agent Loop]()
 - [Chapter 7: The Turn State Machine]()

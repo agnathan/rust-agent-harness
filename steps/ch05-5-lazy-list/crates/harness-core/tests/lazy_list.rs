@@ -20,6 +20,42 @@ fn a_cache_hit_does_not_list_again_until_the_notification() {
 }
 
 #[test]
+fn a_real_tools_list_uses_the_same_cache() {
+    use harness_core::{cards_from_listed, ListedTool};
+    let listed = vec![ListedTool {
+        name: "echo".into(),
+        description: "Return the text argument unchanged.".into(),
+        input_schema: serde_json::json!({"type": "object"}),
+    }];
+    let mut cache = ListCache::from_cards(cards_from_listed("fixture", &listed));
+    let first = cache.list();
+    let second = cache.list();
+    assert_eq!(cache.list_calls(), 1);
+    assert!(Arc::ptr_eq(&first, &second));
+    assert_eq!(first[0].name, "echo");
+    assert_eq!(first[0].server, "fixture");
+    cache.replace_cards(cards_from_listed(
+        "fixture",
+        &[
+            ListedTool {
+                name: "echo".into(),
+                description: "Return the text argument unchanged.".into(),
+                input_schema: serde_json::json!({"type": "object"}),
+            },
+            ListedTool {
+                name: "extra".into(),
+                description: "An extra tool, hidden until grow.".into(),
+                input_schema: serde_json::json!({"type": "object"}),
+            },
+        ],
+    ));
+    let third = cache.list();
+    assert_eq!(cache.list_calls(), 2);
+    assert_eq!(third.len(), 2);
+    assert!(!Arc::ptr_eq(&first, &third));
+}
+
+#[test]
 fn two_agents_see_different_servers_from_one_cache() {
     let mut cache = ListCache::new(256);
     let cards = cache.list();

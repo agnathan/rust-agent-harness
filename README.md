@@ -53,7 +53,7 @@ Chapters 0 through 41, in six parts. Performance is a budget on every chapter, s
 | 1 | First Contact | `steps/ch01-1-messages`, `ch01-2-provider`, `ch01-3-cli`, `ch01-4-errors` | messages, one `Event` enum, OpenRouter as the default client, per-agent cost, `ask`, a request timeout |
 | 2 | Conversations | `steps/ch02-conversations` | a real conversation, a cache-stable system prompt, a `chat` REPL, and the session inbox |
 | 3 | Tools | `steps/ch03-1-registry`, `ch03-2-toolsets`, `ch03-3-dispatch` | an MCP-shaped tool trait, named toolsets gated on env and checks, concurrent reads and exclusive writes |
-| 4 | MCP Client | `steps/ch04-mcp-client` | `rmcp` over stdio and streamable HTTP; MCP and native tools share one scheduler |
+| 4 | MCP Client | `steps/ch04-1-stdio`, `ch04-2-http`, `ch04-3-registry`, `ch04-4-cache` | `rmcp` over stdio and streamable HTTP; MCP and native tools share one scheduler; a cached `tools/list` |
 | 5 | Thousands of Tools | `steps/ch05-1-schema-cost`, `ch05-2-tool-index`, `ch05-3-search-tool`, `ch05-4-routing`, `ch05-5-lazy-list` | load tools on demand: schema cost, a search index, `search_tools`, routing, a cached list |
 | 6 | The Agent Loop | `steps/ch06-agent-loop` | model, tools, results, repeat; a cancellation token and a budget; a saved eval set |
 | 7 | The Turn State Machine | `steps/ch07-turn-state` | one explicit turn, right after the loop |
@@ -117,7 +117,7 @@ Chapters 0 through 41, in six parts. Performance is a budget on every chapter, s
 | 40 | Seeing Inside | `steps/ch40-tracing` | spans on the chapter 1 events, and a capstone team that learns across runs |
 | 41 | Evals | `steps/ch41-evals` | re-run the chapter 6 tasks, plus trajectories |
 
-Chapters 1, 2, 3, and 5 have step crates in the tree. Chapter 4 (the MCP client) is not written yet. The same list drives CI (`.github/chapters.json`).
+Chapters 1 through 5 have step crates in the tree. The same list drives CI (`.github/chapters.json`).
 
 The book builds with [mdBook](https://rust-lang.github.io/mdBook/): `mdbook build` in `book/` (output in `book/_build/`, not committed).
 
@@ -130,7 +130,7 @@ The book builds with [mdBook](https://rust-lang.github.io/mdBook/): `mdbook buil
 - the same tests on Ubuntu, macOS, and Windows for steps whose files changed ([paths-filter](https://github.com/dorny/paths-filter))
 - an mdBook build of `book/`
 
-[Benchmarks](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml) run on pull requests and on pushes to `main`. They execute the three chapter 1 criterion benches on Ubuntu and write the means to the job summary. A slow result does not fail the run.
+[Benchmarks](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml) run on pull requests and on pushes to `main`. They execute the criterion benches for the written chapters on Ubuntu and write the means to the job summary. A slow result does not fail the run.
 
 `my-harness` milestone tests are not part of that required build. They run in [My harness](https://github.com/agnathan/rust-agent-harness/actions/workflows/my-harness.yml).
 

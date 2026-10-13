@@ -27,11 +27,45 @@ impl SyntheticSource {
         }
     }
 
-    /// Stand-in for MCP `tools/list`. Chapter 4's client replaces this method.
+    /// Stand-in for MCP `tools/list`. [`Self::from_cards`] is the same
+    /// method fed by chapter 4's client instead of [`generate`].
     pub fn list(&mut self) -> Vec<ToolCard> {
         self.list_calls += 1;
         self.cards.clone()
     }
+
+    /// Cards already returned by a real `tools/list`.
+    pub fn from_cards(cards: Vec<ToolCard>) -> Self {
+        Self {
+            cards,
+            list_calls: 0,
+        }
+    }
+
+    pub fn replace(&mut self, cards: Vec<ToolCard>) {
+        self.cards = cards;
+    }
+}
+
+/// One listed MCP tool, before it is stored on a [`ToolCard`].
+pub struct ListedTool {
+    pub name: String,
+    pub description: String,
+    pub input_schema: serde_json::Value,
+}
+
+/// The shape chapter 4's client hands this cache. `server` is the MCP server
+/// name. It stays off the schema the model sees.
+pub fn cards_from_listed(server: &str, tools: &[ListedTool]) -> Vec<ToolCard> {
+    tools
+        .iter()
+        .map(|tool| ToolCard {
+            name: tool.name.clone(),
+            description: tool.description.clone(),
+            input_schema: tool.input_schema.clone(),
+            server: server.to_string(),
+        })
+        .collect()
 }
 
 pub struct ListCache {
@@ -47,6 +81,21 @@ impl ListCache {
             cached: None,
             dirty: true,
         }
+    }
+
+    /// Cache a `tools/list` the chapter 4 client already performed.
+    pub fn from_cards(cards: Vec<ToolCard>) -> Self {
+        Self {
+            source: SyntheticSource::from_cards(cards),
+            cached: None,
+            dirty: true,
+        }
+    }
+
+    /// A `tools/list_changed` refresh: store the new list and drop the hit.
+    pub fn replace_cards(&mut self, cards: Vec<ToolCard>) {
+        self.source.replace(cards);
+        self.dirty = true;
     }
 
     pub fn list_calls(&self) -> u64 {

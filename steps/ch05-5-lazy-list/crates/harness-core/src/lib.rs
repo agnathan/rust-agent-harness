@@ -14,7 +14,7 @@ mod provider;
 mod routing;
 mod session;
 
-pub use cache::{AgentView, ListCache, SyntheticSource};
+pub use cache::{cards_from_listed, AgentView, ListCache, ListedTool, SyntheticSource};
 pub use catalog::{
     approx_tokens, generate, mention_count, schema_cost, schema_json, tokenize, trim_words,
     SchemaCost, ToolCard, NOUNS, SERVERS, VERBS,

@@ -39,6 +39,14 @@ jobs:
         run: cargo bench -p ch03-2-harness-core --bench toolset --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
       - name: Section 3.3 dispatch
         run: cargo bench -p ch03-3-harness-core --bench dispatch --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+      - name: Section 4.1 stdio call
+        run: cargo bench -p ch04-1-harness-core --bench stdio_call --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+      - name: Section 4.2 http call
+        run: cargo bench -p ch04-2-harness-core --bench stdio_call --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+      - name: Section 4.3 mcp dispatch
+        run: cargo bench -p ch04-3-harness-core --bench stdio_call --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+      - name: Section 4.4 tool list cache
+        run: cargo bench -p ch04-4-harness-core --bench stdio_call --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
       - name: Section 5.1 schema cost
         run: cargo bench -p ch05-1-harness-core --bench schema_cost --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
       - name: Section 5.2 tool index

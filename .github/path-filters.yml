@@ -27,6 +27,20 @@ ch03-3-dispatch:
   - "steps/ch03-3-dispatch/**"
 ch04-mcp-client:
   - "steps/ch04-mcp-client/**"
+ch04-fixture:
+  - "steps/ch04-fixture/**"
+ch04-1-stdio:
+  - "steps/ch04-1-stdio/**"
+  - "steps/ch04-fixture/**"
+ch04-2-http:
+  - "steps/ch04-2-http/**"
+  - "steps/ch04-fixture/**"
+ch04-3-registry:
+  - "steps/ch04-3-registry/**"
+  - "steps/ch04-fixture/**"
+ch04-4-cache:
+  - "steps/ch04-4-cache/**"
+  - "steps/ch04-fixture/**"
 ch05-1-schema-cost:
   - "steps/ch05-1-schema-cost/**"
 ch05-2-tool-index:
