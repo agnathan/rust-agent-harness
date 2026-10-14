@@ -117,7 +117,7 @@ stdio_echo_round_trip   time:   [70.240 µs 70.665 µs 71.238 µs]
 |---|---|---|---|
 | `stdio_echo_round_trip` | 71.29 µs | one local stdio call, no model | 4 vCPU, sample size 10, warm-up 1 s, measurement 2 s |
 
-CI runs the fixture and this step on Ubuntu, macOS, and Windows. The bench runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml).
+CI runs the fixture and this step on Ubuntu, macOS, and Windows. The bench runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml). A push to `main` appends the medians to the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/).
 
 ### Milestone demo
 
@@ -191,7 +191,7 @@ http_echo_round_trip    time:   [213.70 µs 214.94 µs 216.48 µs]
 |---|---|---|---|
 | `http_echo_round_trip` | 215.7 µs | one local HTTP call, no model | same machine as 4.1 |
 
-The HTTP trip is about three times the stdio trip (215.7 µs against 71.29 µs). Both are loopback. The difference is the HTTP framing, not a network.
+The HTTP trip is about three times the stdio trip (215.7 µs against 71.29 µs). Both are loopback. The difference is the HTTP framing, not a network. The series is on the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/).
 
 ### Milestone demo
 
@@ -251,7 +251,7 @@ mcp_50_sequential       time:   [3.5651 ms 3.5902 ms 3.6127 ms]
 | `mcp_50_concurrent` | 1.908 ms | 50 calls, bound 8, no sleep | same machine as 4.1 |
 | `mcp_50_sequential` | 3.603 ms | the same 50, one at a time | same |
 
-The 40 ms test is the one that matches "about one round trip": eight delayed reads finished together, and eight in a row did not. The bench above is the overhead of the protocol when the tool itself does not wait.
+The 40 ms test is the one that matches "about one round trip": eight delayed reads finished together, and eight in a row did not. The bench above is the overhead of the protocol when the tool itself does not wait. Both rows are on the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/).
 
 ### Milestone demo
 
@@ -318,7 +318,7 @@ mcp_list_hit            time:   [167.80 ns 168.07 ns 168.46 ns]
 | `mcp_list_cold` | 82.87 µs | one `tools/list` over stdio | same machine as 4.1 |
 | `mcp_list_hit` | 168.0 ns | < 1 µs | same |
 
-Chapter 6's synthetic hit was 17.56 ns because it clones an `Arc` and does no protocol. This hit is the same clone plus the atomic flag check, measured with `block_on` inside the iter, so the runtime setup is inside the sample. 168.0 ns is still under the 1 µs budget.
+Chapter 6's synthetic hit was 17.56 ns because it clones an `Arc` and does no protocol. This hit is the same clone plus the atomic flag check, measured with `block_on` inside the iter, so the runtime setup is inside the sample. 168.0 ns is still under the 1 µs budget. The cold and hit series are on the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/).
 
 ### Milestone demo
 

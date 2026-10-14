@@ -596,7 +596,7 @@ dispatch_8_reads_sequential
 
 Tokio's 1 ms sleep is a bit more than 1 ms on this guest, so one wave measured 2.362 ms and eight in a row measured 17.55 ms. That is about 7.4 times, which is the "one call, not eight" budget. The 20 ms demo above is the same comparison with a sleep that dominates the overhead: 21.4 ms versus 170.0 ms.
 
-CI runs these three steps on Ubuntu, macOS, and Windows. The benches run on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml).
+CI runs these three steps on Ubuntu, macOS, and Windows. The benches run on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml). A push to `main` appends the medians to the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/).
 
 ### Milestone demo
 

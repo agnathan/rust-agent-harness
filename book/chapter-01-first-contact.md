@@ -107,7 +107,7 @@ The test builds 50 messages, serializes a `ChatRequest`, and parses it back into
 > **Performance budget**
 >
 > - **Target:** serialize and deserialize a 50-message request in under 1 ms.
-> - **Measured:** `serde_50_message_request` mean **6.937 µs** (criterion, sample size 10, warm-up 1 s, measurement 2 s). The run is pasted below. CI reprints the current mean in the Benchmarks job summary.
+> - **Measured:** `serde_50_message_request` mean **6.937 µs** (criterion, sample size 10, warm-up 1 s, measurement 2 s). The run is pasted below. CI reprints the current median in the Benchmarks job summary, and the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/) keeps the history.
 
 ### Build, run, and benchmark
 
@@ -163,7 +163,7 @@ Found 1 outliers among 10 measurements (10.00%)
 |---|---|---|---|
 | `serde_50_message_request` | 6.937 µs | < 1 ms | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0 |
 
-CI runs this step's tests on Ubuntu, macOS, and Windows. Criterion runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml). Each run uploads a JSON artifact of the means and, when the job can publish, charts them. The table above is from this machine.
+CI runs this step's tests on Ubuntu, macOS, and Windows. Criterion runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml). Each run uploads a JSON artifact, and a push to `main` appends the median to the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/). The table above is from this machine.
 
 ### Milestone demo
 
@@ -339,7 +339,7 @@ mock_100_concurrent     time:   [107.23 µs 110.51 µs 112.81 µs]
 | `mock_turn_overhead` | 235.7 ns | < 1 ms | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0 |
 | `mock_100_concurrent` | 108.9 µs | < 50 ms | same machine |
 
-CI runs these tests on Ubuntu, macOS, and Windows. Criterion runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml), and the means land in the job summary and in a per-commit JSON artifact. The table is from this machine.
+CI runs these tests on Ubuntu, macOS, and Windows. Criterion runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml). The median, low, and high land in the job summary and in a per-commit JSON artifact, and a push to `main` appends them to the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/). The table is from this machine.
 
 ### Milestone demo
 
@@ -602,7 +602,7 @@ build_request_and_parse_response
 |---|---|---|---|
 | `build_request_and_parse_response` | 2.133 µs | < 1 ms | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0 |
 
-CI runs these tests on Ubuntu, macOS, and Windows. Criterion runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml), and the means land in the job summary. The table is from this machine.
+CI runs these tests on Ubuntu, macOS, and Windows. Criterion runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml), and the median lands in the job summary and on the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/). The table is from this machine.
 
 ### Milestone demo
 
@@ -754,7 +754,7 @@ parse_response_edges    time:   [785.72 ns 789.72 ns 797.38 ns]
 |---|---|---|---|
 | `parse_response_edges` | 792.7 ns | < 1 ms | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0 |
 
-CI runs these tests on Ubuntu, macOS, and Windows. Criterion runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml), and the means land in the job summary. The table is from this machine.
+CI runs these tests on Ubuntu, macOS, and Windows. Criterion runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml), and the median lands in the job summary and on the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/). The table is from this machine.
 
 ### Milestone demo
 

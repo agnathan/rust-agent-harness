@@ -191,7 +191,7 @@ live_tool_body          time:   [1.4322 µs 1.4379 µs 1.4437 µs]
 | `loop_8_reads` | 2.370 ms | eight 1 ms reads, then the second reply |
 | `live_tool_body` | 1.435 µs | building the echo and note request body |
 
-2.370 ms is one wave of 1 ms sleeps plus the second scripted reply. It is not eight milliseconds. Later sections add checks, so the same two names on `ch06-10-harness-core` are slower. Those numbers are in 6.10. The Benchmarks job writes every section into one `target/criterion` tree, and the summary keeps one row per function name. Section 6.10 runs last, so the artifact's `gate_check`, `loop_iteration`, and `loop_8_reads` are the finished loop.
+2.370 ms is one wave of 1 ms sleeps plus the second scripted reply. It is not eight milliseconds. Later sections add checks, so the same two names on `ch06-10-harness-core` are slower. Those numbers are in 6.10. The Benchmarks job records each section before the next one starts, and the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/) keeps `6.1/loop_iteration` apart from `6.10/loop_iteration`. Older artifacts stored one row per function name. Those seeded points sit on section 6.10, because that section ran last.
 
 ## 6.2 Prompt cancellation
 
@@ -618,7 +618,7 @@ A steer submitted before any tool result stays in the inbox. `append_steers` doe
 
 Canonical JSON is the send-path copy. The stored `raw_arguments` stay unsorted. A test that looks at the transcript and expects sorted keys is looking at the wrong string.
 
-The Benchmarks job's row for `loop_iteration` is the section 6.10 measurement, 608.0 ns. Quoting the section 6.1 mean of 248.5 ns as the finished loop would hide the checks.
+The [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/) charts section 6.1 and section 6.10 separately. Seeded history for the shared names is the section 6.10 mean, 608.0 ns for `loop_iteration`, because those artifacts stored one row per function name. Quoting the section 6.1 mean of 248.5 ns as the finished loop would hide the checks.
 
 ## Chapter summary
 

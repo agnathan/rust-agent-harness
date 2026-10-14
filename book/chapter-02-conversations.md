@@ -1004,7 +1004,7 @@ The `time:` line is Criterion's slope. The means below are the mean point estima
 
 `inbox_submit` is one `submit` into an empty inbox. The setup of the inbox is outside the measurement. `chat_turn_overhead` is one mock turn: submit, pop, append the user line, call the provider, append the reply. Model latency is zero. Both are under the budget.
 
-CI runs these tests on Ubuntu, macOS, and Windows. Criterion for this bench, and the chapter 1 benches, runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml). The means land in the job summary and in `criterion-summary-<commit>.json`.
+CI runs these tests on Ubuntu, macOS, and Windows. Criterion for this bench, and the chapter 1 benches, runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml). The median, low, and high land in the job summary and in `criterion-summary-<commit>.json`. A push to `main` appends the run to the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/).
 
 ## What's next
 

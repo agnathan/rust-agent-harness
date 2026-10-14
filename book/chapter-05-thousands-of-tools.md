@@ -411,7 +411,7 @@ agent_filter_10000      time:   [76.699 µs 76.885 µs 77.268 µs]
 | `cache_hit_10000` | 17.56 ns | < 1 µs | same |
 | `agent_filter_10000` | 77.00 µs | < 1 ms | same |
 
-CI runs these five steps on Ubuntu, macOS, and Windows. The benches run on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml).
+CI runs these five steps on Ubuntu, macOS, and Windows. The benches run on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml). A push to `main` appends the medians to the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/).
 
 ### Milestone demo
 

@@ -1,8 +1,10 @@
 name: Benchmarks
 
-# Informational only. Reports Criterion estimates in the job summary,
-# uploads one JSON artifact per commit, and charts the series on gh-pages
-# when this token is allowed to publish. There are no fail thresholds.
+# Informational only. Each section is snapshotted before the next one starts,
+# so a shared function name such as loop_iteration stays tied to its section.
+# A push to main appends the Criterion median, low, and high to data.json on
+# gh-pages. Pull requests upload the artifact and do not publish. A slow
+# result does not fail the run.
 on:
   push:
     branches: [main]
@@ -23,60 +25,64 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: .
+      - name: Record the run coordinates
+        run: |
+          echo "BENCH_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
+          echo "BENCH_RUN_URL=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> "$GITHUB_ENV"
       - name: Section 1.1 serde
-        run: cargo bench -p ch01-1-harness-core --bench serde_messages --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+        run: bash .github/scripts/run_bench_section.sh 1.1 "1.1 serde" ch01-1-harness-core serde_messages
       - name: Section 1.2 mock calls
-        run: cargo bench -p ch01-2-harness-core --bench mock_calls --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+        run: bash .github/scripts/run_bench_section.sh 1.2 "1.2 mock calls" ch01-2-harness-core mock_calls
       - name: Section 1.3 request parse
-        run: cargo bench -p ch01-3-harness-core --bench request_parse --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+        run: bash .github/scripts/run_bench_section.sh 1.3 "1.3 request parse" ch01-3-harness-core request_parse
       - name: Section 1.4 response edges
-        run: cargo bench -p ch01-4-harness-core --bench edges --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+        run: bash .github/scripts/run_bench_section.sh 1.4 "1.4 response edges" ch01-4-harness-core edges
       - name: Chapter 2 inbox
-        run: cargo bench -p ch02-harness-core --bench inbox --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+        run: bash .github/scripts/run_bench_section.sh 2 "2 inbox" ch02-harness-core inbox
       - name: Section 3.1 registry lookup
-        run: cargo bench -p ch03-1-harness-core --bench registry --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+        run: bash .github/scripts/run_bench_section.sh 3.1 "3.1 registry lookup" ch03-1-harness-core registry
       - name: Section 3.2 available tools
-        run: cargo bench -p ch03-2-harness-core --bench toolset --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+        run: bash .github/scripts/run_bench_section.sh 3.2 "3.2 available tools" ch03-2-harness-core toolset
       - name: Section 3.3 dispatch
-        run: cargo bench -p ch03-3-harness-core --bench dispatch --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+        run: bash .github/scripts/run_bench_section.sh 3.3 "3.3 dispatch" ch03-3-harness-core dispatch
       - name: Section 4.1 stdio call
-        run: cargo bench -p ch04-1-harness-core --bench stdio_call --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+        run: bash .github/scripts/run_bench_section.sh 4.1 "4.1 stdio call" ch04-1-harness-core stdio_call
       - name: Section 4.2 http call
-        run: cargo bench -p ch04-2-harness-core --bench stdio_call --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+        run: bash .github/scripts/run_bench_section.sh 4.2 "4.2 http call" ch04-2-harness-core stdio_call
       - name: Section 4.3 mcp dispatch
-        run: cargo bench -p ch04-3-harness-core --bench stdio_call --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+        run: bash .github/scripts/run_bench_section.sh 4.3 "4.3 mcp dispatch" ch04-3-harness-core stdio_call
       - name: Section 4.4 tool list cache
-        run: cargo bench -p ch04-4-harness-core --bench stdio_call --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+        run: bash .github/scripts/run_bench_section.sh 4.4 "4.4 tool list cache" ch04-4-harness-core stdio_call
       - name: Section 5.1 schema cost
-        run: cargo bench -p ch05-1-harness-core --bench schema_cost --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+        run: bash .github/scripts/run_bench_section.sh 5.1 "5.1 schema cost" ch05-1-harness-core schema_cost
       - name: Section 5.2 tool index
-        run: cargo bench -p ch05-2-harness-core --bench tool_index --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+        run: bash .github/scripts/run_bench_section.sh 5.2 "5.2 tool index" ch05-2-harness-core tool_index
       - name: Section 5.3 search tool
-        run: cargo bench -p ch05-3-harness-core --bench search_tool --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+        run: bash .github/scripts/run_bench_section.sh 5.3 "5.3 search tool" ch05-3-harness-core search_tool
       - name: Section 5.4 routing
-        run: cargo bench -p ch05-4-harness-core --bench routing --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+        run: bash .github/scripts/run_bench_section.sh 5.4 "5.4 routing" ch05-4-harness-core routing
       - name: Section 5.5 lazy list
-        run: cargo bench -p ch05-5-harness-core --bench lazy_list --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+        run: bash .github/scripts/run_bench_section.sh 5.5 "5.5 lazy list" ch05-5-harness-core lazy_list
       - name: Section 6.1 live tool body
-        run: cargo bench -p ch06-1-harness-core --bench loop_iter --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+        run: bash .github/scripts/run_bench_section.sh 6.1 "6.1 live tool body" ch06-1-harness-core loop_iter
       - name: Section 6.2 cancellation
-        run: cargo bench -p ch06-2-harness-core --bench loop_iter --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+        run: bash .github/scripts/run_bench_section.sh 6.2 "6.2 cancellation" ch06-2-harness-core loop_iter
       - name: Section 6.3 validation
-        run: cargo bench -p ch06-3-harness-core --bench loop_iter --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+        run: bash .github/scripts/run_bench_section.sh 6.3 "6.3 validation" ch06-3-harness-core loop_iter
       - name: Section 6.4 stall
-        run: cargo bench -p ch06-4-harness-core --bench loop_iter --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+        run: bash .github/scripts/run_bench_section.sh 6.4 "6.4 stall" ch06-4-harness-core loop_iter
       - name: Section 6.5 budget notice
-        run: cargo bench -p ch06-5-harness-core --bench loop_iter --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+        run: bash .github/scripts/run_bench_section.sh 6.5 "6.5 budget notice" ch06-5-harness-core loop_iter
       - name: Section 6.6 truncation
-        run: cargo bench -p ch06-6-harness-core --bench loop_iter --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+        run: bash .github/scripts/run_bench_section.sh 6.6 "6.6 truncation" ch06-6-harness-core loop_iter
       - name: Section 6.7 steering
-        run: cargo bench -p ch06-7-harness-core --bench loop_iter --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+        run: bash .github/scripts/run_bench_section.sh 6.7 "6.7 steering" ch06-7-harness-core loop_iter
       - name: Section 6.8 canonical args
-        run: cargo bench -p ch06-8-harness-core --bench loop_iter --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+        run: bash .github/scripts/run_bench_section.sh 6.8 "6.8 canonical args" ch06-8-harness-core loop_iter
       - name: Section 6.9 turn outcome
-        run: cargo bench -p ch06-9-harness-core --bench loop_iter --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+        run: bash .github/scripts/run_bench_section.sh 6.9 "6.9 turn outcome" ch06-9-harness-core loop_iter
       - name: Section 6.10 stress eval
-        run: cargo bench -p ch06-10-harness-core --bench loop_iter --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
+        run: bash .github/scripts/run_bench_section.sh 6.10 "6.10 stress eval" ch06-10-harness-core loop_iter
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"
@@ -88,6 +94,7 @@ jobs:
           path: |
             target/criterion-summary.json
             target/criterion-run.json
+            target/bench-run.json
       - name: Record the benchmark trend
         if: always() && hashFiles('target/criterion-summary.json') != ''
         continue-on-error: true
@@ -104,3 +111,6 @@ jobs:
           summary-always: true
           fail-on-alert: false
           alert-threshold: "200%"
+      - name: Publish the benchmark dashboard
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: python3 .github/scripts/publish_bench_dashboard.py

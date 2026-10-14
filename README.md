@@ -150,7 +150,7 @@ The book builds with [mdBook](https://rust-lang.github.io/mdBook/): `mdbook buil
 - macOS for those steps, at most four jobs at a time, and one automatic retry when the first wave does not succeed. A gate fails the workflow if both waves miss
 - an mdBook build of `book/`
 
-[Benchmarks](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml) run on pull requests and on pushes to `main`. They execute the criterion benches for the written chapters on Ubuntu and write the means to the job summary. A slow result does not fail the run.
+[Benchmarks](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml) run on pull requests and on pushes to `main`. They execute the criterion benches for the written chapters on Ubuntu. Each section is recorded before the next one starts, and the job summary prints the Criterion median with its low and high. A push to `main` appends that run to [`data.json`](benchmarks/data.json) on the `gh-pages` branch. The [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/) charts it. A slow result does not fail the run.
 
 `my-harness` milestone tests are not part of that required build. They run in [My harness](https://github.com/agnathan/rust-agent-harness/actions/workflows/my-harness.yml).
 
