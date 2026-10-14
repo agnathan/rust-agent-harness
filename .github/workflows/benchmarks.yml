@@ -104,7 +104,7 @@ jobs:
           tool: customSmallerIsBetter
           output-file-path: target/criterion-summary.json
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          auto-push: true
+          auto-push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           gh-pages-branch: gh-pages
           benchmark-data-dir-path: dev/bench
           comment-always: true

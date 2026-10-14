@@ -1,9 +1,11 @@
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
+use async_trait::async_trait;
 use harness_core::{
     check_gate, eight_delay_calls, fixture_binary, register_remote, run_loop, run_saved_evals,
-    AgentSession, Budget, CancelFlag, DelayRead, Dispatcher, EchoTool, McpSession, Provider,
+    AgentSession, Budget, CancelFlag, DelayRead, Dispatcher, EchoTool, Event, McpSession, Provider,
     ScriptedProvider, ScriptedReply, StopReason, Tool, ToolRegistry, DISPATCH_BOUND,
 };
 use serde_json::json;
@@ -234,6 +236,81 @@ async fn a_cost_budget_and_a_time_budget_stop_the_same_way() {
     .await;
     assert_eq!(outcome.stop(), StopReason::Budget);
     assert_eq!(provider.calls(), 0);
+}
+
+struct BareError;
+
+#[async_trait]
+impl Provider for BareError {
+    async fn complete(&self, _messages: &[harness_core::Message]) -> Vec<Event> {
+        vec![Event::Error("transport down".into())]
+    }
+
+    fn calls(&self) -> u64 {
+        1
+    }
+}
+
+struct FailWrapUp {
+    calls: AtomicU64,
+}
+
+#[async_trait]
+impl Provider for FailWrapUp {
+    async fn complete(&self, _messages: &[harness_core::Message]) -> Vec<Event> {
+        let call = self.calls.fetch_add(1, Ordering::SeqCst);
+        if call == 0 {
+            return ScriptedReply::tool("call-1", "echo", json!({"text": "partial"})).events();
+        }
+        vec![Event::Error("transport down".into())]
+    }
+
+    fn calls(&self) -> u64 {
+        self.calls.load(Ordering::SeqCst)
+    }
+}
+
+#[tokio::test]
+async fn a_missing_done_event_returns_provider() {
+    let registry = echo_registry();
+    let mut messages = vec![harness_core::Message::user("go")];
+    let outcome = run_loop(
+        &mut messages,
+        &BareError,
+        &registry,
+        &Dispatcher::default(),
+        &Budget::default(),
+        &CancelFlag::new(),
+        Instant::now(),
+    )
+    .await;
+    assert_eq!(outcome.stop(), StopReason::Provider);
+    assert_eq!(outcome.label(), "Provider");
+    assert!(outcome
+        .events()
+        .iter()
+        .any(|event| matches!(event, Event::Error(_))));
+
+    let provider = FailWrapUp {
+        calls: AtomicU64::new(0),
+    };
+    let budget = Budget {
+        max_iterations: 1,
+        ..Budget::default()
+    };
+    let mut messages = vec![harness_core::Message::user("go")];
+    let outcome = run_loop(
+        &mut messages,
+        &provider,
+        &registry,
+        &Dispatcher::default(),
+        &budget,
+        &CancelFlag::new(),
+        Instant::now(),
+    )
+    .await;
+    assert_eq!(outcome.stop(), StopReason::Provider);
+    assert_eq!(provider.calls(), 2);
 }
 
 #[tokio::test]

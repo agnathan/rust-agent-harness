@@ -159,6 +159,7 @@ async fn mock_ask(prompt: String) -> Result<(), String> {
         StopReason::Cancelled => Err("cancelled".into()),
         StopReason::SoftStop => Err("soft stop".into()),
         StopReason::Budget => Err("budget".into()),
+        StopReason::Provider => Err("provider".into()),
         StopReason::Partial => Err("partial".into()),
         StopReason::InvalidToolCalls => Err("invalid tool calls".into()),
         StopReason::Stalled => Err("stalled".into()),

@@ -36,6 +36,11 @@ pub enum TurnOutcome {
         usage: AgentUsage,
         text: String,
     },
+    Provider {
+        events: Vec<Event>,
+        usage: AgentUsage,
+        text: String,
+    },
     Cancelled {
         events: Vec<Event>,
         usage: AgentUsage,
@@ -60,6 +65,7 @@ impl TurnOutcome {
             Self::Finished { events, .. }
             | Self::Partial { events, .. }
             | Self::Budget { events, .. }
+            | Self::Provider { events, .. }
             | Self::Cancelled { events, .. }
             | Self::Stalled { events, .. }
             | Self::InvalidToolCalls { events, .. } => events,
@@ -71,6 +77,7 @@ impl TurnOutcome {
             Self::Finished { usage, .. }
             | Self::Partial { usage, .. }
             | Self::Budget { usage, .. }
+            | Self::Provider { usage, .. }
             | Self::Cancelled { usage, .. }
             | Self::Stalled { usage, .. }
             | Self::InvalidToolCalls { usage, .. } => usage,
@@ -82,6 +89,7 @@ impl TurnOutcome {
             Self::Finished { text, .. }
             | Self::Partial { text, .. }
             | Self::Budget { text, .. }
+            | Self::Provider { text, .. }
             | Self::Cancelled { text, .. }
             | Self::Stalled { text, .. }
             | Self::InvalidToolCalls { text, .. } => text,
@@ -93,6 +101,7 @@ impl TurnOutcome {
             Self::Finished { .. } => StopReason::Finished,
             Self::Partial { .. } => StopReason::Partial,
             Self::Budget { .. } => StopReason::Budget,
+            Self::Provider { .. } => StopReason::Provider,
             Self::Cancelled { hard: true, .. } => StopReason::Cancelled,
             Self::Cancelled { hard: false, .. } => StopReason::SoftStop,
             Self::Stalled { .. } => StopReason::Stalled,
@@ -105,6 +114,7 @@ impl TurnOutcome {
             Self::Finished { .. } => "Finished",
             Self::Partial { .. } => "Partial",
             Self::Budget { .. } => "Budget",
+            Self::Provider { .. } => "Provider",
             Self::Cancelled { .. } => "Cancelled",
             Self::Stalled { .. } => "Stalled",
             Self::InvalidToolCalls { .. } => "InvalidToolCalls",
@@ -125,6 +135,11 @@ fn finish(stop: StopReason, events: Vec<Event>, usage: AgentUsage, text: String)
             text,
         },
         StopReason::Budget => TurnOutcome::Budget {
+            events,
+            usage,
+            text,
+        },
+        StopReason::Provider => TurnOutcome::Provider {
             events,
             usage,
             text,
@@ -280,7 +295,7 @@ pub async fn run_loop_with_inbox(
         };
         let Some(assistant) = absorb(&batch, &mut events, &mut usage) else {
             events.push(Event::Error("provider returned no done event".into()));
-            return finish(StopReason::Budget, events, usage, last_text(messages));
+            return finish(StopReason::Provider, events, usage, last_text(messages));
         };
         let requested = assistant.tool_calls.clone();
         if requested.is_empty() {
@@ -490,7 +505,7 @@ async fn budget_wrap_up(
     };
     let Some(assistant) = absorb(&batch, &mut events, &mut usage) else {
         events.push(Event::Error("provider returned no done event".into()));
-        return finish(StopReason::Budget, events, usage, last_text(messages));
+        return finish(StopReason::Provider, events, usage, last_text(messages));
     };
     if assistant.tool_calls.is_empty() {
         let text = assistant.content.clone();

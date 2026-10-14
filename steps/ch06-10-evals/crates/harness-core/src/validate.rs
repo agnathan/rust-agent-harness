@@ -145,7 +145,11 @@ pub fn levenshtein(left: &str, right: &str) -> usize {
 fn uniquify_ids(calls: &mut [RequestedTool]) {
     let mut seen = HashSet::new();
     for (index, call) in calls.iter_mut().enumerate() {
-        if !seen.insert(call.id.clone()) {
+        if seen.insert(call.id.clone()) {
+            continue;
+        }
+        call.id = format!("{}-{index}", call.id);
+        while !seen.insert(call.id.clone()) {
             call.id = format!("{}-{index}", call.id);
         }
     }
@@ -185,5 +189,36 @@ mod tests {
         let message = unknown_message("", &["echo".into()]);
         assert_eq!(message, "error: tool name is empty");
         assert!(!message.contains("Available tools"));
+    }
+
+    #[test]
+    fn a_rewritten_id_stays_unique_when_the_suffix_is_taken() {
+        let taken_later = classify(
+            vec![requested("a"), requested("a"), requested("a-1")],
+            &["echo".into()],
+        );
+        assert_eq!(ids_of(&taken_later), ["a", "a-1", "a-1-2"]);
+        let taken_earlier = classify(
+            vec![requested("a-2"), requested("a"), requested("a")],
+            &["echo".into()],
+        );
+        assert_eq!(ids_of(&taken_earlier), ["a-2", "a", "a-2-2"]);
+    }
+
+    fn requested(id: &str) -> RequestedTool {
+        RequestedTool {
+            id: id.into(),
+            name: "echo".into(),
+            arguments: serde_json::json!({}),
+            raw_arguments: None,
+        }
+    }
+
+    fn ids_of(classified: &Classified) -> Vec<&str> {
+        classified
+            .calls
+            .iter()
+            .map(|call| call.id.as_str())
+            .collect()
     }
 }

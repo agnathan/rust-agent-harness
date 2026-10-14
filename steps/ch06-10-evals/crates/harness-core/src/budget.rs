@@ -18,6 +18,8 @@ pub enum StopReason {
     Cancelled,
     SoftStop,
     Budget,
+    /// The model call did not finish. A missing done event is not a limit.
+    Provider,
     /// A truncated tool-call argument, or a wrap-up that still wanted tools.
     Partial,
     /// Three batches in a row contained no runnable tool call.

@@ -117,7 +117,7 @@ let batch = tokio::select! {
 };
 ```
 
-`biased` polls the token first. A token that is already cancelled wins over a provider future that is also ready. `absorb` copies the events, records `Usage` when the batch had one, and otherwise counts the call with no bill. The assistant message is the `Done` event. A batch with no `Done` is an error event and a `Budget` return.
+`biased` polls the token first. A token that is already cancelled wins over a provider future that is also ready. `absorb` copies the events, records `Usage` when the batch had one, and otherwise counts the call with no bill. The assistant message is the `Done` event. A batch with no `Done` is an error event and a `Provider` return, in the main loop and in the budget wrap-up.
 
 **A final answer.** Empty `tool_calls` means the turn is over. The assistant message is pushed and the outcome is `Finished`.
 
@@ -558,6 +558,8 @@ outcome_label           time:   [5.5660 ns 5.6528 ns 5.7058 ns]
 | `unknown-tool-repair` | the model asks for `eco` | `Finished`, and the stored name is `echo` |
 | `stall` | `STALL_HALT_AFTER` echoes of a 512-character payload | `Stalled`, and a stub that says the result is byte-identical |
 
+A batch with no `Done` event stops as `Provider`, in the main loop and when the budget wrap-up's completion fails. `hits-iteration-cap` expects `Budget` from a wrap-up that returns the text `partial`.
+
 `prepare_live_evals(None)` returns the missing-key string and does not construct a client. The CLI flag is `--live-evals`. With a key it would call `live_evals`, which uses the same OpenRouter client as `--live`. I ran the flag with the key unset. I did not run it with a key. CI does not pass the flag.
 
 ### Build, run, and benchmark
@@ -571,7 +573,7 @@ cargo bench -p ch06-10-harness-core --bench loop_iter --locked --offline -- --wa
 ```
 
 ```text
-     Summary [   0.099s] 43 tests run: 43 passed, 0 skipped
+     Summary [   0.099s] 45 tests run: 45 passed, 0 skipped
 ```
 
 The example and `evals` print the same seven lines.
