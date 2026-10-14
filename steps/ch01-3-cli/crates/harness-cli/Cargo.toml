@@ -1,0 +1,19 @@
+[package]
+name = "ch01-3-harness-cli"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+
+[[bin]]
+name = "ch01-harness"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive", "env"] }
+harness-core = { package = "ch01-3-harness-core", path = "../harness-core" }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+wiremock = "0.6"

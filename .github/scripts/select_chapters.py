@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Resolve my-harness milestone test targets.
 
-The plan is chapters 1-18 in .github/chapters.json. A spec may name any of
+The plan is chapters 1-48 in .github/chapters.json. A spec may name any of
 those chapters; a chapter with no tests/chNN.rs yet is an error.
-Specs: all | 1 | 1-18 | 3,6,12
+Specs: all | 1 | 1-48 | 3,6,12
 Changed paths: my-harness/tests/chNN.rs, and any my-harness/src change selects every chapter that has a test.
 """
 
@@ -15,7 +15,8 @@ import re
 import sys
 from pathlib import Path
 
-CHAPTER_FILE = re.compile(r"(?:^|/)my-harness/tests/(ch(\d+))\.rs$")
+CHAPTER_FILE = re.compile(r"(?:^|/)my-harness/tests/(ch(\d+)(?:_\d+)?)\.rs$")
+STEM = re.compile(r"ch(\d+)(?:_\d+)?")
 HARNESS_SRC = re.compile(r"(?:^|/)my-harness/(?:src/|Cargo\.toml$|README\.md$)")
 
 
@@ -33,34 +34,34 @@ def planned_chapters(root: Path) -> dict[int, str]:
     return planned
 
 
-def chapter_map(root: Path) -> dict[int, str]:
+def chapter_map(root: Path) -> dict[int, list[str]]:
     tests = root / "my-harness" / "tests"
     if not tests.is_dir():
         raise SystemExit(f"missing test directory: {tests}")
-    mapping: dict[int, str] = {}
+    mapping: dict[int, list[str]] = {}
     for path in sorted(tests.glob("ch*.rs")):
-        match = re.fullmatch(r"ch(\d+)", path.stem)
+        match = STEM.fullmatch(path.stem)
         if not match:
             continue
         number = int(match.group(1))
-        if number in mapping:
-            raise SystemExit(f"two tests share chapter {number}")
-        mapping[number] = path.stem
+        mapping.setdefault(number, []).append(path.stem)
     if not mapping:
         raise SystemExit(f"no chapter tests found in {tests}")
     return mapping
 
 
-def parse_spec(spec: str, mapping: dict[int, str], planned: dict[int, str]) -> list[str]:
+def parse_spec(spec: str, mapping: dict[int, list[str]], planned: dict[int, str]) -> list[str]:
     text = spec.strip()
     if not text:
         raise SystemExit("empty chapter spec")
     if text.lower() == "all":
-        return [mapping[number] for number in sorted(mapping)]
+        return [name for number in sorted(mapping) for name in mapping[number]]
 
     selected: list[str] = []
     seen: set[int] = set()
     known = ", ".join(str(number) for number in sorted(mapping))
+    last = max(planned) if planned else 0
+    span = f"1-{last}" if last else "1-48"
     for part in text.split(","):
         part = part.strip()
         if not part:
@@ -75,7 +76,7 @@ def parse_spec(spec: str, mapping: dict[int, str], planned: dict[int, str]) -> l
             numbers = [int(part)]
         else:
             raise SystemExit(
-                f"invalid chapter spec '{part}'. Use 1, 1-18, 3,6,12, or all."
+                f"invalid chapter spec '{part}'. Use 1, {span}, 3,6,12, or all."
             )
         for number in numbers:
             if number not in mapping:
@@ -86,18 +87,18 @@ def parse_spec(spec: str, mapping: dict[int, str], planned: dict[int, str]) -> l
                         f"(tests exist for: {known})"
                     )
                 raise SystemExit(
-                    f"no chapter {number} in the plan (chapters are 1-18; tests exist for: {known})"
+                    f"no chapter {number} in the plan (chapters are {span}; tests exist for: {known})"
                 )
             if number not in seen:
                 seen.add(number)
-                selected.append(mapping[number])
+                selected.extend(mapping[number])
     if not selected:
         raise SystemExit("no chapters selected")
     return selected
 
 
-def from_paths(lines: list[str], mapping: dict[int, str]) -> list[str]:
-    by_name = {name: number for number, name in mapping.items()}
+def from_paths(lines: list[str], mapping: dict[int, list[str]]) -> list[str]:
+    by_name = {name: number for number, names in mapping.items() for name in names}
     found: list[tuple[int, str]] = []
     seen: set[str] = set()
 
@@ -111,7 +112,8 @@ def from_paths(lines: list[str], mapping: dict[int, str]) -> list[str]:
         path = line.strip().replace("\\", "/")
         if HARNESS_SRC.search(path):
             for number in sorted(mapping):
-                add(mapping[number])
+                for name in mapping[number]:
+                    add(name)
             continue
         match = CHAPTER_FILE.search(path)
         if match:
@@ -124,7 +126,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path("."))
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--spec", help="Chapter spec: all, 1, 1-18, or 3,6,12")
+    group.add_argument("--spec", help="Chapter spec: all, 1, 1-48, or 3,6,12")
     group.add_argument("--changed-from", type=argparse.FileType("r"))
     args = parser.parse_args()
     root = args.root.resolve()

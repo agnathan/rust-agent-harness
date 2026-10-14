@@ -1,0 +1,116 @@
+name: Benchmarks
+
+# Informational only. Each section is snapshotted before the next one starts,
+# so a shared function name such as loop_iteration stays tied to its section.
+# A push to main appends the Criterion median, low, and high to data.json on
+# gh-pages. Pull requests upload the artifact and do not publish. A slow
+# result does not fail the run.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: write
+  pull-requests: write
+  deployments: write
+
+jobs:
+  bench:
+    name: criterion
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: .
+      - name: Record the run coordinates
+        run: |
+          echo "BENCH_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
+          echo "BENCH_RUN_URL=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> "$GITHUB_ENV"
+      - name: Section 1.1 serde
+        run: bash .github/scripts/run_bench_section.sh 1.1 "1.1 serde" ch01-1-harness-core serde_messages
+      - name: Section 1.2 mock calls
+        run: bash .github/scripts/run_bench_section.sh 1.2 "1.2 mock calls" ch01-2-harness-core mock_calls
+      - name: Section 1.3 request parse
+        run: bash .github/scripts/run_bench_section.sh 1.3 "1.3 request parse" ch01-3-harness-core request_parse
+      - name: Section 1.4 response edges
+        run: bash .github/scripts/run_bench_section.sh 1.4 "1.4 response edges" ch01-4-harness-core edges
+      - name: Chapter 2 inbox
+        run: bash .github/scripts/run_bench_section.sh 2 "2 inbox" ch02-harness-core inbox
+      - name: Section 3.1 registry lookup
+        run: bash .github/scripts/run_bench_section.sh 3.1 "3.1 registry lookup" ch03-1-harness-core registry
+      - name: Section 3.2 available tools
+        run: bash .github/scripts/run_bench_section.sh 3.2 "3.2 available tools" ch03-2-harness-core toolset
+      - name: Section 3.3 dispatch
+        run: bash .github/scripts/run_bench_section.sh 3.3 "3.3 dispatch" ch03-3-harness-core dispatch
+      - name: Section 4.1 stdio call
+        run: bash .github/scripts/run_bench_section.sh 4.1 "4.1 stdio call" ch04-1-harness-core stdio_call
+      - name: Section 4.2 http call
+        run: bash .github/scripts/run_bench_section.sh 4.2 "4.2 http call" ch04-2-harness-core stdio_call
+      - name: Section 4.3 mcp dispatch
+        run: bash .github/scripts/run_bench_section.sh 4.3 "4.3 mcp dispatch" ch04-3-harness-core stdio_call
+      - name: Section 4.4 tool list cache
+        run: bash .github/scripts/run_bench_section.sh 4.4 "4.4 tool list cache" ch04-4-harness-core stdio_call
+      - name: Section 5.1 schema cost
+        run: bash .github/scripts/run_bench_section.sh 5.1 "5.1 schema cost" ch05-1-harness-core schema_cost
+      - name: Section 5.2 tool index
+        run: bash .github/scripts/run_bench_section.sh 5.2 "5.2 tool index" ch05-2-harness-core tool_index
+      - name: Section 5.3 search tool
+        run: bash .github/scripts/run_bench_section.sh 5.3 "5.3 search tool" ch05-3-harness-core search_tool
+      - name: Section 5.4 routing
+        run: bash .github/scripts/run_bench_section.sh 5.4 "5.4 routing" ch05-4-harness-core routing
+      - name: Section 5.5 lazy list
+        run: bash .github/scripts/run_bench_section.sh 5.5 "5.5 lazy list" ch05-5-harness-core lazy_list
+      - name: Section 6.1 live tool body
+        run: bash .github/scripts/run_bench_section.sh 6.1 "6.1 live tool body" ch06-1-harness-core loop_iter
+      - name: Section 6.2 cancellation
+        run: bash .github/scripts/run_bench_section.sh 6.2 "6.2 cancellation" ch06-2-harness-core loop_iter
+      - name: Section 6.3 validation
+        run: bash .github/scripts/run_bench_section.sh 6.3 "6.3 validation" ch06-3-harness-core loop_iter
+      - name: Section 6.4 stall
+        run: bash .github/scripts/run_bench_section.sh 6.4 "6.4 stall" ch06-4-harness-core loop_iter
+      - name: Section 6.5 budget notice
+        run: bash .github/scripts/run_bench_section.sh 6.5 "6.5 budget notice" ch06-5-harness-core loop_iter
+      - name: Section 6.6 truncation
+        run: bash .github/scripts/run_bench_section.sh 6.6 "6.6 truncation" ch06-6-harness-core loop_iter
+      - name: Section 6.7 steering
+        run: bash .github/scripts/run_bench_section.sh 6.7 "6.7 steering" ch06-7-harness-core loop_iter
+      - name: Section 6.8 canonical args
+        run: bash .github/scripts/run_bench_section.sh 6.8 "6.8 canonical args" ch06-8-harness-core loop_iter
+      - name: Section 6.9 turn outcome
+        run: bash .github/scripts/run_bench_section.sh 6.9 "6.9 turn outcome" ch06-9-harness-core loop_iter
+      - name: Section 6.10 stress eval
+        run: bash .github/scripts/run_bench_section.sh 6.10 "6.10 stress eval" ch06-10-harness-core loop_iter
+      - name: Write the job summary
+        if: always()
+        run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload the criterion summary
+        if: always() && hashFiles('target/criterion-summary.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: criterion-summary-${{ github.sha }}
+          path: |
+            target/criterion-summary.json
+            target/criterion-run.json
+            target/bench-run.json
+      - name: Record the benchmark trend
+        if: always() && hashFiles('target/criterion-summary.json') != ''
+        continue-on-error: true
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          name: Harness criterion
+          tool: customSmallerIsBetter
+          output-file-path: target/criterion-summary.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          gh-pages-branch: gh-pages
+          benchmark-data-dir-path: dev/bench
+          comment-always: true
+          summary-always: true
+          fail-on-alert: false
+          alert-threshold: "200%"
+      - name: Publish the benchmark dashboard
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: python3 .github/scripts/publish_bench_dashboard.py

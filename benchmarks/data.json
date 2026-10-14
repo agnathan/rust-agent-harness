@@ -1,0 +1,1382 @@
+{
+  "runs": [
+    {
+      "sha": "9bfe6cce85fc277a8750067a2a55e8638c509933",
+      "date": "2026-10-13T04:38:41Z",
+      "run_url": "https://github.com/agnathan/rust-agent-harness/actions/runs/38347365791",
+      "estimate": "mean",
+      "benches": {
+        "1.3/build_request_and_parse_response": {
+          "median_ns": 2951.1657645210144,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.2/mock_100_concurrent": {
+          "median_ns": 85686.82156561666,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.2/mock_turn_overhead": {
+          "median_ns": 252.19914453659848,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.4/parse_response_edges": {
+          "median_ns": 1126.028294007575,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.1/serde_50_message_request": {
+          "median_ns": 10412.767206771598,
+          "low_ns": null,
+          "high_ns": null
+        }
+      }
+    },
+    {
+      "sha": "5caa913cc11cd2fdbfa30b1dd9a5f6be462b4f4d",
+      "date": "2026-10-13T04:54:44Z",
+      "run_url": "https://github.com/agnathan/rust-agent-harness/actions/runs/38348650030",
+      "estimate": "mean",
+      "benches": {
+        "1.3/build_request_and_parse_response": {
+          "median_ns": 2967.134715580177,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "2/chat_turn_overhead": {
+          "median_ns": 694.8193680390708,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "2/inbox_submit": {
+          "median_ns": 41.18936786129232,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.2/mock_100_concurrent": {
+          "median_ns": 83176.79116898871,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.2/mock_turn_overhead": {
+          "median_ns": 250.12093343400716,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.4/parse_response_edges": {
+          "median_ns": 1154.094148871625,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.1/serde_50_message_request": {
+          "median_ns": 10181.461336760613,
+          "low_ns": null,
+          "high_ns": null
+        }
+      }
+    },
+    {
+      "sha": "8425acd843d55125da7ecc8fe25a06346e057849",
+      "date": "2026-10-13T05:05:42Z",
+      "run_url": "https://github.com/agnathan/rust-agent-harness/actions/runs/38349529610",
+      "estimate": "mean",
+      "benches": {
+        "3.2/available_tools_50": {
+          "median_ns": 30543.706423912612,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.3/build_request_and_parse_response": {
+          "median_ns": 2952.264501625278,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "2/chat_turn_overhead": {
+          "median_ns": 691.200134350635,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.3/dispatch_8_reads_concurrent": {
+          "median_ns": 2135529.7718606703,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.3/dispatch_8_reads_sequential": {
+          "median_ns": 16689140.365568783,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "2/inbox_submit": {
+          "median_ns": 40.31218264887084,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.2/mock_100_concurrent": {
+          "median_ns": 85601.92474811374,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.2/mock_turn_overhead": {
+          "median_ns": 250.6751038254149,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.4/parse_response_edges": {
+          "median_ns": 1094.393497435629,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.1/registry_lookup": {
+          "median_ns": 27.10274374211279,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.1/serde_50_message_request": {
+          "median_ns": 10440.509448049921,
+          "low_ns": null,
+          "high_ns": null
+        }
+      }
+    },
+    {
+      "sha": "aea74f6ff8c8dc8e2b9d889e0cde660d8a5f7712",
+      "date": "2026-10-13T06:20:13Z",
+      "run_url": "https://github.com/agnathan/rust-agent-harness/actions/runs/38355844563",
+      "estimate": "mean",
+      "benches": {
+        "5.5/agent_filter_10000": {
+          "median_ns": 125490.31025483207,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.2/available_tools_50": {
+          "median_ns": 30381.152889775876,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.3/build_request_and_parse_response": {
+          "median_ns": 2980.5798002709553,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.5/cache_cold_10000": {
+          "median_ns": 24939500.77797619,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.5/cache_hit_10000": {
+          "median_ns": 13.791779207464355,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "2/chat_turn_overhead": {
+          "median_ns": 752.6303656775133,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.3/dispatch_8_reads_concurrent": {
+          "median_ns": 2133991.9463165263,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.3/dispatch_8_reads_sequential": {
+          "median_ns": 16698211.869748676,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.3/full_schema_tokens_10000": {
+          "median_ns": 23009423.44902778,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "2/inbox_submit": {
+          "median_ns": 40.23516287486284,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.2/index_build_10000": {
+          "median_ns": 21880801.459325396,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.2/index_search_10000": {
+          "median_ns": 331723.468053053,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.3/lazy_visible_prompt_10000": {
+          "median_ns": 15888.462053258147,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.2/mock_100_concurrent": {
+          "median_ns": 81448.26146050684,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.2/mock_turn_overhead": {
+          "median_ns": 253.2978942226705,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.4/parse_response_edges": {
+          "median_ns": 1125.989909344308,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.1/registry_lookup": {
+          "median_ns": 25.751601781906466,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.4/routed_search_10000": {
+          "median_ns": 26231.390637436532,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.1/schema_tokens_1000": {
+          "median_ns": 1269841.3966105639,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.1/schema_tokens_10000": {
+          "median_ns": 43602836.965277776,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.1/serde_50_message_request": {
+          "median_ns": 10446.43219463871,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.4/shrink_schemas_10000": {
+          "median_ns": 63980122.31059524,
+          "low_ns": null,
+          "high_ns": null
+        }
+      }
+    },
+    {
+      "sha": "149f37ff723cd4873df19c95203cdd52172bd442",
+      "date": "2026-10-13T09:56:26Z",
+      "run_url": "https://github.com/agnathan/rust-agent-harness/actions/runs/38379569537",
+      "estimate": "mean",
+      "benches": {
+        "5.5/agent_filter_10000": {
+          "median_ns": 125853.75281029541,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.2/available_tools_50": {
+          "median_ns": 30710.45797629102,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.3/build_request_and_parse_response": {
+          "median_ns": 3186.92285809121,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.5/cache_cold_10000": {
+          "median_ns": 23971421.97634921,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.5/cache_hit_10000": {
+          "median_ns": 13.78974919413524,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "2/chat_turn_overhead": {
+          "median_ns": 722.7235491509507,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.3/dispatch_8_reads_concurrent": {
+          "median_ns": 2135269.2710784315,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.3/dispatch_8_reads_sequential": {
+          "median_ns": 16776961.639550263,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.3/full_schema_tokens_10000": {
+          "median_ns": 22943924.281984128,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "2/inbox_submit": {
+          "median_ns": 40.95588627158111,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.2/index_build_10000": {
+          "median_ns": 21091022.857341267,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.2/index_search_10000": {
+          "median_ns": 333522.8359000721,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.3/lazy_visible_prompt_10000": {
+          "median_ns": 15696.046122189297,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.2/mock_100_concurrent": {
+          "median_ns": 82603.94929019867,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.2/mock_turn_overhead": {
+          "median_ns": 249.6569244797558,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.4/parse_response_edges": {
+          "median_ns": 1110.8769524581994,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.1/registry_lookup": {
+          "median_ns": 25.704534943576142,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.4/routed_search_10000": {
+          "median_ns": 25589.00286848875,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.1/schema_tokens_1000": {
+          "median_ns": 1248338.7187301586,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.1/schema_tokens_10000": {
+          "median_ns": 41163686.178611115,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.1/serde_50_message_request": {
+          "median_ns": 10372.546539754958,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.4/shrink_schemas_10000": {
+          "median_ns": 63283826.32273809,
+          "low_ns": null,
+          "high_ns": null
+        }
+      }
+    },
+    {
+      "sha": "cf8ffae8c21c797362a09055848c841424fb237f",
+      "date": "2026-10-13T10:02:48Z",
+      "run_url": "https://github.com/agnathan/rust-agent-harness/actions/runs/38380324108",
+      "estimate": "mean",
+      "benches": {
+        "5.5/agent_filter_10000": {
+          "median_ns": 88643.2614511644,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.2/available_tools_50": {
+          "median_ns": 24246.194970529097,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.3/build_request_and_parse_response": {
+          "median_ns": 2325.973212113692,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.5/cache_cold_10000": {
+          "median_ns": 23529128.608611114,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.5/cache_hit_10000": {
+          "median_ns": 12.33041014269498,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "2/chat_turn_overhead": {
+          "median_ns": 535.3716435322565,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.3/dispatch_8_reads_concurrent": {
+          "median_ns": 2145741.5476797386,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.3/dispatch_8_reads_sequential": {
+          "median_ns": 16802936.300886244,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.3/full_schema_tokens_10000": {
+          "median_ns": 16715169.69925926,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "2/inbox_submit": {
+          "median_ns": 33.88120860032457,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.2/index_build_10000": {
+          "median_ns": 16684764.216111112,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.2/index_search_10000": {
+          "median_ns": 189874.988114046,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.3/lazy_visible_prompt_10000": {
+          "median_ns": 12546.931375620212,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.2/mock_100_concurrent": {
+          "median_ns": 67753.22200374093,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.2/mock_turn_overhead": {
+          "median_ns": 238.9133193600349,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.4/parse_response_edges": {
+          "median_ns": 940.0483000789147,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.1/registry_lookup": {
+          "median_ns": 17.675818683489076,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.4/routed_search_10000": {
+          "median_ns": 19187.38067679741,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.1/schema_tokens_1000": {
+          "median_ns": 990239.3371666666,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.1/schema_tokens_10000": {
+          "median_ns": 33695802.44740079,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.1/serde_50_message_request": {
+          "median_ns": 8192.400189382377,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.4/shrink_schemas_10000": {
+          "median_ns": 52794334.29031746,
+          "low_ns": null,
+          "high_ns": null
+        }
+      }
+    },
+    {
+      "sha": "0a3b2cf37e51a8ea8709bf7d85effd25338d68c6",
+      "date": "2026-10-13T10:40:29Z",
+      "run_url": "https://github.com/agnathan/rust-agent-harness/actions/runs/38384301839",
+      "estimate": "mean",
+      "benches": {
+        "5.5/agent_filter_10000": {
+          "median_ns": 131512.24220956984,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.2/available_tools_50": {
+          "median_ns": 28301.767917129524,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.3/build_request_and_parse_response": {
+          "median_ns": 2770.3910065583887,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.5/cache_cold_10000": {
+          "median_ns": 19492284.91781746,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.5/cache_hit_10000": {
+          "median_ns": 21.226025399299992,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "2/chat_turn_overhead": {
+          "median_ns": 830.7738834067546,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.3/dispatch_8_reads_concurrent": {
+          "median_ns": 2140270.9643767504,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.3/dispatch_8_reads_sequential": {
+          "median_ns": 16626275.743981484,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.3/full_schema_tokens_10000": {
+          "median_ns": 17088263.253743384,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.2/http_echo_round_trip": {
+          "median_ns": 352073.8233811065,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "2/inbox_submit": {
+          "median_ns": 39.86480945119154,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.2/index_build_10000": {
+          "median_ns": 20568070.91140873,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.2/index_search_10000": {
+          "median_ns": 191228.26784929124,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.3/lazy_visible_prompt_10000": {
+          "median_ns": 15843.928970397072,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.3/mcp_50_concurrent": {
+          "median_ns": 3401347.717994228,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.3/mcp_50_sequential": {
+          "median_ns": 7948359.4714206355,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.4/mcp_list_cold": {
+          "median_ns": 169917.59889713212,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.4/mcp_list_hit": {
+          "median_ns": 214.01532690965934,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.2/mock_100_concurrent": {
+          "median_ns": 105156.50055274519,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.2/mock_turn_overhead": {
+          "median_ns": 250.18332484431434,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.4/parse_response_edges": {
+          "median_ns": 1073.053248854769,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.1/registry_lookup": {
+          "median_ns": 21.510158282670556,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.4/routed_search_10000": {
+          "median_ns": 20673.69089832982,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.1/schema_tokens_1000": {
+          "median_ns": 1182863.483562468,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.1/schema_tokens_10000": {
+          "median_ns": 33334133.059702378,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.1/serde_50_message_request": {
+          "median_ns": 9341.36231267581,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.4/shrink_schemas_10000": {
+          "median_ns": 55045017.80325397,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.1/stdio_echo_round_trip": {
+          "median_ns": 164478.39424172233,
+          "low_ns": null,
+          "high_ns": null
+        }
+      }
+    },
+    {
+      "sha": "95594d6a6b21452019579675d2fc0f0fb7f325fe",
+      "date": "2026-10-13T10:43:43Z",
+      "run_url": "https://github.com/agnathan/rust-agent-harness/actions/runs/38384625792",
+      "estimate": "mean",
+      "benches": {
+        "5.5/agent_filter_10000": {
+          "median_ns": 125732.98375405064,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.2/available_tools_50": {
+          "median_ns": 30692.521645626934,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.3/build_request_and_parse_response": {
+          "median_ns": 2979.3604178070427,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.5/cache_cold_10000": {
+          "median_ns": 26951572.647817455,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.5/cache_hit_10000": {
+          "median_ns": 13.796120071661267,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "2/chat_turn_overhead": {
+          "median_ns": 781.2947053793059,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.3/dispatch_8_reads_concurrent": {
+          "median_ns": 2135747.865177404,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.3/dispatch_8_reads_sequential": {
+          "median_ns": 16795043.894894183,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.3/full_schema_tokens_10000": {
+          "median_ns": 27120062.021329366,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.2/http_echo_round_trip": {
+          "median_ns": 423940.68674922455,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "2/inbox_submit": {
+          "median_ns": 40.385607381213916,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.2/index_build_10000": {
+          "median_ns": 22691876.797420636,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.2/index_search_10000": {
+          "median_ns": 340052.31302143604,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.3/lazy_visible_prompt_10000": {
+          "median_ns": 15487.525827105967,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.3/mcp_50_concurrent": {
+          "median_ns": 5275713.2803918645,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.3/mcp_50_sequential": {
+          "median_ns": 10599943.359940477,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.4/mcp_list_cold": {
+          "median_ns": 223184.6089939875,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.4/mcp_list_hit": {
+          "median_ns": 256.4565184969823,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.2/mock_100_concurrent": {
+          "median_ns": 82884.63302687244,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.2/mock_turn_overhead": {
+          "median_ns": 250.57999788653478,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.4/parse_response_edges": {
+          "median_ns": 1117.9192625652431,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.1/registry_lookup": {
+          "median_ns": 26.535907229464197,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.4/routed_search_10000": {
+          "median_ns": 25846.25157590311,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.1/schema_tokens_1000": {
+          "median_ns": 1276865.777738095,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.1/schema_tokens_10000": {
+          "median_ns": 45398792.907619044,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.1/serde_50_message_request": {
+          "median_ns": 10466.644993490027,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.4/shrink_schemas_10000": {
+          "median_ns": 63679894.68031746,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.1/stdio_echo_round_trip": {
+          "median_ns": 206671.45579544434,
+          "low_ns": null,
+          "high_ns": null
+        }
+      }
+    },
+    {
+      "sha": "6562fcb7c5165c26baf55b465621b5154ae72bc3",
+      "date": "2026-10-13T10:49:57Z",
+      "run_url": "https://github.com/agnathan/rust-agent-harness/actions/runs/38385539882",
+      "estimate": "mean",
+      "benches": {
+        "5.5/agent_filter_10000": {
+          "median_ns": 50534.3185248472,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.2/available_tools_50": {
+          "median_ns": 17423.980725218466,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.3/build_request_and_parse_response": {
+          "median_ns": 1497.2380925708926,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.5/cache_cold_10000": {
+          "median_ns": 15447530.51047619,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.5/cache_hit_10000": {
+          "median_ns": 15.16005841844719,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "2/chat_turn_overhead": {
+          "median_ns": 533.6335990365138,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.3/dispatch_8_reads_concurrent": {
+          "median_ns": 2113486.123234127,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.3/dispatch_8_reads_sequential": {
+          "median_ns": 16723194.805039683,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.3/full_schema_tokens_10000": {
+          "median_ns": 16867016.367857143,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/gate_check": {
+          "median_ns": 1.6322995101465794,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.2/http_echo_round_trip": {
+          "median_ns": 234685.89727956988,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "2/inbox_submit": {
+          "median_ns": 31.317159651610194,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.2/index_build_10000": {
+          "median_ns": 13129929.34718254,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.2/index_search_10000": {
+          "median_ns": 123984.61429000429,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.3/lazy_visible_prompt_10000": {
+          "median_ns": 10070.850636207815,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/loop_8_reads": {
+          "median_ns": 2125208.095921517,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/loop_iteration": {
+          "median_ns": 223.76439187838892,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.3/mcp_50_concurrent": {
+          "median_ns": 2259055.5973536703,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.3/mcp_50_sequential": {
+          "median_ns": 4390948.623827159,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.4/mcp_list_cold": {
+          "median_ns": 92719.54751954216,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.4/mcp_list_hit": {
+          "median_ns": 191.36775963180273,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.2/mock_100_concurrent": {
+          "median_ns": 60640.2409538026,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.2/mock_turn_overhead": {
+          "median_ns": 190.65351124512125,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.4/parse_response_edges": {
+          "median_ns": 674.5131638727419,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.1/registry_lookup": {
+          "median_ns": 16.61752194670094,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.4/routed_search_10000": {
+          "median_ns": 12897.825229425916,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.1/schema_tokens_1000": {
+          "median_ns": 690682.709461665,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.1/schema_tokens_10000": {
+          "median_ns": 30188620.933611106,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.1/serde_50_message_request": {
+          "median_ns": 5716.019704876184,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.4/shrink_schemas_10000": {
+          "median_ns": 49387487.38293651,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.1/stdio_echo_round_trip": {
+          "median_ns": 86124.82898471,
+          "low_ns": null,
+          "high_ns": null
+        }
+      }
+    },
+    {
+      "sha": "c1c8699a7fb90acb141be87efb4395ea3f614223",
+      "date": "2026-10-13T15:29:34Z",
+      "run_url": "https://github.com/agnathan/rust-agent-harness/actions/runs/38420213629",
+      "estimate": "mean",
+      "benches": {
+        "5.5/agent_filter_10000": {
+          "median_ns": 86830.0906541463,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.2/available_tools_50": {
+          "median_ns": 24004.607570461605,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/budget_notice": {
+          "median_ns": 60.07842199419922,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.3/build_request_and_parse_response": {
+          "median_ns": 2251.3153716294646,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.5/cache_cold_10000": {
+          "median_ns": 22724035.76535714,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.5/cache_hit_10000": {
+          "median_ns": 12.409190675016044,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/cancel_select": {
+          "median_ns": 89.15866073025698,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/canonical_args": {
+          "median_ns": 849.8419449174298,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "2/chat_turn_overhead": {
+          "median_ns": 548.4572862645047,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.3/dispatch_8_reads_concurrent": {
+          "median_ns": 2135013.362948179,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.3/dispatch_8_reads_sequential": {
+          "median_ns": 16851055.79554233,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.3/full_schema_tokens_10000": {
+          "median_ns": 19486692.12734127,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/gate_check": {
+          "median_ns": 5.663445029296217,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.2/http_echo_round_trip": {
+          "median_ns": 312463.5014492606,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "2/inbox_submit": {
+          "median_ns": 34.02650088489705,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.2/index_build_10000": {
+          "median_ns": 17432657.113055557,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.2/index_search_10000": {
+          "median_ns": 193805.4218602246,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.3/lazy_visible_prompt_10000": {
+          "median_ns": 12764.99335715698,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/live_tool_body": {
+          "median_ns": 1490.853515763786,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/loop_8_reads": {
+          "median_ns": 2187899.0087231556,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/loop_iteration": {
+          "median_ns": 578.7875848889437,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.3/mcp_50_concurrent": {
+          "median_ns": 3240450.99301918,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.3/mcp_50_sequential": {
+          "median_ns": 6685279.266362434,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.4/mcp_list_cold": {
+          "median_ns": 139014.77879271173,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.4/mcp_list_hit": {
+          "median_ns": 184.41610055538277,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.2/mock_100_concurrent": {
+          "median_ns": 68187.77360751618,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.2/mock_turn_overhead": {
+          "median_ns": 207.25290918712284,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/outcome_label": {
+          "median_ns": 7.680498100696534,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.4/parse_response_edges": {
+          "median_ns": 947.9431288200669,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.1/registry_lookup": {
+          "median_ns": 17.66832423395572,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.4/routed_search_10000": {
+          "median_ns": 18766.49539631455,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.1/schema_tokens_1000": {
+          "median_ns": 989678.8827348778,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.1/schema_tokens_10000": {
+          "median_ns": 38330162.06424603,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.1/serde_50_message_request": {
+          "median_ns": 8415.122385314808,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.4/shrink_schemas_10000": {
+          "median_ns": 57067443.26706348,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/stall_observe": {
+          "median_ns": 113.48506738673748,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.1/stdio_echo_round_trip": {
+          "median_ns": 131036.58689516361,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/steer_append": {
+          "median_ns": 46.20960919861855,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/stress_repair": {
+          "median_ns": 31613.29744906317,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/truncate_output": {
+          "median_ns": 3407.8159163052405,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/validate_repair": {
+          "median_ns": 204.0496303487703,
+          "low_ns": null,
+          "high_ns": null
+        }
+      }
+    },
+    {
+      "sha": "38b3ac79ed16c8423c388665f441b065bfde8a0e",
+      "date": "2026-10-13T16:07:57Z",
+      "run_url": "https://github.com/agnathan/rust-agent-harness/actions/runs/38425789660",
+      "estimate": "mean",
+      "benches": {
+        "5.5/agent_filter_10000": {
+          "median_ns": 87068.5744532204,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.2/available_tools_50": {
+          "median_ns": 24072.130769372223,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/budget_notice": {
+          "median_ns": 62.375858899764395,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.3/build_request_and_parse_response": {
+          "median_ns": 2298.7976585019983,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.5/cache_cold_10000": {
+          "median_ns": 25787445.113968257,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.5/cache_hit_10000": {
+          "median_ns": 12.391615026686349,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/cancel_select": {
+          "median_ns": 92.75413920133745,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/canonical_args": {
+          "median_ns": 845.5590150919345,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "2/chat_turn_overhead": {
+          "median_ns": 621.3617338294666,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.3/dispatch_8_reads_concurrent": {
+          "median_ns": 2147400.5175863677,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.3/dispatch_8_reads_sequential": {
+          "median_ns": 16838398.60351852,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.3/full_schema_tokens_10000": {
+          "median_ns": 23707189.100376986,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/gate_check": {
+          "median_ns": 5.746847918266697,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.2/http_echo_round_trip": {
+          "median_ns": 312894.9817731652,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "2/inbox_submit": {
+          "median_ns": 32.87049877232822,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.2/index_build_10000": {
+          "median_ns": 17976021.274126984,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.2/index_search_10000": {
+          "median_ns": 190090.60058201058,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.3/lazy_visible_prompt_10000": {
+          "median_ns": 12692.432357776674,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/live_tool_body": {
+          "median_ns": 1521.309526489945,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/loop_8_reads": {
+          "median_ns": 2175165.575583567,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/loop_iteration": {
+          "median_ns": 589.1154414912273,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.3/mcp_50_concurrent": {
+          "median_ns": 3307633.0857605822,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.3/mcp_50_sequential": {
+          "median_ns": 6684063.235522488,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.4/mcp_list_cold": {
+          "median_ns": 138231.79005624182,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.4/mcp_list_hit": {
+          "median_ns": 182.37564131686383,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.2/mock_100_concurrent": {
+          "median_ns": 64000.960050486516,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.2/mock_turn_overhead": {
+          "median_ns": 209.14024744377508,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/outcome_label": {
+          "median_ns": 7.661504342020313,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.4/parse_response_edges": {
+          "median_ns": 934.7248448760596,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "3.1/registry_lookup": {
+          "median_ns": 17.65367509090278,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.4/routed_search_10000": {
+          "median_ns": 18812.67087854286,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.1/schema_tokens_1000": {
+          "median_ns": 996044.4241424163,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.1/schema_tokens_10000": {
+          "median_ns": 40358083.33396825,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "1.1/serde_50_message_request": {
+          "median_ns": 8318.828552104502,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "5.4/shrink_schemas_10000": {
+          "median_ns": 64372630.733452395,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/stall_observe": {
+          "median_ns": 114.69668832264612,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "4.1/stdio_echo_round_trip": {
+          "median_ns": 130643.79891463276,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/steer_append": {
+          "median_ns": 45.88800607441555,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/stress_repair": {
+          "median_ns": 31278.86955342741,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/truncate_output": {
+          "median_ns": 3447.3546609910263,
+          "low_ns": null,
+          "high_ns": null
+        },
+        "6.10/validate_repair": {
+          "median_ns": 199.87310490542274,
+          "low_ns": null,
+          "high_ns": null
+        }
+      }
+    }
+  ]
+}

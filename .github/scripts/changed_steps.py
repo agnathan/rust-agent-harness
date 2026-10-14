@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Turn dorny/paths-filter `changes` into the step directories that exist.
 
-`shared` expands to every steps/ch* directory. A planned chapter whose
-directory is not in the tree yet is ignored. Writes `steps=[...]` for
+`shared` expands to every steps/ch* and steps/gw* directory. A planned
+chapter whose directory is not in the tree yet is ignored. Writes `steps=[...]` for
 $GITHUB_OUTPUT when that variable is set, and always prints the JSON array.
 """
 
@@ -21,7 +21,7 @@ def existing_steps(root: Path) -> list[str]:
     return sorted(
         path.name
         for path in steps.iterdir()
-        if path.is_dir() and path.name.startswith("ch")
+        if path.is_dir() and path.name.startswith(("ch", "gw"))
     )
 
 

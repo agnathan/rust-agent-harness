@@ -1,7 +1,8 @@
 # Filter names for real steps match steps/ directory names.
 # `shared` means "retest every step that exists". Planned steps are listed so a
 # new steps/chNN-* directory is picked up without editing the workflow.
-# The chapter plan itself is .github/chapters.json.
+# The chapter plan itself is .github/chapters.json (chapters 0–48, parts I–VI).
+# Server-track steps use the gw- prefix. Only gw-minimal-server exists today.
 shared:
   - "Cargo.toml"
   - "Cargo.lock"
@@ -9,39 +10,167 @@ shared:
   - ".github/workflows/ci.yml"
   - ".github/path-filters.yml"
   - ".github/chapters.json"
-ch01-first-contact:
-  - "steps/ch01-first-contact/**"
+ch01-1-messages:
+  - "steps/ch01-1-messages/**"
+ch01-2-provider:
+  - "steps/ch01-2-provider/**"
+ch01-3-cli:
+  - "steps/ch01-3-cli/**"
+ch01-4-errors:
+  - "steps/ch01-4-errors/**"
 ch02-conversations:
   - "steps/ch02-conversations/**"
-ch03-tools:
-  - "steps/ch03-tools/**"
-ch04-agent-loop:
-  - "steps/ch04-agent-loop/**"
-ch05-handoffs:
-  - "steps/ch05-handoffs/**"
-ch06-agents-as-tools:
-  - "steps/ch06-agents-as-tools/**"
-ch07-when-things-fail:
-  - "steps/ch07-when-things-fail/**"
-ch08-streaming:
-  - "steps/ch08-streaming/**"
-ch09-turn-state:
-  - "steps/ch09-turn-state/**"
-ch10-parallel-tools:
-  - "steps/ch10-parallel-tools/**"
-ch11-context:
-  - "steps/ch11-context/**"
-ch12-remembering:
-  - "steps/ch12-remembering/**"
-ch13-actors:
-  - "steps/ch13-actors/**"
-ch14-supervision:
-  - "steps/ch14-supervision/**"
-ch15-blackboard:
-  - "steps/ch15-blackboard/**"
-ch16-message-bus:
-  - "steps/ch16-message-bus/**"
-ch17-mcp-a2a:
-  - "steps/ch17-mcp-a2a/**"
-ch18-tracing:
-  - "steps/ch18-tracing/**"
+ch03-1-registry:
+  - "steps/ch03-1-registry/**"
+ch03-2-toolsets:
+  - "steps/ch03-2-toolsets/**"
+ch03-3-dispatch:
+  - "steps/ch03-3-dispatch/**"
+ch04-mcp-client:
+  - "steps/ch04-mcp-client/**"
+ch04-fixture:
+  - "steps/ch04-fixture/**"
+ch04-1-stdio:
+  - "steps/ch04-1-stdio/**"
+  - "steps/ch04-fixture/**"
+ch04-2-http:
+  - "steps/ch04-2-http/**"
+  - "steps/ch04-fixture/**"
+ch04-3-registry:
+  - "steps/ch04-3-registry/**"
+  - "steps/ch04-fixture/**"
+ch04-4-cache:
+  - "steps/ch04-4-cache/**"
+  - "steps/ch04-fixture/**"
+ch05-1-schema-cost:
+  - "steps/ch05-1-schema-cost/**"
+ch05-2-tool-index:
+  - "steps/ch05-2-tool-index/**"
+ch05-3-search-tool:
+  - "steps/ch05-3-search-tool/**"
+ch05-4-routing:
+  - "steps/ch05-4-routing/**"
+ch05-5-lazy-list:
+  - "steps/ch05-5-lazy-list/**"
+ch06-1-live:
+  - "steps/ch06-1-live/**"
+  - "steps/ch04-fixture/**"
+ch06-2-cancel:
+  - "steps/ch06-2-cancel/**"
+  - "steps/ch04-fixture/**"
+ch06-3-validate:
+  - "steps/ch06-3-validate/**"
+  - "steps/ch04-fixture/**"
+ch06-4-stall:
+  - "steps/ch06-4-stall/**"
+  - "steps/ch04-fixture/**"
+ch06-5-budget:
+  - "steps/ch06-5-budget/**"
+  - "steps/ch04-fixture/**"
+ch06-6-truncate:
+  - "steps/ch06-6-truncate/**"
+  - "steps/ch04-fixture/**"
+ch06-7-steer:
+  - "steps/ch06-7-steer/**"
+  - "steps/ch04-fixture/**"
+ch06-8-canonical:
+  - "steps/ch06-8-canonical/**"
+  - "steps/ch04-fixture/**"
+ch06-9-outcome:
+  - "steps/ch06-9-outcome/**"
+  - "steps/ch04-fixture/**"
+ch06-10-evals:
+  - "steps/ch06-10-evals/**"
+  - "steps/ch04-fixture/**"
+gw-minimal-server:
+  - "steps/gw-minimal-server/**"
+  - "mcp-gateway/**"
+gw-catalog:
+  - "steps/gw-catalog/**"
+  - "mcp-gateway/**"
+gw-session-toolsets:
+  - "steps/gw-session-toolsets/**"
+  - "mcp-gateway/**"
+gw-limits:
+  - "steps/gw-limits/**"
+  - "mcp-gateway/**"
+gw-learned-tools:
+  - "steps/gw-learned-tools/**"
+  - "mcp-gateway/**"
+gw-balancing:
+  - "steps/gw-balancing/**"
+  - "mcp-gateway/**"
+gw-service:
+  - "steps/gw-service/**"
+  - "mcp-gateway/**"
+gw-capstone:
+  - "steps/gw-capstone/**"
+  - "mcp-gateway/**"
+ch07-turn-state:
+  - "steps/ch07-turn-state/**"
+ch09-approvals:
+  - "steps/ch09-approvals/**"
+ch10-hooks:
+  - "steps/ch10-hooks/**"
+ch11-sandbox:
+  - "steps/ch11-sandbox/**"
+ch12-when-things-fail:
+  - "steps/ch12-when-things-fail/**"
+ch13-providers:
+  - "steps/ch13-providers/**"
+ch14-streaming:
+  - "steps/ch14-streaming/**"
+ch15-sessions:
+  - "steps/ch15-sessions/**"
+ch16-memory:
+  - "steps/ch16-memory/**"
+ch17-recall:
+  - "steps/ch17-recall/**"
+ch18-skills:
+  - "steps/ch18-skills/**"
+ch19-skill-writing:
+  - "steps/ch19-skill-writing/**"
+ch20-reflection:
+  - "steps/ch20-reflection/**"
+ch21-curation:
+  - "steps/ch21-curation/**"
+ch22-pipeline:
+  - "steps/ch22-pipeline/**"
+ch23-supervisor:
+  - "steps/ch23-supervisor/**"
+ch24-handoffs:
+  - "steps/ch24-handoffs/**"
+ch25-fan-out:
+  - "steps/ch25-fan-out/**"
+ch26-critic:
+  - "steps/ch26-critic/**"
+ch27-composition:
+  - "steps/ch27-composition/**"
+ch28-context:
+  - "steps/ch28-context/**"
+ch29-actors:
+  - "steps/ch29-actors/**"
+ch30-supervision:
+  - "steps/ch30-supervision/**"
+ch31-profiles:
+  - "steps/ch31-profiles/**"
+ch32-gateway:
+  - "steps/ch32-gateway/**"
+ch33-cron:
+  - "steps/ch33-cron/**"
+ch34-acp:
+  - "steps/ch34-acp/**"
+ch35-blackboard:
+  - "steps/ch35-blackboard/**"
+ch36-kanban:
+  - "steps/ch36-kanban/**"
+ch37-message-bus:
+  - "steps/ch37-message-bus/**"
+ch38-team-skills:
+  - "steps/ch38-team-skills/**"
+ch39-a2a:
+  - "steps/ch39-a2a/**"
+ch40-tracing:
+  - "steps/ch40-tracing/**"
+ch41-evals:
+  - "steps/ch41-evals/**"
