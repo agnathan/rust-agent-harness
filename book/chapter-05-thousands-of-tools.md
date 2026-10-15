@@ -450,6 +450,16 @@ error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 
 A live call, when a key is present, posts to OpenRouter with the chapter 1 client and a single tool, `search_tools`. I did not make that call.
 
+## Guardrails in this chapter
+
+A size cap on what the model is shown, which is the L2 idea applied to the tool list. The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
+
+**A cap on revealed schemas.** `ToolSession::new` takes a `cap`. `search_tools` stages names and returns a short listing, not the schemas. `begin_turn` appends those names, then drops the oldest revealed name while `revealed.len() > cap`. The core prefix, the `search_tools` schema, is not rewritten. The cap is a constructor argument. There is no global constant, and nothing refuses a catalog of 10,000 tools. Ten thousand is the bench size.
+
+**Short descriptions.** `trim_words` cuts on a character count, at the last whitespace inside the window. Search blurbs and routed descriptions both pass 80. That is the only description cap in this chapter.
+
+Hermes F3 (`agent/prompt_builder.py`, `CONTEXT_FILE_MAX_CHARS`, 20,000 characters, keeping the head and a tail) caps context files such as `AGENTS.md`. That belongs to chapter 32. This chapter does not apply it to tool output either.
+
 ## Chapter summary
 
 - **Schema cost.** 10,000 MCP-shaped schemas were 2,070,285 bytes and 517,572 estimated tokens. 192 of them mention both "rename" and "file". Counting those tokens took 21.06 ms.

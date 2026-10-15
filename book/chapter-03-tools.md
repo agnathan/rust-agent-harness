@@ -653,6 +653,22 @@ error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 - **`schemas()` sorts and clones.** Lookup is the 13.96 ns number. Building the prompt list is the 21.89 µs number, and chapter 6 is what happens when that list is thousands of tools long.
 - **The permit outlives the wait, on purpose.** Holding it across `tool.call` is what caps in-flight work. Holding a `Mutex` across that same wait would pin a worker. `LatencyTool` locks only to push the span, before and after the sleep.
 
+## Guardrails in this chapter
+
+Layer L5, the decision of whether a call may run, plus the file-safety sentence this chapter is not claiming. The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
+
+**Argument check.** `check_arguments` requires every name in the schema's `required` array, and it requires the arguments to be a JSON object. Other schema keywords are stored and not enforced. `EchoTool::call` and `StaticTool::call` run that check. Hermes K2 (`tools/arg_coercion.py`) coerces strings such as `"42"` and `"true"` to the schema type. That coercion is not scheduled in this book.
+
+**Duplicate names.** `ToolRegistry::register` returns `ToolError::Duplicate` when the name is already in the map. One duplicate fails `available`; earlier sets in the vec are not returned as a partial registry.
+
+**Read and write as a scheduling guardrail.** `Dispatcher::is_write` is true only when the registry contains the tool and `kind()` is `ToolKind::Write`. A missing name is not a write. Consecutive reads share a semaphore of `DISPATCH_BOUND` (8). A write runs alone. This decides who shares the pool. It does not look at a path.
+
+**Env-gated toolsets.** `available` registers a set only when its env var is present, non-empty, and its check returns true. The default check accepts any non-empty value. The model is told the schemas of the sets that passed.
+
+**File guards are not here.** Hermes says it in `agent/file_safety.py`: "Every guard here is defense-in-depth, NOT a security boundary: the terminal tool runs as the same OS user." Category C (the write denylist, the read blocks, the rest) is that layer. This registry does not check paths. The boundary Hermes names is the sandbox backend, and that backend is off by default (`terminal.backend: "local"`, catalog D1). Chapter 13 is where this harness builds the sandbox.
+
+The loop's tool-call validator (K1, `agent/turn_tool_validation.py`) is chapter 9. `check_arguments` is the required-key check above.
+
 ## Chapter summary
 
 - **`Tool`** is MCP-shaped: name, description, JSON Schema, content result, and a read or write kind. This chapter does not open an MCP connection.

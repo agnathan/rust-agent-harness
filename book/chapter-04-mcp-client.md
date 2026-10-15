@@ -358,6 +358,16 @@ Every `list_changed` drops the cache. Hermes coalesces a burst into one refresh 
 
 The HTTP URL's port changes every run. A test that asserts a fixed port will fail. Read `MCP_URL=` from stderr.
 
+## Guardrails in this chapter
+
+Still layer L5, for tools that arrive from another process. The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
+
+**An absent `readOnlyHint` is a write.** `list_tools` reads `annotations.read_only_hint` and uses `unwrap_or(false)` when the hint is missing. `RemoteTool` records that bool, and its field comment says an absent hint means the tool is treated as a write. The chapter 3 dispatcher then runs it alone.
+
+**A duplicate remote name is refused.** `register_remote` lists the session once and calls `registry.register` for each tool. The `?` returns `ToolError::Duplicate` and stops the rest of that registration.
+
+Sampling and elicitation limits (M7, `tools/mcp_tool_sampling.py`) are not in this client. Chapter 38 is where a server-driven call gets a limit, next to the gateway's own auth.
+
 ## Chapter summary
 
 - **Stdio.** `McpSession` lists `echo`, `grow`, and `note`, and `echo` returns its text. One round trip measured 71.29 µs.

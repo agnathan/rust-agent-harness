@@ -781,6 +781,16 @@ event: error missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 ```
 
+## Guardrails in this chapter
+
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). This chapter covers two cross-cutting rules: a single request deadline, and a number the server did not send staying absent.
+
+**One request timeout.** `OpenAiCompatible::from_endpoint` calls `with_timeout` with 60 seconds. That timeout covers the whole reqwest call. A hit is `ProviderError::Timeout`, and this client does not retry. Hermes I6 (`agent/deadline.py`) is a shared deadline across MCP, the browser, and subprocesses, with `kill_process_tree`. Process-tree timeouts belong with the sandbox in chapter 13. Retries belong in chapter 14.
+
+**A missing OpenRouter key fails before a request.** `resolve_endpoint` returns `ProviderError::MissingKey { name: "OPENROUTER_API_KEY" }` when the host is `openrouter.ai` and both `--api-key` and `OPENROUTER_API_KEY` are empty. No `Endpoint` is built. The library does not read the process environment; the CLI passes the values in. A different base URL with no `OPENAI_API_KEY` stores an empty key, and the client skips `bearer_auth` when that string is empty. Hermes has no matching pre-request check. Secret redaction is E1 and E2 (`agent/redact.py`), and per-profile scoping is E4 (`agent/secret_scope.py`). Those land in later chapters.
+
+**Cost is recorded only when the server sent it.** `Usage.cost` is `Option<f64>` and deserializes as `None` when the field is absent. `AgentUsage::record` adds the dollars and sets `cost_known` only inside `if let Some(cost)`. The usage line includes `cost=` only for `Some`. A present `0.0` is a real report and is kept. The catalog has no row for this, so I am not pairing it with a Hermes id.
+
 ## Chapter summary
 
 The harness can send one prompt and print one reply. Messages are OpenAI JSON. `Provider` hides the server. Every call, including the mock, emits the same `Event` values. The HTTP client is created once, pools connections, and can speak HTTP/2. OpenRouter is the default endpoint, `--model` selects a model id, and another `--base-url` still works for OpenAI, Ollama, and a local fake. A successful reply can name the model that answered, the token counts, and a USD cost when the server sent one. Those numbers accumulate on one agent. A slow call fails once, as a timeout, and is not retried here.

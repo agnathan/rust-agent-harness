@@ -21,6 +21,10 @@
 
 The book is six parts and chapters 0 through 48. Eight of those chapters are the MCP gateway, marked *(server)* below, and they sit immediately after the harness chapter they build on. The architecture and the notes from Hermes and from ContextForge, ToolHive, and the Docker MCP gateway are in [`docs/mcp-gateway.md`](../docs/mcp-gateway.md). Performance is a budget on every chapter, not a late part: async tokio from chapter 1, concurrent tools from chapter 3, and learning work off the hot path. The numbers are in [`docs/performance.md`](../docs/performance.md). MCP is first-class from Part I: tools are shaped like MCP tools (chapter 3), the harness is an MCP client (chapter 4, via `rmcp`), and a separate gateway process is the MCP server (chapter 5, then the rest of the server track). Later chapters call those servers and can publish skills through them. Part II is learning: one agent gets better with use before the book builds a team. The design for skills, memory, recall, reflection, curation, and the team librarian is [`docs/self-improvement.md`](../docs/self-improvement.md). Part III is the team patterns. The default team is a supervisor that calls other agents as tools, fans them out under a bound, and shares one context object by `Arc`. The rules for choosing a pattern are in [`docs/team-patterns.md`](../docs/team-patterns.md). Part IV is making that system robust. Part V runs it as a service: profiles, a chat gateway, the MCP gateway as a highly available service, cron, and an editor. Part VI is loosely coupled teams, including a durable kanban board next to the blackboard. Speed is already in force by then.
 
+The verified Hermes catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md): 88 guardrails, layers L1–L9 plus a cross-cutting layer. Written chapters name the layer their code already covers. Chapters that are not written yet carry the Guardrail notes below.
+
+**Cross-cutting.** Secret redaction is not in any written chapter. E1 is `agent/redact.py` (`redact_sensitive_text`, `RedactingFormatter`; `security.redact_secrets: true`). E2 is `redact_for_egress` in the same file, the stricter scrub for text that leaves the process. A later chapter that logs, stores, or sends text says whether it adopted those two.
+
 The harness decides what enters the prompt. The server holds the catalog, searches it, and filters the list a session may see. Chapter 6 is the client half of that split. Chapter 5 is the process that will hold the catalog. Neither server chapter past the skeleton is written.
 
 ### Part I: One agent
@@ -45,6 +49,15 @@ The harness decides what enters the prompt. The server holds the catalog, search
 | 15 | Limits and Breakers *(server)* | `steps/gw-limits` | a permit and a breaker | per-tool concurrency limits and queues, timeouts, retries only when the tool is marked idempotent, circuit breakers, hedging, and 429/503 backpressure. Not written |
 | 16 | Providers | `steps/ch13-providers` | another adapter behind the same trait | native Anthropic and Bedrock adapters beside the chapter 1 OpenRouter client; OpenRouter fallback and routing (a `models` array and provider preferences); key rotation on the pooled client; a cheaper side model for summaries |
 | 17 | Streaming | `steps/ch14-streaming` | folding a stream | server-sent deltas as the chapter 1 `Event` values, overlapped with safe tool execution, for each adapter |
+
+**Guardrail notes**
+
+- **Chapter 11.** The nine-layer map (L1–L9 plus X) from the catalog. The approval pipeline order is hardline, then deny, then allowlist, then smart, then ask (`tools/approval.py` `check_all_command_guards`, catalog A1; the layer diagram states that order). Hardline patterns are never bypassable, including in YOLO (`tools/approval_detection.py` `HARDLINE_PATTERNS`, B1). Dangerous-command normalization and detection are B2 (`detect_dangerous_command`, `DANGEROUS_PATTERNS`). The wait times out at 300 seconds and denies (`approvals.timeout: 300`, A5). Cron, `-q`, and unattended mode deny by default (`approvals.cron_mode` / `single_query_mode` / `unattended_mode: "deny"`, A4). A denial tells the model the user has not consented and must not retry or rephrase (`_STOP_COMMAND`, `_STOP_ACTION`, A6; breaker threshold 3).
+- **Chapter 12.** A plugin `pre_tool_call` hook can veto or rewrite a call. The hook returns `(block_message, final_args)` (`agent/tool_executor.py`, about line 672). The same hook can escalate to the human gate (A8, `tools/approval.py` `request_tool_approval`).
+- **Chapter 13.** The sandbox is the real boundary, and Hermes leaves it off (`terminal.backend: "local"`, D1). When the backend is Docker: `--cap-drop ALL`, `--security-opt no-new-privileges`, and a pids limit (`tools/environments/docker.py`, D2). Child env is an allowlist plus declared passthrough (`tools/code_execution_env.py`, `tools/mcp_tool_config.py` `_build_safe_env`, D3; `tools/env_passthrough.py`, D4). Process-tree timeouts and `kill_process_tree` are I6 (`agent/deadline.py`). File-path checks stay defense-in-depth, as chapter 3 already quotes from `agent/file_safety.py`.
+- **Chapter 14.** Empty-response retries (J4, `agent/empty_response_guard.py`: 3 retries, or 1 if one attempt costs more than $0.25) and the repetition guard (J3, `agent/repetition_guard.py`: at least 5 contiguous repeats covering at least half the output). Both were deferred from chapter 9.
+- **Chapter 15.** Server-side rate limits and breakers are this chapter's own topic. Also the per-turn caps in I3 (`agent/tool_guardrails.py` `LoopCapConfig`): 50 web searches and 50 subagent spawns. Chapter 9 already counts a tool named `delegate` against `max_subagent_iterations` (default 50) and returns `error: subagent iteration cap`. The web-search cap of 50 is not implemented yet.
+- **Chapters 16 and 17.** Outbound message sanitization (K4, `agent/message_sanitization.py`), think-block stripping (K5, `agent/think_scrubber.py` `StreamingThinkScrubber`), and TLS via the OS trust store (`agent/ssl_verify.py`; `ssl_verify: false` is for development only). Chapter 9 uniquifies duplicate tool-call ids inside one batch; the rest of K4 is still open.
 
 **Performance budget**
 
@@ -80,6 +93,12 @@ The harness decides what enters the prompt. The server holds the catalog, search
 | 24 | The Reflection Loop | `steps/ch20-reflection` | a supervised child task | nudge counters, the post-turn hook from chapter 12, a forked reviewer with only skill and memory tools |
 | 25 | Curation | `steps/ch21-curation` | a scheduled job | usage telemetry, stale then archived, pinning, backups, optional consolidation |
 
+**Guardrail notes**
+
+- **Chapter 19.** A memory threat scan on writes and on loaded entries (F5, `tools/memory_tool_store.py`). `MEMORY.md` and `USER.md` enter the prompt once per session and stay frozen (F6, `tools/memory_tool.py`). A mid-session write does not rewrite that snapshot.
+- **Chapter 23.** Skill and memory writes go through the approval gate (A9, `tools/write_approval.py` `evaluate_gate`, `stage_write`). The gate is off unless `memory.write_approval` or `skills.write_approval` is set. Skills Guard scans a community skill before install (H1, `tools/skills_guard.py` `scan_skill`, `should_allow_install`). `force` cannot override a dangerous verdict on a community skill.
+- **Chapter 25.** Curation that writes a skill or a memory file uses the same A9 gate, and an install uses H1. The scan stays off the request path, with the rest of this chapter's work.
+
 **Performance budget**
 
 - **Chapter 18.** One local WAL append of a turn < 1 ms. FTS updates are a background task. The chapter re-runs the chapter 9 eval set.
@@ -102,6 +121,10 @@ The harness decides what enters the prompt. The server holds the catalog, search
 | 30 | The Critic | `steps/ch26-critic` | the same tool trait | an evaluator agent, both as a tool and as a final gate |
 | 31 | Composing Patterns | `steps/ch27-composition` | nesting the patterns above | a supervisor that fans out and uses a handoff only when ownership should move |
 
+**Guardrail notes**
+
+- **Chapter 27.** A child cannot call `delegate_task`, `clarify`, `memory`, `send_message`, or `cronjob_manage` (M5, `tools/delegate_tool_toolsets.py` `DELEGATE_BLOCKED_TOOLS`). Depth is 1 (M6, `tools/delegate_tool_config.py` `MAX_DEPTH`). Hermes caps concurrent children at 10 (`delegation.max_concurrent_children`). The performance budget on this row stays eight specialists; that number is the harness measurement, not the Hermes default. Each child can get its own git worktree (D6, `tools/subagent_worktree.py`), and Hermes leaves `delegation.worktree_isolation` opt-in.
+
 **Performance budget**
 
 - **Chapter 26.** The next stage receives `Arc` context. No full transcript copy.
@@ -120,6 +143,10 @@ The harness decides what enters the prompt. The server holds the catalog, search
 | 34 | Supervision and Restart | `steps/ch30-supervision` | atomics | restart a failed child. The cancellation token and the budget are already on the call from chapter 9 |
 | 35 | Balancing and Federation *(server)* | `steps/gw-balancing` | a pool per tool | least-outstanding or power-of-two-choices across a per-tool backend pool, and federation of upstream MCP servers through that pool. Placed after cancellation (chapter 9) and supervision (chapter 34). Not written |
 
+**Guardrail notes**
+
+- **Chapter 32.** Context files such as `AGENTS.md`, `SOUL.md`, and `.cursorrules` are scanned, and a match is replaced with `[BLOCKED: … Content not loaded.]` (F2, `agent/prompt_builder.py` `_scan_context_content`, `agent/context_file_sources.py`). The size cap is 20,000 characters, keeping the head and a tail (F3, `CONTEXT_FILE_MAX_CHARS`). High-risk tool output is wrapped as an untrusted result, and an embedded closer is neutralized (F4, `agent/tool_dispatch_helpers.py` `_maybe_wrap_untrusted`, `_neutralize_delimiters`).
+
 **Performance budget**
 
 - **Chapter 32.** Compression and the memory flush run between turns or in the background. The hot path sends the `Arc` snapshot. Preflight compression, deferred from chapter 9, runs before the model call.
@@ -136,6 +163,13 @@ The harness decides what enters the prompt. The server holds the catalog, search
 | 38 | MCP Gateway Service *(server)* | `steps/gw-service` | `rmcp`, axum, a shared store | mostly stateless replicas routed by session id, hot reload via `arc-swap`, shared sessions and rate limits in Redis or something like it, health and readiness, OAuth 2.1 as the MCP resource server, per-tenant quotas, audit logs, OpenTelemetry, and a drain that finishes in-flight calls. Not written |
 | 39 | Cron | `steps/ch33-cron` | a durable claim | at-most-once runs across crashes, catch-up, a watchdog, and chaining the next job by submitting to the same inbox |
 | 40 | Editor Integration | `steps/ch34-acp` | a protocol adapter | ACP (Agent Client Protocol) as another client of the chapter 2 session inbox |
+
+**Guardrail notes**
+
+- **Chapter 36.** Secrets are scoped per profile. In multiplex mode, `get_secret` fails closed with `UnscopedSecretError` when no scope is installed (E4, `agent/secret_scope.py`).
+- **Chapter 37.** The chat gateway, not the MCP server. Authorization is default-deny after the allowlist and pairing checks (L1a, `gateway/authz_mixin.py` `_is_user_authorized`). A pairing code is 8 characters, lives 1 hour, and five failures lock the caller out for 1 hour (L2a, `gateway/pairing.py` `PairingStore`; max 3 pending). Two bots answering each other hit the bot-loop guard: 20 bot messages in 300 seconds, then a 600 second cooldown (J5, `gateway/bot_loop_guard.py`). Emergency stop is a sentinel from `hermes pause` that fails safe on a stat error (N2, `agent/estop.py`).
+- **Chapter 38.** Auth for this process is the OAuth 2.1 resource-server plan already in the row. The catalog has no gateway-OAuth row; Hermes is the MCP client. The related client checks are a per-server sampling limit and form-mode elicitation routed through approval (M7, `tools/mcp_tool_sampling.py`), and an OSV malware check before an npx or uvx launch (H4, `tools/osv_check.py`, 10 second timeout).
+- **Chapter 39.** A cron prompt is scanned before it runs (M1, `tools/cronjob_prompt_scan.py`). A job that would restart or stop the gateway, or kill its interpreter, is blocked (M2, `cron/lifecycle_guard.py` `check_gateway_lifecycle`). Unattended cron denial of dangerous commands is A4, written with chapter 11.
 
 **Performance budget**
 
@@ -158,6 +192,10 @@ The harness decides what enters the prompt. The server holds the catalog, search
 | 47 | Load and Token Capstone *(server)* | `steps/gw-capstone` | a load generator | the load test (throughput and p99) together with tokens per completed task for every tool, a static set, and a dynamic set, each with task success. Not written |
 | 48 | Evals | `steps/ch41-evals` | a batch over the benches | re-run the saved tasks from chapter 9, plus trajectories, scored with the chapter 1 and chapter 9 benches, still with no fail threshold |
 
+**Guardrail notes**
+
+- **Chapter 48.** One red-team eval per layer, L1 through L9 and the cross-cutting layer. The checklist is section 4 of the catalog. The catalog does not name an eval suite or a file to copy. The saved tasks from chapter 9 stay the regression set; these cases are the extra set, still with no fail threshold.
+
 **Performance budget**
 
 - **Chapter 41.** A claim < 1 ms with 100 waiters. The lock is not held across a model call.
@@ -174,5 +212,6 @@ Chapters 1 through 4, chapter 6, and chapter 9 have harness step crates. Chapter
 **Recurring sidebars:**
 
 - "How Hermes does it": file paths and design notes from NousResearch/hermes-agent.
+- "Guardrails": the layer from [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md), and which catalog ids the chapter adopts or leaves for later. The line is in [`docs/chapter-template.md`](../docs/chapter-template.md).
 - Rust, introduced when the harness needs it.
 - "[personal note]": the author's own experience while working through the chapter.
