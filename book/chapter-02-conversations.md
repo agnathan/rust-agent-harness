@@ -816,6 +816,20 @@ error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 
 [personal note: a real chat session, e.g. testing whether the model remembers something said three turns earlier]
 
+## Guardrails in this chapter
+
+Layer L4's transcript invariants, in the form this type can enforce. The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
+
+**Alternation.** `Conversation::push` rejects `Role::System` with `SystemInHistory`, and it rejects a role other than `next_role`. An empty history expects `User`, then the roles alternate. `reset` clears the history and leaves the system string.
+
+**A stable system prompt.** The system text is its own field. `to_messages` places it first on every call. `trim_to` drops the oldest user/assistant pair while the rough estimate is over the cap and `history.len() > 2`. It does not edit the system string, and it leaves the newest message in place when two or fewer history rows remain.
+
+**Load re-validation.** `Conversation::load` parses the file, then builds a fresh conversation and `push`es every stored message. A hand-edited file that breaks alternation fails the load.
+
+Hermes K4 (`agent/message_sanitization.py`) sanitizes the outbound payload, uniquifies tool-call ids, and closes an interrupted tool sequence. This chapter does none of that. Duplicate ids inside one batch are uniquified later, in chapter 9. Hermes K6 (`agent/transcript_repair.py`) repairs persisted rows. Load re-validation here is the local `push` rules.
+
+**Inbox backpressure.** `SessionInbox` defaults to `INBOX_BOUND` (64). `submit` returns `InboxError::Full` once the queue length has reached that bound, and it does not call the model. `new` allocates the `VecDeque` with `bound.min(64)`, which is only the initial capacity; the refusal uses `self.bound`. The catalog has no inbox row. Chapter 33 reuses this same queue for actors.
+
 ## What we built
 
 - **`Conversation`:** a system prompt plus an alternating history, with the rules enforced by the type itself. Private fields, a single `push` gate, and re-validation on load.

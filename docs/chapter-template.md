@@ -17,6 +17,8 @@ Two or three paragraphs: what the previous chapter cannot do, what this one adds
 >
 > Cite `path/in/hermes-agent`. **Adopted:** … **Adapted:** … **Deferred:** … (and the chapter that will take it).
 
+> **Guardrails.** Layer from [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md): which catalog ids this chapter guards, and which it leaves for a later chapter.
+
 [personal note: …]
 
 ## What this chapter decides
