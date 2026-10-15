@@ -60,13 +60,16 @@ jobs:
   test:
     name: ${{ matrix.os }}
     needs: plan
-    if: needs.plan.outputs.has_chapters == 'true' && matrix.os != 'macos-latest'
+    # matrix is not available in a job-level if. Drop macOS here; test-macos runs it.
+    if: needs.plan.outputs.has_chapters == 'true' && needs.plan.outputs.oses != '["macos-latest"]'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
         os: ${{ fromJSON(needs.plan.outputs.oses) }}
+        exclude:
+          - os: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
