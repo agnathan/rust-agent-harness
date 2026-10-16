@@ -903,6 +903,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ch17-recall"
+version = "0.1.0"
+dependencies = [
+ "ch15-sessions",
+ "criterion",
+ "rusqlite",
+]
+
+[[package]]
 name = "chacha20"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

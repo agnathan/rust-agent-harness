@@ -109,6 +109,8 @@ jobs:
         run: bash .github/scripts/run_bench_section.sh 18 "chapter 18 sessions" ch15-sessions sessions
       - name: Chapter 19 memory
         run: bash .github/scripts/run_bench_section.sh 19 "chapter 19 memory" ch16-memory memory
+      - name: Chapter 20 recall
+        run: bash .github/scripts/run_bench_section.sh 20 "chapter 20 recall" ch17-recall recall
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"

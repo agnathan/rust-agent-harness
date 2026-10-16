@@ -55,6 +55,10 @@ impl Store {
         &self.conn
     }
 
+    pub fn connection_mut(&mut self) -> &mut Connection {
+        &mut self.conn
+    }
+
     pub fn pending_fts(&self) -> usize {
         self.pending_fts.len()
     }

@@ -51,6 +51,7 @@ cargo run -p ch02-harness-cli -- --mock chat
 | ch14-streaming | 17 | Think-block scrubber, folded deltas, read-only overlap |
 | ch15-sessions | 18 | WAL sessions, one append, FTS ids queued |
 | ch16-memory | 19 | MEMORY.md and USER.md, frozen snapshot, strict scan |
+| ch17-recall | 20 | FTS5 trigram session_search: discover, scroll, read, browse |
 | gw-limits | 15 *(server)* | Per-tool permits, idempotent retry, a breaker, caps of 50 |
 | gw-minimal-server | 5 *(server)* | Empty `mcp-gateway` catalog. No socket |
 
