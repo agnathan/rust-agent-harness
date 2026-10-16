@@ -1805,6 +1805,34 @@
       "fake": "No files are written. Rewind replaces the vec.",
       "source": "steps/ch11-sandbox/benches/sandbox.rs",
       "reading": "Smaller is better. It should sit near checkpoint_1000. A much larger number means rewind started walking a directory."
+    },
+    {
+      "id": "14/empty_budget",
+      "section": "chapter 14 failures",
+      "chapter": "Chapter 14 When Things Fail",
+      "function": "empty_budget",
+      "summary": "The empty-reply retry budget for one attempt that cost $0.30.",
+      "what": "retry_budget(Some(0.30)), which returns the reduced budget of 1 because the cost is strictly greater than $0.25.",
+      "why": "The budget decision sits on every empty completion. It has to stay a compare, not a session scan. The chapter target for this check is under 1 µs.",
+      "timing": "Nothing is built outside the bench. The timed closure is b.iter. Inside: retry_budget with Some(0.30) passed through black_box, then black_box of the u32. No model is called. No attempt list is allocated. The $0.25 threshold compare is the whole sample.",
+      "inputs": "One Option<f64> of 0.30. No messages and no usage object.",
+      "fake": "The cost is a number the bench passes in. There is no provider invoice and no HTTP response.",
+      "source": "steps/ch12-when-things-fail/benches/failures.rs",
+      "reading": "Smaller is better. Sub-nanosecond to a few nanoseconds is a branch. Microseconds would mean the budget started walking an attempt list or formatting a dollar amount."
+    },
+    {
+      "id": "14/repetition_guard",
+      "section": "chapter 14 failures",
+      "chapter": "Chapter 14 When Things Fail",
+      "function": "repetition_guard",
+      "summary": "The repetition scan of an 800-character loop.",
+      "what": "is_repetition_dominated on \"abcdefghij\" repeated 80 times, via repetition_probe.",
+      "why": "A length-truncated reply is continued unless this scan says the text is a loop. The scan has to stay under 1 ms so it is not the cost of the turn.",
+      "timing": "repeated_fragment() runs before the bench and builds the 800-character string once. The timed closure is b.iter. Inside: repetition_probe with that string passed through black_box. Building the string is excluded. The sample walks 60-character windows into a HashMap until the count covers half the text, with a floor of 5. It returns as soon as that count is hit.",
+      "inputs": "800 characters, one 10-character fragment repeated. MIN_FRAGMENT_LENGTH is 400, so the short-text fast path does not apply.",
+      "fake": "The text is generated in the bench. No model streamed it.",
+      "source": "steps/ch12-when-things-fail/benches/failures.rs",
+      "reading": "Smaller is better. A few microseconds is a HashMap of short windows. Over 1 ms means the scan stopped returning early or started copying the whole reply per window."
     }
   ]
 }

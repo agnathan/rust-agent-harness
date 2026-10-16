@@ -20,7 +20,7 @@ Server-track chapters are marked *(server)*. They are interleaved with the harne
 - [Chapter 11: Approvals and Guardrails](chapter-11-approvals.md)
 - [Chapter 12: Hooks and Plugins](chapter-12-hooks.md)
 - [Chapter 13: Sandboxed Execution](chapter-13-sandbox.md)
-- [Chapter 14: When Things Fail]()
+- [Chapter 14: When Things Fail](chapter-14-when-things-fail.md)
 - [Chapter 15: Limits and Breakers]() *(server)*
 - [Chapter 16: Providers]()
 - [Chapter 17: Streaming]()

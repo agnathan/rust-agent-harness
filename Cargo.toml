@@ -56,4 +56,5 @@ members = [
     "steps/ch09-approvals",
     "steps/ch10-hooks",
     "steps/ch11-sandbox",
+    "steps/ch12-when-things-fail",
 ]
