@@ -55,4 +55,5 @@ members = [
     "steps/ch07-turn-state/crates/harness-core",
     "steps/ch09-approvals",
     "steps/ch10-hooks",
+    "steps/ch11-sandbox",
 ]

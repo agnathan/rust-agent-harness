@@ -95,6 +95,8 @@ jobs:
         run: bash .github/scripts/run_bench_section.sh 11 "chapter 11 approvals" ch09-approvals decision
       - name: Chapter 12 hooks
         run: bash .github/scripts/run_bench_section.sh 12 "chapter 12 hooks" ch10-hooks hooks
+      - name: Chapter 13 sandbox
+        run: bash .github/scripts/run_bench_section.sh 13 "chapter 13 sandbox" ch11-sandbox sandbox
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"
