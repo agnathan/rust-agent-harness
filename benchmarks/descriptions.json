@@ -1917,6 +1917,20 @@
       "fake": "No model and no socket.",
       "source": "steps/ch14-streaming/benches/streaming.rs",
       "reading": "Smaller is better. Fold_deltas should stay close to this number. A much smaller fold number would mean the two benches stopped sharing the input."
+    },
+    {
+      "id": "18/wal_append",
+      "section": "chapter 18 sessions",
+      "chapter": "Chapter 18 Sessions on Disk",
+      "function": "wal_append",
+      "summary": "Append one turn: a user row and an assistant row, in one transaction.",
+      "what": "append_turn of session bench, user hi, assistant pong, on a database that is already migrated.",
+      "why": "The request path pays this commit. The budget is under 1 ms. FTS indexing is not in it.",
+      "timing": "Store::open and migrate run before the bench, on a temp file named with the process id. The timed closure is b.iter. Inside: append_turn with the three strings passed through black_box, then black_box of the row count. The sample is the transaction and a push onto the FTS queue. Opening the file and creating the tables are excluded. No virtual table is written. The queue is capped at 64, so a long run drops the oldest id instead of growing without a bound.",
+      "inputs": "One session id, two short strings. The sessions row already exists after the first sample. Later samples insert two message rows and ignore the existing session.",
+      "fake": "The assistant text is the string pong. No model is called. The file is a temp database, deleted after the bench.",
+      "source": "steps/ch15-sessions/benches/sessions.rs",
+      "reading": "Smaller is better. Tens of microseconds is a small WAL commit. Over 1 ms means the append started building an FTS index or fsyncing more than the commit."
     }
   ]
 }

@@ -105,6 +105,8 @@ jobs:
         run: bash .github/scripts/run_bench_section.sh 16 "chapter 16 providers" ch13-providers providers
       - name: Chapter 17 streaming
         run: bash .github/scripts/run_bench_section.sh 17 "chapter 17 streaming" ch14-streaming streaming
+      - name: Chapter 18 sessions
+        run: bash .github/scripts/run_bench_section.sh 18 "chapter 18 sessions" ch15-sessions sessions
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"
