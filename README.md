@@ -6,6 +6,8 @@ An AI agent harness in Rust, with a book on how to build it step by step.
 
 This is a hands-on course for people **new to Rust**. You learn the language by growing one harness, not by a tour of the language. The design is informed by Nous Research's [Hermes Agent](https://github.com/NousResearch/hermes-agent) (Python). Each chapter points at the Hermes files that solve the same problem.
 
+The chapter list, with links to the pages and step crates that exist, is [TABLE_OF_CONTENTS.md](TABLE_OF_CONTENTS.md). It follows [book/SUMMARY.md](book/SUMMARY.md).
+
 ## Layout
 
 ```
