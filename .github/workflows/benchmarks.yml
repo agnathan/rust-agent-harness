@@ -83,6 +83,14 @@ jobs:
         run: bash .github/scripts/run_bench_section.sh 6.9 "6.9 turn outcome" ch06-9-harness-core loop_iter
       - name: Section 6.10 stress eval
         run: bash .github/scripts/run_bench_section.sh 6.10 "6.10 stress eval" ch06-10-harness-core loop_iter
+      - name: Chapter 5 call gate
+        run: bash .github/scripts/run_bench_section.sh gw5 "chapter 5 gate" gw-minimal-mcp-gateway gate
+      - name: Chapter 7 catalog
+        run: bash .github/scripts/run_bench_section.sh gw7 "chapter 7 catalog" gw-catalog catalog
+      - name: Chapter 8 session toolset
+        run: bash .github/scripts/run_bench_section.sh gw8 "chapter 8 toolset" gw-session-toolsets toolset
+      - name: Chapter 10 turn state
+        run: bash .github/scripts/run_bench_section.sh 10 "chapter 10 turn" ch07-turn-state transition
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"

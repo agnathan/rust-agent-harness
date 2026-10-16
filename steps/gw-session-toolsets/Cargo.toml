@@ -1,0 +1,26 @@
+[package]
+name = "gw-session-toolsets"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+description = "Chapter 8: per-session toolsets, search, describe, and token telemetry."
+
+[lib]
+name = "gw_session"
+
+[[bin]]
+name = "gw-session"
+path = "src/main.rs"
+
+[dependencies]
+gw-catalog = { path = "../gw-catalog" }
+serde_json = "1"
+thiserror = "2"
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["async_tokio"] }
+
+[[bench]]
+name = "toolset"
+harness = false

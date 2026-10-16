@@ -2,7 +2,7 @@
 
 [Book outline](book-outline.md)
 
-Server-track chapters are marked *(server)*. They are interleaved with the harness. The server chapters are not written yet. The skeleton is `mcp-gateway/`.
+Server-track chapters are marked *(server)*. They are interleaved with the harness. Chapters 5, 7, and 8 are written. Later server chapters are not. The process crate is `mcp-gateway/`.
 
 # Part I: One agent
 
@@ -11,12 +11,12 @@ Server-track chapters are marked *(server)*. They are interleaved with the harne
 - [Chapter 2: Conversations](chapter-02-conversations.md)
 - [Chapter 3: Tools](chapter-03-tools.md)
 - [Chapter 4: MCP Client](chapter-04-mcp-client.md)
-- [Chapter 5: A Minimal MCP Server]() *(server)*
+- [Chapter 5: A Minimal MCP Server](chapter-05-minimal-mcp-server.md) *(server)*
 - [Chapter 6: Thousands of Tools](chapter-05-thousands-of-tools.md)
-- [Chapter 7: Dynamic Catalog]() *(server)*
-- [Chapter 8: Session Toolsets]() *(server)*
+- [Chapter 7: Dynamic Catalog](chapter-07-dynamic-catalog.md) *(server)*
+- [Chapter 8: Session Toolsets](chapter-08-session-toolsets.md) *(server)*
 - [Chapter 9: The Agent Loop](chapter-06-agent-loop.md)
-- [Chapter 10: The Turn State Machine]()
+- [Chapter 10: The Turn State Machine](chapter-10-turn-state.md)
 - [Chapter 11: Approvals and Guardrails]()
 - [Chapter 12: Hooks and Plugins]()
 - [Chapter 13: Sandboxed Execution]()

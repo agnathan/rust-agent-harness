@@ -816,6 +816,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "ch07-turn-state"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+]
+
+[[package]]
 name = "chacha20"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1255,10 +1262,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "gw-catalog"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+ "serde_json",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
 name = "gw-minimal-mcp-gateway"
 version = "0.1.0"
 dependencies = [
- "mcp-gateway",
+ "criterion",
+ "serde_json",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "gw-session-toolsets"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+ "gw-catalog",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]
@@ -1663,6 +1693,9 @@ checksum = "47e1ffaa40ddd1f3ed91f717a33c8c0ee23fff369e3aa8772b9605cc1d22f4c3"
 [[package]]
 name = "mcp-gateway"
 version = "0.1.0"
+dependencies = [
+ "gw-session-toolsets",
+]
 
 [[package]]
 name = "memchr"
