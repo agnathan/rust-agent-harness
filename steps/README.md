@@ -42,6 +42,8 @@ cargo run -p ch02-harness-cli -- --mock chat
 | ch06-8-canonical | 9 (section 6.8) | Sorted, compact tool-call arguments on the send path |
 | ch06-9-outcome | 9 (section 6.9) | `TurnOutcome` enum and a budget wrap-up call |
 | ch06-10-evals | 9 (section 6.10) | Stress evals, optionally live, still keyless in CI |
+| ch07-turn-state | 10 | `Phase` and a tested `step` table |
+| ch09-approvals | 11 | Approval pipeline, one human prompt, permit dropped before the wait |
 | gw-minimal-server | 5 *(server)* | Empty `mcp-gateway` catalog. No socket |
 
 Your own copy is `my-harness/` at the repo root. Milestone tests there start failing until you implement each chapter. The course plan is chapters 0–48 in six parts, listed in `book/book-outline.md` and `.github/chapters.json`. Performance budgets for every chapter are `docs/performance.md`. MCP is a first-class tool boundary from chapter 3 (client in chapter 4, gateway server in chapter 5). The gateway design is `docs/mcp-gateway.md`. Part II is how one agent learns; the design is `docs/self-improvement.md`. How the team patterns fit together is `docs/team-patterns.md`. Only the steps in the table above exist so far. Later `gw-*` rows in the outline are the plan, not empty crates. Section numbers inside chapters 6 and 9 stay aligned with the `ch05-*` and `ch06-*` crate names.

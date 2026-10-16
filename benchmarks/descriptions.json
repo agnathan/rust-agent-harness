@@ -1707,6 +1707,20 @@
       "fake": "ScriptStep is an enum. Nothing is delayed and nothing is sent.",
       "source": "steps/ch07-turn-state/crates/harness-core/benches/transition.rs",
       "reading": "Smaller is better. Single-digit nanoseconds is the whole script. It is not comparable to chapter 9's 608 ns loop, which runs the real checks."
+    },
+    {
+      "id": "11/skip_decision",
+      "section": "chapter 11 approvals",
+      "chapter": "Chapter 11 Approvals and Guardrails",
+      "function": "skip_decision",
+      "summary": "The approval check of one safe command, echo hello.",
+      "what": "skip_decision(\"echo hello\"), which builds Policy::manual() and a fresh Session and calls check.",
+      "why": "A safe command is the common path. If the floor scan allocates on it, every echo pays the dangerous-command normalizer. The budget is under 1 µs.",
+      "timing": "Nothing is built outside the bench. The timed closure is b.iter. Inside: skip_decision with the string passed through black_box, then black_box of the Verdict. Policy and session construction happen inside skip_decision, on every sample. There is no tokio runtime, no semaphore, and no prompt lock. The fast path returns before normalize allocates.",
+      "inputs": "The command echo hello. Policy::manual(): mode Manual, timeout 300 seconds, cron and unattended deny, empty deny list, empty allowlist, YOLO off, presence Interactive.",
+      "fake": "No model and no human. fake_smart_review is not called. The command is not a shell.",
+      "source": "steps/ch09-approvals/benches/decision.rs",
+      "reading": "Smaller is better. Tens or hundreds of nanoseconds means the keyword scan. A microsecond or more means the fast path started allocating the normalized string. This is not the cost of a human wait."
     }
   ]
 }

@@ -91,6 +91,8 @@ jobs:
         run: bash .github/scripts/run_bench_section.sh gw8 "chapter 8 toolset" gw-session-toolsets toolset
       - name: Chapter 10 turn state
         run: bash .github/scripts/run_bench_section.sh 10 "chapter 10 turn" ch07-turn-state transition
+      - name: Chapter 11 approvals
+        run: bash .github/scripts/run_bench_section.sh 11 "chapter 11 approvals" ch09-approvals decision
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"

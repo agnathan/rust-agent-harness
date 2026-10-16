@@ -823,6 +823,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "ch09-approvals"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+ "tokio",
+]
+
+[[package]]
 name = "chacha20"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
