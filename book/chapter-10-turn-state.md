@@ -91,10 +91,12 @@ The binary runs `[Tools, Tools, Text]`. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `turn_transition` | 1.008 ns | under 1 µs | `step(Idle, Start)` |
-| `scripted_turn` | 6.694 ns | under 1 ms | the three-step script, no model |
+| `turn_transition` | 1.103 ns | under 1 µs | `step(Idle, Start)` |
+| `scripted_turn` | 7.803 ns | under 1 ms | the three-step script, no model |
 
-`turn_transition` is `step` and `black_box` of the next phase. Building the enums is the arguments, which are `Copy`. `scripted_turn` runs `run_script` on a three-element slice inside the sample. There is no runtime, no sleep, and no provider. CI section id is `10`.
+`turn_transition` is `step` and `black_box` of the next phase. Building the enums is the arguments, which are `Copy`. `scripted_turn` runs `run_script` on a three-element slice inside the sample. There is no runtime, no sleep, and no provider.
+
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38863938100](https://github.com/agnathan/rust-agent-harness/actions/runs/38863938100), section `10`.
 
 ### Milestone demo
 
@@ -122,7 +124,7 @@ Secret redaction is still absent (E1, E2). Approvals are chapter 11. The table w
 
 - **Table.** Fifteen legal moves. Every other pair is `Illegal`. The grid test counts both.
 - **Script.** A tool call, a tool result, and a text answer end `Finished`. Soft stop ends `SoftStopped`. A budget wrap-up that asks for tools ends `Partial`.
-- **Time.** One transition measured **1.008 ns**. The three-step script measured **6.694 ns**.
+- **Time.** One transition measured **1.103 ns**. The three-step script measured **7.803 ns**.
 
 [personal note: which exit you had been handling inline, and how it looked as a row]
 

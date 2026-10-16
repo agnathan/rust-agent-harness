@@ -105,4 +105,4 @@ Chapters 5, 7, and 8 quote the means from their own benches. The targets below t
 - **Replica-kill failover time**, and drain that finishes in-flight calls. Chapter 38.
 - **Catalog reload cost.** Chapter 7.
 
-Chapter 5 accepts 32 calls and executes 8. A permit round trip measured 79.93 ns. Eight 1 ms sleeps measured 2.307 ms.
+Chapter 5 accepts 32 calls and executes 8. A permit round trip measured 45.53 ns. Eight 1 ms sleeps measured 2.129 ms.

@@ -80,13 +80,13 @@ The binary loads one native tool and one upstream tool and searches `rename a fi
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `catalog_search_10k` | 141.4 µs | search under 1 ms | top-8 BM25 over 10,000 tools |
-| `catalog_reload_10k` | 21.41 ms | rebuild plus the `Arc` store | clone 10,000 cards, build the index, store it |
-| `catalog_arc_swap` | 1.838 µs | the pointer swap on a 1-tool catalog | hold the old `Arc`, reload one card |
+| `catalog_search_10k` | 299.0 µs | search under 1 ms | top-8 BM25 over 10,000 tools |
+| `catalog_reload_10k` | 27.42 ms | rebuild plus the `Arc` store | clone 10,000 cards, build the index, store it |
+| `catalog_arc_swap` | 2.467 µs | the pointer swap on a 1-tool catalog | hold the old `Arc`, reload one card |
 
-`catalog_search_10k` builds the gateway and the 10,000-card index outside the sample. The timed closure is `search("rename a file", 8)` and `black_box` of the hits. No embedder is installed. `catalog_reload_10k` clones the 10,000 cards and rebuilds the index inside the sample. That clone is part of the reload the caller pays. `catalog_arc_swap` times a reload of one card while an `Arc` from before the reload is still held. The search number is the server. Chapter 6's client search of 10,000 tools was 146.8 µs. This server search measured 141.4 µs on this machine. They are different crates and different runs. I am not claiming the server is faster.
+`catalog_search_10k` builds the gateway and the 10,000-card index outside the sample. The timed closure is `search("rename a file", 8)` and `black_box` of the hits. No embedder is installed. `catalog_reload_10k` clones the 10,000 cards and rebuilds the index inside the sample. That clone is part of the reload the caller pays. `catalog_arc_swap` times a reload of one card while an `Arc` from before the reload is still held. The search number is the server. Chapter 6's client search of 10,000 tools was 146.8 µs. This server search measured 299.0 µs on the Benchmarks runner. They are different crates and different machines.
 
-CI records these under section id `gw7`.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38863938100](https://github.com/agnathan/rust-agent-harness/actions/runs/38863938100), section `gw7`.
 
 ### Milestone demo
 
@@ -117,8 +117,8 @@ Context-file injection scanning (F2) and the 20,000-character cap (F3) are chapt
 ## Chapter summary
 
 - **Load.** Native, then plugins, then upstreams. A duplicate name aborts the reload.
-- **Search.** BM25, exact name first. 10,000 tools, top 8, measured **141.4 µs**.
-- **Reload.** The index is built, then the `Arc` is stored. Rebuilding 10,000 tools measured **21.41 ms**. Swapping a one-tool snapshot while holding the old `Arc` measured **1.838 µs**.
+- **Search.** BM25, exact name first. 10,000 tools, top 8, measured **299.0 µs**.
+- **Reload.** The index is built, then the `Arc` is stored. Rebuilding 10,000 tools measured **27.42 ms**. Swapping a one-tool snapshot while holding the old `Arc` measured **2.467 µs**.
 - **Embedder.** Optional. Ranking does not use it.
 
 [personal note: whether the reload or the index was the part you had to reread]

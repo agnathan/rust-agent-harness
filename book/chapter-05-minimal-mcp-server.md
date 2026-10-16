@@ -79,12 +79,12 @@ The bench is `benches/gate.rs`. Criterion warm-up is 1 second, measurement is 2 
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `echo_through_gate` | 79.93 ns | the permit round trip | one `CallGate::run` that returns `hello`, no sleep |
-| `eight_concurrent_sleeps` | 2.307 ms | eight 1 ms sleeps on the execute bound | eight tasks, each sleeping 1 ms inside `run` |
+| `echo_through_gate` | 45.53 ns | the permit round trip | one `CallGate::run` that returns `hello`, no sleep |
+| `eight_concurrent_sleeps` | 2.129 ms | eight 1 ms sleeps on the execute bound | eight tasks, each sleeping 1 ms inside `run` |
 
-`echo_through_gate` builds the runtime (4 workers) and the gate outside the sample. The timed closure takes one accept permit, waits for an execute permit, and returns the string `hello`. `eight_concurrent_sleeps` spawns eight tasks inside the sample. Each sleeps 1 ms while holding an execute permit. Setup of the runtime is excluded. Nothing is a model. The 2.307 ms number is one wave of eight 1 ms sleeps plus scheduling, on this machine.
+`echo_through_gate` builds the runtime (4 workers) and the gate outside the sample. The timed closure takes one accept permit, waits for an execute permit, and returns the string `hello`. `eight_concurrent_sleeps` spawns eight tasks inside the sample. Each sleeps 1 ms while holding an execute permit. Setup of the runtime is excluded. Nothing is a model. The 2.129 ms number is one wave of eight 1 ms sleeps plus scheduling.
 
-CI runs the same bench on Ubuntu. The workflow id is `gw5`.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38863938100](https://github.com/agnathan/rust-agent-harness/actions/runs/38863938100), section `gw5`.
 
 ### Milestone demo
 
@@ -112,7 +112,7 @@ This process does not authenticate a caller. Default-deny and pairing are chapte
 
 - **List.** A new gateway is empty. `register` appends. `session_tools` returns that list for every session.
 - **Call.** `echo` returns `text`. A second `echo` is `Duplicate`. An unknown name is `Unknown` and takes no permit.
-- **Gate.** 32 calls may be inside. 8 may run the body. One more is `Saturated`. A permit round trip measured **79.93 ns**. Eight 1 ms sleeps measured **2.307 ms**.
+- **Gate.** 32 calls may be inside. 8 may run the body. One more is `Saturated`. A permit round trip measured **45.53 ns**. Eight 1 ms sleeps measured **2.129 ms**.
 
 [personal note: what was harder, the semaphore or deciding the server is not the harness]
 

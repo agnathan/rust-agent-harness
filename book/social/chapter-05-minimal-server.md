@@ -15,7 +15,7 @@ I kept the fixed list and the registration order. A duplicate name is refused, w
 This step binds no socket. HTTP is a later chapter.
 
 4/
-The gate accepts 32 calls and runs 8. The 33rd is Saturated. A permit round trip measured 79.93 ns. Eight tasks that each sleep 1 ms measured 2.307 ms.
+The gate accepts 32 calls and runs 8. The 33rd is Saturated. A permit round trip measured 45.53 ns. Eight tasks that each sleep 1 ms measured 2.129 ms.
 
 5/
 There is no model here, so there is no API key. cargo run registers echo and prints hello.
@@ -36,7 +36,7 @@ Chapter 4 can call an MCP server. It cannot be one. Hermes Agent's mcp_serve.py 
 
 The Rust in this chapter is two semaphores. One caps accepted calls at 32, including calls waiting to run. The other caps the tool body at 8. A permit is a value. Dropping it gives the slot back. Holding a mutex across the body would pin a worker. The permit does not.
 
-The keyless demo registers echo and returns hello. A permit round trip measured 79.93 ns. Eight 1 ms sleeps measured 2.307 ms.
+The keyless demo registers echo and returns hello. A permit round trip measured 45.53 ns. Eight 1 ms sleeps measured 2.129 ms.
 
 [personal note: one takeaway from writing this chapter]
 

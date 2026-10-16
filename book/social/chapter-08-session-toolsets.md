@@ -21,7 +21,7 @@ every tool: 45,104 schema tokens
 static: 153
 dynamic: 135
 
-The dynamic arm measured 4.124 ms. Revealing every tool measured 5.996 ms. Those times include building the catalog.
+The dynamic arm measured 5.687 ms. Revealing every tool measured 8.355 ms. Those times include building the catalog.
 
 5/
 [personal note]

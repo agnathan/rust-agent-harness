@@ -81,10 +81,12 @@ The output is the three lines in the fake-task section. No API key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `dynamic_rename_task` | 4.124 ms | the dynamic arm | search, describe, and one call on 2,000 tools |
-| `every_tool_rename_task` | 5.996 ms | the every-tool arm | reveal 2,000 schemas, then one call |
+| `dynamic_rename_task` | 5.687 ms | the dynamic arm | search, describe, and one call on 2,000 tools |
+| `every_tool_rename_task` | 8.355 ms | the every-tool arm | reveal 2,000 schemas, then one call |
 
-Both benches call `run_rename_task` inside the sample, including catalog build. The 2,000-tool `synthetic` vec is built inside the timed closure. There is no model and no sleep. The dynamic arm is faster on this machine and it records 135 schema tokens against 45,104 for every tool, on the same 2,000-tool catalog, in the demo rather than in the bench. The bench is the time. The demo is the token count. CI section id is `gw8`.
+Both benches call `run_rename_task` inside the sample, including catalog build. The 2,000-tool `synthetic` vec is built inside the timed closure. There is no model and no sleep. The dynamic arm measured 5.687 ms and the every-tool arm measured 8.355 ms. The demo, not the bench, records 135 schema tokens against 45,104 for every tool, on the same 2,000-tool catalog. The bench is the time. The demo is the token count.
+
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38863938100](https://github.com/agnathan/rust-agent-harness/actions/runs/38863938100), section `gw8`.
 
 ### Milestone demo
 
@@ -116,7 +118,7 @@ Secret redaction (E1, E2) is still not in this process. Rate limits and the per-
 
 - **Session.** Empty until `search_tools` or `set_task`. `call` checks the revealed list.
 - **Listing versus schema.** Search returns a short line. `describe` returns the full text. Both add to `schema_tokens`.
-- **Three arms, 2,000 tools.** Every tool 45,104 schema tokens, static 153, dynamic 135. All three succeed. The dynamic arm measured **4.124 ms**. The every-tool arm measured **5.996 ms**.
+- **Three arms, 2,000 tools.** Every tool 45,104 schema tokens, static 153, dynamic 135. All three succeed. The dynamic arm measured **5.687 ms**. The every-tool arm measured **8.355 ms**.
 - **Flag.** `take_list_changed` is true once after the revealed set grows.
 
 [personal note: which of the three token numbers you would show someone who wants every tool in the prompt]

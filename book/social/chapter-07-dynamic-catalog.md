@@ -13,7 +13,7 @@ Hermes searches in tools/tool_search_catalog.py. An exact name ranks first. The 
 I kept BM25 and the exact-name rank. I did not copy the rarest-token admission. A duplicate name fails the reload and the previous snapshot stays. Hermes overwrites a same-toolset duplicate.
 
 4/
-Search over 10,000 tools measured 141.4 µs. Rebuilding that index measured 21.41 ms. Swapping a one-tool snapshot while holding the old Arc measured 1.838 µs.
+Search over 10,000 tools measured 299.0 µs. Rebuilding that index measured 27.42 ms. Swapping a one-tool snapshot while holding the old Arc measured 2.467 µs.
 
 HashEmbedder is eight buckets of byte counts. Ranking does not use it.
 
@@ -36,7 +36,7 @@ Hermes Agent rebuilds its tool-search catalog from the live definitions on every
 
 Plugins and upstreams in this chapter are lists in the load. Nothing is dialed. A duplicate name aborts the reload.
 
-On this machine, search over 10,000 synthetic tools measured 141.4 µs. The rebuild measured 21.41 ms.
+On the Benchmarks runner, search over 10,000 synthetic tools measured 299.0 µs. The rebuild measured 27.42 ms.
 
 [personal note: one takeaway from writing this chapter]
 
