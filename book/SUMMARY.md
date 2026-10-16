@@ -28,7 +28,7 @@ Server-track chapters are marked *(server)*. They are interleaved with the harne
 # Part II: Learning
 
 - [Chapter 18: Sessions on Disk](chapter-18-sessions.md)
-- [Chapter 19: Memory Files]()
+- [Chapter 19: Memory Files](chapter-19-memory.md)
 - [Chapter 20: Recall]()
 - [Chapter 21: Learned Tools]() *(server)*
 - [Chapter 22: Using Skills]()

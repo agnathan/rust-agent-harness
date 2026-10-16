@@ -61,4 +61,5 @@ members = [
     "steps/ch13-providers",
     "steps/ch14-streaming",
     "steps/ch15-sessions",
+    "steps/ch16-memory",
 ]

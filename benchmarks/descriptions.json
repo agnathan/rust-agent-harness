@@ -1931,6 +1931,20 @@
       "fake": "The assistant text is the string pong. No model is called. The file is a temp database, deleted after the bench.",
       "source": "steps/ch15-sessions/benches/sessions.rs",
       "reading": "Smaller is better. Tens of microseconds is a small WAL commit. Over 1 ms means the append started building an FTS index or fsyncing more than the commit."
+    },
+    {
+      "id": "19/memory_enqueue",
+      "section": "chapter 19 memory",
+      "chapter": "Chapter 19 Memory Files",
+      "function": "memory_enqueue",
+      "summary": "Push one turn onto the memory-file queue.",
+      "what": "MemoryFiles::enqueue_turn of user hi and assistant ok. The trait method from chapter 12, on the file backend.",
+      "why": "The request path only enqueues. The file write and the system-prompt snapshot stay off this call. The budget is under 1 ms.",
+      "timing": "MemoryFiles::open of a temp directory runs before the bench and reads any existing files once into an Arc. The timed closure is b.iter. Inside: enqueue_turn with the TurnRecord passed through black_box. The sample locks a mutex, drops the oldest job if 64 are queued, formats one string, and pushes it. Opening the directory is excluded. No file is written. The Arc snapshot is not rebuilt.",
+      "inputs": "TurnRecord user hi, assistant ok. Queue cap 64. Empty MEMORY.md and USER.md.",
+      "fake": "Nothing calls a model. The queue is a VecDeque. It is not a second write to MEMORY.md.",
+      "source": "steps/ch16-memory/benches/memory.rs",
+      "reading": "Smaller is better. Tens of nanoseconds is a lock and a short string. Milliseconds would mean the enqueue started writing the file or copying the snapshot."
     }
   ]
 }
