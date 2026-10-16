@@ -151,6 +151,7 @@ The book builds with [mdBook](https://rust-lang.github.io/mdBook/): `mdbook buil
 - the same tests on Ubuntu and Windows for steps whose files changed ([paths-filter](https://github.com/dorny/paths-filter))
 - macOS for those steps, at most four jobs at a time, and one automatic retry when the first wave does not succeed. A gate fails the workflow if both waves miss
 - an mdBook build of `book/`
+- `python3 .github/scripts/check_toc_links.py`, which fails if a link in `TABLE_OF_CONTENTS.md` points at a missing file, or if a written chapter does not use the file named in `book/SUMMARY.md`
 
 [Benchmarks](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml) run on pull requests and on pushes to `main`. They execute the criterion benches for the written chapters on Ubuntu. Each section is recorded before the next one starts, and the job summary prints the Criterion median with its low and high. A push to `main` appends that run to [`data.json`](benchmarks/data.json) on the `gh-pages` branch. The [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/) charts it. A slow result does not fail the run.
 
