@@ -54,4 +54,5 @@ members = [
     "steps/gw-session-toolsets",
     "steps/ch07-turn-state/crates/harness-core",
     "steps/ch09-approvals",
+    "steps/ch10-hooks",
 ]

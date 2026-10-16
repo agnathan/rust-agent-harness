@@ -18,7 +18,7 @@ Server-track chapters are marked *(server)*. They are interleaved with the harne
 - [Chapter 9: The Agent Loop](chapter-06-agent-loop.md)
 - [Chapter 10: The Turn State Machine](chapter-10-turn-state.md)
 - [Chapter 11: Approvals and Guardrails](chapter-11-approvals.md)
-- [Chapter 12: Hooks and Plugins]()
+- [Chapter 12: Hooks and Plugins](chapter-12-hooks.md)
 - [Chapter 13: Sandboxed Execution]()
 - [Chapter 14: When Things Fail]()
 - [Chapter 15: Limits and Breakers]() *(server)*

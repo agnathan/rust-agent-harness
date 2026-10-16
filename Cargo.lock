@@ -831,6 +831,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "ch10-hooks"
+version = "0.1.0"
+dependencies = [
+ "ch09-approvals",
+ "criterion",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "chacha20"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
