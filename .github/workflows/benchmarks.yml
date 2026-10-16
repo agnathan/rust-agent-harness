@@ -101,6 +101,8 @@ jobs:
         run: bash .github/scripts/run_bench_section.sh 14 "chapter 14 failures" ch12-when-things-fail failures
       - name: Chapter 15 limits
         run: bash .github/scripts/run_bench_section.sh 15 "chapter 15 limits" gw-limits limits
+      - name: Chapter 16 providers
+        run: bash .github/scripts/run_bench_section.sh 16 "chapter 16 providers" ch13-providers providers
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"

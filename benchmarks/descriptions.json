@@ -1861,6 +1861,34 @@
       "fake": "No tool body runs. The permit is not waiting on a queue.",
       "source": "steps/gw-limits/benches/limits.rs",
       "reading": "Smaller is better. Tens of nanoseconds matches the chapter 5 permit round trip. Microseconds would mean the sample started waiting or allocating a new semaphore every time."
+    },
+    {
+      "id": "16/choose_route",
+      "section": "chapter 16 providers",
+      "chapter": "Chapter 16 Providers",
+      "function": "choose_route",
+      "summary": "Pick the model after primary in a three-name route.",
+      "what": "choose_next on [primary, fallback, last] with the failed name primary. The result is fallback.",
+      "why": "Choosing the next adapter or the next OpenRouter route has to stay under 1 ms, and the failed call itself is not part of that number.",
+      "timing": "The three-name vec is built before the bench. The timed closure is b.iter. Inside: choose_next with the vec and Some(primary) both passed through black_box. No HTTP client is constructed. No body is serialized. The failed call is not inside the sample.",
+      "inputs": "Three model names. The failed name is primary, so the function returns the next slot.",
+      "fake": "The names are strings. Nothing is sent to OpenRouter, Anthropic, or Bedrock.",
+      "source": "steps/ch13-providers/benches/providers.rs",
+      "reading": "Smaller is better. A few nanoseconds is a scan of three names. Milliseconds would mean the choice started building a request or opening a client."
+    },
+    {
+      "id": "16/rotate_key",
+      "section": "chapter 16 providers",
+      "chapter": "Chapter 16 Providers",
+      "function": "rotate_key",
+      "summary": "Advance to the next key on one pool.",
+      "what": "Pool::mark_exhausted_and_rotate on a pool of three keys. The client id stays 1.",
+      "why": "Rotation is supposed to reuse the pooled client from chapter 1. Rebuilding the client on every exhausted key would show up here.",
+      "timing": "Pool::new of sk-one, sk-two, and sk-three runs before the bench. The timed closure is b.iter. Inside: mark_exhausted_and_rotate, then black_box of the returned key. The index wraps from the last key back to the first across samples. The client id field is not rewritten. No HTTP pool is created.",
+      "inputs": "Three key strings. One Pool. Client id 1 for the whole bench.",
+      "fake": "The keys are not sent. There is no reqwest client in this crate.",
+      "source": "steps/ch13-providers/benches/providers.rs",
+      "reading": "Smaller is better. A few nanoseconds is an index update. A number that allocates a new client, or copies the key list, would miss the under-1 ms budget only if it got much larger; the thing to watch is a jump from nanoseconds into allocations."
     }
   ]
 }
