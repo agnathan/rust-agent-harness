@@ -103,6 +103,8 @@ jobs:
         run: bash .github/scripts/run_bench_section.sh 15 "chapter 15 limits" gw-limits limits
       - name: Chapter 16 providers
         run: bash .github/scripts/run_bench_section.sh 16 "chapter 16 providers" ch13-providers providers
+      - name: Chapter 17 streaming
+        run: bash .github/scripts/run_bench_section.sh 17 "chapter 17 streaming" ch14-streaming streaming
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"

@@ -59,4 +59,5 @@ members = [
     "steps/ch11-sandbox",
     "steps/ch12-when-things-fail",
     "steps/ch13-providers",
+    "steps/ch14-streaming",
 ]

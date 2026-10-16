@@ -1,0 +1,23 @@
+[package]
+name = "ch14-streaming"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+description = "Chapter 17: fold stream deltas and strip think blocks."
+
+[lib]
+name = "streaming"
+
+[[bin]]
+name = "ch14-streaming"
+path = "src/main.rs"
+
+[dependencies]
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "streaming"
+harness = false

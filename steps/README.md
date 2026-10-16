@@ -48,6 +48,7 @@ cargo run -p ch02-harness-cli -- --mock chat
 | ch11-sandbox | 13 | Child worker, Docker argv, env scrub, checkpoints |
 | ch12-when-things-fail | 14 | Empty retries, repetition guard, timeout drops the permit |
 | ch13-providers | 16 | Anthropic and Bedrock bodies, a route, key rotation |
+| ch14-streaming | 17 | Think-block scrubber, folded deltas, read-only overlap |
 | gw-limits | 15 *(server)* | Per-tool permits, idempotent retry, a breaker, caps of 50 |
 | gw-minimal-server | 5 *(server)* | Empty `mcp-gateway` catalog. No socket |
 

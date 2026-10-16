@@ -23,7 +23,7 @@ Server-track chapters are marked *(server)*. They are interleaved with the harne
 - [Chapter 14: When Things Fail](chapter-14-when-things-fail.md)
 - [Chapter 15: Limits and Breakers](chapter-15-limits.md) *(server)*
 - [Chapter 16: Providers](chapter-16-providers.md)
-- [Chapter 17: Streaming]()
+- [Chapter 17: Streaming](chapter-17-streaming.md)
 
 # Part II: Learning
 

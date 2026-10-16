@@ -1889,6 +1889,34 @@
       "fake": "The keys are not sent. There is no reqwest client in this crate.",
       "source": "steps/ch13-providers/benches/providers.rs",
       "reading": "Smaller is better. A few nanoseconds is an index update. A number that allocates a new client, or copies the key list, would miss the under-1 ms budget only if it got much larger; the thing to watch is a jump from nanoseconds into allocations."
+    },
+    {
+      "id": "17/fold_deltas",
+      "section": "chapter 17 streaming",
+      "chapter": "Chapter 17 Streaming",
+      "function": "fold_deltas",
+      "summary": "Fold 100 plain text chunks through the think scrubber.",
+      "what": "fold_text on 100 copies of hello space. Each chunk has no <, so the scrubber takes the fast path, then flush.",
+      "why": "Assembling a streamed reply should add less than 1 ms over a buffered join, excluding model time. This is that assembly.",
+      "timing": "The vec of 100 strings is built before the bench. The timed closure is b.iter. Inside: fold_text with the slice passed through black_box. That constructs a ThinkScrubber, calls feed 100 times, and flush. Building the vec is excluded. No model is called. Chunks that contain < would scan the tag list; these do not.",
+      "inputs": "100 strings. Each is hello followed by a space. Six characters. No think tags.",
+      "fake": "The chunks are built in the bench. They are not SSE frames and not a provider stream.",
+      "source": "steps/ch14-streaming/benches/streaming.rs",
+      "reading": "Smaller is better. It should sit within 1 ms of buffer_join. A gap of milliseconds means the plain-text fast path started scanning tags."
+    },
+    {
+      "id": "17/buffer_join",
+      "section": "chapter 17 streaming",
+      "chapter": "Chapter 17 Streaming",
+      "function": "buffer_join",
+      "summary": "Join the same 100 chunks with no scrubber.",
+      "what": "buffer_join concatenates the 100 hello-space strings.",
+      "why": "This is the buffered baseline. The streamed path is allowed to add less than 1 ms on top of it.",
+      "timing": "The same vec is built before the bench. The timed closure is b.iter. Inside: buffer_join with the slice passed through black_box. No ThinkScrubber is constructed. Building the vec is excluded.",
+      "inputs": "The same 100 strings as fold_deltas.",
+      "fake": "No model and no socket.",
+      "source": "steps/ch14-streaming/benches/streaming.rs",
+      "reading": "Smaller is better. Fold_deltas should stay close to this number. A much smaller fold number would mean the two benches stopped sharing the input."
     }
   ]
 }
