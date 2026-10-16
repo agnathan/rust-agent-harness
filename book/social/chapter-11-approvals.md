@@ -13,7 +13,7 @@ Hermes Agent runs that order in tools/approval.py (check_all_command_guards and 
 A denial tells the model the user has not consented and must not retry. The fake model stops the script, so the next call is not issued. Three denials append the circuit breaker. Cron denies a dangerous command and still allows echo.
 
 4/
-Two asks share one mutex. The tool permit is dropped before the wait. A skip of echo hello measured CI_MEAN_11_SKIP.
+Two asks share one mutex. The tool permit is dropped before the wait. A skip of echo hello measured 252.3 ns.
 
 [personal note]
 
@@ -29,7 +29,7 @@ Chapter 11 is out: Approvals and Guardrails.
 
 The agent loop already stops for a bad tool name. What it did not have was a single check that refuses a destructive command before the tool runs. Hermes Agent puts hardline patterns, the user's deny list, an allowlist, an auxiliary review, and a human prompt in that order, and the hardline floor still fires when YOLO is on. I wrote that pipeline, with a fake model and no API key.
 
-Two calls that need a human share one prompt. The wait gives the tool-concurrency permit back first. A skip of a safe command measured CI_MEAN_11_SKIP.
+Two calls that need a human share one prompt. The wait gives the tool-concurrency permit back first. A skip of a safe command measured 252.3 ns.
 
 [personal note: one takeaway from writing this chapter]
 

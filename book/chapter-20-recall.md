@@ -70,11 +70,11 @@ The binary is one temp database. A child session and a user session both contain
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `discover_10k` | CI_MEAN_20_DISC | under 20 ms | one trigram query over 10,000 messages |
+| `discover_10k` | 60.27 µs | under 20 ms | one trigram query over 10,000 messages |
 
 `discover_10k` opens a temp database, migrates, and inserts 10,000 messages into session `desk` before the bench. Message 5,000 contains `zephyrtoken`. The other 9,999 are `note N`. `install_fts` rebuilds the trigram index before the bench. The timed closure is `b.iter`. Inside: `session_search` with the query `zephyrtoken`, no session id, and no anchor, both the store and the query passed through `black_box`. The inserts and the rebuild are excluded. No model is called. The result is one hit in `desk`.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, CI_RUN_20, section `20`.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38967738024](https://github.com/agnathan/rust-agent-harness/actions/runs/38967738024), section `20`.
 
 ### Milestone demo
 
@@ -105,7 +105,7 @@ Trigram `MATCH` wants at least three characters. A one-letter query is the wrong
 - **Index.** `messages_fts_trigram`, trigram tokenizer, rebuilt from `messages`.
 - **Discover.** One hit per session. `desk` before `nightly`. `child` is absent.
 - **Other shapes.** Scroll is a window of 5. Read is the session. Browse is recent sessions, with cron after the user.
-- **Time.** One discover over 10,000 messages measured **CI_MEAN_20_DISC**.
+- **Time.** One discover over 10,000 messages measured **60.27 µs**.
 
 [personal note: a past session the search found, or one it hid]
 

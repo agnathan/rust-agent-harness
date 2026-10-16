@@ -78,14 +78,14 @@ The binary rotates once, then picks the second fake model because the first one 
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `choose_route` | CI_MEAN_16_ROUTE | under 1 ms | the next model after `primary` |
-| `rotate_key` | CI_MEAN_16_ROTATE | under 1 ms | advance the key, same client id |
+| `choose_route` | 6.229 ns | under 1 ms | the next model after `primary` |
+| `rotate_key` | 3.471 ns | under 1 ms | advance the key, same client id |
 
 `choose_route` builds a three-name list before the bench. The timed closure is `b.iter`. Inside: `choose_next` with that list and `Some("primary")` both passed through `black_box`. No failed HTTP call is inside the sample. The result is `fallback`.
 
 `rotate_key` builds a pool of three keys before the bench. Each sample calls `mark_exhausted_and_rotate` and black-boxes the new key. The client id is not rebuilt. The pool wraps from the last key back to the first across samples, so the sample is the index update, not a client constructor.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, CI_RUN_16, section `16`.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38967738024](https://github.com/agnathan/rust-agent-harness/actions/runs/38967738024), section `16`.
 
 ### Milestone demo
 
@@ -117,7 +117,7 @@ A side-model summary does not run because the turn printed text. It runs when `a
 - **Route.** Invalid sorts are dropped. The fallback is the next name in `models`.
 - **Client.** Rotation changes the key and keeps client id 1. The side model stays off.
 - **Wire.** `call_0` twice becomes `call_0` and `call_0_d2`. A dangling tool row is closed.
-- **Time.** Choosing the next route measured **CI_MEAN_16_ROUTE**. Rotating a key measured **CI_MEAN_16_ROTATE**.
+- **Time.** Choosing the next route measured **6.229 ns**. Rotating a key measured **3.471 ns**.
 
 [personal note: a key rotation that built a second client, and what the pool was supposed to keep]
 

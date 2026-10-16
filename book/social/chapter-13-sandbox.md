@@ -13,7 +13,7 @@ Hermes Agent sets terminal.backend to "local" in hermes_cli/config_defaults.py. 
 The child env keeps PATH. It drops OPENAI_API_KEY even if a skill lists it as passthrough. A third-party key on that list is kept. That split is tools/env_passthrough.py.
 
 4/
-A warm ping measured CI_MEAN_13_WARM. Copying a 1,000-path manifest measured CI_MEAN_13_CKPT. Putting it back measured CI_MEAN_13_REW. No Docker daemon in the bench.
+A warm ping measured 29.74 µs. Copying a 1,000-path manifest measured 50.91 µs. Putting it back measured 81.06 µs. No Docker daemon in the bench.
 
 [personal note]
 
@@ -29,7 +29,7 @@ Chapter 13 is out: Sandboxed Execution.
 
 An approval check is not a container. Hermes Agent leaves the terminal backend on local, and only builds the hardened Docker command when that backend is Docker: drop every capability, no-new-privileges, and a pids limit. I kept that default. The chapter's demo is a small worker process that answers ping. Docker is an argument list a test can read, not a daemon the suite starts.
 
-The child environment keeps PATH and drops a provider API key even when a caller asked to pass it through. Checkpoints are off until enabled, then a rewind puts the saved files back. A warm accept measured CI_MEAN_13_WARM.
+The child environment keeps PATH and drops a provider API key even when a caller asked to pass it through. Checkpoints are off until enabled, then a rewind puts the saved files back. A warm accept measured 29.74 µs.
 
 [personal note: one takeaway from writing this chapter]
 

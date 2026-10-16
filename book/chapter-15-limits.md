@@ -80,8 +80,8 @@ The binary is two fake calls. `echo` retries a transport error. `search` is not 
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `open_breaker` | CI_MEAN_15_OPEN | under 1 µs | a call that returns before the backend |
-| `permit_release` | CI_MEAN_15_PERMIT | under 1 µs | take one execute permit and drop it |
+| `open_breaker` | 30.01 ns | under 1 µs | a call that returns before the backend |
+| `permit_release` | 60.17 ns | under 1 µs | take one execute permit and drop it |
 
 `open_breaker` records three 503s before the bench. The timed closure is `b.iter`. Inside: `dispatch` of `search` with the tool name passed through `black_box`. The breaker is already open, so the script is not called. Building the gateway and opening the breaker are excluded.
 
@@ -89,7 +89,7 @@ The binary is two fake calls. `echo` retries a transport error. `search` is not 
 
 The timeout is not a bench. The test above is the measurement of the cancel: 30 milliseconds against a 5 second sleep, both permit counts full, elapsed under 2 seconds.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, CI_RUN_15, section `15`.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38967738024](https://github.com/agnathan/rust-agent-harness/actions/runs/38967738024), section `15`.
 
 ### Milestone demo
 
@@ -131,7 +131,7 @@ The queue is the accept bound of 32. The 33rd call is refused. Nothing parks pas
 - **Retry.** Idempotent only. 429 and 503 wait outside.
 - **Breaker.** Three failures, then the backend is not called.
 - **Caps.** 50 web searches. 50 subagent spawns. A list action still runs.
-- **Time.** The open-breaker check measured **CI_MEAN_15_OPEN**. The permit round trip measured **CI_MEAN_15_PERMIT**.
+- **Time.** The open-breaker check measured **30.01 ns**. The permit round trip measured **60.17 ns**.
 
 [personal note: a breaker that opened on a tool you still wanted to retry]
 
