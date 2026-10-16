@@ -4,10 +4,11 @@ version = "0.1.0"
 edition = "2021"
 rust-version = "1.85"
 publish = false
-description = "Standalone MCP gateway. Chapter 8's session toolset is the process crate."
+description = "Standalone MCP gateway. Chapter 15's limits wrap the session toolset."
 
 [lib]
 name = "mcp_gateway"
 
 [dependencies]
+gw-limits = { path = "../steps/gw-limits" }
 gw-session-toolsets = { path = "../steps/gw-session-toolsets" }

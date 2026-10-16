@@ -52,6 +52,7 @@ members = [
     "steps/gw-minimal-server",
     "steps/gw-catalog",
     "steps/gw-session-toolsets",
+    "steps/gw-limits",
     "steps/ch07-turn-state/crates/harness-core",
     "steps/ch09-approvals",
     "steps/ch10-hooks",

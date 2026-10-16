@@ -1833,6 +1833,34 @@
       "fake": "The text is generated in the bench. No model streamed it.",
       "source": "steps/ch12-when-things-fail/benches/failures.rs",
       "reading": "Smaller is better. A few microseconds is a HashMap of short windows. Over 1 ms means the scan stopped returning early or started copying the whole reply per window."
+    },
+    {
+      "id": "15/open_breaker",
+      "section": "chapter 15 limits",
+      "chapter": "Chapter 15 Limits and Breakers",
+      "function": "open_breaker",
+      "summary": "One call that returns because the breaker is already open.",
+      "what": "dispatch of search on a gateway whose search breaker was opened by three 503s before the sample.",
+      "why": "An open breaker has to stop the call before any backend work. If the check took the permit or formatted a cap message, every refused call would pay that.",
+      "timing": "The gateway, three 503 dispatches, and an idle script are built before the bench. The timed closure is b.iter. Inside: dispatch with the tool name search passed through black_box, then black_box of the Result. The script is not called. No semaphore is acquired. Opening the breaker is excluded.",
+      "inputs": "Tool name search. CallOpts with hedge false. The breaker is open. The idle script has no queued outcomes.",
+      "fake": "The backend is an in-memory script. There is no socket and no upstream MCP server.",
+      "source": "steps/gw-limits/benches/limits.rs",
+      "reading": "Smaller is better. Tens of nanoseconds is a map lookup. A microsecond or more means the open path started allocating a block message or taking a permit."
+    },
+    {
+      "id": "15/permit_release",
+      "section": "chapter 15 limits",
+      "chapter": "Chapter 15 Limits and Breakers",
+      "function": "permit_release",
+      "summary": "Take one execute permit and drop it.",
+      "what": "roundtrip_execute on the tool echo, which try_acquire_owned from the execute semaphore of 8 and drops the permit.",
+      "why": "A timeout has to give this permit back. The acquire and drop is the cost of holding a slot, without the sleep.",
+      "timing": "LimitedGateway::new runs before the bench and creates no semaphore until the first sample. The timed closure is b.iter. Inside: roundtrip_execute with the tool name passed through black_box. The first sample creates the semaphore of 8. Later samples only acquire and drop. The accept semaphore of 32 is not taken. There is no timeout and no backend call.",
+      "inputs": "Tool name echo. Execute bound 8. One permit held for the body of the call, then dropped before the sample returns.",
+      "fake": "No tool body runs. The permit is not waiting on a queue.",
+      "source": "steps/gw-limits/benches/limits.rs",
+      "reading": "Smaller is better. Tens of nanoseconds matches the chapter 5 permit round trip. Microseconds would mean the sample started waiting or allocating a new semaphore every time."
     }
   ]
 }

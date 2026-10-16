@@ -76,7 +76,7 @@ Chapters 0 through 48, in six parts. Eight chapters are a standalone MCP gateway
 | 12 | Hooks and Plugins | `steps/ch10-hooks` | before/after tool hooks, API-request hooks, rewritten tool results, a swappable memory backend |
 | 13 | Sandboxed Execution | `steps/ch11-sandbox` | a code tool outside the process, plus file checkpoint and rewind |
 | 14 | When Things Fail | `steps/ch12-when-things-fail` | classify failures, retry, fall back, including MCP crashes and reconnects |
-| 15 | Limits and Breakers *(server)* | `steps/gw-limits` | timeouts, idempotent-only retries, breakers, queues. Not written |
+| 15 | Limits and Breakers *(server)* | `steps/gw-limits` | timeouts, idempotent-only retries, breakers, queues |
 | 16 | Providers | `steps/ch13-providers` | native Anthropic and Bedrock adapters, OpenRouter fallback and routing, key rotation, a cheaper side model |
 | 17 | Streaming | `steps/ch14-streaming` | the same events, as tokens arrive |
 
