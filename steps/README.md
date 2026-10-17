@@ -58,6 +58,7 @@ cargo run -p ch02-harness-cli -- --mock chat
 | ch20-reflection | 24 | nudge counters, a forked reviewer, cancel on return |
 | ch21-curation | 25 | stale, then archived, a snapshot, off the request path |
 | ch22-pipeline | 26 | outline, draft, critique, revise, one shared `Arc` |
+| ch23-supervisor | 27 | eight specialists, one `Arc`, blocked child tools, depth 1 |
 | gw-limits | 15 *(server)* | Per-tool permits, idempotent retry, a breaker, caps of 50 |
 | gw-minimal-server | 5 *(server)* | Empty `mcp-gateway` catalog. No socket |
 
