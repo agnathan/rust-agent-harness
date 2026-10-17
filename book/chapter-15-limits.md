@@ -6,7 +6,7 @@
 
 Chapter 14 names a failure and decides retry or fallback inside the harness. The tool call still arrives at a backend with no limit of its own. This chapter is the gateway. Each tool accepts 32 calls and runs 8. A retry, and a hedge, run only when that tool is marked idempotent. Three failures open a breaker, and the next call does not reach the backend. `web_search` and `delegate_task` stop at 50 for the turn.
 
-The step crate is `steps/gw-limits`. The book number is 15. The package is `gw-limits`. `mcp-gateway` re-exports `LimitedGateway` as `Gateway`. A new gateway still has an empty catalog.
+The step crate is `steps/gw-limits`. The book number is 15. The package is `gw-limits`. Chapter 21's process crate wraps `LimitedGateway`. A new gateway still has an empty catalog.
 
 | Section | Step | What it adds |
 |---|---|---|

@@ -30,7 +30,7 @@ Written chapters link to `book/chapter-….md`. A chapter that has no page yet i
 - [Chapter 18: Sessions on Disk](book/chapter-18-sessions.md) — [`steps/ch15-sessions`](steps/ch15-sessions)
 - [Chapter 19: Memory Files](book/chapter-19-memory.md) — [`steps/ch16-memory`](steps/ch16-memory)
 - [Chapter 20: Recall](book/chapter-20-recall.md) — [`steps/ch17-recall`](steps/ch17-recall)
-- Chapter 21: Learned Tools *(server)* (not yet written)
+- [Chapter 21: Learned Tools](book/chapter-21-learned-tools.md) *(server)* — [`steps/gw-learned-tools`](steps/gw-learned-tools)
 - Chapter 22: Using Skills (not yet written)
 - Chapter 23: Writing Skills (not yet written)
 - Chapter 24: The Reflection Loop (not yet written)

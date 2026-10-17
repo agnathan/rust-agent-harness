@@ -1959,6 +1959,34 @@
       "fake": "The messages are generated in the bench. They are not a restored Hermes database. Nothing is sent to a model.",
       "source": "steps/ch17-recall/benches/recall.rs",
       "reading": "Smaller is better. Tens of microseconds means the index answered. Over 20 ms means the sample started rebuilding the index or scanning the message table."
+    },
+    {
+      "id": "21/apply_offered",
+      "section": "chapter 21 learned",
+      "chapter": "Chapter 21 Learned Tools",
+      "function": "apply_offered",
+      "summary": "Copy a precomputed 32-name offer into one session view.",
+      "what": "session_tools on session desk after refresh_prediction has already stored the names. The view's tool list is those names.",
+      "why": "The request path is allowed to read the offered set. It is not allowed to score memory or the usage log. This is that read.",
+      "timing": "LearnedGateway::new, open_session, a 32-name catalog, one usage row, and refresh_prediction all run before the bench. One session_tools call also runs before the bench so the list_changed flag is already clear. The timed closure is b.iter. Inside: session_tools with the session id passed through black_box, then black_box of the view. That clones the Arc and copies 32 names into the view. The score is not computed. No model is called.",
+      "inputs": "32 tool names, tool_0 through tool_31. One usage row for tool_0. Memory text is the string tool_0. Session id desk.",
+      "fake": "The catalog is generated in the bench. Nothing is loaded from a live MCP server. The scripted model is not constructed.",
+      "source": "steps/gw-learned-tools/benches/learned.rs",
+      "reading": "Smaller is better. Tens of nanoseconds is a pointer clone plus a short name copy. Milliseconds would mean the sample started scoring the usage log."
+    },
+    {
+      "id": "21/predict_offline",
+      "section": "chapter 21 learned",
+      "chapter": "Chapter 21 Learned Tools",
+      "function": "predict_offline",
+      "summary": "Score 64 tool names against 1,000 usage rows, off the request path.",
+      "what": "predict on a task, a 1,000-row usage log, a memory sentence, a session note, and 64 catalog names. The function returns the names whose score is above zero.",
+      "why": "This is the work that must stay off session_tools. The number is here so a later change that calls it from the request path is visible next to apply_offered.",
+      "timing": "The catalog, the 1,000 usage rows, and the PredictInput are built before the bench. The timed closure is b.iter. Inside: predict with the input passed through black_box. No gateway is constructed. No session is opened. The result is not installed.",
+      "inputs": "64 names, tool_0 through tool_63. 1,000 usage rows. Task text is task 3. Memory mentions tool_3. The session note mentions tool_9.",
+      "fake": "The rows are generated in the bench. They are not a restored session database. No model is called.",
+      "source": "steps/gw-learned-tools/benches/learned.rs",
+      "reading": "Smaller is better. This may be much larger than apply_offered. That gap is the point: the score is not the request. Over a millisecond is still fine here. It would not be fine inside session_tools."
     }
   ]
 }

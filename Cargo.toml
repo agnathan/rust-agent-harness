@@ -63,4 +63,5 @@ members = [
     "steps/ch15-sessions",
     "steps/ch16-memory",
     "steps/ch17-recall",
+    "steps/gw-learned-tools",
 ]

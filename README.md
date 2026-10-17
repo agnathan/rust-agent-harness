@@ -89,7 +89,7 @@ Chapters 0 through 48, in six parts. Eight chapters are a standalone MCP gateway
 | 18 | Sessions on Disk | `steps/ch15-sessions` | SQLite sessions (append-only, WAL) and resume |
 | 19 | Memory Files | `steps/ch16-memory` | `MEMORY.md` / `USER.md`, the `memory` tool, a frozen system-prompt snapshot |
 | 20 | Recall | `steps/ch17-recall` | FTS5 `session_search`: discover, scroll, read, browse |
-| 21 | Learned Tools *(server)* | `steps/gw-learned-tools` | learned tool prediction and composite tools. Not written |
+| 21 | Learned Tools *(server)* | `steps/gw-learned-tools` | a predicted offer, composite and macro tools, a code-mode script |
 | 22 | Using Skills | `steps/ch18-skills` | `SKILL.md`, a cache-stable index, `skills_list` / `skill_view` |
 | 23 | Writing Skills | `steps/ch19-skill-writing` | create, patch, delete, a scanner, the approval gate, read-before-write |
 | 24 | The Reflection Loop | `steps/ch20-reflection` | nudge counters and a forked reviewer with only skill and memory tools |
