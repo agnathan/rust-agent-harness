@@ -131,6 +131,8 @@ jobs:
         run: bash .github/scripts/run_bench_section.sh 29 "chapter 29 fan-out" ch25-fan-out fan_out
       - name: Chapter 30 critic
         run: bash .github/scripts/run_bench_section.sh 30 "chapter 30 critic" ch26-critic critic
+      - name: Chapter 31 composition
+        run: bash .github/scripts/run_bench_section.sh 31 "chapter 31 composition" ch27-composition composition
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"
