@@ -1,6 +1,7 @@
 use gw_session::{
-    page_text, run_rename_task, synthetic, Arm, Load, PluginSet, SessionError, SessionGateway,
-    ToolCard, Upstream, MAX_DESCRIBE_NAMES, MAX_QUERIES_PER_CALL, PAGE_CHARS,
+    approx_tokens, page_text, run_rename_task, synthetic, Arm, Load, PluginSet, SessionError,
+    SessionGateway, ToolCard, Upstream, MAX_DESCRIBE_NAMES, MAX_QUERIES_PER_CALL, PAGE_CHARS,
+    STARTER_LIMIT,
 };
 
 fn card(name: &str, description: &str, server: &str) -> ToolCard {
@@ -100,6 +101,26 @@ fn set_task_prefers_the_files_server() {
     let picked = gateway.set_task("s", "rename a file").unwrap();
     assert!(!picked.is_empty());
     assert!(picked.iter().all(|name| name.starts_with("files_")));
+
+    let gateway = SessionGateway::new();
+    gateway
+        .reload(Load {
+            native: synthetic(2_000),
+            plugins: vec![],
+            upstreams: vec![],
+        })
+        .unwrap();
+    gateway.open_session("s");
+    let picked = gateway.set_task("s", "rename a file").unwrap();
+    assert_eq!(picked.len(), STARTER_LIMIT);
+    assert!(picked.iter().all(|name| name.starts_with("files_")));
+    let rename = picked
+        .iter()
+        .find(|name| name.contains("rename_file"))
+        .expect("starter set includes a rename_file tool");
+    gateway
+        .call("s", rename, &serde_json::json!({"to": "b.txt"}))
+        .unwrap();
 }
 
 #[test]
@@ -110,6 +131,20 @@ fn three_arms_succeed_and_dynamic_sends_fewer_schema_tokens() {
     assert!(every.success && static_arm.success && dynamic.success);
     assert!(dynamic.schema_tokens < static_arm.schema_tokens);
     assert!(static_arm.schema_tokens < every.schema_tokens);
+    let cards = synthetic(256);
+    let static_blob = cards
+        .iter()
+        .filter(|card| card.server == "files")
+        .take(STARTER_LIMIT)
+        .map(|card| {
+            format!(
+                "{}\nserver: {}\n{}",
+                card.name, card.server, card.description
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+    assert_eq!(static_arm.schema_tokens, approx_tokens(&static_blob));
     println!(
         "every={} static={} dynamic={}",
         every.schema_tokens, static_arm.schema_tokens, dynamic.schema_tokens

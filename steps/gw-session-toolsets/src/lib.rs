@@ -157,10 +157,8 @@ impl SessionGateway {
                 .filter(|card| card.server == server)
                 .collect();
             names.sort_by(|left, right| {
-                let left_hit = tokens.iter().any(|token| left.name.contains(token));
-                let right_hit = tokens.iter().any(|token| right.name.contains(token));
-                right_hit
-                    .cmp(&left_hit)
+                name_token_hits(&right.name, &tokens)
+                    .cmp(&name_token_hits(&left.name, &tokens))
                     .then_with(|| left.name.cmp(&right.name))
             });
             for card in names.into_iter().take(STARTER_LIMIT) {
@@ -316,6 +314,14 @@ impl Default for SessionGateway {
     }
 }
 
+fn name_token_hits(name: &str, tokens: &[String]) -> usize {
+    let parts = tokenize(name);
+    tokens
+        .iter()
+        .filter(|token| parts.iter().any(|part| part == *token))
+        .count()
+}
+
 fn schema_blob(cards: &[ToolCard]) -> String {
     cards
         .iter()
@@ -404,7 +410,11 @@ pub fn run_rename_task(arm: Arm, count: usize) -> TaskReport {
             let mut sessions = gateway.sessions.lock().expect("sessions");
             let session = sessions.get_mut("task").expect("session");
             session.reveal(&target);
-            for card in cards.iter().filter(|card| card.server == "files").take(7) {
+            for card in cards
+                .iter()
+                .filter(|card| card.server == "files" && card.name != target)
+                .take(STARTER_LIMIT - 1)
+            {
                 session.reveal(&card.name);
             }
             let revealed = sessions.get("task").expect("session").revealed.clone();

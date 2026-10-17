@@ -18,7 +18,7 @@ Hermes does not have set_task. I searched. The starter set here is a token overl
 A fake model, no key, 2,000 tools, three arms, all successful:
 
 every tool: 45,104 schema tokens
-static: 153
+static: 175
 dynamic: 135
 
 The dynamic arm measured 5.687 ms. Revealing every tool measured 8.355 ms. Those times include building the catalog.
@@ -38,7 +38,7 @@ Chapter 8 is out: Session Toolsets.
 
 The expensive part of a tool catalog is showing the schema. Hermes Agent caps search at 7 queries and describe at 10 names, and it rebuilds the catalog so a session-scoped copy cannot drift. I kept the caps. The session stores revealed names. The catalog stores the cards. A call to a name that was not revealed fails.
 
-On 2,000 synthetic tools a fake task succeeded three ways. Showing every schema was 45,104 estimated tokens. A static set was 153. Search plus one describe was 135. The estimate is bytes divided by 4. It is not a bill.
+On 2,000 synthetic tools a fake task succeeded three ways. Showing every schema was 45,104 estimated tokens. A static set was 175. Search plus one describe was 135. The estimate is bytes divided by 4. It is not a bill.
 
 [personal note: one takeaway from writing this chapter]
 

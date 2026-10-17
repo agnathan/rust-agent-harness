@@ -30,7 +30,7 @@ A new session's revealed list is empty. `call` returns `NotOffered` until `searc
 
 `describe` adds the full text's token estimate, also to `schema_tokens`.
 
-`set_task` picks the server with the highest overlap. A token that is a prefix of the server name, or the other way around, scores an extra 2, which is why `rename a file` prefers `files` over `calendar` on the synthetic catalog. Up to `STARTER_LIMIT` (8) names are revealed. Names that contain a query token sort first.
+`set_task` picks the server with the highest overlap. A token that is a prefix of the server name, or the other way around, scores an extra 2, which is why `rename a file` prefers `files` over `calendar` on the synthetic catalog. Up to `STARTER_LIMIT` (8) names are revealed. Names that contain more of the query's tokens, as whole words, sort first. The token `file` does not match the server prefix `files`.
 
 `page_text` slices on characters, `PAGE_CHARS` 2,000. A page that is not the last one ends with `[page N continues]`.
 
@@ -48,7 +48,7 @@ On 2,000 tools the keyless binary printed:
 
 ```text
 every: success=true schema_tokens=45104 call_tokens=4 result_tokens=14
-static: success=true schema_tokens=153 call_tokens=4 result_tokens=14
+static: success=true schema_tokens=175 call_tokens=4 result_tokens=14
 dynamic: success=true schema_tokens=135 call_tokens=4 result_tokens=15
 ```
 
@@ -60,7 +60,7 @@ All three succeed. Dynamic sends fewer schema tokens than the static set, and th
 
 ## Tests
 
-`search_reveals_names_and_describe_is_capped` checks the short listing, the `list_changed` flag, the full describe text, and both caps. `a_call_must_be_offered_and_paging_splits_long_text` refuses `echo` until search reveals it, then checks a 2,010-character page. `set_task_prefers_the_files_server` uses 64 synthetic tools and expects every picked name to start with `files_`. `three_arms_succeed_and_dynamic_sends_fewer_schema_tokens` uses 256 tools and checks the token order.
+`search_reveals_names_and_describe_is_capped` checks the short listing, the `list_changed` flag, the full describe text, and both caps. `a_call_must_be_offered_and_paging_splits_long_text` refuses `echo` until search reveals it, then checks a 2,010-character page. `set_task_prefers_the_files_server` uses 64 synthetic tools and expects every picked name to start with `files_`. On 2,000 tools it also requires a `rename_file` name in that starter set, and `call` accepts it. `three_arms_succeed_and_dynamic_sends_fewer_schema_tokens` uses 256 tools and checks the token order, including that the static blob is eight `files` tools.
 
 ## Build, run, and benchmark
 
@@ -118,7 +118,7 @@ Secret redaction (E1, E2) is still not in this process. Rate limits and the per-
 
 - **Session.** Empty until `search_tools` or `set_task`. `call` checks the revealed list.
 - **Listing versus schema.** Search returns a short line. `describe` returns the full text. Both add to `schema_tokens`.
-- **Three arms, 2,000 tools.** Every tool 45,104 schema tokens, static 153, dynamic 135. All three succeed. The dynamic arm measured **5.687 ms**. The every-tool arm measured **8.355 ms**.
+- **Three arms, 2,000 tools.** Every tool 45,104 schema tokens, static 175, dynamic 135. All three succeed. The dynamic arm measured **5.687 ms**. The every-tool arm measured **8.355 ms**.
 - **Flag.** `take_list_changed` is true once after the revealed set grows.
 
 [personal note: which of the three token numbers you would show someone who wants every tool in the prompt]
