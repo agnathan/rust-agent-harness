@@ -89,4 +89,5 @@ members = [
     "steps/ch38-team-skills",
     "steps/ch39-a2a",
     "steps/ch40-tracing",
+    "steps/gw-capstone",
 ]

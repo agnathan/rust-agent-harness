@@ -1585,6 +1585,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "gw-capstone"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+]
+
+[[package]]
 name = "gw-catalog"
 version = "0.1.0"
 dependencies = [

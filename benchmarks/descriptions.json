@@ -2421,6 +2421,34 @@
       "fake": "CountingSubscriber increments an atomic and returns. No OTLP client and no socket. The prompt is discarded by safe_field.",
       "source": "steps/ch40-tracing/benches/spans.rs",
       "reading": "Smaller is better. Around 100 nanoseconds above event_without_span is the span tax and stays under 0.1 milliseconds. One millisecond would still meet the chapter 1 budget and would mean the sample started a collector or the 100-agent team."
+    },
+    {
+      "id": "47/dynamic_tokens",
+      "section": "chapter 47 capstone",
+      "chapter": "Chapter 47 Load and Token Capstone",
+      "function": "dynamic_tokens",
+      "summary": "Score the dynamic arm for tool_07 and read its token count.",
+      "what": "compare of the 32-card catalog, needed name tool_07, no deadline. The timed value is arms[2].tokens, which is 4.",
+      "why": "The capstone has to report tokens per completed task for every tool, a static set, and a dynamic set. This sample is the dynamic arm's count. The load is the other function.",
+      "timing": "sample_catalog runs before the bench and is not timed. The timed closure is b.iter. Inside: compare with the catalog and tool_07 passed through black_box and deadline None, then black_box of arms[2].tokens. Building the three card slices and summing schema lengths are inside the sample. load is not called. No socket is opened.",
+      "inputs": "32 cards, tool_00 through tool_31. Each schema is {\"name\":\"tool_NN\"}, 18 bytes, 4 tokens by integer division. The dynamic arm keeps the one card named tool_07. STATIC_LEN is 8. No deadline.",
+      "fake": "The cards are strings. No catalog server and no oha. FakeModel is not called by compare.",
+      "source": "steps/gw-capstone/benches/capstone.rs",
+      "reading": "Smaller is better. Around 100 nanoseconds is three filters over 32 short schemas. Milliseconds would mean the sample started a socket or rebuilt the catalog from disk. The token count itself is 4, which is a result, not a time."
+    },
+    {
+      "id": "47/load_100",
+      "section": "chapter 47 capstone",
+      "chapter": "Chapter 47 Load and Token Capstone",
+      "function": "load_100",
+      "summary": "Run 100 in-memory dispatches and compute a nearest-rank p99.",
+      "what": "load of 100 requests against the 32-card catalog. Each request compares tool_07 and calls FakeModel. All 100 succeed. Waves reset at 8, so the report has 13 waves.",
+      "why": "The load test has to report throughput and p99 together with task success, and this step does not bind a socket. This sample is that in-memory batch. oha is not run.",
+      "timing": "sample_catalog runs before the bench and is not timed. The timed closure is b.iter. Inside: load of the catalog and 100, then black_box of the LoadReport. The 100 compares, the 100 FakeModel completes, the wave counter, the sample vec, the sort, and the p99 index are inside the sample. No sleep and no socket. The deadline path is not taken.",
+      "inputs": "100 requests. Catalog of 32 cards. Needed name tool_07. CALL_BOUND is 8. Reply string tool_07. Nearest-rank index for 100 samples is 98.",
+      "fake": "Every dispatch is a function call in this process. FakeModel returns tool_07. No listener and no oha. The demo's p99_ns is a debug-build sample and is not this Criterion mean.",
+      "source": "steps/gw-capstone/benches/capstone.rs",
+      "reading": "Smaller is better. Tens of microseconds is 100 in-memory compares plus a sort of 100 timestamps. That rate is not a server throughput number. Milliseconds would still be an in-memory loop. A number taken from a listening socket would be a different program."
     }
   ]
 }
