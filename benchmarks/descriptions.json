@@ -2323,6 +2323,20 @@
       "fake": "The waiters are records, not threads. FakeModel is not constructed. No condvar wait and no sleep.",
       "source": "steps/ch35-blackboard/benches/blackboard.rs",
       "reading": "Smaller is better. A few microseconds is a mutex and a scan of 100 short strings. One millisecond would still meet the budget. A number that includes a model call would mean the lock was held across complete."
+    },
+    {
+      "id": "42/claim_transaction",
+      "section": "chapter 42 kanban",
+      "chapter": "Chapter 42 The Kanban Board",
+      "function": "claim_transaction",
+      "summary": "Claim task t1 through the lock file and rewrite board.json.",
+      "what": "transact of Op::Claim with owner worker on a board that has one ready task t1. The status comes back running. The temp directory is deleted after the claim.",
+      "why": "Claim, complete, review, or block has to be one transaction under 5 milliseconds, and two processes must not both own the task. This sample is one uncontended claim. The race is the test.",
+      "timing": "iter_batched. The setup closure creates a fresh temp directory, writes one ready task t1, and is not timed. The timed routine calls transact, then remove_dir_all, then black_box of the status. create_new of board.lock, the JSON read, the status swap, and the JSON write are inside the sample. Directory creation is excluded. The second process is not spawned. FakeModel is not called. Complete, review, and block are not this sample. The 100 microsecond retry loop runs only when the lock file already exists.",
+      "inputs": "One task, id t1, status ready, no owner, no parents. Owner string worker. One lock file in a private temp directory.",
+      "fake": "The board is a JSON file in the temp directory. No SQLite and no worker process. FakeModel is not constructed.",
+      "source": "steps/ch36-kanban/benches/kanban.rs",
+      "reading": "Smaller is better. Tens of microseconds is a lock file plus two JSON writes. Five milliseconds would still meet the budget. A number that includes two processes and the retry sleep is the race test, not this one."
     }
   ]
 }
