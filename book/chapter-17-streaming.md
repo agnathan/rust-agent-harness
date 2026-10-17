@@ -74,8 +74,8 @@ The binary is the split think block plus one read-only tool. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `fold_deltas` | 2.806 µs | within 1 ms of `buffer_join` | scrub and join 100 plain chunks |
-| `buffer_join` | 659.7 ns | the buffered baseline | join the same 100 chunks, no scrubber |
+| `fold_deltas` | 1.388 µs | within 1 ms of `buffer_join` | scrub and join 100 plain chunks |
+| `buffer_join` | 367.9 ns | the buffered baseline | join the same 100 chunks, no scrubber |
 
 `fold_deltas` builds the 100 strings before the bench. Each is `hello `, six characters, no `<`. The timed closure is `b.iter`. Inside: `fold_text` on that slice passed through `black_box`, which constructs a scrubber, calls `feed` 100 times, and `flush`. The fast path returns each chunk without scanning tags. Building the vec is excluded.
 
@@ -83,7 +83,7 @@ The binary is the split think block plus one read-only tool. No key.
 
 The budget is the difference. Assembling the streamed reply should add less than 1 ms over the buffered join. Both numbers exclude model time. There is no SSE parser in the sample.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38967738024](https://github.com/agnathan/rust-agent-harness/actions/runs/38967738024), section `17`.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38983232549](https://github.com/agnathan/rust-agent-harness/actions/runs/38983232549), section `17`.
 
 ### Milestone demo
 
@@ -114,7 +114,7 @@ A write recorded during the stream does not run. `finish` only moves the name on
 - **Fold.** Deltas become one string. A split `<think>` does not leak.
 - **Tags.** English and the four CJK tags. An inline mention without a close is kept.
 - **Overlap.** `echo` starts. `write` waits for `finish`.
-- **Time.** Folding 100 plain chunks measured **2.806 µs**. Joining them measured **659.7 ns**.
+- **Time.** Folding 100 plain chunks measured **1.388 µs**. Joining them measured **367.9 ns**.
 
 [personal note: a stream that showed the thought before the close tag arrived]
 

@@ -74,11 +74,11 @@ The binary is one fake reply in a temp database. The file is removed when the pr
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `wal_append` | 143.9 µs | under 1 ms | one transaction, two message rows |
+| `wal_append` | 116.5 µs | under 1 ms | one transaction, two message rows |
 
 `wal_append` opens a temp database and runs `migrate` before the bench. The timed closure is `b.iter`. Inside: `append_turn` of session `bench`, user `hi`, assistant `pong`, with each argument passed through `black_box`. The sample is the transaction and the queue push. Opening the file and creating the tables are excluded. No FTS insert runs. The queue is capped at 64, so later samples drop the oldest id instead of growing without a bound.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38967738024](https://github.com/agnathan/rust-agent-harness/actions/runs/38967738024), section `18`.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38983232549](https://github.com/agnathan/rust-agent-harness/actions/runs/38983232549), section `18`.
 
 ### Milestone demo
 
@@ -110,7 +110,7 @@ The eval test does not touch this store. A green eval run means the chapter 9 lo
 - **Turn.** Two rows, one commit. The session row is inserted once.
 - **Search.** Two ids queued. No virtual table.
 - **Evals.** The chapter 9 mock set still passes.
-- **Time.** One WAL append measured **143.9 µs**.
+- **Time.** One WAL append measured **116.5 µs**.
 
 [personal note: a resume that came back empty, and which file you had opened]
 

@@ -13,7 +13,7 @@ Hermes Agent's StreamingThinkScrubber (agent/think_scrubber.py) holds a partial 
 A read-only tool can be recorded while text is still arriving. A write waits until finish. This chapter does not execute the tool.
 
 4/
-Folding 100 plain chunks measured 2.806 µs. Joining the same chunks with no scrubber measured 659.7 ns. The demo reply is hello. No socket.
+Folding 100 plain chunks measured 1.388 µs. Joining the same chunks with no scrubber measured 367.9 ns. The demo reply is hello. No socket.
 
 [personal note]
 
@@ -29,7 +29,7 @@ Chapter 17 is out: Streaming.
 
 A streamed reply is the same text as a buffered one, plus the work of folding deltas. I strip think blocks as the chunks arrive, and I hold a tag that shows up half in one chunk and half in the next. The tag list is the one in Hermes Agent's StreamingThinkScrubber, including the CJK tags.
 
-A read-only tool is recorded before the stream finishes. A write waits. Folding 100 plain chunks measured 2.806 µs, against a plain join of 659.7 ns.
+A read-only tool is recorded before the stream finishes. A write waits. Folding 100 plain chunks measured 1.388 µs, against a plain join of 367.9 ns.
 
 [personal note: one takeaway from writing this chapter]
 

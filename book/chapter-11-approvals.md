@@ -83,11 +83,11 @@ The binary runs the two-call script. No key. `stopped: 1` is the fake model refu
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `skip_decision` | 252.3 ns | under 1 µs | `check` of `echo hello` |
+| `skip_decision` | 152.7 ns | under 1 µs | `check` of `echo hello` |
 
 `skip_decision` calls `skip_decision("echo hello")`, which is `check` on `Policy::manual()` with a fresh session. The string is passed through `black_box`. The timed closure is `b.iter`. Building the policy is inside the call, not a separate setup step. There is no runtime, no sleep, and no prompt. The fast path scans the bytes and returns `Allow`. It does not allocate a normalized copy.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38967738024](https://github.com/agnathan/rust-agent-harness/actions/runs/38967738024), section `11`.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38983232549](https://github.com/agnathan/rust-agent-harness/actions/runs/38983232549), section `11`.
 
 ### Milestone demo
 
@@ -128,7 +128,7 @@ The breaker reads the tally after this denial has been counted. Threshold 3 mean
 - **Pipeline.** Hardline and the other floors first. Then YOLO, the allowlist, unattended deny, smart, and one ask.
 - **Prompt.** Two dangerous calls share one mutex. The tool permit is back in the semaphore before either wait starts.
 - **Fake model.** `rm -rf /` then `echo hello` produces one verdict, `deny`.
-- **Time.** The skip of `echo hello` measured **252.3 ns**. The target is under 1 µs.
+- **Time.** The skip of `echo hello` measured **152.7 ns**. The target is under 1 µs.
 
 [personal note: the first command you put on the allowlist, and whether the floor still caught a cousin of it]
 

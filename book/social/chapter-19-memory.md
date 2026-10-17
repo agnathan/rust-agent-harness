@@ -13,7 +13,7 @@ Hermes Agent budgets memory at 2,200 characters and the user profile at 1,375 (t
 The approval gate stays off. Chapter 23 is where a human accepts a memory write. This chapter writes when add is called, and it refuses a poisoned entry before the file changes.
 
 4/
-Enqueue of one turn measured 53.23 ns. The demo file says "likes tea". The snapshot prints frozen. No key.
+Enqueue of one turn measured 34.55 ns. The demo file says "likes tea". The snapshot prints frozen. No key.
 
 [personal note]
 
@@ -29,7 +29,7 @@ Chapter 19 is out: Memory Files.
 
 The memory tool finally has files. MEMORY.md and USER.md, entries split by a section mark, with the character budgets Hermes Agent uses. The system-prompt snapshot is an Arc taken at open. Writing an entry updates the file and leaves that Arc alone, so the prompt prefix does not change mid-session.
 
-A strict scan blocks authorized_keys, a zero-width space, a context exfiltration phrase, and a hardcoded key. The write-approval gate stays off until the skills chapter. One enqueue measured 53.23 ns.
+A strict scan blocks authorized_keys, a zero-width space, a context exfiltration phrase, and a hardcoded key. The write-approval gate stays off until the skills chapter. One enqueue measured 34.55 ns.
 
 [personal note: one takeaway from writing this chapter]
 
