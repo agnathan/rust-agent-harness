@@ -2141,6 +2141,20 @@
       "fake": "The messages are generated in the bench. They are not a restored session. Hermes handoff.request does not perform this filter.",
       "source": "steps/ch24-handoffs/benches/handoffs.rs",
       "reading": "Smaller is better. It should stay under 1 ms. A number in the milliseconds means the sample started copying more than these short strings, or the transcript got much larger."
+    },
+    {
+      "id": "29/schedule_100",
+      "section": "chapter 29 fan-out",
+      "chapter": "Chapter 29 Fan-out and Gather",
+      "function": "schedule_100",
+      "summary": "Schedule 100 tasks onto a fresh board.",
+      "what": "Board::schedule of 100 tasks. The board length ends at 100. The 101st call is not in this sample.",
+      "why": "One hundred mock subagents have to be schedulable, and the queue has to stop. This is the schedule, not the gather.",
+      "timing": "iter_batched. The setup closure calls Board::new and is not timed. The timed closure schedules 100 tasks and passes len through black_box. No Pool is constructed. No thread is started. gather is not called. No model is called.",
+      "inputs": "100 tasks. task_index 0 through 99. Reply is reply N. tool_trace is secret-tool. Queue cap 100.",
+      "fake": "The replies are strings. No specialist runs. The tool trace is stored and not executed.",
+      "source": "steps/ch25-fan-out/benches/fan_out.rs",
+      "reading": "Smaller is better. A few microseconds is 100 short string pushes. Milliseconds would mean the sample started threads or the gather."
     }
   ]
 }
