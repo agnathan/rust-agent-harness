@@ -56,7 +56,7 @@ Server-track chapters are marked *(server)*. They are interleaved with the harne
 
 - [Chapter 36: Profiles](chapter-36-profiles.md)
 - [Chapter 37: The Gateway](chapter-37-gateway.md)
-- [Chapter 38: MCP Gateway Service]() *(server)*
+- [Chapter 38: MCP Gateway Service](chapter-38-service.md) *(server)*
 - [Chapter 39: Cron]()
 - [Chapter 40: Editor Integration]()
 

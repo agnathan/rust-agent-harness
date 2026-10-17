@@ -69,6 +69,7 @@ cargo run -p ch02-harness-cli -- --mock chat
 | gw-balancing | 35 *(server)* | least outstanding, power of two, federation, discovery cap of 4 |
 | ch31-profiles | 36 | personas, a secret map per profile, fail closed with no scope |
 | ch32-gateway | 37 | allowlist, pairing, bot-loop guard, emergency stop, the session inbox |
+| gw-service | 38 *(server)* | session routing, an `Arc` reload, quotas, a drain, sampling and OSV |
 | gw-limits | 15 *(server)* | Per-tool permits, idempotent retry, a breaker, caps of 50 |
 | gw-minimal-server | 5 *(server)* | Empty `mcp-gateway` catalog. No socket |
 

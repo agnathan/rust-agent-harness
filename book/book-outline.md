@@ -160,7 +160,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 |---|---|---|---|---|
 | 36 | Profiles | `steps/ch31-profiles` | config, a secret map | several personas in one config, each with its own secrets, kept out of the system prompt |
 | 37 | The Gateway | `steps/ch32-gateway` | the session inbox | platform adapters submit to the chapter 2 inbox; a mid-turn message becomes an interrupt or a steer; streaming folds chapter 1 events into one message. This is the chat gateway, not the MCP server. Chapter 28 defers the platform re-bind from `handoff.request` to here |
-| 38 | MCP Gateway Service *(server)* | `steps/gw-service` | `rmcp`, axum, a shared store | mostly stateless replicas routed by session id, hot reload via `arc-swap`, shared sessions and rate limits in Redis or something like it, health and readiness, OAuth 2.1 as the MCP resource server, per-tenant quotas, audit logs, OpenTelemetry, and a drain that finishes in-flight calls. Not written |
+| 38 | MCP Gateway Service *(server)* | `steps/gw-service` | an `Arc` reload, a session map | mostly stateless replicas routed by session id, hot reload by swapping an `Arc`, shared session routes and quotas in memory, health and readiness, a bearer check standing in for the OAuth 2.1 resource server, per-tenant quotas, an audit vec, span names, and a drain that finishes in-flight calls. No socket |
 | 39 | Cron | `steps/ch33-cron` | a durable claim | at-most-once runs across crashes, catch-up, a watchdog, and chaining the next job by submitting to the same inbox |
 | 40 | Editor Integration | `steps/ch34-acp` | a protocol adapter | ACP (Agent Client Protocol) as another client of the chapter 2 session inbox |
 
@@ -175,7 +175,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 
 - **Chapter 36.** Resolving a profile and its secrets is < 1 ms (one resolve measured 59.49 ns). Secrets are not copied into the prompt.
 - **Chapter 37.** Enqueue of a platform message is < 1 ms (one enqueue measured 77.90 ns). A steer is a push onto a bounded queue. Streaming updates one message.
-- **Chapter 38.** *(server)* Throughput and p99 under load (oha or something like it). Killing one replica fails over by session id. Drain finishes the calls already accepted. No measurement yet.
+- **Chapter 38.** *(server)* Killing one replica fails over by session id. Drain finishes the calls already accepted. One route lookup measured 11.89 ns. oha throughput is not measured: this step does not bind a socket.
 - **Chapter 39.** A crash retries a claimed job at most once. Scanning 1,000 due jobs is < 10 ms. The watchdog and a chained job stay off the request path.
 - **Chapter 40.** Translating an ACP update onto the session queue is < 1 ms.
 
