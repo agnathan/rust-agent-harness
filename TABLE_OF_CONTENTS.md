@@ -62,7 +62,7 @@ Written chapters link to `book/chapter-….md`. A chapter that has no page yet i
 
 ## Part VI: Loosely coupled teams
 
-- Chapter 41: The Blackboard (not yet written)
+- [Chapter 41: The Blackboard](book/chapter-41-blackboard.md) — [`steps/ch35-blackboard`](steps/ch35-blackboard)
 - Chapter 42: The Kanban Board (not yet written)
 - Chapter 43: The Message Bus (not yet written)
 - Chapter 44: Shared Team Skills (not yet written)

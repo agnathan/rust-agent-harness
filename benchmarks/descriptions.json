@@ -1715,7 +1715,7 @@
       "function": "skip_decision",
       "summary": "The approval check of one safe command, echo hello.",
       "what": "skip_decision(\"echo hello\"), which builds Policy::manual() and a fresh Session and calls check.",
-      "why": "A safe command is the common path. If the floor scan allocates on it, every echo pays the dangerous-command normalizer. The budget is under 1 µs.",
+      "why": "A safe command is the common path. If the floor scan allocates on it, every echo pays the dangerous-command normalizer. The budget is under 1 \u00b5s.",
       "timing": "Nothing is built outside the bench. The timed closure is b.iter. Inside: skip_decision with the string passed through black_box, then black_box of the Verdict. Policy and session construction happen inside skip_decision, on every sample. There is no tokio runtime, no semaphore, and no prompt lock. The fast path returns before normalize allocates.",
       "inputs": "The command echo hello. Policy::manual(): mode Manual, timeout 300 seconds, cron and unattended deny, empty deny list, empty allowlist, YOLO off, presence Interactive.",
       "fake": "No model and no human. fake_smart_review is not called. The command is not a shell.",
@@ -1813,7 +1813,7 @@
       "function": "empty_budget",
       "summary": "The empty-reply retry budget for one attempt that cost $0.30.",
       "what": "retry_budget(Some(0.30)), which returns the reduced budget of 1 because the cost is strictly greater than $0.25.",
-      "why": "The budget decision sits on every empty completion. It has to stay a compare, not a session scan. The chapter target for this check is under 1 µs.",
+      "why": "The budget decision sits on every empty completion. It has to stay a compare, not a session scan. The chapter target for this check is under 1 \u00b5s.",
       "timing": "Nothing is built outside the bench. The timed closure is b.iter. Inside: retry_budget with Some(0.30) passed through black_box, then black_box of the u32. No model is called. No attempt list is allocated. The $0.25 threshold compare is the whole sample.",
       "inputs": "One Option<f64> of 0.30. No messages and no usage object.",
       "fake": "The cost is a number the bench passes in. There is no provider invoice and no HTTP response.",
@@ -2309,6 +2309,20 @@
       "fake": "The update is a struct. No editor process and no stdio handle. FakeModel is not constructed. The permission map is not consulted.",
       "source": "steps/ch34-acp/benches/acp.rs",
       "reading": "Smaller is better. Tens of nanoseconds is a short string clone and one push. A millisecond would still meet the budget and would mean the sample started encoding JSON or writing a pipe."
+    },
+    {
+      "id": "41/claim_with_waiters",
+      "section": "chapter 41 blackboard",
+      "chapter": "Chapter 41 The Blackboard",
+      "function": "claim_with_waiters",
+      "summary": "Claim one waiter from a board of 100, matching key last.",
+      "what": "tick on a Mutex of a Board that already holds the fact notes under the key ready. The last waiter is named chosen and watches ready. The result is Claim::Woke.",
+      "why": "A claim has to stay under a millisecond with 100 waiters, and the lock must not be held across a model call. This sample is the claim. The model is not in it.",
+      "timing": "iter_batched. The setup closure builds waiters w0 through w98 on keys k0 through k98, then chosen on ready, posts notes, wraps the board in a Mutex, and is not timed. The timed routine calls tick with that mutex passed through black_box, then black_box of the Claim. The lock, the scan of 100 waiters, the wake increment, the name and key clones, and the removal of the fact are inside the sample. Building the waiters is excluded. FakeModel, answer, pause, and the Condvar are not called.",
+      "inputs": "100 waiters. The matching key ready is last. The fact value is notes, 5 characters. MAX_WAKES is 8. The board is not paused.",
+      "fake": "The waiters are records, not threads. FakeModel is not constructed. No condvar wait and no sleep.",
+      "source": "steps/ch35-blackboard/benches/blackboard.rs",
+      "reading": "Smaller is better. A few microseconds is a mutex and a scan of 100 short strings. One millisecond would still meet the budget. A number that includes a model call would mean the lock was held across complete."
     }
   ]
 }

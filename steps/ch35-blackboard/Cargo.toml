@@ -1,0 +1,21 @@
+[package]
+name = "ch35-blackboard"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+description = "Chapter 41: a blackboard, a condition, and a thin scheduler."
+
+[lib]
+name = "blackboard"
+
+[[bin]]
+name = "ch35-blackboard"
+path = "src/main.rs"
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "blackboard"
+harness = false

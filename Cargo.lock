@@ -1052,6 +1052,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "ch35-blackboard"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+]
+
+[[package]]
 name = "chacha20"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

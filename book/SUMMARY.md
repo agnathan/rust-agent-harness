@@ -62,7 +62,7 @@ Server-track chapters are marked *(server)*. They are interleaved with the harne
 
 # Part VI: Loosely coupled teams
 
-- [Chapter 41: The Blackboard]()
+- [Chapter 41: The Blackboard](chapter-41-blackboard.md)
 - [Chapter 42: The Kanban Board]()
 - [Chapter 43: The Message Bus]()
 - [Chapter 44: Shared Team Skills]()
