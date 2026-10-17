@@ -2267,6 +2267,20 @@
       "fake": "The message is a string. No platform socket is opened. FakeModel is not constructed. The allowlist is not consulted.",
       "source": "steps/ch32-gateway/benches/gateway.rs",
       "reading": "Smaller is better. Tens of nanoseconds is one bounded push of a short string. Milliseconds would mean the sample started a pairing check, a file stat, or a network send."
+    },
+    {
+      "id": "38/route_session",
+      "section": "chapter 38 service",
+      "chapter": "Chapter 38 MCP Gateway Service",
+      "function": "route_session",
+      "summary": "Look up the replica for session s0.",
+      "what": "route of session s0. The map has 64 sessions, s0 through s63, all placed on replica a before the sample. The result is Some(a).",
+      "why": "A replica is chosen by session id. The hot path is that lookup. Failover, drain, and the OSV check are not this sample.",
+      "timing": "Before the bench, Service::new builds replicas a, b, c, and d with quota 8, then place runs for s0 through s63. The timed closure is b.iter. Inside: route with s0 passed through black_box, then black_box of the Option. The HashMap get is inside the sample. place, kill, accept, Sampler, OsvCache, and FakeModel are not called. No socket is opened.",
+      "inputs": "64 sessions. Four replica names. Every session is on a, because a is the first live replica. The lookup key is s0.",
+      "fake": "Replicas are strings. No process is killed. The bearer token, the quota, and the malware list are not consulted. oha is not run.",
+      "source": "steps/gw-service/benches/service.rs",
+      "reading": "Smaller is better. Around 10 nanoseconds is one HashMap get. Microseconds would mean the sample started placing sessions again. Milliseconds would mean a socket or a drain walk."
     }
   ]
 }

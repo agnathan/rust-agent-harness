@@ -145,6 +145,8 @@ jobs:
         run: bash .github/scripts/run_bench_section.sh 36 "chapter 36 profiles" ch31-profiles profiles
       - name: Chapter 37 gateway
         run: bash .github/scripts/run_bench_section.sh 37 "chapter 37 gateway" ch32-gateway gateway
+      - name: Chapter 38 service
+        run: bash .github/scripts/run_bench_section.sh 38 "chapter 38 service" gw-service service
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"

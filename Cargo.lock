@@ -1566,6 +1566,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "gw-service"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+]
+
+[[package]]
 name = "gw-session-toolsets"
 version = "0.1.0"
 dependencies = [

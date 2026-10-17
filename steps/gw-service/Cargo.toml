@@ -1,0 +1,21 @@
+[package]
+name = "gw-service"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+description = "Chapter 38: session routing, drain, quotas, and the MCP client checks."
+
+[lib]
+name = "gwservice"
+
+[[bin]]
+name = "gw-service"
+path = "src/main.rs"
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "service"
+harness = false

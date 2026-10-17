@@ -80,4 +80,5 @@ members = [
     "steps/gw-balancing",
     "steps/ch31-profiles",
     "steps/ch32-gateway",
+    "steps/gw-service",
 ]
