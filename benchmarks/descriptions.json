@@ -2197,6 +2197,20 @@
       "fake": "Nothing is mocked. This is Arc::clone. FakeModel is not constructed. No file is read and no regex runs.",
       "source": "steps/ch28-context/benches/context.rs",
       "reading": "Smaller is better. Tens of nanoseconds is a pointer clone. Microseconds would mean the sample started copying the 20,000 characters. The scan and the compression are not in this number."
+    },
+    {
+      "id": "33/inbox_submit",
+      "section": "chapter 33 actors",
+      "chapter": "Chapter 33 Agents as Actors",
+      "function": "inbox_submit",
+      "summary": "try_send one turn into an empty inbox of 64.",
+      "what": "submit of Mail::Turn with the text hello. The channel has room, so the send succeeds. The receiver is kept so the channel is not closed.",
+      "why": "Enqueue has to stay under a millisecond, and a full inbox has to refuse rather than grow. This sample is the empty-inbox send. The 65th message is the test.",
+      "timing": "iter_batched. The setup closure builds tokio::sync::mpsc::channel with capacity 64 and is not timed. The timed routine calls submit with that sender and Mail::Turn of hello, both passed through black_box, then black_box of the receiver. Allocating the string hello is inside the sample. No task is spawned. FakeModel is not constructed. The Full path is not taken.",
+      "inputs": "One message, text hello. Channel capacity 64. The channel is empty at the start of each sample.",
+      "fake": "The message is a string. No model runs. The 100-agent fan is not this sample.",
+      "source": "steps/ch29-actors/benches/actors.rs",
+      "reading": "Smaller is better. A few hundred nanoseconds is one bounded send. Milliseconds would mean the sample started waiting or spawned the agent task. A number that includes 64 sends would be the fill test, not this one."
     }
   ]
 }
