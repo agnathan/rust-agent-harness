@@ -91,7 +91,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 | 22 | Using Skills | `steps/ch18-skills` | a directory of markdown | `SKILL.md` (agentskills.io-compatible), a cache-stable `<available_skills>` index, `skills_list` / `skill_view` |
 | 23 | Writing Skills | `steps/ch19-skill-writing` | patch and validate | create, patch, delete, and supporting files, with a scanner, the approval gate from chapter 11, and read-before-write |
 | 24 | The Reflection Loop | `steps/ch20-reflection` | a supervised child task | nudge counters, the post-turn hook from chapter 12, a forked reviewer with only skill and memory tools |
-| 25 | Curation | `steps/ch21-curation` | a scheduled job | usage telemetry, stale then archived, pinning, backups, optional consolidation |
+| 25 | Curation | `steps/ch21-curation` | a scheduled job | usage telemetry, stale then archived, pinning, backups, optional consolidation. A write uses chapter 23's scan and the A9 gate, off the request path |
 
 **Guardrail notes**
 
@@ -106,7 +106,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 - **Chapter 20.** Discover over 10,000 messages < 20 ms (measured 60.27 µs), and only when the model calls the tool.
 - **Chapter 21.** *(server)* Prediction stays off the request path except for the offered set. Applying that set measured 94.69 ns. Scoring 1,000 usage rows against 64 names measured 174.4 µs, and `session_tools` does not call it.
 - **Chapter 22.** Load and render 500 skills < 10 ms, once per session (measured 1.946 ms). The index is `Arc` and byte-stable.
-- **Chapter 23.** Security scan of one skill < 5 ms. A write the model did not ask for is a background task.
+- **Chapter 23.** Security scan of one skill < 5 ms (measured 255.1 ns). A write the model did not ask for is a background task (enqueue measured 21.15 ns).
 - **Chapter 24.** Spawning the reviewer adds < 1 ms to turn finalize. Cancelling it when the user returns takes < 50 ms.
 - **Chapter 25.** Curation never runs on the request path.
 
