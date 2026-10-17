@@ -119,7 +119,7 @@ Chapters 0 through 48, in six parts. Eight chapters are a standalone MCP gateway
 
 | Ch | Title | Step | You add |
 |---|---|---|---|
-| 36 | Profiles | `steps/ch31-profiles` | several personas, each with its own secrets |
+| 36 | Profiles | `steps/ch31-profiles` | several personas, each with its own secrets, kept out of the prompt |
 | 37 | The Gateway | `steps/ch32-gateway` | platform adapters into the session inbox; interrupts, steers, and chapter 1 events. Not the MCP server |
 | 38 | MCP Gateway Service *(server)* | `steps/gw-service` | HA replicas, shared state, OAuth 2.1, drain. Not written |
 | 39 | Cron | `steps/ch33-cron` | at-most-once runs across crashes, catch-up, a watchdog, chaining onto the same inbox |

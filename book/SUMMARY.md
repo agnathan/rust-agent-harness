@@ -54,7 +54,7 @@ Server-track chapters are marked *(server)*. They are interleaved with the harne
 
 # Part V: Running as a service
 
-- [Chapter 36: Profiles]()
+- [Chapter 36: Profiles](chapter-36-profiles.md)
 - [Chapter 37: The Gateway]()
 - [Chapter 38: MCP Gateway Service]() *(server)*
 - [Chapter 39: Cron]()
