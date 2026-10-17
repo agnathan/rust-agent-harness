@@ -19,7 +19,10 @@ impl Temp {
             .duration_since(UNIX_EPOCH)
             .map(|d| d.as_nanos())
             .unwrap_or(0);
-        let path = std::env::temp_dir().join(format!("ch21-{nanos}-{n}"));
+        // nextest runs each test in its own process, so the counter starts at
+        // zero in every one. The pid keeps two processes from sharing a dir
+        // and deleting each other's SKILL.md.
+        let path = std::env::temp_dir().join(format!("ch21-{}-{nanos}-{n}", std::process::id()));
         fs::create_dir_all(&path).expect("dir");
         Self(path)
     }
