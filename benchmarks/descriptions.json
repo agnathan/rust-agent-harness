@@ -2183,6 +2183,20 @@
       "fake": "The replies are formatted in nested_fanout. FakeModel is not constructed. No shell is spawned. Width 9 is not called.",
       "source": "steps/ch27-composition/benches/composition.rs",
       "reading": "Smaller is better. Around 100 microseconds is thread start for eight short jobs. A number near eight times a sleep would mean the sample started holding. Milliseconds still fit a fan-out that starts threads. A multi-millisecond jump means the sample started a model call."
+    },
+    {
+      "id": "32/share_snapshot",
+      "section": "chapter 32 context",
+      "chapter": "Chapter 32 Managing Context",
+      "function": "share_snapshot",
+      "summary": "Clone the Arc that holds one frozen context snapshot.",
+      "what": "share of an Arc whose string is 20,000 characters. The clone is another pointer to the same allocation.",
+      "why": "The hot path sends the snapshot it already built. Compression and the memory flush are not this sample. A regression here means the turn started copying the prompt.",
+      "timing": "Before the bench, the string is built by repeating rule-space 4,000 times and wrapping it in Arc::new. The timed closure is b.iter. Inside: share with that Arc passed through black_box, then black_box of the cloned Arc. The string allocation is excluded. scan_context, truncate_content, wrap_untrusted, and preflight are not called.",
+      "inputs": "One string, 20,000 characters, the word rule followed by a space, repeated. One Arc.",
+      "fake": "Nothing is mocked. This is Arc::clone. FakeModel is not constructed. No file is read and no regex runs.",
+      "source": "steps/ch28-context/benches/context.rs",
+      "reading": "Smaller is better. Tens of nanoseconds is a pointer clone. Microseconds would mean the sample started copying the 20,000 characters. The scan and the compression are not in this number."
     }
   ]
 }

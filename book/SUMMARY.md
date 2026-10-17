@@ -47,7 +47,7 @@ Server-track chapters are marked *(server)*. They are interleaved with the harne
 
 # Part IV: Making it robust
 
-- [Chapter 32: Managing Context]()
+- [Chapter 32: Managing Context](chapter-32-context.md)
 - [Chapter 33: Agents as Actors]()
 - [Chapter 34: Supervision and Restart]()
 - [Chapter 35: Balancing and Federation]() *(server)*
