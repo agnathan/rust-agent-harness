@@ -2127,6 +2127,20 @@
       "fake": "The note is a string. Chapter 24's reviewer is not constructed.",
       "source": "steps/ch23-supervisor/benches/supervisor.rs",
       "reading": "Smaller is better. Tens of nanoseconds is a mutex and a short string. Starting the reviewer would show up as thread time."
+    },
+    {
+      "id": "28/filter_100",
+      "section": "chapter 28 handoffs",
+      "chapter": "Chapter 28 Handoffs",
+      "function": "filter_100",
+      "summary": "Drop scratch messages from a 100-message transcript.",
+      "what": "filter_transcript. Every fifth message has role scratch and is removed. The other 80 are kept, in order.",
+      "why": "A handoff filters context before the next agent sees it. The budget is under 1 ms for 100 messages.",
+      "timing": "The 100 messages are built before the bench. The timed closure is b.iter. Inside: filter_transcript with the slice passed through black_box, then black_box of the new vec. The board is not updated. The owner does not change. No model is called.",
+      "inputs": "100 messages. Index divisible by 5 has role scratch. The rest have role user. Text is message N about the rename procedure.",
+      "fake": "The messages are generated in the bench. They are not a restored session. Hermes handoff.request does not perform this filter.",
+      "source": "steps/ch24-handoffs/benches/handoffs.rs",
+      "reading": "Smaller is better. It should stay under 1 ms. A number in the milliseconds means the sample started copying more than these short strings, or the transcript got much larger."
     }
   ]
 }

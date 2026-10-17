@@ -125,6 +125,8 @@ jobs:
         run: bash .github/scripts/run_bench_section.sh 26 "chapter 26 pipeline" ch22-pipeline pipeline
       - name: Chapter 27 supervisor
         run: bash .github/scripts/run_bench_section.sh 27 "chapter 27 supervisor" ch23-supervisor supervisor
+      - name: Chapter 28 handoffs
+        run: bash .github/scripts/run_bench_section.sh 28 "chapter 28 handoffs" ch24-handoffs handoffs
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"

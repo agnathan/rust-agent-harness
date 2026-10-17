@@ -61,7 +61,7 @@ Principles and the way to choose a team shape live next to this page: [team patt
 | 25 | Curation | The curator never runs on the request path. Enqueue measured **29.05 ns**. |
 | 26 | The Sequential Pipeline | The next stage receives `Arc` context (measured **10.78 ns**). Copying 100 messages measured **7.089 µs** and is not the hand-off. |
 | 27 | The Supervisor | Up to **8** specialists at once, each with `Arc` context. Eight specialists that each slept 40 ms finished in **0.044 s** in nextest. Scheduling eight with no sleep measured **98.54 µs**. A reflection note measured **21.23 ns**. |
-| 28 | Handoffs | Filtering a **100**-message transcript for a handoff **< 1 ms**. |
+| 28 | Handoffs | Filtering a **100**-message transcript for a handoff **< 1 ms** (measured **2.740 µs**). |
 | 29 | Fan-out and Gather | The worker limit holds. **100** mock subagents can be scheduled without an unbounded queue. |
 | 30 | The Critic | The critic shares `Arc` context and takes one permit from the same bound. |
 | 31 | Composing Patterns | Nested fan-out cannot exceed the worker limit. |
