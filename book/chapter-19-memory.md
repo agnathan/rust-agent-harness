@@ -76,11 +76,11 @@ The binary uses a temp directory. The file has the new entry. The snapshot taken
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `memory_enqueue` | 34.55 ns | under 1 ms | push one turn onto the background queue |
+| `memory_enqueue` | 54.94 ns | under 1 ms | push one turn onto the background queue |
 
 `memory_enqueue` calls `MemoryFiles::open` on a temp directory before the bench. The timed closure is `b.iter`. Inside: `enqueue_turn` of user `hi` and assistant `ok`, with the record passed through `black_box`. The sample locks the queue, drops the oldest entry if 64 are already queued, formats one string, and pushes it. Opening the directory and reading the files are excluded. No file is written. The snapshot is not rebuilt.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38983232549](https://github.com/agnathan/rust-agent-harness/actions/runs/38983232549), section `19`.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38993207081](https://github.com/agnathan/rust-agent-harness/actions/runs/38993207081), section `19`.
 
 ### Milestone demo
 
@@ -114,7 +114,7 @@ The queue is not a write. `enqueue_turn` will not create `MEMORY.md`. `add` is t
 - **Snapshot.** The `Arc` from `open` does not change when `add` writes.
 - **Scan.** `authorized_keys` and a zero-width space never reach the file.
 - **Queue.** `enqueue_turn` does not write. The gate A9 stays off.
-- **Time.** One enqueue measured **34.55 ns**.
+- **Time.** One enqueue measured **54.94 ns**.
 
 [personal note: an entry the scan blocked, and whether you agreed with it]
 

@@ -13,7 +13,7 @@ Hermes Agent's build_anthropic_kwargs sends model, messages, and max_tokens, and
 Duplicate tool-call ids become id_d2, not a random suffix (agent/message_sanitization.py). A transcript that ends on a tool row is closed so the next user message is not tool-then-user. ssl_verify false is refused unless a dev flag is set.
 
 4/
-Choosing the next route measured 2.498 ns. Rotating a key measured 2.650 ns. The demo is a fake fallback. No HTTP. The client id stays 1.
+Choosing the next route measured 6.239 ns. Rotating a key measured 3.447 ns. The demo is a fake fallback. No HTTP. The client id stays 1.
 
 [personal note]
 
@@ -29,7 +29,7 @@ Chapter 16 is out: Providers.
 
 The first client in this book speaks OpenRouter. Anthropic and Bedrock want different JSON. I built those bodies without opening a socket: model, messages, and max_tokens for Anthropic; modelId and inferenceConfig for Bedrock. An OpenRouter route carries a models list and a provider object. Invalid sort values are dropped.
 
-Key rotation advances an index inside one pool. The client id does not change. A cheaper side model stays off the user turn unless that turn asked for a summary. Choosing the next route measured 2.498 ns.
+Key rotation advances an index inside one pool. The client id does not change. A cheaper side model stays off the user turn unless that turn asked for a summary. Choosing the next route measured 6.239 ns.
 
 [personal note: one takeaway from writing this chapter]
 

@@ -72,13 +72,13 @@ The harness decides what enters the prompt. The server holds the catalog, search
 - **Chapter 8.** *(server)* On 2,000 synthetic tools, schema-token estimates were 45,104 (every tool), 153 (static), and 135 (dynamic), all three successful. The dynamic arm measured 5.687 ms. The every-tool arm measured 8.355 ms.
 - **Chapter 9.** Ten sections, crates `ch06-*`, section labels 6.1–6.10. Loop-iteration overhead < 1 ms excluding the model (measured 608.0 ns on the finished loop; 248.5 ns on the section 6.1 loop). Checking the cancellation token or the budget is < 1 µs (measured 11.92 ns). A cancelled call does not start the next model request. Eight 1 ms reads in one turn measured 2.421 ms. Name repair 188.8 ns, stall observe 100.0 ns, a budget notice 58.20 ns, truncation 3.174 µs, a steer append 47.12 ns, canonical arguments 771.0 ns. Re-running the saved eval set and the four stress evals on the mock stays inside the worker bound.
 - **Chapter 10.** A state transition measured 1.103 ns. A three-step scripted turn measured 7.803 ns.
-- **Chapter 11.** A skip decision is < 1 µs (measured 152.7 ns). Concurrent approvals serialize onto one prompt. Waiting on a human releases the tool permit.
-- **Chapter 12.** An empty before/after hook adds < 0.1 ms (measured 7.005 ns). An API-request hook does not copy the conversation (measured 1.378 ns on 1,000 messages). A memory-backend call that only records the turn enqueues in < 1 ms (measured 33.36 ns).
-- **Chapter 13.** A warm sandbox accepts a job in < 50 ms (measured 16.39 µs). Checkpoint and rewind of a 1,000-path manifest are each < 10 ms (measured 41.90 µs and 61.75 µs).
-- **Chapter 14.** A timeout cancels the in-flight call and releases its permit. Retries stay inside the bound. The empty-response budget check measured 0.5595 ns. The repetition guard on an 800-character loop measured 1.402 µs.
-- **Chapter 15.** *(server)* A timeout releases that tool's permit. A retry runs only when the tool is marked idempotent. An open breaker stops new calls to that backend (measured 19.24 ns). One execute-permit round trip measured 71.56 ns.
-- **Chapter 16.** Choosing the next native adapter, or the next OpenRouter route, adds < 1 ms, excluding the failed call (measured 2.498 ns). Rotation reuses the pooled client from chapter 1 (measured 2.650 ns). A side-model summary does not run on the user turn unless that turn asked for it.
-- **Chapter 17.** Assembling a streamed reply from chapter 1 events adds < 1 ms versus a buffered reply, excluding model time. Folding 100 plain chunks measured 1.388 µs. Joining the same chunks measured 367.9 ns.
+- **Chapter 11.** A skip decision is < 1 µs (measured 251.1 ns). Concurrent approvals serialize onto one prompt. Waiting on a human releases the tool permit.
+- **Chapter 12.** An empty before/after hook adds < 0.1 ms (measured 10.91 ns). An API-request hook does not copy the conversation (measured 2.834 ns on 1,000 messages). A memory-backend call that only records the turn enqueues in < 1 ms (measured 56.83 ns).
+- **Chapter 13.** A warm sandbox accepts a job in < 50 ms (measured 28.53 µs). Checkpoint and rewind of a 1,000-path manifest are each < 10 ms (measured 50.71 µs and 78.96 µs).
+- **Chapter 14.** A timeout cancels the in-flight call and releases its permit. Retries stay inside the bound. The empty-response budget check measured 0.9040 ns. The repetition guard on an 800-character loop measured 2.551 µs.
+- **Chapter 15.** *(server)* A timeout releases that tool's permit. A retry runs only when the tool is marked idempotent. An open breaker stops new calls to that backend (measured 30.09 ns). One execute-permit round trip measured 58.96 ns.
+- **Chapter 16.** Choosing the next native adapter, or the next OpenRouter route, adds < 1 ms, excluding the failed call (measured 6.239 ns). Rotation reuses the pooled client from chapter 1 (measured 3.447 ns). A side-model summary does not run on the user turn unless that turn asked for it.
+- **Chapter 17.** Assembling a streamed reply from chapter 1 events adds < 1 ms versus a buffered reply, excluding model time. Folding 100 plain chunks measured 2.832 µs. Joining the same chunks measured 730.1 ns.
 
 ### Part II: Learning
 
@@ -101,9 +101,9 @@ The harness decides what enters the prompt. The server holds the catalog, search
 
 **Performance budget**
 
-- **Chapter 18.** One local WAL append of a turn < 1 ms (measured 116.5 µs). FTS updates are a background task. The chapter re-runs the chapter 9 eval set.
-- **Chapter 19.** The frozen snapshot is built once and shared by `Arc`. A memory write does not rewrite the system prompt. Enqueue of a background write < 1 ms (measured 34.55 ns).
-- **Chapter 20.** Discover over 10,000 messages < 20 ms (measured 22.95 µs), and only when the model calls the tool.
+- **Chapter 18.** One local WAL append of a turn < 1 ms (measured 142.9 µs). FTS updates are a background task. The chapter re-runs the chapter 9 eval set.
+- **Chapter 19.** The frozen snapshot is built once and shared by `Arc`. A memory write does not rewrite the system prompt. Enqueue of a background write < 1 ms (measured 54.94 ns).
+- **Chapter 20.** Discover over 10,000 messages < 20 ms (measured 59.35 µs), and only when the model calls the tool.
 - **Chapter 21.** *(server)* Prediction stays off the request path except for the offered set. No measurement yet.
 - **Chapter 22.** Load and render 500 skills < 10 ms, once per session. The index is `Arc` and byte-stable.
 - **Chapter 23.** Security scan of one skill < 5 ms. A write the model did not ask for is a background task.

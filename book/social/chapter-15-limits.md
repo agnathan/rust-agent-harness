@@ -13,7 +13,7 @@ Hermes Agent caps a turn at 50 web_search calls and 50 delegate_task spawns (age
 429 and 503 do not retry. A transport error on an idempotent tool does, once. A hedge starts a second call only for an idempotent tool. The 30-second client reconnect cooldown is not this breaker.
 
 4/
-The open-breaker check measured 19.24 ns. Taking one execute permit and dropping it measured 71.56 ns. The demo is a fake script. No socket. No key.
+The open-breaker check measured 30.09 ns. Taking one execute permit and dropping it measured 58.96 ns. The demo is a fake script. No socket. No key.
 
 [personal note]
 
@@ -29,7 +29,7 @@ Chapter 15 is out: Limits and Breakers.
 
 The failure chapter decides retry or fallback in the harness. The gateway still needs its own bound. I gave each tool 32 accept permits and 8 execute permits. A timeout drops both. A second attempt runs only when the tool is marked idempotent, and a 429 or 503 does not retry at all. Three failures open a breaker.
 
-Hermes Agent already stops a turn at 50 web searches and 50 subagent spawns. Those caps landed here, including the batch count and the control actions that still run. The open-breaker check measured 19.24 ns.
+Hermes Agent already stops a turn at 50 web searches and 50 subagent spawns. Those caps landed here, including the batch count and the control actions that still run. The open-breaker check measured 30.09 ns.
 
 [personal note: one takeaway from writing this chapter]
 
