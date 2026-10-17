@@ -13,7 +13,7 @@ Hermes Agent claims a fire under a file lock in cron/jobs.py. Recurring jobs adv
 This crate's retry budget is one. The second crash keeps the claim. The due scan does not tick the watchdog. Fake replies. No key.
 
 4/
-Scanning 1,000 due jobs measured 1.338 µs. The demo prints "cron: claimed".
+Scanning 1,000 due jobs measured 1.607 µs. The demo prints "cron: claimed".
 
 [personal note]
 
@@ -31,7 +31,7 @@ A scheduled job has to run once. Hermes Agent takes a file-lock claim so one mac
 
 The claim here is in memory. The book budget is one crash retry, and the second crash leaves the claim held. Scanning the due list does not run the watchdog and does not enqueue the next job. Those are separate calls.
 
-Scanning 1,000 due jobs measured 1.338 µs. The demo does not need an API key.
+Scanning 1,000 due jobs measured 1.607 µs. The demo does not need an API key.
 
 [personal note: one takeaway from writing this chapter]
 

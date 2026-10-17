@@ -69,11 +69,11 @@ The binary fans out two scripted children, does not hand off, and accepts one sc
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `nested_eight` | 103.0 µs | nested fan-out stays inside the worker limit | schedule and gather 8 children on one pool |
+| `nested_eight` | 270.8 µs | nested fan-out stays inside the worker limit | schedule and gather 8 children on one pool |
 
 `nested_eight` builds `Pool::new(8)` before the bench. The timed closure is `b.iter`. Inside: `nested_fanout` with `held` 0 and width 8, both passed through `black_box`, then `black_box` of the summary. The bound check passes. Eight tasks are scheduled and gathered. Each worker takes one permit, copies a short reply, and drops the permit. The hold is zero, so the sample does not sleep. No model is called. The 30 second judge timeout and the 300 second gate timeout are not slept. Width 9 is not this sample. That refusal is the test, and it does not start threads.
 
-The printed slope on this machine was `time: [101.15 µs 102.78 µs 104.24 µs]`. The table is `mean.point_estimate` from `target/criterion/nested_eight/new/estimates.json` (103004.84 ns), with the Benchmarks flags `--warm-up-time 1 --measurement-time 2 --sample-size 10`. The workflow mean on ubuntu-latest replaces this number when that run is green.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38989567446](https://github.com/agnathan/rust-agent-harness/actions/runs/38989567446), section `31`. The flags were `--warm-up-time 1 --measurement-time 2 --sample-size 10`.
 
 ### Milestone demo
 
@@ -111,7 +111,7 @@ The gate command is a string. Exit codes come from the script. `cargo test` in t
 - **Handoff.** Only `Route::Move`. `Stay` leaves the owner where it was.
 - **Loop.** Gates, then the critic. Wait with a target parks. Twenty continues stop.
 - **Model.** `FakeModel` is a queue of strings. The demo does not need a key.
-- **Time.** Eight nested children measured **103.0 µs**.
+- **Time.** Eight nested children measured **270.8 µs**.
 
 [personal note: a bound you wanted to hit in the test, not in a run]
 

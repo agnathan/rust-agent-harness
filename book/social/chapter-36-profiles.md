@@ -13,7 +13,7 @@ Hermes Agent raises UnscopedSecretError from agent/secret_scope.py when multiple
 The maps are in memory. resolve clones the persona Arc and reports whether the secret is present. Fake replies. No key is printed.
 
 4/
-One resolve measured 59.49 ns. The demo prints "profile: writer".
+One resolve measured 95.95 ns. The demo prints "profile: writer".
 
 [personal note]
 
@@ -31,7 +31,7 @@ Hermes Agent serves more than one profile from one process. A secret read has to
 
 This chapter stores each persona and each secret map in process. The prompt handed to the model is the persona. The secret is a lookup, and the lookup result is not written into that string.
 
-One resolve measured 59.49 ns. The demo does not need an API key.
+One resolve measured 95.95 ns. The demo does not need an API key.
 
 [personal note: one takeaway from writing this chapter]
 

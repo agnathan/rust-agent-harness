@@ -70,11 +70,11 @@ The binary queues one turn and denies a stranger. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `enqueue_platform` | 77.90 ns | enqueue a platform message under 1 ms | one turn pushed onto an empty inbox of 64 |
+| `enqueue_platform` | 174.5 ns | enqueue a platform message under 1 ms | one turn pushed onto an empty inbox of 64 |
 
 `enqueue_platform` uses `iter_batched`. The setup closure calls `Inbox::new(64)` and is not timed. The timed routine calls `submit` with `Message::Turn` of `hello`, the string built inside the sample and passed through `black_box`, then `black_box` of `Submit`. The queue is empty, so the result is `Accepted`. Pairing, the bot guard, `fold`, and `FakeModel` are not called. The `Full` path is not taken.
 
-The printed slope on this machine was `time: [73.434 ns 86.186 ns 94.376 ns]`. The table is `mean.point_estimate` from `target/criterion/enqueue_platform/new/estimates.json` (77.8967 ns), with the Benchmarks flags `--warm-up-time 1 --measurement-time 2 --sample-size 10`. The workflow mean on ubuntu-latest replaces this number when that run is green.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38989567446](https://github.com/agnathan/rust-agent-harness/actions/runs/38989567446), section `37`. The flags were `--warm-up-time 1 --measurement-time 2 --sample-size 10`.
 
 ### Milestone demo
 
@@ -112,7 +112,7 @@ Timestamp 0 is inside the bot window. Pruning with a saturating subtract treated
 - **Stop.** A sentinel, or a stat error, engages.
 - **Inbox.** A turn or a steer, cap 64. Text folds into one string.
 - **Model.** `FakeModel` answers `ok`. The demo needs no key.
-- **Time.** One enqueue measured **77.90 ns**.
+- **Time.** One enqueue measured **174.5 ns**.
 
 [personal note: a gateway that refused first and queued second]
 

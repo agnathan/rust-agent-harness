@@ -13,7 +13,7 @@ Hermes Agent reserves stdout for ACP JSON-RPC. acp_adapter/session.py sends inci
 The inbox cap is 64. The 65th update is refused. There is no ACP SDK in this crate. Fake replies. No key.
 
 4/
-One translate onto the inbox measured 58.97 ns. The demo prints "acp: end_turn".
+One translate onto the inbox measured 119.9 ns. The demo prints "acp: end_turn".
 
 [personal note]
 
@@ -31,7 +31,7 @@ An editor can drive the same session inbox the chat gateway uses. Hermes Agent s
 
 This chapter does that translation in memory. The update text becomes one mail. The inbox holds 64. The protocol line and the log line are different vecs, and a test checks they did not mix.
 
-One translate measured 58.97 ns. The demo does not need an API key.
+One translate measured 119.9 ns. The demo does not need an API key.
 
 [personal note: one takeaway from writing this chapter]
 

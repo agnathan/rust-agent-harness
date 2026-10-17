@@ -66,11 +66,11 @@ The binary translates one update and ends the turn. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `translate_update` | 58.97 ns | translate an ACP update onto the session queue under 1 ms | clone `hello` and push it |
+| `translate_update` | 119.9 ns | translate an ACP update onto the session queue under 1 ms | clone `hello` and push it |
 
 `translate_update` builds the `Update` (`hello`, not cancelled) before the bench. It uses `iter_batched`. The setup closure calls `Inbox::new(64)` and is not timed. The timed routine calls `translate` with that update passed through `black_box`, then `submit` of the mail, then `black_box` of `Submit`. The string clone and the push are inside the sample. The inbox is empty, so the result is `Accepted`. `write_result`, `log_line`, `map_permission`, and `FakeModel` are not called. The `Full` path is not taken.
 
-The printed slope on this machine was `time: [58.918 ns 66.065 ns 70.690 ns]`. The table is `mean.point_estimate` from `target/criterion/translate_update/new/estimates.json` (58.9742 ns), with the Benchmarks flags `--warm-up-time 1 --measurement-time 2 --sample-size 10`. The workflow mean on ubuntu-latest replaces this number when that run is green.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38989567446](https://github.com/agnathan/rust-agent-harness/actions/runs/38989567446), section `40`. The flags were `--warm-up-time 1 --measurement-time 2 --sample-size 10`.
 
 ### Milestone demo
 
@@ -105,7 +105,7 @@ The 65th message is `Full`. ACP does not grow the inbox to make room.
 - **Streams.** JSON on stdout. Logs on stderr.
 - **Permission.** Unknown denies.
 - **Model.** `FakeModel` answers `ok`. The demo needs no key.
-- **Time.** One translate measured **58.97 ns**.
+- **Time.** One translate measured **119.9 ns**.
 
 [personal note: a protocol line that stayed a single string]
 

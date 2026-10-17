@@ -13,7 +13,7 @@ Hermes Agent's steer is agent/interrupt_control.py. Empty text returns false. Tw
 The capacity of 64 is the harness budget, not a number I found in steer. One hundred tasks means one hundred inboxes. FakeModel answers. No key.
 
 4/
-One submit into an empty inbox measured 208.2 ns. The demo prints "agent: ok".
+One submit into an empty inbox measured 289.2 ns. The demo prints "agent: ok".
 
 [personal note]
 
@@ -29,7 +29,7 @@ Chapter 33 is out: Agents as Actors.
 
 An agent that shares the caller's thread cannot tell a second message to wait. Hermes Agent queues a steer without cancelling the turn, and it refuses empty steer text. I kept that. The mailbox here is a bounded channel of 64. A full inbox returns Full instead of growing. An interrupt is a different message: the turn it marks does not call the model. One hundred agents means one hundred of those inboxes, each with a scripted reply.
 
-One submit into an empty inbox measured 208.2 ns. The demo does not need an API key.
+One submit into an empty inbox measured 289.2 ns. The demo does not need an API key.
 
 [personal note: one takeaway from writing this chapter]
 

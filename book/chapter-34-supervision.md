@@ -63,11 +63,11 @@ The binary retries one scripted child. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `restart_bookkeeping` | 32.47 ns | restart under 1 ms, excluding the child's work | record one boot on an empty supervisor |
+| `restart_bookkeeping` | 27.75 ns | restart under 1 ms, excluding the child's work | record one boot on an empty supervisor |
 
 `restart_bookkeeping` uses `iter_batched`. The setup closure calls `Supervisor::new` and is not timed. The timed routine calls `record(0)` with the timestamp passed through `black_box`, then `black_box` of the bool. The chain length is 1, so the breaker does not trip. `FakeModel` is not constructed. `restart_child` is not called. No sleep runs. The 300 second gap is a comparison against the argument `0`, not a wait.
 
-The printed slope on this machine was `time: [32.336 ns 33.040 ns 33.444 ns]`. The table is `mean.point_estimate` from `target/criterion/restart_bookkeeping/new/estimates.json` (32.4736 ns), with the Benchmarks flags `--warm-up-time 1 --measurement-time 2 --sample-size 10`. The workflow mean on ubuntu-latest replaces this number when that run is green.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38989567446](https://github.com/agnathan/rust-agent-harness/actions/runs/38989567446), section `34`. The flags were `--warm-up-time 1 --measurement-time 2 --sample-size 10`.
 
 ### Milestone demo
 
@@ -101,7 +101,7 @@ The second `complete` runs only when the breaker did not trip. On the third fail
 - **Chain.** Gap 300 seconds. Length 3 trips. I/O failure stays open.
 - **Atomics.** The restart count and the cancel flag.
 - **Model.** `FakeModel` is a queue of results. The demo needs no key.
-- **Time.** One record measured **32.47 ns**.
+- **Time.** One record measured **27.75 ns**.
 
 [personal note: a restart that was cheaper than the work it was restarting]
 

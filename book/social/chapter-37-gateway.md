@@ -13,7 +13,7 @@ Hermes Agent: gateway/pairing.py uses an alphabet with no I, O, 0, or 1. Five fa
 A busy session rejects handoff.request with code 4009. That re-bind was deferred from chapter 28. The code in this crate is stored in a Vec so a test can approve it. Hermes stores a salted hash.
 
 4/
-One enqueue measured 77.90 ns. The demo prints "gateway: queued".
+One enqueue measured 174.5 ns. The demo prints "gateway: queued".
 
 [personal note]
 
@@ -31,7 +31,7 @@ The chat gateway decides who may talk to the agent. Hermes Agent default-denies 
 
 This chapter keeps those decisions in memory. A platform message, including a mid-turn steer, is a push onto an inbox of 64. Text chunks from a stream fold into one string. A running session refuses a platform re-bind with error 4009.
 
-One enqueue measured 77.90 ns. The demo does not need an API key.
+One enqueue measured 174.5 ns. The demo does not need an API key.
 
 [personal note: one takeaway from writing this chapter]
 

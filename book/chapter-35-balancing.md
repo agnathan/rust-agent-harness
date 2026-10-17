@@ -71,11 +71,11 @@ The binary picks between two scripted upstreams. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `pick_least` | 2.502 ns | a local pick among a pool | choose the quietest of four backends |
+| `pick_least` | 3.739 ns | a local pick among a pool | choose the quietest of four backends |
 
 `pick_least` builds four backends before the bench, with outstanding counts 3, 1, 4, and 2. The timed closure is `b.iter`. Inside: `pick(Policy::LeastOutstanding)` passed through `black_box`, then `black_box` of the index. Each sample loads four atomics and returns index 1. `call` is not used, so the counters do not change. No thread is started. `discover` is not called. No socket is opened. `FakeModel` is not constructed.
 
-The printed slope on this machine was `time: [2.4758 ns 2.4946 ns 2.5148 ns]`. The table is `mean.point_estimate` from `target/criterion/pick_least/new/estimates.json` (2.5022 ns), with the Benchmarks flags `--warm-up-time 1 --measurement-time 2 --sample-size 10`. The workflow mean on ubuntu-latest replaces this number when that run is green.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38989567446](https://github.com/agnathan/rust-agent-harness/actions/runs/38989567446), section `35`. The flags were `--warm-up-time 1 --measurement-time 2 --sample-size 10`.
 
 ### Milestone demo
 
@@ -109,7 +109,7 @@ Hermes treats `discovery_concurrency: 0` as unlimited. This gate does not. Four 
 - **Pick.** Least outstanding, or the quieter of two indexes.
 - **Federation.** A map from tool name to server names. No socket.
 - **Discovery.** Four at a time.
-- **Time.** One least-outstanding pick measured **2.502 ns**.
+- **Time.** One least-outstanding pick measured **3.739 ns**.
 
 [personal note: a choice that was four atomic loads]
 

@@ -68,11 +68,11 @@ The binary claims one clean job. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `scan_thousand` | 1.338 µs | scan 1,000 due jobs under 10 ms | indexes of 1,000 unclaimed jobs |
+| `scan_thousand` | 1.607 µs | scan 1,000 due jobs under 10 ms | indexes of 1,000 unclaimed jobs |
 
 `scan_thousand` builds the store and the 1,000 jobs before the bench. The timed closure is `b.iter`. Inside: `scan_due` of timestamp `0` passed through `black_box`, then `black_box` of the index vec. The walk and the `Vec` allocation of 1,000 indexes are inside the sample. Building the jobs is excluded. `scan_prompt`, `check_lifecycle`, `watchdog`, `chain`, and `FakeModel` are not called. No sleep runs.
 
-The printed slope on this machine was `time: [1.3207 µs 1.3278 µs 1.3416 µs]`. The table is `mean.point_estimate` from `target/criterion/scan_thousand/new/estimates.json` (1.3383 µs), with the Benchmarks flags `--warm-up-time 1 --measurement-time 2 --sample-size 10`. The workflow mean on ubuntu-latest replaces this number when that run is green.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38989567446](https://github.com/agnathan/rust-agent-harness/actions/runs/38989567446), section `39`. The flags were `--warm-up-time 1 --measurement-time 2 --sample-size 10`.
 
 ### Milestone demo
 
@@ -107,7 +107,7 @@ A prose sentence that says `hermes gateway restart` as a command still matches. 
 - **Scan.** The prompt, then the lifecycle, then the claim.
 - **Off the path.** The watchdog and the chained inbox push are separate calls.
 - **Model.** `FakeModel` answers `ok`. The demo needs no key.
-- **Time.** One thousand due jobs measured **1.338 µs**.
+- **Time.** One thousand due jobs measured **1.607 µs**.
 
 [personal note: a due list that was an index, and a job the scanner refused to claim]
 

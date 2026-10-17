@@ -67,11 +67,11 @@ The binary steps one scripted turn. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `inbox_submit` | 208.2 ns | enqueue under 1 ms | one `try_send` into an empty inbox of 64 |
+| `inbox_submit` | 289.2 ns | enqueue under 1 ms | one `try_send` into an empty inbox of 64 |
 
 `inbox_submit` uses `iter_batched`. The setup closure builds `mpsc::channel(64)` and is not timed. The timed routine calls `submit` with `Mail::Turn("hello")` passed through `black_box`, then `black_box` of the receiver so the channel stays open. The string `hello` is allocated inside the sample. No task is spawned. `FakeModel` is not constructed. The inbox is empty, so this sample does not take the `Full` path. Filling 64 and refusing the 65th is the test.
 
-The printed slope on this machine was `time: [206.91 ns 209.03 ns 210.45 ns]`. The table is `mean.point_estimate` from `target/criterion/inbox_submit/new/estimates.json` (208.151 ns), with the Benchmarks flags `--warm-up-time 1 --measurement-time 2 --sample-size 10`. The workflow mean on ubuntu-latest replaces this number when that run is green.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38989567446](https://github.com/agnathan/rust-agent-harness/actions/runs/38989567446), section `33`. The flags were `--warm-up-time 1 --measurement-time 2 --sample-size 10`.
 
 ### Milestone demo
 
@@ -107,7 +107,7 @@ A steer that arrives after `step` has already answered the turn waits for the ne
 - **Steer.** Stored, joined with newlines, appended to the next turn.
 - **Interrupt.** The next turn skips the model.
 - **Tasks.** `fan(100)` is one hundred scripted agents.
-- **Time.** One submit measured **208.2 ns**.
+- **Time.** One submit measured **289.2 ns**.
 
 [personal note: a queue you wanted to see fill, on purpose]
 

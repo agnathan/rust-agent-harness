@@ -13,7 +13,7 @@ Hermes Agent does this in agent/prompt_builder.py. The cap is 20,000 characters,
 I kept four of the threat patterns, not the whole library. The side model is a queue of strings. Under the cap it is not called. The hot path clones the Arc.
 
 4/
-Sharing that snapshot measured 15.12 ns. The demo prints "shared: clean". No key.
+Sharing that snapshot measured 5.281 ns. The demo prints "shared: clean". No key.
 
 [personal note]
 
@@ -29,7 +29,7 @@ Chapter 32 is out: Managing Context.
 
 The prompt is a choice. Hermes Agent scans files such as AGENTS.md before they enter it, replaces a match with a blocked sentence, and caps a huge file at 20,000 characters while keeping a head and a tail. Tool output from the web, the browser, or an MCP server is wrapped, and a forged closer is rewritten so it cannot end the block early. I kept those rules. The frozen snapshot is an Arc the hot path only clones. Compression, and the memory flush in front of it, run when the transcript is over the cap, and they do not rebuild that snapshot.
 
-Sharing the snapshot measured 15.12 ns. The demo does not need an API key.
+Sharing the snapshot measured 5.281 ns. The demo does not need an API key.
 
 [personal note: one takeaway from writing this chapter]
 

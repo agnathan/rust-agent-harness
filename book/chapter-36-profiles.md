@@ -64,11 +64,11 @@ The binary resolves one scoped profile. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `resolve_profile` | 59.49 ns | resolve a profile and its secret under 1 ms | persona `Arc` plus one secret lookup |
+| `resolve_profile` | 95.95 ns | resolve a profile and its secret under 1 ms | persona `Arc` plus one secret lookup |
 
 `resolve_profile` builds the multiplex store, the `writer` profile, and the scope before the bench. The timed closure is `b.iter`. Inside: `resolve` of `writer` and `API_KEY`, both passed through `black_box`, then `black_box` of the `Resolved`. The `HashMap` lookup, the secret clone, and the `Arc` clone are inside the sample. Building the profile is excluded. `FakeModel` is not constructed. The fail-closed path is not taken.
 
-The printed slope on this machine was `time: [59.325 ns 59.603 ns 59.913 ns]`. The table is `mean.point_estimate` from `target/criterion/resolve_profile/new/estimates.json` (59.4881 ns), with the Benchmarks flags `--warm-up-time 1 --measurement-time 2 --sample-size 10`. The workflow mean on ubuntu-latest replaces this number when that run is green.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38989567446](https://github.com/agnathan/rust-agent-harness/actions/runs/38989567446), section `36`. The flags were `--warm-up-time 1 --measurement-time 2 --sample-size 10`.
 
 ### Milestone demo
 
@@ -102,7 +102,7 @@ The persona is trusted text. This crate does not scan it. Chapter 32 scans conte
 - **Fail closed.** Multiplex and no scope is an error.
 - **Prompt.** The persona `Arc`. The secret stays in the map.
 - **Model.** `FakeModel` answers `ok`. The demo needs no key.
-- **Time.** One resolve measured **59.49 ns**.
+- **Time.** One resolve measured **95.95 ns**.
 
 [personal note: a key that resolved, and a prompt that did not contain it]
 

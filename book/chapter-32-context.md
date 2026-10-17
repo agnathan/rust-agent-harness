@@ -69,11 +69,11 @@ The binary scans one short file and clones its snapshot. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `share_snapshot` | 15.12 ns | the hot path sends the `Arc` | clone one frozen snapshot |
+| `share_snapshot` | 5.281 ns | the hot path sends the `Arc` | clone one frozen snapshot |
 
 `share_snapshot` builds a 20,000-character string (`"rule "` repeated 4,000 times) and wraps it in an `Arc` before the bench. The timed closure is `b.iter`. Inside: `share` of that `Arc` passed through `black_box`, then `black_box` of the clone. The string is not rebuilt. The scan, the cap, the wrap, and `preflight` are not called. `FakeModel` is not constructed. No file is read.
 
-The printed slope on this machine was `time: [15.121 ns 15.141 ns 15.159 ns]`. The table is `mean.point_estimate` from `target/criterion/share_snapshot/new/estimates.json` (15.1157 ns), with the Benchmarks flags `--warm-up-time 1 --measurement-time 2 --sample-size 10`. The workflow mean on ubuntu-latest replaces this number when that run is green.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38989567446](https://github.com/agnathan/rust-agent-harness/actions/runs/38989567446), section `32`. The flags were `--warm-up-time 1 --measurement-time 2 --sample-size 10`.
 
 ### Milestone demo
 
@@ -111,7 +111,7 @@ The side model is a queue. `complete` on an empty queue returns the word `summar
 - **Cap.** 20,000 characters, head 14,000, tail 4,000.
 - **Wrap.** High-risk tool output, with the closer neutralized.
 - **Snapshot.** One `Arc`. Preflight does not rebuild it. The side model runs only over the cap.
-- **Time.** Sharing the snapshot measured **15.12 ns**.
+- **Time.** Sharing the snapshot measured **5.281 ns**.
 
 [personal note: a file you almost pasted in whole]
 

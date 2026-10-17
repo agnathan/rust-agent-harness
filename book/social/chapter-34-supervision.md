@@ -13,7 +13,7 @@ Hermes Agent records this in gateway/restart_loop_guard.py. Three restarts, a 60
 The log here is in memory. now is an argument, so the test does not sleep. Cancel and a zero budget never start the child. FakeModel fails once and then returns ok. No key.
 
 4/
-One record measured 32.47 ns. The demo prints "restarted: ok".
+One record measured 27.75 ns. The demo prints "restarted: ok".
 
 [personal note]
 
@@ -29,7 +29,7 @@ Chapter 34 is out: Supervision and Restart.
 
 A failed child should get one more try, and a process that keeps dying should stop being resumed. Hermes Agent chains restart-interrupted boots and skips auto-resume at three, as long as the gap between them stays inside 300 seconds. A failure to read that log does not trip the breaker. I kept those rules. Cancel and an empty budget return before the child runs. The bench records one boot on an empty supervisor and does not call the child.
 
-That record measured 32.47 ns. The demo does not need an API key.
+That record measured 27.75 ns. The demo does not need an API key.
 
 [personal note: one takeaway from writing this chapter]
 

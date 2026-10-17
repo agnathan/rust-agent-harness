@@ -13,7 +13,7 @@ Hermes Agent caps MCP discovery at 4. tools/mcp_tool_discovery.py names _DISCOVE
 The pool is in memory. A finished call drops the outstanding count. Six connects with a short hold never show more than four in flight. Fake replies. No key.
 
 4/
-One least-outstanding pick measured 2.502 ns. The demo prints "pick: echo via alpha".
+One least-outstanding pick measured 3.739 ns. The demo prints "pick: echo via alpha".
 
 [personal note]
 
@@ -29,7 +29,7 @@ Chapter 35 is out: Balancing and Federation.
 
 This one is the server. Hermes Agent limits how many MCP servers it connects at once: the default is 4, and a config value of 0 means unlimited. It does not pick among backends by outstanding load. That pick is the pool in this chapter. Least outstanding reads four atomics and returns an index. Power of two choices returns the quieter of the two indexes you handed it. Federation is a map from a tool name to the servers that offer it. Nothing opens a socket.
 
-One pick measured 2.502 ns. The demo does not need an API key.
+One pick measured 3.739 ns. The demo does not need an API key.
 
 [personal note: one takeaway from writing this chapter]
 

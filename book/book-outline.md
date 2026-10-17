@@ -132,7 +132,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 - **Chapter 28.** Filtering a 100-message transcript for a handoff < 1 ms (measured 2.664 µs).
 - **Chapter 29.** The worker limit holds. One hundred mock subagents can be scheduled without an unbounded queue (scheduling 100 measured 4.285 µs). The 101st is refused.
 - **Chapter 30.** The critic shares `Arc` context and takes one permit from the same bound (one judgment measured 196.6 ns).
-- **Chapter 31.** Nested fan-out cannot exceed the worker limit. Eight children on the shared pool measured 103.0 µs. Width 9 is refused before any task is scheduled.
+- **Chapter 31.** Nested fan-out cannot exceed the worker limit. Eight children on the shared pool measured 270.8 µs. Width 9 is refused before any task is scheduled.
 
 ### Part IV: Making it robust
 
@@ -149,10 +149,10 @@ The harness decides what enters the prompt. The server holds the catalog, search
 
 **Performance budget**
 
-- **Chapter 32.** Compression and the memory flush run between turns or in the background. The hot path sends the `Arc` snapshot (measured 15.12 ns). Preflight compression, deferred from chapter 9, runs before the model call.
-- **Chapter 33.** The session inbox capacity is 64. One hundred or more mock agents at once. A full inbox applies backpressure. One submit measured 208.2 ns.
-- **Chapter 34.** Restarting a failed child adds < 1 ms, excluding the child's work (one record measured 32.47 ns).
-- **Chapter 35.** *(server)* Picking a backend is a local choice among a pool (one least-outstanding pick measured 2.502 ns). Discovery connects at most 4 at once.
+- **Chapter 32.** Compression and the memory flush run between turns or in the background. The hot path sends the `Arc` snapshot (measured 5.281 ns). Preflight compression, deferred from chapter 9, runs before the model call.
+- **Chapter 33.** The session inbox capacity is 64. One hundred or more mock agents at once. A full inbox applies backpressure. One submit measured 289.2 ns.
+- **Chapter 34.** Restarting a failed child adds < 1 ms, excluding the child's work (one record measured 27.75 ns).
+- **Chapter 35.** *(server)* Picking a backend is a local choice among a pool (one least-outstanding pick measured 3.739 ns). Discovery connects at most 4 at once.
 
 ### Part V: Running as a service
 
@@ -173,11 +173,11 @@ The harness decides what enters the prompt. The server holds the catalog, search
 
 **Performance budget**
 
-- **Chapter 36.** Resolving a profile and its secrets is < 1 ms (one resolve measured 59.49 ns). Secrets are not copied into the prompt.
-- **Chapter 37.** Enqueue of a platform message is < 1 ms (one enqueue measured 77.90 ns). A steer is a push onto a bounded queue. Streaming updates one message.
-- **Chapter 38.** *(server)* Killing one replica fails over by session id. Drain finishes the calls already accepted. One route lookup measured 11.89 ns. oha throughput is not measured: this step does not bind a socket.
-- **Chapter 39.** A crash retries a claimed job at most once. Scanning 1,000 due jobs is < 10 ms (measured 1.338 µs). The watchdog and a chained job stay off the request path.
-- **Chapter 40.** Translating an ACP update onto the session queue is < 1 ms (one translate measured 58.97 ns).
+- **Chapter 36.** Resolving a profile and its secrets is < 1 ms (one resolve measured 95.95 ns). Secrets are not copied into the prompt.
+- **Chapter 37.** Enqueue of a platform message is < 1 ms (one enqueue measured 174.5 ns). A steer is a push onto a bounded queue. Streaming updates one message.
+- **Chapter 38.** *(server)* Killing one replica fails over by session id. Drain finishes the calls already accepted. One route lookup measured 19.43 ns. oha throughput is not measured: this step does not bind a socket.
+- **Chapter 39.** A crash retries a claimed job at most once. Scanning 1,000 due jobs is < 10 ms (measured 1.607 µs). The watchdog and a chained job stay off the request path.
+- **Chapter 40.** Translating an ACP update onto the session queue is < 1 ms (one translate measured 119.9 ns).
 
 ### Part VI: Loosely coupled teams
 

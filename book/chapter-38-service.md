@@ -72,11 +72,11 @@ The binary places one session on the first replica. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `route_session` | 11.89 ns | a session id picks a replica | one map lookup after 64 placements |
+| `route_session` | 19.43 ns | a session id picks a replica | one map lookup after 64 placements |
 
 `route_session` builds a service with replicas `a` through `d` and calls `place` for `s0` through `s63` before the bench. The timed closure is `b.iter`. Inside: `route` of `s0` passed through `black_box`, then `black_box` of the `Option`. The `HashMap` get is the sample. `place`, `kill`, `accept`, `Sampler`, `OsvCache`, and `FakeModel` are not called. No socket is opened. oha is not this number.
 
-The printed slope on this machine was `time: [11.842 ns 11.887 ns 11.947 ns]`. The table is `mean.point_estimate` from `target/criterion/route_session/new/estimates.json` (11.8920 ns), with the Benchmarks flags `--warm-up-time 1 --measurement-time 2 --sample-size 10`. The workflow mean on ubuntu-latest replaces this number when that run is green.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38989567446](https://github.com/agnathan/rust-agent-harness/actions/runs/38989567446), section `38`. The flags were `--warm-up-time 1 --measurement-time 2 --sample-size 10`.
 
 ### Milestone demo
 
@@ -114,7 +114,7 @@ The bearer check does not validate a signature. An empty token and a missing `Be
 - **Quota.** Concurrent, per tenant.
 - **Client checks.** Sampling, elicitation, and `MAL-*`.
 - **Model.** `FakeModel` answers `ok`. The demo needs no key.
-- **Time.** One route measured **11.89 ns**.
+- **Time.** One route measured **19.43 ns**.
 
 [personal note: a failover that was a map update]
 
