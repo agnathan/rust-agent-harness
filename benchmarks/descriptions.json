@@ -2379,6 +2379,20 @@
       "fake": "Both indexes are in memory. No manifest hash and no file copy. FakeModel is not constructed.",
       "source": "steps/ch38-team-skills/benches/skills.rs",
       "reading": "Smaller is better. Around 200 nanoseconds is a mutex and an Arc replace. A millisecond would mean the sample rebuilt the skill list or called the model under the lock."
+    },
+    {
+      "id": "45/cancel_inflight",
+      "section": "chapter 45 a2a",
+      "chapter": "Chapter 45 A2A for External Agents",
+      "function": "cancel_inflight",
+      "summary": "Set the cancel flag and join the thread that is waiting on it.",
+      "what": "cancel stores true on an AtomicBool. A thread already inside wait_cancel sees the flag and returns. join finishes inside the sample.",
+      "why": "Cancel has to reach an in-flight call in under 50 milliseconds. This sample is that flag and the join. HTTP is not in it.",
+      "timing": "iter_batched. The setup closure spawns a thread running wait_cancel, spins until started is true, and is not timed. The timed routine calls cancel with the flag passed through black_box, joins the thread, then black_box of the unit. The atomic store and the waiter's exit are inside the sample. HttpPool, FakeModel, redact_for_egress, call, and the permit pool are not used. There is no sleep and no socket.",
+      "inputs": "One flag, starting false. One helper thread. No URL.",
+      "fake": "The in-flight call is a yield loop, not a peer. No HTTP client is built. FakeModel is not constructed.",
+      "source": "steps/ch39-a2a/benches/a2a.rs",
+      "reading": "Smaller is better. Tens of microseconds is a flag store plus a thread join. Fifty milliseconds would still meet the budget. A number that includes a connect would be a client this crate does not open."
     }
   ]
 }

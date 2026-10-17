@@ -66,7 +66,7 @@ Server-track chapters are marked *(server)*. They are interleaved with the harne
 - [Chapter 42: The Kanban Board](chapter-42-kanban.md)
 - [Chapter 43: The Message Bus](chapter-43-message-bus.md)
 - [Chapter 44: Shared Team Skills](chapter-44-team-skills.md)
-- [Chapter 45: A2A for External Agents]()
+- [Chapter 45: A2A for External Agents](chapter-45-a2a.md)
 - [Chapter 46: Seeing Inside]()
 - [Chapter 47: Load and Token Capstone]() *(server)*
 - [Chapter 48: Evals]()

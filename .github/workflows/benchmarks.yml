@@ -159,6 +159,8 @@ jobs:
         run: bash .github/scripts/run_bench_section.sh 43 "chapter 43 message bus" ch37-message-bus bus
       - name: Chapter 44 team skills
         run: bash .github/scripts/run_bench_section.sh 44 "chapter 44 team skills" ch38-team-skills skills
+      - name: Chapter 45 a2a
+        run: bash .github/scripts/run_bench_section.sh 45 "chapter 45 a2a" ch39-a2a a2a
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"
