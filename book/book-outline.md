@@ -87,11 +87,11 @@ The harness decides what enters the prompt. The server holds the catalog, search
 | 18 | Sessions on Disk | `steps/ch15-sessions` | SQLite, WAL | an append-only session store and a way to resume |
 | 19 | Memory Files | `steps/ch16-memory` | bounded text, atomic writes | `MEMORY.md` and `USER.md`, a `memory` tool, a frozen snapshot in the system prompt, injection scanning; the file backend behind the trait from chapter 12 |
 | 20 | Recall | `steps/ch17-recall` | FTS5 | a `session_search` tool: discover, scroll, read, browse |
-| 21 | Learned Tools *(server)* | `steps/gw-learned-tools` | a prediction off the request path | learned tool prediction from memory and sessions, plus composite and macro tools and a code-mode tool. The prediction changes the offered set. It does not run inside the model call. Not written |
+| 21 | Learned Tools *(server)* | `steps/gw-learned-tools` | a prediction off the request path | learned tool prediction from memory and sessions, plus composite and macro tools and a code-mode tool. The prediction changes the offered set. It does not run inside the model call |
 | 22 | Using Skills | `steps/ch18-skills` | a directory of markdown | `SKILL.md` (agentskills.io-compatible), a cache-stable `<available_skills>` index, `skills_list` / `skill_view` |
 | 23 | Writing Skills | `steps/ch19-skill-writing` | patch and validate | create, patch, delete, and supporting files, with a scanner, the approval gate from chapter 11, and read-before-write |
 | 24 | The Reflection Loop | `steps/ch20-reflection` | a supervised child task | nudge counters, the post-turn hook from chapter 12, a forked reviewer with only skill and memory tools |
-| 25 | Curation | `steps/ch21-curation` | a scheduled job | usage telemetry, stale then archived, pinning, backups, optional consolidation |
+| 25 | Curation | `steps/ch21-curation` | a scheduled job | usage telemetry, stale then archived, pinning, backups, optional consolidation. A write uses chapter 23's scan and the A9 gate, off the request path |
 
 **Guardrail notes**
 
@@ -104,22 +104,22 @@ The harness decides what enters the prompt. The server holds the catalog, search
 - **Chapter 18.** One local WAL append of a turn < 1 ms (measured 142.9 µs). FTS updates are a background task. The chapter re-runs the chapter 9 eval set.
 - **Chapter 19.** The frozen snapshot is built once and shared by `Arc`. A memory write does not rewrite the system prompt. Enqueue of a background write < 1 ms (measured 54.94 ns).
 - **Chapter 20.** Discover over 10,000 messages < 20 ms (measured 59.35 µs), and only when the model calls the tool.
-- **Chapter 21.** *(server)* Prediction stays off the request path except for the offered set. No measurement yet.
-- **Chapter 22.** Load and render 500 skills < 10 ms, once per session. The index is `Arc` and byte-stable.
-- **Chapter 23.** Security scan of one skill < 5 ms. A write the model did not ask for is a background task.
-- **Chapter 24.** Spawning the reviewer adds < 1 ms to turn finalize. Cancelling it when the user returns takes < 50 ms.
-- **Chapter 25.** Curation never runs on the request path.
+- **Chapter 21.** *(server)* Prediction stays off the request path except for the offered set. Applying that set measured 79.01 ns. Scoring 1,000 usage rows against 64 names measured 153.1 µs, and `session_tools` does not call it.
+- **Chapter 22.** Load and render 500 skills < 10 ms, once per session (measured 2.162 ms). The index is `Arc` and byte-stable.
+- **Chapter 23.** Security scan of one skill < 5 ms (measured 242.5 ns). A write the model did not ask for is a background task (enqueue measured 17.96 ns).
+- **Chapter 24.** Spawning the reviewer adds < 1 ms to turn finalize (measured 60.16 ns). Cancelling it when the user returns takes < 50 ms (measured 819.8 µs).
+- **Chapter 25.** Curation never runs on the request path. Enqueue measured 27.80 ns.
 
 ### Part III: The team patterns
 
 | Ch | Title | Step | Rust, just in time | What the harness gains |
 |---|---|---|---|---|
 | 26 | The Sequential Pipeline | `steps/ch22-pipeline` | an agent as a value you can pass around | outline, draft, critique, revise; each stage is an agent run in order |
-| 27 | The Supervisor | `steps/ch23-supervisor` | the tool trait, used for agents | the default team: a manager, specialists called as tools and fanned out under a bound, one `Arc`-shared context object; the reflection loop learns from team runs off the hot path |
+| 27 | The Supervisor | `steps/ch23-supervisor` | the tool trait, used for agents | the default team: a manager, specialists called as tools and fanned out under a bound, one `Arc`-shared context object; the reflection loop learns from team runs off the hot path. Chapter 24's forked agent and prompt-cache parity stay out of that note: the team run only enqueues it. Chapter 26's live model per stage is not required here; specialists stay scripted |
 | 28 | Handoffs | `steps/ch24-handoffs` | a pointer to the current agent | routing and ownership transfer; handoff-as-tool; a max-handoff limit; context filtered before the next agent sees it |
-| 29 | Fan-out and Gather | `steps/ch25-fan-out` | a worker limit, an aggregator | the dedicated gather: the supervisor already runs specialists in parallel; this chapter adds the worker limit's tests and the aggregator |
-| 30 | The Critic | `steps/ch26-critic` | the same tool trait | an evaluator agent, both as a tool and as a final gate |
-| 31 | Composing Patterns | `steps/ch27-composition` | nesting the patterns above | a supervisor that fans out and uses a handoff only when ownership should move |
+| 29 | Fan-out and Gather | `steps/ch25-fan-out` | a worker limit, an aggregator | the dedicated gather: the supervisor already runs specialists in parallel; this chapter adds the worker limit's tests and the aggregator. Chapter 27 defers the queue of 100 and the `task_index` order to here |
+| 30 | The Critic | `steps/ch26-critic` | the same tool trait | an evaluator agent, both as a tool and as a final gate. It takes one permit from the chapter 27 pool. Chapter 29's summary is what it reads; it does not do the work |
+| 31 | Composing Patterns | `steps/ch27-composition` | nesting the patterns above | a supervisor that fans out and uses a handoff only when ownership should move. Chapter 30 defers the judge continuation loop, the `wait` target, and the quality-gate shell commands to here |
 
 **Guardrail notes**
 
@@ -127,11 +127,11 @@ The harness decides what enters the prompt. The server holds the catalog, search
 
 **Performance budget**
 
-- **Chapter 26.** The next stage receives `Arc` context. No full transcript copy.
-- **Chapter 27.** Up to eight specialists at once, each with `Arc` context. Eight latency-mock specialists finish in about one specialist's time.
-- **Chapter 28.** Filtering a 100-message transcript for a handoff < 1 ms.
-- **Chapter 29.** The worker limit holds. One hundred mock subagents can be scheduled without an unbounded queue.
-- **Chapter 30.** The critic shares `Arc` context and takes one permit from the same bound.
+- **Chapter 26.** The next stage receives `Arc` context (measured 10.46 ns). Copying 100 messages measured 6.568 µs and is not the hand-off.
+- **Chapter 27.** Up to eight specialists at once, each with `Arc` context. Eight specialists that each slept 40 ms finished in 0.044 s in nextest. Scheduling eight with no sleep measured 148.1 µs. A reflection note measured 20.81 ns and does not run the reviewer.
+- **Chapter 28.** Filtering a 100-message transcript for a handoff < 1 ms (measured 2.664 µs).
+- **Chapter 29.** The worker limit holds. One hundred mock subagents can be scheduled without an unbounded queue (scheduling 100 measured 4.285 µs). The 101st is refused.
+- **Chapter 30.** The critic shares `Arc` context and takes one permit from the same bound (one judgment measured 196.6 ns).
 - **Chapter 31.** Nested fan-out cannot exceed the worker limit.
 
 ### Part IV: Making it robust
@@ -159,7 +159,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 | Ch | Title | Step | Rust, just in time | What the harness gains |
 |---|---|---|---|---|
 | 36 | Profiles | `steps/ch31-profiles` | config, a secret map | several personas in one config, each with its own secrets, kept out of the system prompt |
-| 37 | The Gateway | `steps/ch32-gateway` | the session inbox | platform adapters submit to the chapter 2 inbox; a mid-turn message becomes an interrupt or a steer; streaming folds chapter 1 events into one message. This is the chat gateway, not the MCP server |
+| 37 | The Gateway | `steps/ch32-gateway` | the session inbox | platform adapters submit to the chapter 2 inbox; a mid-turn message becomes an interrupt or a steer; streaming folds chapter 1 events into one message. This is the chat gateway, not the MCP server. Chapter 28 defers the platform re-bind from `handoff.request` to here |
 | 38 | MCP Gateway Service *(server)* | `steps/gw-service` | `rmcp`, axum, a shared store | mostly stateless replicas routed by session id, hot reload via `arc-swap`, shared sessions and rate limits in Redis or something like it, health and readiness, OAuth 2.1 as the MCP resource server, per-tenant quotas, audit logs, OpenTelemetry, and a drain that finishes in-flight calls. Not written |
 | 39 | Cron | `steps/ch33-cron` | a durable claim | at-most-once runs across crashes, catch-up, a watchdog, and chaining the next job by submitting to the same inbox |
 | 40 | Editor Integration | `steps/ch34-acp` | a protocol adapter | ACP (Agent Client Protocol) as another client of the chapter 2 session inbox |
@@ -207,7 +207,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 - **Chapter 47.** *(server)* The load test and the three-arm token comparison. No measurement yet.
 - **Chapter 48.** Re-running the saved eval set, and one hundred mock trajectories, stays inside the worker bound. Appending one trajectory event is < 1 ms.
 
-Chapters 1 through 4, chapter 6, and chapters 9 through 20 have harness step crates. Chapter 6 is five sections under `steps/ch05-*`. Chapter 9 is ten sections under `steps/ch06-*`, and the section labels in that chapter stay 6.1–6.10 so they match the crates. Chapter 10 is `steps/ch07-turn-state`. Chapters 5, 7, 8, and 15 have server step crates. `mcp-gateway` re-exports the chapter 15 limited gateway, which still opens an empty catalog. Chapter 6's 10,000-tool benches still use a synthetic catalog. A real `tools/list` enters that cache through `cards_from_listed`. Chapter 9 starts a saved eval set that later chapters re-run, and chapter 48 scores that set. Pull requests and pushes to `main` report the Criterion median, low, and high in the Benchmarks workflow and upload one JSON artifact per commit. A push to `main` appends the run to the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/) on `gh-pages`. The same job still updates the `dev/bench` chart when it can publish. There is no fail threshold. Later rows are the plan, not empty crates. The same list is `.github/chapters.json`, which CI uses. Draft rows in `book/SUMMARY.md` are the chapters that are not written yet. Planned harness steps keep the directory names already in the CI filters (`ch07-turn-state` is book chapter 10). Server steps use the `gw-` prefix.
+Chapters 1 through 4, chapter 6, and chapters 9 through 20 have harness step crates. Chapter 6 is five sections under `steps/ch05-*`. Chapter 9 is ten sections under `steps/ch06-*`, and the section labels in that chapter stay 6.1–6.10 so they match the crates. Chapter 10 is `steps/ch07-turn-state`. Chapters 5, 7, 8, 15, and 21 have server step crates. `mcp-gateway` re-exports the chapter 21 learned gateway, which wraps the chapter 15 limits and still opens an empty catalog. Chapter 6's 10,000-tool benches still use a synthetic catalog. A real `tools/list` enters that cache through `cards_from_listed`. Chapter 9 starts a saved eval set that later chapters re-run, and chapter 48 scores that set. Pull requests and pushes to `main` report the Criterion median, low, and high in the Benchmarks workflow and upload one JSON artifact per commit. A push to `main` appends the run to the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/) on `gh-pages`. The same job still updates the `dev/bench` chart when it can publish. There is no fail threshold. Later rows are the plan, not empty crates. The same list is `.github/chapters.json`, which CI uses. Draft rows in `book/SUMMARY.md` are the chapters that are not written yet. Planned harness steps keep the directory names already in the CI filters (`ch07-turn-state` is book chapter 10). Server steps use the `gw-` prefix.
 
 **Recurring sidebars:**
 

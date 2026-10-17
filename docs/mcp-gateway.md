@@ -70,7 +70,9 @@ These are the designs that sit in front of many MCP servers. The notes are from 
 
 **In chapters 5, 7, 8, and 15.** A 32/8 call gate, BM25 over native, plugin, and in-memory upstream tools, an `Arc` reload, `search_tools`, `set_task`, `describe`, a `list_changed` flag, paging, schema/call/result tokens, and per-tool permits, idempotent retries, a breaker, and 429/503 backpressure.
 
-**Deferred with the unwritten chapters.** A real embedder, live federation, composite tools, code mode, replica routing, health, quotas, audit logs, and OpenTelemetry. The server still does not bind a socket.
+**In chapter 21.** A usage score installed as the offered set, composite and macro names, and a line-script code mode capped at 50 calls on the sandbox allowlist. The score does not run inside `session_tools`.
+
+**Deferred with the unwritten chapters.** A real embedder, live federation, a Python sandbox for code mode, replica routing, health, quotas, audit logs, and OpenTelemetry. The server still does not bind a socket.
 
 ## Reading order
 
@@ -87,7 +89,7 @@ Server-track chapters are marked *(server)*. Each one sits after the harness cha
 | 14 | harness | — | When Things Fail. |
 | 15 | *(server)* | chapter 14 | Timeouts, idempotent-only retries, circuit breakers, queues, concurrency limits. |
 | 18–20 | harness | — | Sessions, memory, recall. |
-| 21 | *(server)* | chapter 20 | Learned tool prediction and composite tools. Prediction stays off the request path except for the offered set. |
+| 21 | *(server)* | chapter 20 | Learned tool prediction and composite tools. Written. Prediction stays off the request path except for the offered set. |
 | 34 | harness | — | Supervision and restart. Cancellation is already in chapter 9. |
 | 35 | *(server)* | chapter 34 | Least-outstanding / power-of-two-choices, per-tool pools, federation of upstream MCP. |
 | 37 | harness | — | The chat gateway: platform adapters into the session inbox. Not this server. |

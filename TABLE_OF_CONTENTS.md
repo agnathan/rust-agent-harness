@@ -30,19 +30,19 @@ Written chapters link to `book/chapter-….md`. A chapter that has no page yet i
 - [Chapter 18: Sessions on Disk](book/chapter-18-sessions.md) — [`steps/ch15-sessions`](steps/ch15-sessions)
 - [Chapter 19: Memory Files](book/chapter-19-memory.md) — [`steps/ch16-memory`](steps/ch16-memory)
 - [Chapter 20: Recall](book/chapter-20-recall.md) — [`steps/ch17-recall`](steps/ch17-recall)
-- Chapter 21: Learned Tools *(server)* (not yet written)
-- Chapter 22: Using Skills (not yet written)
-- Chapter 23: Writing Skills (not yet written)
-- Chapter 24: The Reflection Loop (not yet written)
-- Chapter 25: Curation (not yet written)
+- [Chapter 21: Learned Tools](book/chapter-21-learned-tools.md) *(server)* — [`steps/gw-learned-tools`](steps/gw-learned-tools)
+- [Chapter 22: Using Skills](book/chapter-22-using-skills.md) — [`steps/ch18-skills`](steps/ch18-skills)
+- [Chapter 23: Writing Skills](book/chapter-23-writing-skills.md) — [`steps/ch19-skill-writing`](steps/ch19-skill-writing)
+- [Chapter 24: The Reflection Loop](book/chapter-24-reflection.md) — [`steps/ch20-reflection`](steps/ch20-reflection)
+- [Chapter 25: Curation](book/chapter-25-curation.md) — [`steps/ch21-curation`](steps/ch21-curation)
 
 ## Part III: The team patterns
 
-- Chapter 26: The Sequential Pipeline (not yet written)
-- Chapter 27: The Supervisor (not yet written)
-- Chapter 28: Handoffs (not yet written)
-- Chapter 29: Fan-out and Gather (not yet written)
-- Chapter 30: The Critic (not yet written)
+- [Chapter 26: The Sequential Pipeline](book/chapter-26-pipeline.md) — [`steps/ch22-pipeline`](steps/ch22-pipeline)
+- [Chapter 27: The Supervisor](book/chapter-27-supervisor.md) — [`steps/ch23-supervisor`](steps/ch23-supervisor)
+- [Chapter 28: Handoffs](book/chapter-28-handoffs.md) — [`steps/ch24-handoffs`](steps/ch24-handoffs)
+- [Chapter 29: Fan-out and Gather](book/chapter-29-fan-out.md) — [`steps/ch25-fan-out`](steps/ch25-fan-out)
+- [Chapter 30: The Critic](book/chapter-30-critic.md) — [`steps/ch26-critic`](steps/ch26-critic)
 - Chapter 31: Composing Patterns (not yet written)
 
 ## Part IV: Making it robust

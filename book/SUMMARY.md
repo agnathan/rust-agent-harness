@@ -30,19 +30,19 @@ Server-track chapters are marked *(server)*. They are interleaved with the harne
 - [Chapter 18: Sessions on Disk](chapter-18-sessions.md)
 - [Chapter 19: Memory Files](chapter-19-memory.md)
 - [Chapter 20: Recall](chapter-20-recall.md)
-- [Chapter 21: Learned Tools]() *(server)*
-- [Chapter 22: Using Skills]()
-- [Chapter 23: Writing Skills]()
-- [Chapter 24: The Reflection Loop]()
-- [Chapter 25: Curation]()
+- [Chapter 21: Learned Tools](chapter-21-learned-tools.md) *(server)*
+- [Chapter 22: Using Skills](chapter-22-using-skills.md)
+- [Chapter 23: Writing Skills](chapter-23-writing-skills.md)
+- [Chapter 24: The Reflection Loop](chapter-24-reflection.md)
+- [Chapter 25: Curation](chapter-25-curation.md)
 
 # Part III: The team patterns
 
-- [Chapter 26: The Sequential Pipeline]()
-- [Chapter 27: The Supervisor]()
-- [Chapter 28: Handoffs]()
-- [Chapter 29: Fan-out and Gather]()
-- [Chapter 30: The Critic]()
+- [Chapter 26: The Sequential Pipeline](chapter-26-pipeline.md)
+- [Chapter 27: The Supervisor](chapter-27-supervisor.md)
+- [Chapter 28: Handoffs](chapter-28-handoffs.md)
+- [Chapter 29: Fan-out and Gather](chapter-29-fan-out.md)
+- [Chapter 30: The Critic](chapter-30-critic.md)
 - [Chapter 31: Composing Patterns]()
 
 # Part IV: Making it robust

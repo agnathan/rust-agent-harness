@@ -52,6 +52,16 @@ cargo run -p ch02-harness-cli -- --mock chat
 | ch15-sessions | 18 | WAL sessions, one append, FTS ids queued |
 | ch16-memory | 19 | MEMORY.md and USER.md, frozen snapshot, strict scan |
 | ch17-recall | 20 | FTS5 trigram session_search: discover, scroll, read, browse |
+| gw-learned-tools | 21 *(server)* | Predicted offer, composite and macro tools, code-mode lines |
+| ch18-skills | 22 | `SKILL.md`, a cache-stable index, `skills_list` / `skill_view` |
+| ch19-skill-writing | 23 | create, patch, delete, a scanner, the approval gate, read-before-write |
+| ch20-reflection | 24 | nudge counters, a forked reviewer, cancel on return |
+| ch21-curation | 25 | stale, then archived, a snapshot, off the request path |
+| ch22-pipeline | 26 | outline, draft, critique, revise, one shared `Arc` |
+| ch23-supervisor | 27 | eight specialists, one `Arc`, blocked child tools, depth 1 |
+| ch24-handoffs | 28 | a filtered transcript and a cap of four handoffs |
+| ch25-fan-out | 29 | a queue of 100, the supervisor bound, summaries in index order |
+| ch26-critic | 30 | a verdict, one permit, accept only on done |
 | gw-limits | 15 *(server)* | Per-tool permits, idempotent retry, a breaker, caps of 50 |
 | gw-minimal-server | 5 *(server)* | Empty `mcp-gateway` catalog. No socket |
 
