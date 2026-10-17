@@ -1,0 +1,24 @@
+[package]
+name = "ch28-context"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+description = "Chapter 32: context-file scan, a size cap, and preflight compression off the frozen snapshot."
+
+[lib]
+name = "contextprep"
+
+[[bin]]
+name = "ch28-context"
+path = "src/main.rs"
+
+[dependencies]
+regex = "1"
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "context"
+harness = false
