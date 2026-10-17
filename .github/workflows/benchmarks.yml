@@ -149,6 +149,8 @@ jobs:
         run: bash .github/scripts/run_bench_section.sh 38 "chapter 38 service" gw-service service
       - name: Chapter 39 cron
         run: bash .github/scripts/run_bench_section.sh 39 "chapter 39 cron" ch33-cron cron
+      - name: Chapter 40 acp
+        run: bash .github/scripts/run_bench_section.sh 40 "chapter 40 acp" ch34-acp acp
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"

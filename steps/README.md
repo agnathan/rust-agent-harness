@@ -71,6 +71,7 @@ cargo run -p ch02-harness-cli -- --mock chat
 | ch32-gateway | 37 | allowlist, pairing, bot-loop guard, emergency stop, the session inbox |
 | gw-service | 38 *(server)* | session routing, an `Arc` reload, quotas, a drain, sampling and OSV |
 | ch33-cron | 39 | one claim, one crash retry, a prompt scan, the lifecycle guard |
+| ch34-acp | 40 | one inbox message per ACP update, `end_turn` or `cancelled` |
 | gw-limits | 15 *(server)* | Per-tool permits, idempotent retry, a breaker, caps of 50 |
 | gw-minimal-server | 5 *(server)* | Empty `mcp-gateway` catalog. No socket |
 
