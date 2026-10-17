@@ -1,0 +1,24 @@
+[package]
+name = "ch33-cron"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+description = "Chapter 39: claim a cron job once, scan the prompt, and keep the watchdog off the scan."
+
+[lib]
+name = "cron"
+
+[[bin]]
+name = "ch33-cron"
+path = "src/main.rs"
+
+[dependencies]
+regex = "1"
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "cron"
+harness = false

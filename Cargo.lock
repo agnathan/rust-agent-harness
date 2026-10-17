@@ -1037,6 +1037,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "ch33-cron"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+ "regex",
+]
+
+[[package]]
 name = "chacha20"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -176,7 +176,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 - **Chapter 36.** Resolving a profile and its secrets is < 1 ms (one resolve measured 59.49 ns). Secrets are not copied into the prompt.
 - **Chapter 37.** Enqueue of a platform message is < 1 ms (one enqueue measured 77.90 ns). A steer is a push onto a bounded queue. Streaming updates one message.
 - **Chapter 38.** *(server)* Killing one replica fails over by session id. Drain finishes the calls already accepted. One route lookup measured 11.89 ns. oha throughput is not measured: this step does not bind a socket.
-- **Chapter 39.** A crash retries a claimed job at most once. Scanning 1,000 due jobs is < 10 ms. The watchdog and a chained job stay off the request path.
+- **Chapter 39.** A crash retries a claimed job at most once. Scanning 1,000 due jobs is < 10 ms (measured 1.338 µs). The watchdog and a chained job stay off the request path.
 - **Chapter 40.** Translating an ACP update onto the session queue is < 1 ms.
 
 ### Part VI: Loosely coupled teams

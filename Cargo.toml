@@ -81,4 +81,5 @@ members = [
     "steps/ch31-profiles",
     "steps/ch32-gateway",
     "steps/gw-service",
+    "steps/ch33-cron",
 ]
