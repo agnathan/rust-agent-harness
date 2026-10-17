@@ -72,11 +72,15 @@ These are the designs that sit in front of many MCP servers. The notes are from 
 
 **In chapter 21.** A usage score installed as the offered set, composite and macro names, and a line-script code mode capped at 50 calls on the sandbox allowlist. The score does not run inside `session_tools`.
 
-**Deferred with the unwritten chapters.** A real embedder, live federation, a Python sandbox for code mode, replica routing, health, quotas, audit logs, and OpenTelemetry. The server still does not bind a socket.
+**In chapter 35.** Least-outstanding and power-of-two picks over an in-memory per-tool pool, federation as a map from tool name to server names, and a discovery gate of 4. No socket.
+
+**In chapter 38.** Session-id routing, failover when a replica is marked dead, an `Arc` config reload, per-tenant concurrent quotas, an audit vec, span names, health and readiness, a bearer check, and a drain. Sampling, form-mode elicitation, and the `MAL-*` check live in the same crate. No socket.
+
+**Deferred with the unwritten chapters.** A real embedder, live upstream connections, a Python sandbox for code mode, a bound listener, Redis, OAuth token issuance, and a trace exporter. The server still does not bind a socket.
 
 ## Reading order
 
-Server-track chapters are marked *(server)*. Each one sits after the harness chapter it builds on. Step directories for the written harness chapters stay `steps/ch05-*` (book chapter 6) and `steps/ch06-*` (book chapter 9). Only `steps/gw-minimal-server` exists. The other `gw-*` names are the plan.
+Server-track chapters are marked *(server)*. Each one sits after the harness chapter it builds on. Step directories for the written harness chapters stay `steps/ch05-*` (book chapter 6) and `steps/ch06-*` (book chapter 9). `steps/gw-minimal-server`, `steps/gw-catalog`, `steps/gw-session-toolsets`, `steps/gw-limits`, `steps/gw-learned-tools`, `steps/gw-balancing`, and `steps/gw-service` exist. Later `gw-*` names are the plan.
 
 | Ch | Track | After | What it adds |
 |---|---|---|---|
@@ -91,9 +95,9 @@ Server-track chapters are marked *(server)*. Each one sits after the harness cha
 | 18–20 | harness | — | Sessions, memory, recall. |
 | 21 | *(server)* | chapter 20 | Learned tool prediction and composite tools. Written. Prediction stays off the request path except for the offered set. |
 | 34 | harness | — | Supervision and restart. Cancellation is already in chapter 9. |
-| 35 | *(server)* | chapter 34 | Least-outstanding / power-of-two-choices, per-tool pools, federation of upstream MCP. |
+| 35 | *(server)* | chapter 34 | Least-outstanding / power-of-two-choices, per-tool pools, federation of upstream MCP. Written. In memory. No socket. |
 | 37 | harness | — | The chat gateway: platform adapters into the session inbox. Not this server. |
-| 38 | *(server)* | chapter 37 | HA replicas, session-id routing, Redis (or similar), OAuth 2.1, quotas, audit, drain, health. |
+| 38 | *(server)* | chapter 37 | Session-id routing, an `Arc` reload, quotas, audit, drain, health. Written. In memory. No socket. |
 | 46 | harness | — | Seeing Inside. Spans across the harness and the gateway. |
 | 47 | *(server)* | chapter 46 | Load test and the token-efficiency capstone. |
 

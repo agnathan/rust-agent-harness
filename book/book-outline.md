@@ -132,7 +132,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 - **Chapter 28.** Filtering a 100-message transcript for a handoff < 1 ms (measured 2.664 µs).
 - **Chapter 29.** The worker limit holds. One hundred mock subagents can be scheduled without an unbounded queue (scheduling 100 measured 4.285 µs). The 101st is refused.
 - **Chapter 30.** The critic shares `Arc` context and takes one permit from the same bound (one judgment measured 196.6 ns).
-- **Chapter 31.** Nested fan-out cannot exceed the worker limit.
+- **Chapter 31.** Nested fan-out cannot exceed the worker limit. Eight children on the shared pool measured 270.8 µs. Width 9 is refused before any task is scheduled.
 
 ### Part IV: Making it robust
 
@@ -141,7 +141,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 | 32 | Managing Context | `steps/ch28-context` | slicing a `Vec` | compression, structured summaries from the side model in chapter 16, `[SKILL_PRUNED]` markers, a memory flush before compression. Deferred from chapter 9: preflight compression before the model call (`agent/turn_context.py`, `agent/context_compressor.py`) |
 | 33 | Agents as Actors | `steps/ch29-actors` | bounded channels | one tokio task per agent; the mailbox is the session inbox from chapter 2; steering and backpressure |
 | 34 | Supervision and Restart | `steps/ch30-supervision` | atomics | restart a failed child. The cancellation token and the budget are already on the call from chapter 9 |
-| 35 | Balancing and Federation *(server)* | `steps/gw-balancing` | a pool per tool | least-outstanding or power-of-two-choices across a per-tool backend pool, and federation of upstream MCP servers through that pool. Placed after cancellation (chapter 9) and supervision (chapter 34). Not written |
+| 35 | Balancing and Federation *(server)* | `steps/gw-balancing` | a pool per tool | least-outstanding or power-of-two-choices across a per-tool backend pool, and federation of upstream MCP servers through that pool. Placed after cancellation (chapter 9) and supervision (chapter 34) |
 
 **Guardrail notes**
 
@@ -149,10 +149,10 @@ The harness decides what enters the prompt. The server holds the catalog, search
 
 **Performance budget**
 
-- **Chapter 32.** Compression and the memory flush run between turns or in the background. The hot path sends the `Arc` snapshot. Preflight compression, deferred from chapter 9, runs before the model call.
-- **Chapter 33.** The session inbox capacity is 64. One hundred or more mock agents at once. A full inbox applies backpressure.
-- **Chapter 34.** Restarting a failed child adds < 1 ms, excluding the child's work.
-- **Chapter 35.** *(server)* Picking a backend is a local choice among a pool. No measurement yet.
+- **Chapter 32.** Compression and the memory flush run between turns or in the background. The hot path sends the `Arc` snapshot (measured 5.281 ns). Preflight compression, deferred from chapter 9, runs before the model call.
+- **Chapter 33.** The session inbox capacity is 64. One hundred or more mock agents at once. A full inbox applies backpressure. One submit measured 289.2 ns.
+- **Chapter 34.** Restarting a failed child adds < 1 ms, excluding the child's work (one record measured 27.75 ns).
+- **Chapter 35.** *(server)* Picking a backend is a local choice among a pool (one least-outstanding pick measured 3.739 ns). Discovery connects at most 4 at once.
 
 ### Part V: Running as a service
 
@@ -160,7 +160,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 |---|---|---|---|---|
 | 36 | Profiles | `steps/ch31-profiles` | config, a secret map | several personas in one config, each with its own secrets, kept out of the system prompt |
 | 37 | The Gateway | `steps/ch32-gateway` | the session inbox | platform adapters submit to the chapter 2 inbox; a mid-turn message becomes an interrupt or a steer; streaming folds chapter 1 events into one message. This is the chat gateway, not the MCP server. Chapter 28 defers the platform re-bind from `handoff.request` to here |
-| 38 | MCP Gateway Service *(server)* | `steps/gw-service` | `rmcp`, axum, a shared store | mostly stateless replicas routed by session id, hot reload via `arc-swap`, shared sessions and rate limits in Redis or something like it, health and readiness, OAuth 2.1 as the MCP resource server, per-tenant quotas, audit logs, OpenTelemetry, and a drain that finishes in-flight calls. Not written |
+| 38 | MCP Gateway Service *(server)* | `steps/gw-service` | an `Arc` reload, a session map | mostly stateless replicas routed by session id, hot reload by swapping an `Arc`, shared session routes and quotas in memory, health and readiness, a bearer check standing in for the OAuth 2.1 resource server, per-tenant quotas, an audit vec, span names, and a drain that finishes in-flight calls. No socket |
 | 39 | Cron | `steps/ch33-cron` | a durable claim | at-most-once runs across crashes, catch-up, a watchdog, and chaining the next job by submitting to the same inbox |
 | 40 | Editor Integration | `steps/ch34-acp` | a protocol adapter | ACP (Agent Client Protocol) as another client of the chapter 2 session inbox |
 
@@ -173,11 +173,11 @@ The harness decides what enters the prompt. The server holds the catalog, search
 
 **Performance budget**
 
-- **Chapter 36.** Resolving a profile and its secrets is < 1 ms. Secrets are not copied into the prompt.
-- **Chapter 37.** Enqueue of a platform message is < 1 ms. A steer is a push onto a bounded queue. Streaming updates one message.
-- **Chapter 38.** *(server)* Throughput and p99 under load (oha or something like it). Killing one replica fails over by session id. Drain finishes the calls already accepted. No measurement yet.
-- **Chapter 39.** A crash retries a claimed job at most once. Scanning 1,000 due jobs is < 10 ms. The watchdog and a chained job stay off the request path.
-- **Chapter 40.** Translating an ACP update onto the session queue is < 1 ms.
+- **Chapter 36.** Resolving a profile and its secrets is < 1 ms (one resolve measured 95.95 ns). Secrets are not copied into the prompt.
+- **Chapter 37.** Enqueue of a platform message is < 1 ms (one enqueue measured 174.5 ns). A steer is a push onto a bounded queue. Streaming updates one message.
+- **Chapter 38.** *(server)* Killing one replica fails over by session id. Drain finishes the calls already accepted. One route lookup measured 19.43 ns. oha throughput is not measured: this step does not bind a socket.
+- **Chapter 39.** A crash retries a claimed job at most once. Scanning 1,000 due jobs is < 10 ms (measured 1.607 µs). The watchdog and a chained job stay off the request path.
+- **Chapter 40.** Translating an ACP update onto the session queue is < 1 ms (one translate measured 119.9 ns).
 
 ### Part VI: Loosely coupled teams
 

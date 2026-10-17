@@ -43,22 +43,22 @@ Written chapters link to `book/chapter-….md`. A chapter that has no page yet i
 - [Chapter 28: Handoffs](book/chapter-28-handoffs.md) — [`steps/ch24-handoffs`](steps/ch24-handoffs)
 - [Chapter 29: Fan-out and Gather](book/chapter-29-fan-out.md) — [`steps/ch25-fan-out`](steps/ch25-fan-out)
 - [Chapter 30: The Critic](book/chapter-30-critic.md) — [`steps/ch26-critic`](steps/ch26-critic)
-- Chapter 31: Composing Patterns (not yet written)
+- [Chapter 31: Composing Patterns](book/chapter-31-composition.md) — [`steps/ch27-composition`](steps/ch27-composition)
 
 ## Part IV: Making it robust
 
-- Chapter 32: Managing Context (not yet written)
-- Chapter 33: Agents as Actors (not yet written)
-- Chapter 34: Supervision and Restart (not yet written)
-- Chapter 35: Balancing and Federation *(server)* (not yet written)
+- [Chapter 32: Managing Context](book/chapter-32-context.md) — [`steps/ch28-context`](steps/ch28-context)
+- [Chapter 33: Agents as Actors](book/chapter-33-actors.md) — [`steps/ch29-actors`](steps/ch29-actors)
+- [Chapter 34: Supervision and Restart](book/chapter-34-supervision.md) — [`steps/ch30-supervision`](steps/ch30-supervision)
+- [Chapter 35: Balancing and Federation](book/chapter-35-balancing.md) *(server)* — [`steps/gw-balancing`](steps/gw-balancing)
 
 ## Part V: Running as a service
 
-- Chapter 36: Profiles (not yet written)
-- Chapter 37: The Gateway (not yet written)
-- Chapter 38: MCP Gateway Service *(server)* (not yet written)
-- Chapter 39: Cron (not yet written)
-- Chapter 40: Editor Integration (not yet written)
+- [Chapter 36: Profiles](book/chapter-36-profiles.md) — [`steps/ch31-profiles`](steps/ch31-profiles)
+- [Chapter 37: The Gateway](book/chapter-37-gateway.md) — [`steps/ch32-gateway`](steps/ch32-gateway)
+- [Chapter 38: MCP Gateway Service](book/chapter-38-service.md) *(server)* — [`steps/gw-service`](steps/gw-service)
+- [Chapter 39: Cron](book/chapter-39-cron.md) — [`steps/ch33-cron`](steps/ch33-cron)
+- [Chapter 40: Editor Integration](book/chapter-40-acp.md) — [`steps/ch34-acp`](steps/ch34-acp)
 
 ## Part VI: Loosely coupled teams
 

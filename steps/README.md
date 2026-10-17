@@ -62,6 +62,16 @@ cargo run -p ch02-harness-cli -- --mock chat
 | ch24-handoffs | 28 | a filtered transcript and a cap of four handoffs |
 | ch25-fan-out | 29 | a queue of 100, the supervisor bound, summaries in index order |
 | ch26-critic | 30 | a verdict, one permit, accept only on done |
+| ch27-composition | 31 | nested fan-out under one pool, a handoff only when ownership moves, the critic loop |
+| ch28-context | 32 | a scan, a 20,000-character cap, an untrusted wrap, preflight compression |
+| ch29-actors | 33 | one task per agent, an inbox of 64, steer and interrupt |
+| ch30-supervision | 34 | one restart, a chain of three, cancel and budget |
+| gw-balancing | 35 *(server)* | least outstanding, power of two, federation, discovery cap of 4 |
+| ch31-profiles | 36 | personas, a secret map per profile, fail closed with no scope |
+| ch32-gateway | 37 | allowlist, pairing, bot-loop guard, emergency stop, the session inbox |
+| gw-service | 38 *(server)* | session routing, an `Arc` reload, quotas, a drain, sampling and OSV |
+| ch33-cron | 39 | one claim, one crash retry, a prompt scan, the lifecycle guard |
+| ch34-acp | 40 | one inbox message per ACP update, `end_turn` or `cancelled` |
 | gw-limits | 15 *(server)* | Per-tool permits, idempotent retry, a breaker, caps of 50 |
 | gw-minimal-server | 5 *(server)* | Empty `mcp-gateway` catalog. No socket |
 

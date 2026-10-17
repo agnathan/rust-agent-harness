@@ -989,6 +989,69 @@ dependencies = [
 ]
 
 [[package]]
+name = "ch27-composition"
+version = "0.1.0"
+dependencies = [
+ "ch23-supervisor",
+ "ch24-handoffs",
+ "ch25-fan-out",
+ "ch26-critic",
+ "criterion",
+]
+
+[[package]]
+name = "ch28-context"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+ "regex",
+]
+
+[[package]]
+name = "ch29-actors"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+ "tokio",
+]
+
+[[package]]
+name = "ch30-supervision"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+]
+
+[[package]]
+name = "ch31-profiles"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+]
+
+[[package]]
+name = "ch32-gateway"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+]
+
+[[package]]
+name = "ch33-cron"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+ "regex",
+]
+
+[[package]]
+name = "ch34-acp"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+]
+
+[[package]]
 name = "chacha20"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1470,6 +1533,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "gw-balancing"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+]
+
+[[package]]
 name = "gw-catalog"
 version = "0.1.0"
 dependencies = [
@@ -1508,6 +1578,13 @@ dependencies = [
  "serde_json",
  "thiserror",
  "tokio",
+]
+
+[[package]]
+name = "gw-service"
+version = "0.1.0"
+dependencies = [
+ "criterion",
 ]
 
 [[package]]

@@ -43,22 +43,22 @@ Server-track chapters are marked *(server)*. They are interleaved with the harne
 - [Chapter 28: Handoffs](chapter-28-handoffs.md)
 - [Chapter 29: Fan-out and Gather](chapter-29-fan-out.md)
 - [Chapter 30: The Critic](chapter-30-critic.md)
-- [Chapter 31: Composing Patterns]()
+- [Chapter 31: Composing Patterns](chapter-31-composition.md)
 
 # Part IV: Making it robust
 
-- [Chapter 32: Managing Context]()
-- [Chapter 33: Agents as Actors]()
-- [Chapter 34: Supervision and Restart]()
-- [Chapter 35: Balancing and Federation]() *(server)*
+- [Chapter 32: Managing Context](chapter-32-context.md)
+- [Chapter 33: Agents as Actors](chapter-33-actors.md)
+- [Chapter 34: Supervision and Restart](chapter-34-supervision.md)
+- [Chapter 35: Balancing and Federation](chapter-35-balancing.md) *(server)*
 
 # Part V: Running as a service
 
-- [Chapter 36: Profiles]()
-- [Chapter 37: The Gateway]()
-- [Chapter 38: MCP Gateway Service]() *(server)*
-- [Chapter 39: Cron]()
-- [Chapter 40: Editor Integration]()
+- [Chapter 36: Profiles](chapter-36-profiles.md)
+- [Chapter 37: The Gateway](chapter-37-gateway.md)
+- [Chapter 38: MCP Gateway Service](chapter-38-service.md) *(server)*
+- [Chapter 39: Cron](chapter-39-cron.md)
+- [Chapter 40: Editor Integration](chapter-40-acp.md)
 
 # Part VI: Loosely coupled teams
 

@@ -131,6 +131,26 @@ jobs:
         run: bash .github/scripts/run_bench_section.sh 29 "chapter 29 fan-out" ch25-fan-out fan_out
       - name: Chapter 30 critic
         run: bash .github/scripts/run_bench_section.sh 30 "chapter 30 critic" ch26-critic critic
+      - name: Chapter 31 composition
+        run: bash .github/scripts/run_bench_section.sh 31 "chapter 31 composition" ch27-composition composition
+      - name: Chapter 32 context
+        run: bash .github/scripts/run_bench_section.sh 32 "chapter 32 context" ch28-context context
+      - name: Chapter 33 actors
+        run: bash .github/scripts/run_bench_section.sh 33 "chapter 33 actors" ch29-actors actors
+      - name: Chapter 34 supervision
+        run: bash .github/scripts/run_bench_section.sh 34 "chapter 34 supervision" ch30-supervision supervision
+      - name: Chapter 35 balancing
+        run: bash .github/scripts/run_bench_section.sh 35 "chapter 35 balancing" gw-balancing balancing
+      - name: Chapter 36 profiles
+        run: bash .github/scripts/run_bench_section.sh 36 "chapter 36 profiles" ch31-profiles profiles
+      - name: Chapter 37 gateway
+        run: bash .github/scripts/run_bench_section.sh 37 "chapter 37 gateway" ch32-gateway gateway
+      - name: Chapter 38 service
+        run: bash .github/scripts/run_bench_section.sh 38 "chapter 38 service" gw-service service
+      - name: Chapter 39 cron
+        run: bash .github/scripts/run_bench_section.sh 39 "chapter 39 cron" ch33-cron cron
+      - name: Chapter 40 acp
+        run: bash .github/scripts/run_bench_section.sh 40 "chapter 40 acp" ch34-acp acp
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"
