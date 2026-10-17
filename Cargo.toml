@@ -71,4 +71,5 @@ members = [
     "steps/ch22-pipeline",
     "steps/ch23-supervisor",
     "steps/ch24-handoffs",
+    "steps/ch25-fan-out",
 ]

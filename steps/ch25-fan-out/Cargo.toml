@@ -1,0 +1,24 @@
+[package]
+name = "ch25-fan-out"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+description = "Chapter 29: a queue of 100 and an aggregator that keeps summaries."
+
+[lib]
+name = "fanout"
+
+[[bin]]
+name = "ch25-fan-out"
+path = "src/main.rs"
+
+[dependencies]
+ch23-supervisor = { path = "../ch23-supervisor" }
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "fan_out"
+harness = false

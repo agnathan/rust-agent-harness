@@ -118,7 +118,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 | 27 | The Supervisor | `steps/ch23-supervisor` | the tool trait, used for agents | the default team: a manager, specialists called as tools and fanned out under a bound, one `Arc`-shared context object; the reflection loop learns from team runs off the hot path. Chapter 24's forked agent and prompt-cache parity stay out of that note: the team run only enqueues it. Chapter 26's live model per stage is not required here; specialists stay scripted |
 | 28 | Handoffs | `steps/ch24-handoffs` | a pointer to the current agent | routing and ownership transfer; handoff-as-tool; a max-handoff limit; context filtered before the next agent sees it |
 | 29 | Fan-out and Gather | `steps/ch25-fan-out` | a worker limit, an aggregator | the dedicated gather: the supervisor already runs specialists in parallel; this chapter adds the worker limit's tests and the aggregator. Chapter 27 defers the queue of 100 and the `task_index` order to here |
-| 30 | The Critic | `steps/ch26-critic` | the same tool trait | an evaluator agent, both as a tool and as a final gate. It takes one permit from the chapter 27 pool |
+| 30 | The Critic | `steps/ch26-critic` | the same tool trait | an evaluator agent, both as a tool and as a final gate. It takes one permit from the chapter 27 pool. Chapter 29's summary is what it reads; it does not do the work |
 | 31 | Composing Patterns | `steps/ch27-composition` | nesting the patterns above | a supervisor that fans out and uses a handoff only when ownership should move |
 
 **Guardrail notes**
@@ -130,7 +130,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 - **Chapter 26.** The next stage receives `Arc` context (measured 10.78 ns). Copying 100 messages measured 7.089 µs and is not the hand-off.
 - **Chapter 27.** Up to eight specialists at once, each with `Arc` context. Eight specialists that each slept 40 ms finished in 0.044 s in nextest. Scheduling eight with no sleep measured 98.54 µs. A reflection note measured 21.23 ns and does not run the reviewer.
 - **Chapter 28.** Filtering a 100-message transcript for a handoff < 1 ms (measured 2.740 µs).
-- **Chapter 29.** The worker limit holds. One hundred mock subagents can be scheduled without an unbounded queue.
+- **Chapter 29.** The worker limit holds. One hundred mock subagents can be scheduled without an unbounded queue (scheduling 100 measured 4.635 µs). The 101st is refused.
 - **Chapter 30.** The critic shares `Arc` context and takes one permit from the same bound.
 - **Chapter 31.** Nested fan-out cannot exceed the worker limit.
 
