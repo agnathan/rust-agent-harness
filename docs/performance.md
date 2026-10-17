@@ -59,7 +59,7 @@ Principles and the way to choose a team shape live next to this page: [team patt
 | 23 | Writing Skills | Security scan of one skill **< 5 ms** (measured **255.1 ns**). A write the model did not ask for is a background task (enqueue measured **21.15 ns**). |
 | 24 | The Reflection Loop | Spawning the reviewer adds **< 1 ms** to turn finalize (measured **60.01 ns**). Cancelling it when the user returns takes **< 50 ms** (measured **758.7 µs**). |
 | 25 | Curation | The curator never runs on the request path. Enqueue measured **29.05 ns**. |
-| 26 | The Sequential Pipeline | The next stage receives `Arc` context. No full transcript copy. |
+| 26 | The Sequential Pipeline | The next stage receives `Arc` context (measured **10.78 ns**). Copying 100 messages measured **7.089 µs** and is not the hand-off. |
 | 27 | The Supervisor | Up to **8** specialists at once, each with `Arc` context. Eight latency-mock specialists finish in about one specialist's time. |
 | 28 | Handoffs | Filtering a **100**-message transcript for a handoff **< 1 ms**. |
 | 29 | Fan-out and Gather | The worker limit holds. **100** mock subagents can be scheduled without an unbounded queue. |

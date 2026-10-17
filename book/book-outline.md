@@ -115,7 +115,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 | Ch | Title | Step | Rust, just in time | What the harness gains |
 |---|---|---|---|---|
 | 26 | The Sequential Pipeline | `steps/ch22-pipeline` | an agent as a value you can pass around | outline, draft, critique, revise; each stage is an agent run in order |
-| 27 | The Supervisor | `steps/ch23-supervisor` | the tool trait, used for agents | the default team: a manager, specialists called as tools and fanned out under a bound, one `Arc`-shared context object; the reflection loop learns from team runs off the hot path. Chapter 24's forked agent and prompt-cache parity stay out of that note: the team run only enqueues it |
+| 27 | The Supervisor | `steps/ch23-supervisor` | the tool trait, used for agents | the default team: a manager, specialists called as tools and fanned out under a bound, one `Arc`-shared context object; the reflection loop learns from team runs off the hot path. Chapter 24's forked agent and prompt-cache parity stay out of that note: the team run only enqueues it. Chapter 26's live model per stage is not required here; specialists stay scripted |
 | 28 | Handoffs | `steps/ch24-handoffs` | a pointer to the current agent | routing and ownership transfer; handoff-as-tool; a max-handoff limit; context filtered before the next agent sees it |
 | 29 | Fan-out and Gather | `steps/ch25-fan-out` | a worker limit, an aggregator | the dedicated gather: the supervisor already runs specialists in parallel; this chapter adds the worker limit's tests and the aggregator |
 | 30 | The Critic | `steps/ch26-critic` | the same tool trait | an evaluator agent, both as a tool and as a final gate |
@@ -127,7 +127,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 
 **Performance budget**
 
-- **Chapter 26.** The next stage receives `Arc` context. No full transcript copy.
+- **Chapter 26.** The next stage receives `Arc` context (measured 10.78 ns). Copying 100 messages measured 7.089 µs and is not the hand-off.
 - **Chapter 27.** Up to eight specialists at once, each with `Arc` context. Eight latency-mock specialists finish in about one specialist's time.
 - **Chapter 28.** Filtering a 100-message transcript for a handoff < 1 ms.
 - **Chapter 29.** The worker limit holds. One hundred mock subagents can be scheduled without an unbounded queue.
