@@ -122,25 +122,28 @@ impl ExternalAgent for RemotePeer {
     }
 }
 
+/// Mask every bearer residue and every `sk-` token. Other text is unchanged.
 pub fn redact_for_egress(text: &str) -> String {
-    let mut out = String::new();
-    let mut rest = text;
-    while let Some(index) = rest.find("Bearer ") {
-        out.push_str(&rest[..index]);
-        out.push_str("Bearer [redacted]");
-        rest = &rest[index + "Bearer ".len()..];
-        let skip = rest.find(char::is_whitespace).unwrap_or(rest.len());
-        rest = &rest[skip..];
-    }
-    if let Some(index) = rest.find("sk-") {
-        out.push_str(&rest[..index]);
-        out.push_str("[redacted]");
-        let skip = rest[index..]
-            .find(char::is_whitespace)
-            .unwrap_or(rest.len() - index);
-        out.push_str(&rest[index + skip..]);
-    } else {
-        out.push_str(rest);
+    let mut out = String::with_capacity(text.len());
+    let mut i = 0;
+    while i < text.len() {
+        if let Some(rest) = text[i..].strip_prefix("Bearer ") {
+            out.push_str("Bearer [redacted]");
+            let token_len = rest.find(char::is_whitespace).unwrap_or(rest.len());
+            i += "Bearer ".len() + token_len;
+            continue;
+        }
+        if text[i..].starts_with("sk-") {
+            out.push_str("[redacted]");
+            let token_len = text[i..]
+                .find(char::is_whitespace)
+                .unwrap_or(text.len() - i);
+            i += token_len;
+            continue;
+        }
+        let ch = text[i..].chars().next().expect("char");
+        out.push(ch);
+        i += ch.len_utf8();
     }
     out
 }

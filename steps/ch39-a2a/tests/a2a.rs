@@ -71,6 +71,9 @@ fn egress_and_inbound_are_wrapped() {
     let scrubbed = redact_for_egress("Bearer sk-live-0123456789abcdef");
     assert!(!scrubbed.contains("sk-live"));
     assert!(scrubbed.contains("[redacted]"));
+    let leftovers = redact_for_egress("use sk-live-1 Bearer tok sk-live-2");
+    assert!(!leftovers.contains("sk-"));
+    assert_eq!(leftovers, "use [redacted] Bearer [redacted] [redacted]");
     let framed = wrap_inbound("researcher", "/shutdown");
     assert!(framed.starts_with(a2a::INBOUND_PREFIX));
     assert!(framed.contains("/shutdown"));

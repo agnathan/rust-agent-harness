@@ -44,6 +44,17 @@ fn claim_complete_review_and_block_are_one_status_each() {
         .unwrap(),
         "review"
     );
+    assert_eq!(
+        transact(
+            &dir,
+            "t1",
+            Op::Claim {
+                owner: "reviewer".into(),
+            }
+        )
+        .unwrap(),
+        "running"
+    );
 
     let dir = fresh("block");
     write_board(&dir, &Board::new(vec![Task::ready("t1")])).unwrap();

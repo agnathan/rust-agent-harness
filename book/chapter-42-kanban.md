@@ -16,7 +16,7 @@ The step crate is `steps/ch36-kanban`. The book number is 42. The package is `ch
 >
 > The module docstring says concurrency is WAL plus `BEGIN IMMEDIATE` plus a compare-and-swap on `tasks.status` and `claim_lock`. SQLite serializes writers. One claimer wins. Losers see zero rows. `_claim_and_open_run` updates `ready` (or `review`) to `running` only when `claim_lock` is null, and returns none when `rowcount` is not 1. `complete_task` refuses an empty result and refuses to close a live claim without proof of ownership. `request_review` moves `running` to `review`. `block_task` moves a card to `blocked`. `DEFAULT_WORKFLOW` names the columns `triage`, `todo`, `scheduled`, `ready`, `running`, `blocked`, `review`, and `done`.
 >
-> **Adopted.** A claim is one transaction that loses when the status is no longer `ready`. Complete, review, and block require the owner. An empty result is refused. A parent that is not `done` blocks the claim. Pause refuses a new claim.
+> **Adopted.** A claim is one transaction that loses when the status is neither `ready` nor `review`. Complete, review, and block require the owner. An empty result is refused. A parent that is not `done` blocks the claim. Pause refuses a new claim.
 >
 > **Adapted.** The board is one JSON file. The transaction is a `create_new` lock file, not SQLite. The columns in this crate are `ready`, `running`, `review`, `blocked`, and `done`. The model runs after the lock file is removed.
 >
@@ -28,7 +28,7 @@ The step crate is `steps/ch36-kanban`. The book number is 42. The package is `ch
 
 `transact` creates `board.lock` with `create_new`, reads `board.json`, applies one op, writes the file back, and deletes the lock in a `Drop`. The handle is closed before the delete so Windows can unlink it.
 
-`Claim` requires status `ready`, no owner, parents `done`, and a board that is not paused. It sets `running` and the owner.
+`Claim` requires status `ready` or `review`, no owner, parents `done`, and a board that is not paused. It sets `running` and the owner.
 
 `Complete` requires `running`, the same owner, and a non-empty result. It sets `done` and clears the owner. Whitespace is `Empty`.
 
@@ -40,7 +40,7 @@ A second claim of a `running` card returns `Lost`. Two processes are the binary 
 
 ## Rust: create_new is the swap
 
-`OpenOptions::create_new(true)` fails with `AlreadyExists` when the lock file is already there. That is the compare-and-swap. The loser sleeps 100 microseconds and retries, up to 2,000 times, then returns `Busy`. The status check inside the lock is the second half: even after the lock is acquired, a card that is not `ready` is `Lost`. The JSON write happens before the function returns, so a reader that runs after `transact` sees the new status. The bench does not start a second process.
+`OpenOptions::create_new(true)` fails with `AlreadyExists` when the lock file is already there. That is the compare-and-swap. The loser sleeps 100 microseconds and retries, up to 2,000 times, then returns `Busy`. The status check inside the lock is the second half: even after the lock is acquired, a card that is neither `ready` nor `review` is `Lost`. The JSON write happens before the function returns, so a reader that runs after `transact` sees the new status. The bench does not start a second process.
 
 ## Tests
 
@@ -92,7 +92,7 @@ Complete from a process that is not the owner is `Lost`. Clearing the owner on r
 
 [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
-**One owner.** The status update matches `ready` and an empty owner, the same shape as `_claim_and_open_run` requiring `claim_lock IS NULL` and `rowcount == 1`. Two processes cannot both observe `running` under their own name.
+**One owner.** The status update matches `ready` or `review` and an empty owner, the same shape as `_claim_and_open_run` requiring `claim_lock IS NULL` and `rowcount == 1`. Two processes cannot both observe `running` under their own name.
 
 **Empty completion.** `complete_task` raises when the evidence is empty. This crate returns `Empty` and does not write `done`.
 

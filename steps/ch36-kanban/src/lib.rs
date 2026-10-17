@@ -151,7 +151,8 @@ fn apply(board: &mut Board, id: &str, op: &Op) -> Result<(), TxError> {
             if !parents_ok {
                 return Err(TxError::Parents);
             }
-            if task.status != "ready" || task.owner.is_some() {
+            // `review` is claimable: Review clears the owner so a reviewer can take it.
+            if (task.status != "ready" && task.status != "review") || task.owner.is_some() {
                 return Err(TxError::Lost);
             }
             task.status = "running".into();
