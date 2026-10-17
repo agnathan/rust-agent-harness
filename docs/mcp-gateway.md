@@ -68,9 +68,9 @@ These are the designs that sit in front of many MCP servers. The notes are from 
 - Hosted-room replica promotion is not the MCP replica design. MCP replicas are mostly stateless, routed by session id, with shared state in Redis or something like it.
 - OAuth 2.1 on the server follows the MCP spec (the resource server). Hermes's `mcp_oauth.py` is the client that will talk to it. This server does not implement the client flow.
 
-**In chapters 5, 7, and 8.** A 32/8 call gate, BM25 over native, plugin, and in-memory upstream tools, an `Arc` reload, `search_tools`, `set_task`, `describe`, a `list_changed` flag, paging, and schema/call/result tokens.
+**In chapters 5, 7, 8, and 15.** A 32/8 call gate, BM25 over native, plugin, and in-memory upstream tools, an `Arc` reload, `search_tools`, `set_task`, `describe`, a `list_changed` flag, paging, schema/call/result tokens, and per-tool permits, idempotent retries, a breaker, and 429/503 backpressure.
 
-**Deferred with the unwritten chapters.** A real embedder, live federation, composite tools, code mode, limits, breakers, hedging, backpressure, replica routing, health, quotas, audit logs, and OpenTelemetry. The server still does not bind a socket.
+**Deferred with the unwritten chapters.** A real embedder, live federation, composite tools, code mode, replica routing, health, quotas, audit logs, and OpenTelemetry. The server still does not bind a socket.
 
 ## Reading order
 

@@ -46,7 +46,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 | 12 | Hooks and Plugins | `steps/ch10-hooks` | traits as extension points | before/after tool hooks, an API-request hook, rewriting a tool result, and a swappable memory backend; a hook may enable a toolset, and the availability check stays in the registry from chapter 3 |
 | 13 | Sandboxed Execution | `steps/ch11-sandbox` | a child process, a snapshot | a code tool that runs outside the harness process, plus a file checkpoint and rewind |
 | 14 | When Things Fail | `steps/ch12-when-things-fail` | matching on errors | classify failures, retry, fall back; MCP crashes, timeouts, reconnects; a timeout releases its concurrency permit. Deferred from chapter 9: empty-response retries after tool calls (`agent/conversation_loop.py`), length continuation when a reply is cut off (`agent/turn_truncation.py`), and the repetition guard (`agent/repetition_guard.py`) |
-| 15 | Limits and Breakers *(server)* | `steps/gw-limits` | a permit and a breaker | per-tool concurrency limits and queues, timeouts, retries only when the tool is marked idempotent, circuit breakers, hedging, and 429/503 backpressure. Not written |
+| 15 | Limits and Breakers *(server)* | `steps/gw-limits` | a permit and a breaker | per-tool concurrency limits and queues, timeouts, retries only when the tool is marked idempotent, circuit breakers, hedging, and 429/503 backpressure |
 | 16 | Providers | `steps/ch13-providers` | another adapter behind the same trait | native Anthropic and Bedrock adapters beside the chapter 1 OpenRouter client; OpenRouter fallback and routing (a `models` array and provider preferences); key rotation on the pooled client; a cheaper side model for summaries |
 | 17 | Streaming | `steps/ch14-streaming` | folding a stream | server-sent deltas as the chapter 1 `Event` values, overlapped with safe tool execution, for each adapter |
 
@@ -72,13 +72,13 @@ The harness decides what enters the prompt. The server holds the catalog, search
 - **Chapter 8.** *(server)* On 2,000 synthetic tools, schema-token estimates were 45,104 (every tool), 153 (static), and 135 (dynamic), all three successful. The dynamic arm measured 5.687 ms. The every-tool arm measured 8.355 ms.
 - **Chapter 9.** Ten sections, crates `ch06-*`, section labels 6.1–6.10. Loop-iteration overhead < 1 ms excluding the model (measured 608.0 ns on the finished loop; 248.5 ns on the section 6.1 loop). Checking the cancellation token or the budget is < 1 µs (measured 11.92 ns). A cancelled call does not start the next model request. Eight 1 ms reads in one turn measured 2.421 ms. Name repair 188.8 ns, stall observe 100.0 ns, a budget notice 58.20 ns, truncation 3.174 µs, a steer append 47.12 ns, canonical arguments 771.0 ns. Re-running the saved eval set and the four stress evals on the mock stays inside the worker bound.
 - **Chapter 10.** A state transition measured 1.103 ns. A three-step scripted turn measured 7.803 ns.
-- **Chapter 11.** A skip decision is < 1 µs. Concurrent approvals serialize onto one prompt. Waiting on a human releases the tool permit.
-- **Chapter 12.** An empty before/after hook adds < 0.1 ms. An API-request hook does not copy the conversation. A memory-backend call that only records the turn enqueues in < 1 ms.
-- **Chapter 13.** A warm sandbox accepts a job in < 50 ms. Checkpoint and rewind of a 1,000-path manifest are each < 10 ms.
-- **Chapter 14.** A timeout cancels the in-flight call and releases its permit. Retries stay inside the bound. Empty-response retries, length continuation, and the repetition guard, deferred from chapter 9, land here.
-- **Chapter 15.** *(server)* A timeout releases that tool's permit. A retry runs only when the tool is marked idempotent. An open breaker stops new calls to that backend.
-- **Chapter 16.** Choosing the next native adapter, or the next OpenRouter route, adds < 1 ms, excluding the failed call. Rotation reuses the pooled client from chapter 1. A side-model summary does not run on the user turn unless that turn asked for it.
-- **Chapter 17.** Assembling a streamed reply from chapter 1 events adds < 1 ms versus a buffered reply, excluding model time.
+- **Chapter 11.** A skip decision is < 1 µs (measured 251.1 ns). Concurrent approvals serialize onto one prompt. Waiting on a human releases the tool permit.
+- **Chapter 12.** An empty before/after hook adds < 0.1 ms (measured 10.91 ns). An API-request hook does not copy the conversation (measured 2.834 ns on 1,000 messages). A memory-backend call that only records the turn enqueues in < 1 ms (measured 56.83 ns).
+- **Chapter 13.** A warm sandbox accepts a job in < 50 ms (measured 28.53 µs). Checkpoint and rewind of a 1,000-path manifest are each < 10 ms (measured 50.71 µs and 78.96 µs).
+- **Chapter 14.** A timeout cancels the in-flight call and releases its permit. Retries stay inside the bound. The empty-response budget check measured 0.9040 ns. The repetition guard on an 800-character loop measured 2.551 µs.
+- **Chapter 15.** *(server)* A timeout releases that tool's permit. A retry runs only when the tool is marked idempotent. An open breaker stops new calls to that backend (measured 30.09 ns). One execute-permit round trip measured 58.96 ns.
+- **Chapter 16.** Choosing the next native adapter, or the next OpenRouter route, adds < 1 ms, excluding the failed call (measured 6.239 ns). Rotation reuses the pooled client from chapter 1 (measured 3.447 ns). A side-model summary does not run on the user turn unless that turn asked for it.
+- **Chapter 17.** Assembling a streamed reply from chapter 1 events adds < 1 ms versus a buffered reply, excluding model time. Folding 100 plain chunks measured 2.832 µs. Joining the same chunks measured 730.1 ns.
 
 ### Part II: Learning
 
@@ -101,9 +101,9 @@ The harness decides what enters the prompt. The server holds the catalog, search
 
 **Performance budget**
 
-- **Chapter 18.** One local WAL append of a turn < 1 ms. FTS updates are a background task. The chapter re-runs the chapter 9 eval set.
-- **Chapter 19.** The frozen snapshot is built once and shared by `Arc`. A memory write does not rewrite the system prompt. Enqueue of a background write < 1 ms.
-- **Chapter 20.** Discover over 10,000 messages < 20 ms, and only when the model calls the tool.
+- **Chapter 18.** One local WAL append of a turn < 1 ms (measured 142.9 µs). FTS updates are a background task. The chapter re-runs the chapter 9 eval set.
+- **Chapter 19.** The frozen snapshot is built once and shared by `Arc`. A memory write does not rewrite the system prompt. Enqueue of a background write < 1 ms (measured 54.94 ns).
+- **Chapter 20.** Discover over 10,000 messages < 20 ms (measured 59.35 µs), and only when the model calls the tool.
 - **Chapter 21.** *(server)* Prediction stays off the request path except for the offered set. No measurement yet.
 - **Chapter 22.** Load and render 500 skills < 10 ms, once per session. The index is `Arc` and byte-stable.
 - **Chapter 23.** Security scan of one skill < 5 ms. A write the model did not ask for is a background task.
@@ -207,7 +207,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 - **Chapter 47.** *(server)* The load test and the three-arm token comparison. No measurement yet.
 - **Chapter 48.** Re-running the saved eval set, and one hundred mock trajectories, stays inside the worker bound. Appending one trajectory event is < 1 ms.
 
-Chapters 1 through 4, chapter 6, chapter 9, and chapter 10 have harness step crates. Chapter 6 is five sections under `steps/ch05-*`. Chapter 9 is ten sections under `steps/ch06-*`, and the section labels in that chapter stay 6.1–6.10 so they match the crates. Chapter 10 is `steps/ch07-turn-state`. Chapters 5, 7, and 8 have server step crates. `mcp-gateway` re-exports the chapter 8 session gateway. Chapter 6's 10,000-tool benches still use a synthetic catalog. A real `tools/list` enters that cache through `cards_from_listed`. Chapter 9 starts a saved eval set that later chapters re-run, and chapter 48 scores that set. Pull requests and pushes to `main` report the Criterion median, low, and high in the Benchmarks workflow and upload one JSON artifact per commit. A push to `main` appends the run to the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/) on `gh-pages`. The same job still updates the `dev/bench` chart when it can publish. There is no fail threshold. Later rows are the plan, not empty crates. The same list is `.github/chapters.json`, which CI uses. Draft rows in `book/SUMMARY.md` are the chapters that are not written yet. Planned harness steps keep the directory names already in the CI filters (`ch07-turn-state` is book chapter 10). Server steps use the `gw-` prefix.
+Chapters 1 through 4, chapter 6, and chapters 9 through 20 have harness step crates. Chapter 6 is five sections under `steps/ch05-*`. Chapter 9 is ten sections under `steps/ch06-*`, and the section labels in that chapter stay 6.1–6.10 so they match the crates. Chapter 10 is `steps/ch07-turn-state`. Chapters 5, 7, 8, and 15 have server step crates. `mcp-gateway` re-exports the chapter 15 limited gateway, which still opens an empty catalog. Chapter 6's 10,000-tool benches still use a synthetic catalog. A real `tools/list` enters that cache through `cards_from_listed`. Chapter 9 starts a saved eval set that later chapters re-run, and chapter 48 scores that set. Pull requests and pushes to `main` report the Criterion median, low, and high in the Benchmarks workflow and upload one JSON artifact per commit. A push to `main` appends the run to the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/) on `gh-pages`. The same job still updates the `dev/bench` chart when it can publish. There is no fail threshold. Later rows are the plan, not empty crates. The same list is `.github/chapters.json`, which CI uses. Draft rows in `book/SUMMARY.md` are the chapters that are not written yet. Planned harness steps keep the directory names already in the CI filters (`ch07-turn-state` is book chapter 10). Server steps use the `gw-` prefix.
 
 **Recurring sidebars:**
 

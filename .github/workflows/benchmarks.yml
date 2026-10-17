@@ -91,6 +91,26 @@ jobs:
         run: bash .github/scripts/run_bench_section.sh gw8 "chapter 8 toolset" gw-session-toolsets toolset
       - name: Chapter 10 turn state
         run: bash .github/scripts/run_bench_section.sh 10 "chapter 10 turn" ch07-turn-state transition
+      - name: Chapter 11 approvals
+        run: bash .github/scripts/run_bench_section.sh 11 "chapter 11 approvals" ch09-approvals decision
+      - name: Chapter 12 hooks
+        run: bash .github/scripts/run_bench_section.sh 12 "chapter 12 hooks" ch10-hooks hooks
+      - name: Chapter 13 sandbox
+        run: bash .github/scripts/run_bench_section.sh 13 "chapter 13 sandbox" ch11-sandbox sandbox
+      - name: Chapter 14 failures
+        run: bash .github/scripts/run_bench_section.sh 14 "chapter 14 failures" ch12-when-things-fail failures
+      - name: Chapter 15 limits
+        run: bash .github/scripts/run_bench_section.sh 15 "chapter 15 limits" gw-limits limits
+      - name: Chapter 16 providers
+        run: bash .github/scripts/run_bench_section.sh 16 "chapter 16 providers" ch13-providers providers
+      - name: Chapter 17 streaming
+        run: bash .github/scripts/run_bench_section.sh 17 "chapter 17 streaming" ch14-streaming streaming
+      - name: Chapter 18 sessions
+        run: bash .github/scripts/run_bench_section.sh 18 "chapter 18 sessions" ch15-sessions sessions
+      - name: Chapter 19 memory
+        run: bash .github/scripts/run_bench_section.sh 19 "chapter 19 memory" ch16-memory memory
+      - name: Chapter 20 recall
+        run: bash .github/scripts/run_bench_section.sh 20 "chapter 20 recall" ch17-recall recall
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"

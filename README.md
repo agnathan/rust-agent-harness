@@ -6,6 +6,8 @@ An AI agent harness in Rust, with a book on how to build it step by step.
 
 This is a hands-on course for people **new to Rust**. You learn the language by growing one harness, not by a tour of the language. The design is informed by Nous Research's [Hermes Agent](https://github.com/NousResearch/hermes-agent) (Python). Each chapter points at the Hermes files that solve the same problem.
 
+The chapter list, with links to the pages and step crates that exist, is [TABLE_OF_CONTENTS.md](TABLE_OF_CONTENTS.md). It follows [book/SUMMARY.md](book/SUMMARY.md).
+
 ## Layout
 
 ```
@@ -76,7 +78,7 @@ Chapters 0 through 48, in six parts. Eight chapters are a standalone MCP gateway
 | 12 | Hooks and Plugins | `steps/ch10-hooks` | before/after tool hooks, API-request hooks, rewritten tool results, a swappable memory backend |
 | 13 | Sandboxed Execution | `steps/ch11-sandbox` | a code tool outside the process, plus file checkpoint and rewind |
 | 14 | When Things Fail | `steps/ch12-when-things-fail` | classify failures, retry, fall back, including MCP crashes and reconnects |
-| 15 | Limits and Breakers *(server)* | `steps/gw-limits` | timeouts, idempotent-only retries, breakers, queues. Not written |
+| 15 | Limits and Breakers *(server)* | `steps/gw-limits` | timeouts, idempotent-only retries, breakers, queues |
 | 16 | Providers | `steps/ch13-providers` | native Anthropic and Bedrock adapters, OpenRouter fallback and routing, key rotation, a cheaper side model |
 | 17 | Streaming | `steps/ch14-streaming` | the same events, as tokens arrive |
 
@@ -149,6 +151,7 @@ The book builds with [mdBook](https://rust-lang.github.io/mdBook/): `mdbook buil
 - the same tests on Ubuntu and Windows for steps whose files changed ([paths-filter](https://github.com/dorny/paths-filter))
 - macOS for those steps, at most four jobs at a time, and one automatic retry when the first wave does not succeed. A gate fails the workflow if both waves miss
 - an mdBook build of `book/`
+- `python3 .github/scripts/check_toc_links.py`, which fails if a link in `TABLE_OF_CONTENTS.md` points at a missing file, or if a written chapter does not use the file named in `book/SUMMARY.md`
 
 [Benchmarks](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml) run on pull requests and on pushes to `main`. They execute the criterion benches for the written chapters on Ubuntu. Each section is recorded before the next one starts, and the job summary prints the Criterion median with its low and high. A push to `main` appends that run to [`data.json`](benchmarks/data.json) on the `gh-pages` branch. The [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/) charts it. A slow result does not fail the run.
 

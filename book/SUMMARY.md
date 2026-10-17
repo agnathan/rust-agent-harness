@@ -17,19 +17,19 @@ Server-track chapters are marked *(server)*. They are interleaved with the harne
 - [Chapter 8: Session Toolsets](chapter-08-session-toolsets.md) *(server)*
 - [Chapter 9: The Agent Loop](chapter-06-agent-loop.md)
 - [Chapter 10: The Turn State Machine](chapter-10-turn-state.md)
-- [Chapter 11: Approvals and Guardrails]()
-- [Chapter 12: Hooks and Plugins]()
-- [Chapter 13: Sandboxed Execution]()
-- [Chapter 14: When Things Fail]()
-- [Chapter 15: Limits and Breakers]() *(server)*
-- [Chapter 16: Providers]()
-- [Chapter 17: Streaming]()
+- [Chapter 11: Approvals and Guardrails](chapter-11-approvals.md)
+- [Chapter 12: Hooks and Plugins](chapter-12-hooks.md)
+- [Chapter 13: Sandboxed Execution](chapter-13-sandbox.md)
+- [Chapter 14: When Things Fail](chapter-14-when-things-fail.md)
+- [Chapter 15: Limits and Breakers](chapter-15-limits.md) *(server)*
+- [Chapter 16: Providers](chapter-16-providers.md)
+- [Chapter 17: Streaming](chapter-17-streaming.md)
 
 # Part II: Learning
 
-- [Chapter 18: Sessions on Disk]()
-- [Chapter 19: Memory Files]()
-- [Chapter 20: Recall]()
+- [Chapter 18: Sessions on Disk](chapter-18-sessions.md)
+- [Chapter 19: Memory Files](chapter-19-memory.md)
+- [Chapter 20: Recall](chapter-20-recall.md)
 - [Chapter 21: Learned Tools]() *(server)*
 - [Chapter 22: Using Skills]()
 - [Chapter 23: Writing Skills]()

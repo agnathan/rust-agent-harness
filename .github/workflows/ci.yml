@@ -185,6 +185,14 @@ jobs:
           EXPECT_MACOS: ${{ needs.changed-steps.outputs.steps != '[]' }}
         run: python3 .github/scripts/macos_retry.py gate
 
+  toc-links:
+    name: Table of contents links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check TABLE_OF_CONTENTS.md links
+        run: python3 .github/scripts/check_toc_links.py
+
   book:
     name: mdBook
     runs-on: ubuntu-latest
