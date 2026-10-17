@@ -13,7 +13,7 @@ Hermes Agent counts schema characters with 4 per token in tools/tool_search_cata
 Integer division makes an 18-byte schema 4 tokens. The arms are 128, 32, and 4. One hundred requests run as 13 waves. Fake replies. No key. oha is not run.
 
 4/
-The dynamic arm measured 142.8 ns. The load of 100 measured 21.03 µs. The demo prints "capstone: every=128 static=32 dynamic=4 success=1/1/1 load=100/100 p99_ns=1160". That p99 is the debug run, not the Criterion mean.
+The dynamic arm measured 245.5 ns. The load of 100 measured 30.05 µs. The demo prints "capstone: every=128 static=32 dynamic=4 success=1/1/1 load=100/100 p99_ns=1160". That p99 is the debug run, not the Criterion mean.
 
 [personal note]
 
@@ -31,7 +31,7 @@ The server track ends by comparing what a completed task costs in schema tokens.
 
 The load runs 100 of those dispatches in memory, eight at a time, so 100 requests are 13 waves. Nothing listens. oha is not invoked. The debug demo's `p99_ns` is a nearest-rank sample from that process, separate from the Criterion mean of the whole batch.
 
-The dynamic arm measured 142.8 ns. The load of 100 measured 21.03 µs. The demo does not need an API key.
+The dynamic arm measured 245.5 ns. The load of 100 measured 30.05 µs. The demo does not need an API key.
 
 [personal note: one takeaway from writing this chapter]
 

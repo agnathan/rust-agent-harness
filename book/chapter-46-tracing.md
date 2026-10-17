@@ -66,12 +66,12 @@ The binary records one turn and 101 notes. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `event_without_span` | 12.23 ns | the chapter 1 mock floor, no span | `FakeModel::complete("hello")` |
-| `span_per_event` | 126.5 ns | a span per event under 0.1 ms, and the chapter 1 budget under 1 ms with tracing on | `mock_turn` under `CountingSubscriber` |
+| `event_without_span` | 17.29 ns | the chapter 1 mock floor, no span | `FakeModel::complete("hello")` |
+| `span_per_event` | 115.7 ns | a span per event under 0.1 ms, and the chapter 1 budget under 1 ms with tracing on | `mock_turn` under `CountingSubscriber` |
 
 Both functions run inside one `with_default`, so the subscriber is installed before either sample. That install is not timed. `event_without_span` is `b.iter` of `complete` on `hello`. `span_per_event` is `b.iter` of `mock_turn`, which builds a three-name sink, enters the turn, request, response, and gateway spans, and calls `complete`. The sink allocation and the span enters are inside that sample. `research_team` is not called. No file is written. The prompt `hello` has no secret. The 100 agents are the test and the demo, not this sample.
 
-The printed slopes on this machine were `time: [12.172 ns 12.198 ns 12.226 ns]` and `time: [126.31 ns 126.56 ns 126.81 ns]`. The table is `mean.point_estimate` (12.2313 ns and 126.4649 ns). The span sample is 114 ns above the bare call, under 0.1 ms, and under the chapter 1 budget of 1 ms. The Benchmarks flags are `--warm-up-time 1 --measurement-time 2 --sample-size 10`. The workflow means on ubuntu-latest replace these numbers when that run is green.
+The table is `mean.point_estimate` from Benchmarks run [38991844877](https://github.com/agnathan/rust-agent-harness/actions/runs/38991844877) on ubuntu-latest (`bench-run.json`, 17.288160993245015 ns and 115.74375520610401 ns). The span sample is 98.46 ns above the bare call, under 0.1 ms, and under the chapter 1 budget of 1 ms. The flags are `--warm-up-time 1 --measurement-time 2 --sample-size 10`.
 
 ### Milestone demo
 
@@ -103,7 +103,7 @@ A subscriber that writes the prompt into a field would fail the secret test. `sa
 - **Turn.** `request`, `response`, `gateway`.
 - **Team.** 100 mock agents, then one more that sees the notes.
 - **Model.** `FakeModel` answers `ok` or `kept`. The demo needs no key.
-- **Time.** One bare call measured **12.23 ns**. The same call with spans measured **126.5 ns**.
+- **Time.** One bare call measured **17.29 ns**. The same call with spans measured **115.7 ns**.
 
 [personal note: five spans and none of them held the prompt]
 

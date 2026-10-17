@@ -13,7 +13,7 @@ Hermes Agent wakes work from a dispatcher and runs the hook after the lock. agen
 One hundred waiters, the matching key last. Fake replies. No key. Eight wakes, then idle.
 
 4/
-One claim measured 2.903 µs. The demo prints "blackboard: researcher ok".
+One claim measured 4.97 µs. The demo prints "blackboard: researcher ok".
 
 [personal note]
 
@@ -31,7 +31,7 @@ Shared state for a team is a board of facts and waiters. Hermes Agent does not h
 
 An injection phrase is refused at `post` and is not stored. A waiter stops after eight claims. The fact stays for someone else.
 
-One claim with 100 waiters measured 2.903 µs. The demo does not need an API key.
+One claim with 100 waiters measured 4.97 µs. The demo does not need an API key.
 
 [personal note: one takeaway from writing this chapter]
 

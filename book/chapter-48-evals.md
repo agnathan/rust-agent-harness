@@ -99,14 +99,14 @@ The binary scores the mock set. No key. Peak 1 is this run.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `append_event` | 56.7 ns | one trajectory append under 1 ms | one JSON push onto an empty vec |
-| `saved_set` | 37.3 ns | re-run the three saved tasks inside the worker bound | `run_saved` |
+| `append_event` | 81.3 ns | one trajectory append under 1 ms | one JSON push onto an empty vec |
+| `saved_set` | 51.1 ns | re-run the three saved tasks inside the worker bound | `run_saved` |
 
 `append_event` uses `iter_batched`. Setup is `Vec::new` and is not timed. The timed routine pushes one object for `echo-hello` and `black_box` of the vec. The format and the push are inside the sample. The red-team cases, the 100 threads, and `FakeModel` are not called.
 
 `saved_set` is `b.iter` of `run_saved`. The three mock replies and the 8-read count are inside the sample. No sleep. The stress set and the red-team set are not called. `FAIL_THRESHOLD` is not read.
 
-The printed slopes on this machine were `time: [56.200 ns 56.616 ns 57.385 ns]` and `time: [36.719 ns 36.954 ns 37.463 ns]`. The table is `mean.point_estimate` (56.6797 ns and 37.3004 ns), with the Benchmarks flags `--warm-up-time 1 --measurement-time 2 --sample-size 10`. The workflow means on ubuntu-latest replace these numbers when that run is green.
+The table is `mean.point_estimate` from Benchmarks run [38991844877](https://github.com/agnathan/rust-agent-harness/actions/runs/38991844877) on ubuntu-latest (`bench-run.json`, 81.28412576761825 ns and 51.092415722030836 ns). The flags are `--warm-up-time 1 --measurement-time 2 --sample-size 10`.
 
 ### Milestone demo
 
@@ -153,7 +153,7 @@ These cases are the extra set. The saved tasks from chapter 9 stay the regressio
 - **Trajectory.** One JSON object. One hundred mock runs, peak at most 8.
 - **Threshold.** `None`.
 - **Model.** `FakeModel`. The demo needs no key.
-- **Time.** One append measured **56.7 ns**. The saved set measured **37.3 ns**.
+- **Time.** One append measured **81.3 ns**. The saved set measured **51.1 ns**.
 
 [personal note: the last chapter still had a mock]
 

@@ -68,11 +68,11 @@ The binary calls one fake peer. No key. No socket.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `cancel_inflight` | 26.39 µs | cancel reaches an in-flight call under 50 ms | set the flag and join the waiter |
+| `cancel_inflight` | 48.33 µs | cancel reaches an in-flight call under 50 ms | set the flag and join the waiter |
 
 `cancel_inflight` uses `iter_batched`. The setup closure spawns a thread that runs `wait_cancel`, waits until that thread has stored `started`, and is not timed. The timed routine calls `cancel` and `join`. The flag store and the waiter's exit are inside the sample. `HttpPool`, `FakeModel`, `redact_for_egress`, and the permit pool are not called. There is no sleep and no socket.
 
-The printed slope on this machine was `time: [26.934 µs 29.246 µs 30.428 µs]`. The table is `mean.point_estimate` from `target/criterion/cancel_inflight/new/estimates.json` (26386.5476 ns), with the Benchmarks flags `--warm-up-time 1 --measurement-time 2 --sample-size 10`. The workflow mean on ubuntu-latest replaces this number when that run is green.
+The table is `mean.point_estimate` from Benchmarks run [38991844877](https://github.com/agnathan/rust-agent-harness/actions/runs/38991844877) on ubuntu-latest (`bench-run.json`, 48326.683465522576 ns). The flags are `--warm-up-time 1 --measurement-time 2 --sample-size 10`.
 
 ### Milestone demo
 
@@ -108,7 +108,7 @@ The ninth call is `Bound` only while eight permits are held. A test that release
 - **Pool.** Eight permits. The ninth is `Bound`.
 - **Cancel.** A flag. The bench joins the waiter.
 - **Model.** `FakeModel` answers `ok`. The demo needs no key and no socket.
-- **Time.** One cancel measured **26.39 µs**.
+- **Time.** One cancel measured **48.33 µs**.
 
 [personal note: a permit that came back after cancel]
 

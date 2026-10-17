@@ -70,14 +70,14 @@ That `p99_ns` is the debug binary's nearest-rank p99 of 100 in-memory dispatches
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `dynamic_tokens` | 142.8 ns | the dynamic arm's token count | `compare` and the dynamic token field |
-| `load_100` | 21.03 µs | the load of 100 dispatches | 100 compares, 13 waves, p99 computed inside |
+| `dynamic_tokens` | 245.5 ns | the dynamic arm's token count | `compare` and the dynamic token field |
+| `load_100` | 30.05 µs | the load of 100 dispatches | 100 compares, 13 waves, p99 computed inside |
 
 `dynamic_tokens` builds the catalog before the bench. The timed closure is `b.iter`. Inside: `compare` of `tool_07` with no deadline, then `black_box` of `arms[2].tokens`. Catalog construction is excluded. `load` is not called.
 
 `load_100` also builds the catalog before the bench. The timed closure calls `load` with 100 and `black_box` of the report. The 100 compares, the `FakeModel` calls, the wave counter, the sample vec, the sort, and the p99 index are inside the sample. No socket, no sleep, no oha. The deadline path is not taken. All 100 succeed.
 
-The printed slopes on this machine were `time: [142.91 ns 143.49 ns 144.09 ns]` and `time: [20.974 µs 21.014 µs 21.074 µs]`. The table is `mean.point_estimate` (142.8498 ns and 21030.1359 ns). One hundred requests in 21.03 µs is about 4.76 million a second in this release bench, which is an in-memory loop, not a server. The Benchmarks flags are `--warm-up-time 1 --measurement-time 2 --sample-size 10`. The workflow means on ubuntu-latest replace these numbers when that run is green.
+The table is `mean.point_estimate` from Benchmarks run [38991844877](https://github.com/agnathan/rust-agent-harness/actions/runs/38991844877) on ubuntu-latest (`bench-run.json`, 245.5200445938794 ns and 30047.278824845125 ns). One hundred requests in 30.05 µs is about 3.33 million a second in that run, which is an in-memory loop, not a server. The flags are `--warm-up-time 1 --measurement-time 2 --sample-size 10`.
 
 ### Milestone demo
 
@@ -109,7 +109,7 @@ The static set is the first 8 names. `tool_07` is in it. `tool_31` is not. A sta
 - **Load.** 100 in-memory dispatches, 13 waves of at most 8.
 - **p99.** Nearest rank. The debug demo on this run printed **1160 ns**.
 - **Model.** `FakeModel` answers `tool_07`. The demo needs no key and no socket.
-- **Time.** The dynamic arm measured **142.8 ns**. The load of 100 measured **21.03 µs**.
+- **Time.** The dynamic arm measured **245.5 ns**. The load of 100 measured **30.05 µs**.
 
 [personal note: the same task, three token counts]
 

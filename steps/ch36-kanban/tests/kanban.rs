@@ -214,11 +214,21 @@ fn two_processes_cannot_hold_the_same_task() {
             .output()
             .unwrap()
     });
-    let a = String::from_utf8(first.join().unwrap().stdout).unwrap();
-    let b = String::from_utf8(second.join().unwrap().stdout).unwrap();
+    let out_a = first.join().unwrap();
+    let out_b = second.join().unwrap();
+    let a = String::from_utf8(out_a.stdout).unwrap();
+    let b = String::from_utf8(out_b.stdout).unwrap();
+    let err_a = String::from_utf8_lossy(&out_a.stderr);
+    let err_b = String::from_utf8_lossy(&out_b.stderr);
     let lines = [a.trim(), b.trim()];
-    assert!(lines.contains(&"claimed"), "{lines:?}");
-    assert!(lines.contains(&"lost"), "{lines:?}");
+    assert!(
+        lines.contains(&"claimed"),
+        "stdout {lines:?} stderr [{err_a:?}, {err_b:?}]"
+    );
+    assert!(
+        lines.contains(&"lost"),
+        "stdout {lines:?} stderr [{err_a:?}, {err_b:?}]"
+    );
     assert_eq!(task_status(&dir, "t1").unwrap().as_deref(), Some("running"));
 }
 

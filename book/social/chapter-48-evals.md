@@ -13,7 +13,7 @@ Hermes Agent appends a trajectory as JSONL and keeps a separate file for failure
 One hundred mock trajectories share a pool of 8. The ninth permit is refused. A fast run can show a peak of 1 and still be inside that bound. No key.
 
 4/
-One trajectory append measured 56.7 ns. The saved set measured 37.3 ns. The demo ends with "trajectories: 100 peak: 1" and "threshold: None".
+One trajectory append measured 81.3 ns. The saved set measured 51.1 ns. The demo ends with "trajectories: 100 peak: 1" and "threshold: None".
 
 [personal note]
 
@@ -31,7 +31,7 @@ Chapter 9 saved three tasks and four stress names. This chapter runs those names
 
 A trajectory line is one JSON object pushed onto a vec. One hundred mock trajectories take permits from a pool of 8. Filling that pool makes the ninth permit fail. The peak observed in the demo can be 1, because the mock returns before the next thread is scheduled. The test checks that the peak stays between 1 and 8 and that the ninth permit is refused.
 
-One append measured 56.7 ns. The saved set measured 37.3 ns. The demo does not need an API key.
+One append measured 81.3 ns. The saved set measured 51.1 ns. The demo does not need an API key.
 
 [personal note: one takeaway from writing this chapter]
 

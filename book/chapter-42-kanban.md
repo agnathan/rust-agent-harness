@@ -68,11 +68,11 @@ The binary writes a temp board, claims it, and completes it. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `claim_transaction` | 81.55 µs | one claim transaction under 5 ms | lock file, read, CAS, write |
+| `claim_transaction` | 321.89 µs | one claim transaction under 5 ms | lock file, read, CAS, write |
 
 `claim_transaction` uses `iter_batched`. The setup closure makes a fresh temp directory, writes one `ready` task `t1`, and is not timed. The timed routine calls `transact` with `Op::Claim` and owner `worker`, then deletes the directory. The `create_new`, the JSON read, the status swap, and the JSON write are inside the sample. The directory creation and the second process are not. `FakeModel` is not called. Complete, review, and block are the tests, not this sample.
 
-The printed slope on this machine was `time: [80.600 µs 81.719 µs 82.635 µs]`. The table is `mean.point_estimate` from `target/criterion/claim_transaction/new/estimates.json` (81548.6431 ns), with the Benchmarks flags `--warm-up-time 1 --measurement-time 2 --sample-size 10`. The workflow mean on ubuntu-latest replaces this number when that run is green.
+The table is `mean.point_estimate` from Benchmarks run [38991844877](https://github.com/agnathan/rust-agent-harness/actions/runs/38991844877) on ubuntu-latest (`bench-run.json`, 321890.572846589 ns). The flags are `--warm-up-time 1 --measurement-time 2 --sample-size 10`.
 
 ### Milestone demo
 
@@ -83,6 +83,8 @@ The `cargo run` above. The line is `kanban: done`.
 The bench is one uncontended claim. A number that includes two processes and the 100 microsecond retry is the race test.
 
 The lock file is removed in `Drop`. A crash between `create_new` and that drop leaves `board.lock` behind, and the next caller spins until `Busy`. This crate does not reclaim a stale lock. Hermes reclaims an expired `claim_lock`. That reclaim is not here.
+
+On Windows, the delete can show up as `PermissionDenied` rather than `AlreadyExists`. `acquire` retries that error for the same 2,000 attempts. An immediate `Io` there was an empty stdout in the two-process test.
 
 Complete from a process that is not the owner is `Lost`. Clearing the owner on review is what lets a reviewer claim next. Leaving the owner set would stuck the card.
 
@@ -106,7 +108,7 @@ Complete from a process that is not the owner is `Lost`. Clearing the owner on r
 - **Verbs.** Claim, complete, review, block. Each is one transaction.
 - **Race.** Two processes. One `claimed`, one `lost`.
 - **Model.** `FakeModel` runs after the lock file is gone. The demo needs no key.
-- **Time.** One claim measured **81.55 µs**.
+- **Time.** One claim measured **321.89 µs**.
 
 [personal note: the lock file that had to disappear before the reply]
 

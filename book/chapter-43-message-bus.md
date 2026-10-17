@@ -68,11 +68,11 @@ The binary publishes one envelope. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `publish_to_agents` | 27.11 µs | one small publish under 1 ms at 100 agents | `try_send` of `ping` to 100 empty channels |
+| `publish_to_agents` | 45.75 µs | one small publish under 1 ms at 100 agents | `try_send` of `ping` to 100 empty channels |
 
 `publish_to_agents` uses `iter_batched`. The setup closure builds a `Bus`, subscribes `a0` through `a99` on topic `work`, and keeps the 100 receivers. That setup is not timed. The timed routine calls `publish` with topic `work` and body `ping`, then `black_box` of the result and the receivers. The 100 clones and the 100 `try_send` calls are inside the sample. The channels are empty, so the result is `Delivered(100)`. `redact_for_egress`, `publish_bot`, and `FakeModel` are not called. The `Full` path is not taken.
 
-The printed slope on this machine was `time: [25.443 µs 26.250 µs 27.242 µs]`. The table is `mean.point_estimate` from `target/criterion/publish_to_agents/new/estimates.json` (27111.6697 ns), with the Benchmarks flags `--warm-up-time 1 --measurement-time 2 --sample-size 10`. The workflow mean on ubuntu-latest replaces this number when that run is green.
+The table is `mean.point_estimate` from Benchmarks run [38991844877](https://github.com/agnathan/rust-agent-harness/actions/runs/38991844877) on ubuntu-latest (`bench-run.json`, 45745.398594771235 ns). The flags are `--warm-up-time 1 --measurement-time 2 --sample-size 10`.
 
 ### Milestone demo
 
@@ -104,7 +104,7 @@ The receivers are part of the batched value so they are not dropped before `try_
 - **Bound.** 64. The next one is `Slow`.
 - **Bots.** The 21st `publish_bot` is `Cooldown`.
 - **Model.** `FakeModel` answers `ok`. The demo needs no key.
-- **Time.** One publish to 100 agents measured **27.11 µs**.
+- **Time.** One publish to 100 agents measured **45.75 µs**.
 
 [personal note: a channel that stayed at 64]
 

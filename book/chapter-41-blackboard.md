@@ -66,11 +66,11 @@ The binary posts one fact and claims it. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `claim_with_waiters` | 2.903 µs | a claim under 1 ms with 100 waiters | lock, scan, remove the fact |
+| `claim_with_waiters` | 4.97 µs | a claim under 1 ms with 100 waiters | lock, scan, remove the fact |
 
 `claim_with_waiters` uses `iter_batched`. The setup closure builds 100 `Waiter` values, posts `notes` under the key `ready` on the last waiter, wraps the board in a `Mutex`, and is not timed. The timed routine calls `tick` with that mutex passed through `black_box`, then `black_box` of the `Claim`. The lock, the scan of 100 waiters, the wake increment, and the removal of the fact are inside the sample. The matching waiter is last, so the scan walks the other 99. Building the waiters is excluded. `FakeModel`, `answer`, `pause`, and the `Condvar` are not called. The 100 waiters are records, not 100 threads.
 
-The printed slope on this machine was `time: [3.0370 µs 3.0888 µs 3.1149 µs]`. The table is `mean.point_estimate` from `target/criterion/claim_with_waiters/new/estimates.json` (2903.1087 ns), with the Benchmarks flags `--warm-up-time 1 --measurement-time 2 --sample-size 10`. The workflow mean on ubuntu-latest replaces this number when that run is green.
+The table is `mean.point_estimate` from Benchmarks run [38991844877](https://github.com/agnathan/rust-agent-harness/actions/runs/38991844877) on ubuntu-latest (`bench-run.json`, 4973.257594361747 ns). The flags are `--warm-up-time 1 --measurement-time 2 --sample-size 10`.
 
 ### Milestone demo
 
@@ -104,7 +104,7 @@ Eight wakes is the cap. The ninth post still stores the fact. `tick` leaves it t
 - **Scheduler.** `tick` claims one waiter and drops the guard.
 - **Model.** `FakeModel` runs after the claim. The demo needs no key.
 - **Pause.** New claims stop. A claim already taken does not.
-- **Time.** One claim with 100 waiters measured **2.903 µs**.
+- **Time.** One claim with 100 waiters measured **4.97 µs**.
 
 [personal note: a guard that ended in the right function]
 

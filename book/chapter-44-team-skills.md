@@ -66,14 +66,14 @@ The binary proposes one skill and the librarian accepts it. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `skill_propose` | 51.2 ns | enqueue a proposal under 1 ms | one push on an empty deque |
-| `index_swap` | 198.2 ns | an `Arc` swap, off the worker path | `mem::replace` of the index pointer |
+| `skill_propose` | 73.7 ns | enqueue a proposal under 1 ms | one push on an empty deque |
+| `index_swap` | 199.9 ns | an `Arc` swap, off the worker path | `mem::replace` of the index pointer |
 
 `skill_propose` builds the `Proposal` before the bench. `iter_batched` setup is `VecDeque::new` and is not timed. The timed routine calls `skill_propose` and `black_box` of the result. The push is inside the sample. The librarian, the guard, and `FakeModel` are not called. The `Full` path is not taken.
 
 `index_swap` setup builds a `Library` at version 1 and a new `Arc<Index>` at version 2. That is not timed. The timed routine calls `swap_index` and `black_box` of the previous `Arc`. The lock and the pointer replace are inside the sample. Cloning the skill list and rendering `TEAM.md` are not.
 
-The printed slopes on this machine were `time: [51.033 ns 51.122 ns 51.230 ns]` and `time: [199.23 ns 199.73 ns 200.29 ns]`. The table is `mean.point_estimate` from `estimates.json` (51.1962 ns and 198.1789 ns), with the Benchmarks flags `--warm-up-time 1 --measurement-time 2 --sample-size 10`. The workflow means on ubuntu-latest replace these numbers when that run is green.
+The table is `mean.point_estimate` from Benchmarks run [38991844877](https://github.com/agnathan/rust-agent-harness/actions/runs/38991844877) on ubuntu-latest (`bench-run.json`, 73.69873963432929 ns and 199.94539724084487 ns). The flags are `--warm-up-time 1 --measurement-time 2 --sample-size 10`.
 
 ### Milestone demo
 
@@ -106,7 +106,7 @@ The worker must `load` before the swap if the test wants to show the old version
 - **Index.** An `Arc` replace. Old readers keep the old version.
 - **Team.** `TEAM.md` lists bundled and team skills. `skills.updated` follows the swap.
 - **Model.** `FakeModel` answers `ok`. The demo needs no key.
-- **Time.** One enqueue measured **51.2 ns**. One swap measured **198.2 ns**.
+- **Time.** One enqueue measured **73.7 ns**. One swap measured **199.9 ns**.
 
 [personal note: a version number the old Arc did not see]
 

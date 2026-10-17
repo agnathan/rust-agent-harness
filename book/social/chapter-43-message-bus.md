@@ -13,7 +13,7 @@ Hermes Agent claims unseen events under a lock, then fires the hook outside that
 This bus is sync_channel and try_send. Ordinary publish does not count toward the cooldown. Bearer and sk- are masked in submit. Fake replies. No key.
 
 4/
-One publish to 100 agents measured 27.11 µs. The demo prints "bus: ping ok".
+One publish to 100 agents measured 45.75 µs. The demo prints "bus: ping ok".
 
 [personal note]
 
@@ -31,7 +31,7 @@ Peers need a way to hand a small envelope to each other without waiting on the s
 
 `submit` masks `Bearer` and `sk-` before the body is queued. A different topic delivers zero.
 
-One publish of `ping` to 100 agents measured 27.11 µs. The demo does not need an API key.
+One publish of `ping` to 100 agents measured 45.75 µs. The demo does not need an API key.
 
 [personal note: one takeaway from writing this chapter]
 

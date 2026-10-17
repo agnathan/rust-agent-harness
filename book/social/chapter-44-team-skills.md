@@ -13,7 +13,7 @@ Hermes Agent syncs bundled skills into a library and hashes a manifest. tools/sk
 This crate rejects an empty body and a community body that contains rm -rf / or the injection phrase, even with force. TEAM.md is rendered from the new index. Fake replies. No key.
 
 4/
-One skill_propose measured 51.2 ns. One index swap measured 198.2 ns. The demo prints "skills: v2 3".
+One skill_propose measured 73.7 ns. One index swap measured 199.9 ns. The demo prints "skills: v2 3".
 
 [personal note]
 
@@ -31,7 +31,7 @@ A team that shares skills still needs one writer. Hermes Agent installs bundled 
 
 A community proposal whose body is `rm -rf /` or `ignore previous instructions` is rejected with force set. A builtin dangerous body is allowed. The rendered team file is a `# TEAM` list.
 
-One enqueue measured 51.2 ns. One index swap measured 198.2 ns. The demo does not need an API key.
+One enqueue measured 73.7 ns. One index swap measured 199.9 ns. The demo does not need an API key.
 
 [personal note: one takeaway from writing this chapter]
 

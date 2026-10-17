@@ -13,7 +13,7 @@ Hermes Agent emits monitoring events without blocking and without raising. Gatew
 This crate installs a counting subscriber. One hundred mock researchers append notes into one memory. Fake replies. No key. No exporter.
 
 4/
-A bare complete measured 12.23 ns. One spanned turn measured 126.5 ns. The demo prints "trace: ok events=3 spans=5 team=101".
+A bare complete measured 17.29 ns. One spanned turn measured 115.7 ns. The demo prints "trace: ok events=3 spans=5 team=101".
 
 [personal note]
 
@@ -31,7 +31,7 @@ A trace that copies the prompt into a span is a leak, and a trace that waits on 
 
 The same subscriber wraps a research team. One hundred mock agents each append one note, and a second call sees the earlier notes. No socket and no exporter.
 
-A bare complete measured 12.23 ns. The spanned turn measured 126.5 ns. The demo does not need an API key.
+A bare complete measured 17.29 ns. The spanned turn measured 115.7 ns. The demo does not need an API key.
 
 [personal note: one takeaway from writing this chapter]
 

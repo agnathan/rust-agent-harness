@@ -113,7 +113,12 @@ fn acquire(path: &Path) -> Result<Unlock, TxError> {
                     path: path.to_path_buf(),
                 });
             }
-            Err(error) if error.kind() == ErrorKind::AlreadyExists => {
+            Err(error)
+                if error.kind() == ErrorKind::AlreadyExists
+                    || error.kind() == ErrorKind::PermissionDenied =>
+            {
+                // Windows can report a sharing violation while the other
+                // process deletes the lock file. That is a retry, not a loss.
                 thread::sleep(Duration::from_micros(100));
             }
             Err(_) => return Err(TxError::Io),

@@ -13,7 +13,7 @@ Hermes Agent says to use delegation or kanban on the same machine. plugins/platf
 This crate records URLs in an HttpPool and does not open a socket. The card name is harness, skill research. Fake replies. No key.
 
 4/
-Cancel of an in-flight waiter measured 26.39 µs. The demo prints "a2a: ok".
+Cancel of an in-flight waiter measured 48.33 µs. The demo prints "a2a: ok".
 
 [personal note]
 
@@ -31,7 +31,7 @@ MCP already covers tools we expose. Agent-to-agent is for a peer in another proc
 
 There is no socket. The agent card name is `harness` and the skill is `research`.
 
-Cancel of a waiting thread measured 26.39 µs. The demo does not need an API key.
+Cancel of a waiting thread measured 48.33 µs. The demo does not need an API key.
 
 [personal note: one takeaway from writing this chapter]
 

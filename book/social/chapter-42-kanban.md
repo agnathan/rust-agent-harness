@@ -13,7 +13,7 @@ Hermes Agent keeps the card in SQLite. hermes_cli/kanban_db.py claims with BEGIN
 This crate uses create_new on board.lock, then writes the JSON back. Two processes: one claimed, one lost. Fake replies. No key.
 
 4/
-One claim transaction measured 81.55 µs. The demo prints "kanban: done".
+One claim transaction measured 321.89 µs. The demo prints "kanban: done".
 
 [personal note]
 
@@ -31,7 +31,7 @@ A blackboard in one process disappears on a crash, and a second process cannot s
 
 An empty result stays off `done`. A parent that is not `done` blocks the claim. A paused board refuses `Claim` and still allows complete of a card already running. Two processes spawned together produce one `claimed` and one `lost`.
 
-One claim transaction measured 81.55 µs. The demo does not need an API key.
+One claim transaction measured 321.89 µs. The demo does not need an API key.
 
 [personal note: one takeaway from writing this chapter]
 
