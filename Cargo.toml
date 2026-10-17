@@ -78,4 +78,5 @@ members = [
     "steps/ch29-actors",
     "steps/ch30-supervision",
     "steps/gw-balancing",
+    "steps/ch31-profiles",
 ]

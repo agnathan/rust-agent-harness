@@ -173,7 +173,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 
 **Performance budget**
 
-- **Chapter 36.** Resolving a profile and its secrets is < 1 ms. Secrets are not copied into the prompt.
+- **Chapter 36.** Resolving a profile and its secrets is < 1 ms (one resolve measured 59.49 ns). Secrets are not copied into the prompt.
 - **Chapter 37.** Enqueue of a platform message is < 1 ms. A steer is a push onto a bounded queue. Streaming updates one message.
 - **Chapter 38.** *(server)* Throughput and p99 under load (oha or something like it). Killing one replica fails over by session id. Drain finishes the calls already accepted. No measurement yet.
 - **Chapter 39.** A crash retries a claimed job at most once. Scanning 1,000 due jobs is < 10 ms. The watchdog and a chained job stay off the request path.

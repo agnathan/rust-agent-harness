@@ -2239,6 +2239,20 @@
       "fake": "The backends are structs in this process. No upstream MCP server is contacted. FakeModel is not constructed. PowerOfTwo is not this sample.",
       "source": "steps/gw-balancing/benches/balancing.rs",
       "reading": "Smaller is better. A few nanoseconds is four atomic loads and a compare. Microseconds would mean the sample started a thread or a connect. Milliseconds would mean a sleep or a socket."
+    },
+    {
+      "id": "36/resolve_profile",
+      "section": "chapter 36 profiles",
+      "chapter": "Chapter 36 Profiles",
+      "function": "resolve_profile",
+      "summary": "Resolve one scoped profile and whether its secret is present.",
+      "what": "resolve of profile writer and secret API_KEY. Multiplex is on and the scope is writer. The persona Arc is cloned. has_secret is true. The secret string is not stored on the result.",
+      "why": "A turn has to know which persona and which secret it is using, and the secret must not be copied into the prompt. This is that lookup. Building the maps is not this sample.",
+      "timing": "Before the bench, Profiles::new(true) adds the writer profile (persona you write, secret API_KEY sk-writer) and set_scope(Some(writer)). The timed closure is b.iter. Inside: resolve with writer and API_KEY passed through black_box, then black_box of Resolved. The HashMap lookup, the secret clone inside get_secret, and the Arc clone of the persona are inside the sample. Profile construction is excluded. FakeModel is not constructed. The UnscopedSecretError path is not taken.",
+      "inputs": "One profile, name writer. Persona you write, 9 characters. One secret, name API_KEY, value sk-writer. Multiplex true. Scope writer.",
+      "fake": "The secret is a string in the profile map. No environment variable is read. FakeModel is not constructed. No file is loaded.",
+      "source": "steps/ch31-profiles/benches/profiles.rs",
+      "reading": "Smaller is better. Tens of nanoseconds is two map lookups and an Arc clone. A millisecond would still meet the budget and would mean the sample started copying a large prompt or reading a file."
     }
   ]
 }
