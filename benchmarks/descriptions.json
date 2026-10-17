@@ -2071,6 +2071,34 @@
       "fake": "The job is a string. No clock is read. Age is not computed. The scripted model is not constructed.",
       "source": "steps/ch21-curation/benches/curation.rs",
       "reading": "Smaller is better. Tens of nanoseconds is a mutex and a short string. Milliseconds would mean the sample started the snapshot or the archive move."
+    },
+    {
+      "id": "26/arc_pass",
+      "section": "chapter 26 pipeline",
+      "chapter": "Chapter 26 The Sequential Pipeline",
+      "function": "arc_pass",
+      "summary": "Hand the next stage the same context pointer.",
+      "what": "hand_off of an Arc clone. Arc::ptr_eq is true. The 100 messages stay in one allocation.",
+      "why": "The next stage receives Arc context. The hand-off must not clone the transcript.",
+      "timing": "Before the bench, the harness builds a Context with 100 messages. The timed closure is b.iter. Inside: Arc::clone passed through black_box into hand_off, then Arc::ptr_eq passed through black_box. No stage note is formatted. No model is called. The messages vec is not cloned.",
+      "inputs": "100 messages. Role user. Text is message N about the rename procedure, N from 0 to 99.",
+      "fake": "The messages are generated in the bench. No model wrote them. hand_off returns the same Arc.",
+      "source": "steps/ch22-pipeline/benches/pipeline.rs",
+      "reading": "Smaller is better. Tens of nanoseconds is a pointer clone. Microseconds would mean the sample started cloning the message vec."
+    },
+    {
+      "id": "26/copy_transcript",
+      "section": "chapter 26 pipeline",
+      "chapter": "Chapter 26 The Sequential Pipeline",
+      "function": "copy_transcript",
+      "summary": "Clone 100 messages, the copy the pipeline does not do.",
+      "what": "Vec::clone of the message vec. The pipeline's hand_off does not call this.",
+      "why": "The budget is no full transcript copy. This number is that copy, so a later change that clones messages on the hand-off is comparable.",
+      "timing": "The same 100 messages are built before the bench. The timed closure is b.iter. Inside: clone of messages passed through black_box, then black_box of the cloned vec. No Arc is cloned. No model is called.",
+      "inputs": "100 messages. Role user. Text is message N about the rename procedure.",
+      "fake": "The messages are generated in the bench. The function is not on the pipeline path.",
+      "source": "steps/ch22-pipeline/benches/pipeline.rs",
+      "reading": "Smaller is better for a copy, and this copy should stay off the hand-off. A hand-off number near this one means the sample started cloning messages."
     }
   ]
 }

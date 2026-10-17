@@ -68,4 +68,5 @@ members = [
     "steps/ch19-skill-writing",
     "steps/ch20-reflection",
     "steps/ch21-curation",
+    "steps/ch22-pipeline",
 ]
