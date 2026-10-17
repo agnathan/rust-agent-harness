@@ -122,7 +122,7 @@ Chapters 0 through 48, in six parts. Eight chapters are a standalone MCP gateway
 | 36 | Profiles | `steps/ch31-profiles` | several personas, each with its own secrets, kept out of the prompt |
 | 37 | The Gateway | `steps/ch32-gateway` | allowlist, pairing, and platform messages into the session inbox. Not the MCP server |
 | 38 | MCP Gateway Service *(server)* | `steps/gw-service` | session routing, quotas, a drain, sampling and an OSV check. No socket |
-| 39 | Cron | `steps/ch33-cron` | at-most-once runs across crashes, catch-up, a watchdog, chaining onto the same inbox |
+| 39 | Cron | `steps/ch33-cron` | one claim, one crash retry, a prompt scan, the lifecycle guard |
 | 40 | Editor Integration | `steps/ch34-acp` | ACP as another client of the session inbox |
 
 **Part VI: Loosely coupled teams**

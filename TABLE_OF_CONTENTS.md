@@ -57,7 +57,7 @@ Written chapters link to `book/chapter-….md`. A chapter that has no page yet i
 - [Chapter 36: Profiles](book/chapter-36-profiles.md) — [`steps/ch31-profiles`](steps/ch31-profiles)
 - [Chapter 37: The Gateway](book/chapter-37-gateway.md) — [`steps/ch32-gateway`](steps/ch32-gateway)
 - [Chapter 38: MCP Gateway Service](book/chapter-38-service.md) *(server)* — [`steps/gw-service`](steps/gw-service)
-- Chapter 39: Cron (not yet written)
+- [Chapter 39: Cron](book/chapter-39-cron.md) — [`steps/ch33-cron`](steps/ch33-cron)
 - Chapter 40: Editor Integration (not yet written)
 
 ## Part VI: Loosely coupled teams

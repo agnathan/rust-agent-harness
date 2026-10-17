@@ -2281,6 +2281,20 @@
       "fake": "Replicas are strings. No process is killed. The bearer token, the quota, and the malware list are not consulted. oha is not run.",
       "source": "steps/gw-service/benches/service.rs",
       "reading": "Smaller is better. Around 10 nanoseconds is one HashMap get. Microseconds would mean the sample started placing sessions again. Milliseconds would mean a socket or a drain walk."
+    },
+    {
+      "id": "39/scan_thousand",
+      "section": "chapter 39 cron",
+      "chapter": "Chapter 39 Cron",
+      "function": "scan_thousand",
+      "summary": "Index 1,000 due, unclaimed jobs.",
+      "what": "scan_due at timestamp 0. Every job is due at 0, unclaimed, and not blocked. The result is 1,000 indexes.",
+      "why": "Finding the due set has to stay under 10 milliseconds, and it must not run the watchdog or chain the next job. The prompt scan is not this sample.",
+      "timing": "Before the bench, Store::new and 1,000 Job::new calls build ids j0 through j999, each due at 0 with the prompt summarize. The timed closure is b.iter. Inside: scan_due with timestamp 0 passed through black_box, then black_box of the Vec of indexes. The walk and the result allocation are inside the sample. Building the jobs is excluded. scan_prompt, check_lifecycle, watchdog, chain, and FakeModel are not called. No sleep runs.",
+      "inputs": "1,000 jobs. Prompt summarize, 9 characters. due is 0. now is 0. None are claimed.",
+      "fake": "The jobs are structs. No clock and no jobs file. The threat regex is not compiled by this function. FakeModel is not constructed.",
+      "source": "steps/ch33-cron/benches/cron.rs",
+      "reading": "Smaller is better. Around a microsecond is a walk of 1,000 short jobs plus the index vec. Ten milliseconds would still meet the budget. A number that includes the prompt regex would be the threat scan, not this one."
     }
   ]
 }

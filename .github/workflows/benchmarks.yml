@@ -147,6 +147,8 @@ jobs:
         run: bash .github/scripts/run_bench_section.sh 37 "chapter 37 gateway" ch32-gateway gateway
       - name: Chapter 38 service
         run: bash .github/scripts/run_bench_section.sh 38 "chapter 38 service" gw-service service
+      - name: Chapter 39 cron
+        run: bash .github/scripts/run_bench_section.sh 39 "chapter 39 cron" ch33-cron cron
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"
