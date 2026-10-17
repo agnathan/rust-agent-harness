@@ -90,4 +90,5 @@ members = [
     "steps/ch39-a2a",
     "steps/ch40-tracing",
     "steps/gw-capstone",
+    "steps/ch41-evals",
 ]

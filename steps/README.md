@@ -72,7 +72,15 @@ cargo run -p ch02-harness-cli -- --mock chat
 | gw-service | 38 *(server)* | session routing, an `Arc` reload, quotas, a drain, sampling and OSV |
 | ch33-cron | 39 | one claim, one crash retry, a prompt scan, the lifecycle guard |
 | ch34-acp | 40 | one inbox message per ACP update, `end_turn` or `cancelled` |
+| ch35-blackboard | 41 | facts and waiters, a claim that drops the lock, pause and an injection check |
+| ch36-kanban | 42 | one JSON board, a `create_new` lock, claim, complete, review, or block |
+| ch37-message-bus | 43 | a bus of 64, `try_send`, a bot cooldown of 20, egress redaction |
+| ch38-team-skills | 44 | a proposal queue, a librarian as the only writer, an `Arc` index swap |
+| ch39-a2a | 45 | A2A for a URL outside this process, a pool of 8, a cancel flag |
+| ch40-tracing | 46 | a counting subscriber, content-free span names, 100 mock researchers |
+| gw-capstone | 47 *(server)* | three token arms and a load of 100. No socket |
+| ch41-evals | 48 | the chapter 9 task names, one red-team case per layer, no fail threshold |
 | gw-limits | 15 *(server)* | Per-tool permits, idempotent retry, a breaker, caps of 50 |
 | gw-minimal-server | 5 *(server)* | Empty `mcp-gateway` catalog. No socket |
 
-Your own copy is `my-harness/` at the repo root. Milestone tests there start failing until you implement each chapter. The course plan is chapters 0–48 in six parts, listed in `book/book-outline.md` and `.github/chapters.json`. Performance budgets for every chapter are `docs/performance.md`. MCP is a first-class tool boundary from chapter 3 (client in chapter 4, gateway server in chapter 5). The gateway design is `docs/mcp-gateway.md`. Part II is how one agent learns; the design is `docs/self-improvement.md`. How the team patterns fit together is `docs/team-patterns.md`. Only the steps in the table above exist so far. Later `gw-*` rows in the outline are the plan, not empty crates. Section numbers inside chapters 6 and 9 stay aligned with the `ch05-*` and `ch06-*` crate names.
+Your own copy is `my-harness/` at the repo root. Milestone tests there start failing until you implement each chapter. The course plan is chapters 0–48 in six parts, listed in `book/book-outline.md` and `.github/chapters.json`. Performance budgets for every chapter are `docs/performance.md`. MCP is a first-class tool boundary from chapter 3 (client in chapter 4, gateway server in chapter 5). The gateway design is `docs/mcp-gateway.md`. Part II is how one agent learns; the design is `docs/self-improvement.md`. How the team patterns fit together is `docs/team-patterns.md`. The steps in the table above are the written chapters, including `gw-capstone`. None of the server steps bind a socket. Section numbers inside chapters 6 and 9 stay aligned with the `ch05-*` and `ch06-*` crate names.

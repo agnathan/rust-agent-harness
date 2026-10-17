@@ -165,6 +165,8 @@ jobs:
         run: bash .github/scripts/run_bench_section.sh 46 "chapter 46 tracing" ch40-tracing spans
       - name: Chapter 47 capstone
         run: bash .github/scripts/run_bench_section.sh 47 "chapter 47 capstone" gw-capstone capstone
+      - name: Chapter 48 evals
+        run: bash .github/scripts/run_bench_section.sh 48 "chapter 48 evals" ch41-evals evals
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"

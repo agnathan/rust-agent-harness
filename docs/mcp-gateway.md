@@ -80,7 +80,7 @@ These are the designs that sit in front of many MCP servers. The notes are from 
 
 ## Reading order
 
-Server-track chapters are marked *(server)*. Each one sits after the harness chapter it builds on. Step directories for the written harness chapters stay `steps/ch05-*` (book chapter 6) and `steps/ch06-*` (book chapter 9). `steps/gw-minimal-server`, `steps/gw-catalog`, `steps/gw-session-toolsets`, `steps/gw-limits`, `steps/gw-learned-tools`, `steps/gw-balancing`, and `steps/gw-service` exist. Later `gw-*` names are the plan.
+Server-track chapters are marked *(server)*. Each one sits after the harness chapter it builds on. Step directories for the written harness chapters stay `steps/ch05-*` (book chapter 6) and `steps/ch06-*` (book chapter 9). `steps/gw-minimal-server`, `steps/gw-catalog`, `steps/gw-session-toolsets`, `steps/gw-limits`, `steps/gw-learned-tools`, `steps/gw-balancing`, `steps/gw-service`, and `steps/gw-capstone` exist. None of them bind a socket.
 
 | Ch | Track | After | What it adds |
 |---|---|---|---|
@@ -99,7 +99,7 @@ Server-track chapters are marked *(server)*. Each one sits after the harness cha
 | 37 | harness | — | The chat gateway: platform adapters into the session inbox. Not this server. |
 | 38 | *(server)* | chapter 37 | Session-id routing, an `Arc` reload, quotas, audit, drain, health. Written. In memory. No socket. |
 | 46 | harness | — | Seeing Inside. Spans across the harness and the gateway. |
-| 47 | *(server)* | chapter 46 | Load test and the token-efficiency capstone. |
+| 47 | *(server)* | chapter 46 | Load test and the token-efficiency capstone. Written. In memory. No socket. |
 
 ## Benchmark targets
 
@@ -107,7 +107,7 @@ Chapters 5, 7, and 8 quote the means from their own benches. The targets below t
 
 - **Tokens per completed task**, three arms (every tool, a static set, a dynamic set), each with task success. Chapter 8 collects the telemetry. Chapter 47 is the capstone that reports it.
 - **Search latency over 10,000 tools** on the server, and the cost of a catalog reload that swaps an `Arc` without blocking an in-flight call. Chapter 7. The client BM25 search in chapter 6 already measured 146.8 µs. That number is the harness, not the server.
-- **Throughput and p99** under load, with oha or something like it. Chapters 38 and 47.
+- **Throughput and p99** under load, with oha or something like it. Chapters 38 and 47 do not bind a socket, so oha is not run. Chapter 47 measures 100 in-memory dispatches and a nearest-rank p99 inside that process.
 - **Replica-kill failover time**, and drain that finishes in-flight calls. Chapter 38.
 - **Catalog reload cost.** Chapter 7.
 

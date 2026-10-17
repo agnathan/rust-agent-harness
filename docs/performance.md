@@ -74,11 +74,11 @@ Principles and the way to choose a team shape live next to this page: [team patt
 | 38 | MCP Gateway Service *(server)* | Killing one replica fails over by session id. Drain finishes in-flight calls. One route lookup measured **19.43 ns**. oha throughput is not measured: this step does not bind a socket. |
 | 39 | Cron | A crash retries a claimed job at most once. Scanning **1,000** due jobs is **< 10 ms** (measured **1.607 µs**). The watchdog and a chained job stay off the request path. |
 | 40 | Editor Integration | Translating an ACP update onto the session queue is **< 1 ms** (one translate measured **119.9 ns**). |
-| 41 | The Blackboard | A claim **< 1 ms** with **100** waiters. The lock is not held across a model call. |
-| 42 | The Kanban Board | Claim, complete, review, or block is one transaction **< 5 ms**. Two processes cannot hold the same task. |
-| 43 | The Message Bus | Publish of one small envelope **< 1 ms** at **100** agents. Slow subscribers hit a bounded channel. |
-| 44 | Shared Team Skills | `skill_propose` enqueues in **< 1 ms**. The index swap is an `Arc` swap. Workers do not wait on the librarian. |
-| 45 | A2A for External Agents | Remote calls use the HTTP pool and the same bound. Cancel reaches an in-flight call in **< 50 ms**. |
-| 46 | Seeing Inside | A span per chapter 1 event adds **< 0.1 ms**, and spans cross the harness and the gateway. The chapter 1 bench still meets its budget with tracing on. The capstone runs **100+** concurrent mock agents. |
-| 47 | Load and Token Capstone *(server)* | The load test and the token comparison (every tool, a static set, a dynamic set) with task success. No measurement yet. |
-| 48 | Evals | Re-running the saved eval set, and **100** mock trajectories, stays inside the worker bound. Appending one trajectory event is **< 1 ms**. |
+| 41 | The Blackboard | A claim **< 1 ms** with **100** waiters (measured **2.903 µs**). The lock is not held across a model call. |
+| 42 | The Kanban Board | Claim, complete, review, or block is one transaction **< 5 ms** (one claim measured **81.55 µs**). Two processes cannot hold the same task. |
+| 43 | The Message Bus | Publish of one small envelope **< 1 ms** at **100** agents (measured **27.11 µs**). Slow subscribers hit a bounded channel. |
+| 44 | Shared Team Skills | `skill_propose` enqueues in **< 1 ms** (measured **51.2 ns**). The index swap is an `Arc` swap (measured **198.2 ns**). Workers do not wait on the librarian. |
+| 45 | A2A for External Agents | Remote calls use the HTTP pool and the same bound. Cancel reaches an in-flight call in **< 50 ms** (measured **26.39 µs**). |
+| 46 | Seeing Inside | A span per chapter 1 event adds **< 0.1 ms** (a bare complete measured **12.23 ns**; the spanned turn measured **126.5 ns**), and spans cross the harness and the gateway. The chapter 1 bench still meets its budget with tracing on. The capstone runs **100+** concurrent mock agents. |
+| 47 | Load and Token Capstone *(server)* | The dynamic arm measured **142.8 ns**. A load of **100** in-memory dispatches measured **21.03 µs**. Tokens are **128**, **32**, and **4**, each with task success for `tool_07`. oha is not measured: this step does not bind a socket. |
+| 48 | Evals | Re-running the saved eval set measured **37.3 ns**, and **100** mock trajectories stay inside the worker bound. Appending one trajectory event is **< 1 ms** (measured **56.7 ns**). There is no fail threshold. |

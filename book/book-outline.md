@@ -189,7 +189,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 | 44 | Shared Team Skills | `steps/ch38-team-skills` | a single writer | a layered skill store, `skill_propose` on the bus, a librarian agent, `skills.updated`, a versioned library, `TEAM.md` |
 | 45 | A2A for External Agents | `steps/ch39-a2a` | traits at the process boundary | A2A only for agents outside this process; MCP already covers tools, agents, and skills we expose |
 | 46 | Seeing Inside | `steps/ch40-tracing` | tracing | spans on the chapter 1 events and across the gateway, the same criterion bench with tracing on, a capstone research team that learns across runs |
-| 47 | Load and Token Capstone *(server)* | `steps/gw-capstone` | a load generator | the load test (throughput and p99) together with tokens per completed task for every tool, a static set, and a dynamic set, each with task success. Not written |
+| 47 | Load and Token Capstone *(server)* | `steps/gw-capstone` | a load generator | the load test (throughput and p99) together with tokens per completed task for every tool, a static set, and a dynamic set, each with task success. Written. In memory. No socket |
 | 48 | Evals | `steps/ch41-evals` | a batch over the benches | re-run the saved tasks from chapter 9, plus trajectories, scored with the chapter 1 and chapter 9 benches, still with no fail threshold |
 
 **Guardrail notes**
@@ -198,16 +198,16 @@ The harness decides what enters the prompt. The server holds the catalog, search
 
 **Performance budget**
 
-- **Chapter 41.** A claim < 1 ms with 100 waiters. The lock is not held across a model call.
-- **Chapter 42.** Claim, complete, review, or block is one transaction < 5 ms. Two processes cannot hold the same task.
-- **Chapter 43.** Publish of one small envelope < 1 ms at 100 agents. A slow subscriber hits a bounded channel.
-- **Chapter 44.** `skill_propose` enqueues in < 1 ms. The index swap is an `Arc` swap. Workers do not wait on the librarian.
-- **Chapter 45.** Remote calls use the HTTP pool and the same bound. Cancel reaches an in-flight call in < 50 ms.
-- **Chapter 46.** A span per event adds < 0.1 ms. The chapter 1 bench still meets its budget with tracing on. Spans cross the harness and the gateway. The capstone runs 100 or more concurrent mock agents.
-- **Chapter 47.** *(server)* The load test and the three-arm token comparison. No measurement yet.
-- **Chapter 48.** Re-running the saved eval set, and one hundred mock trajectories, stays inside the worker bound. Appending one trajectory event is < 1 ms.
+- **Chapter 41.** A claim < 1 ms with 100 waiters (measured 2.903 µs). The lock is not held across a model call.
+- **Chapter 42.** Claim, complete, review, or block is one transaction < 5 ms (one claim measured 81.55 µs). Two processes cannot hold the same task.
+- **Chapter 43.** Publish of one small envelope < 1 ms at 100 agents (measured 27.11 µs). A slow subscriber hits a bounded channel.
+- **Chapter 44.** `skill_propose` enqueues in < 1 ms (measured 51.2 ns). The index swap is an `Arc` swap (measured 198.2 ns). Workers do not wait on the librarian.
+- **Chapter 45.** Remote calls use the HTTP pool and the same bound. Cancel reaches an in-flight call in < 50 ms (measured 26.39 µs).
+- **Chapter 46.** A span per event adds < 0.1 ms (a bare complete measured 12.23 ns; the spanned turn measured 126.5 ns). The chapter 1 bench still meets its budget with tracing on. Spans cross the harness and the gateway. The capstone runs 100 or more concurrent mock agents.
+- **Chapter 47.** *(server)* The dynamic arm measured 142.8 ns. A load of 100 in-memory dispatches measured 21.03 µs. Tokens are 128, 32, and 4, each with task success for `tool_07`. oha is not measured: this step does not bind a socket.
+- **Chapter 48.** Re-running the saved eval set (measured 37.3 ns), and one hundred mock trajectories, stays inside the worker bound. Appending one trajectory event is < 1 ms (measured 56.7 ns). There is no fail threshold.
 
-Chapters 1 through 4, chapter 6, and chapters 9 through 20 have harness step crates. Chapter 6 is five sections under `steps/ch05-*`. Chapter 9 is ten sections under `steps/ch06-*`, and the section labels in that chapter stay 6.1–6.10 so they match the crates. Chapter 10 is `steps/ch07-turn-state`. Chapters 5, 7, 8, 15, and 21 have server step crates. `mcp-gateway` re-exports the chapter 21 learned gateway, which wraps the chapter 15 limits and still opens an empty catalog. Chapter 6's 10,000-tool benches still use a synthetic catalog. A real `tools/list` enters that cache through `cards_from_listed`. Chapter 9 starts a saved eval set that later chapters re-run, and chapter 48 scores that set. Pull requests and pushes to `main` report the Criterion median, low, and high in the Benchmarks workflow and upload one JSON artifact per commit. A push to `main` appends the run to the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/) on `gh-pages`. The same job still updates the `dev/bench` chart when it can publish. There is no fail threshold. Later rows are the plan, not empty crates. The same list is `.github/chapters.json`, which CI uses. Draft rows in `book/SUMMARY.md` are the chapters that are not written yet. Planned harness steps keep the directory names already in the CI filters (`ch07-turn-state` is book chapter 10). Server steps use the `gw-` prefix.
+Chapters 1 through 4, chapter 6, and chapters 9 through 20 have harness step crates. Chapter 6 is five sections under `steps/ch05-*`. Chapter 9 is ten sections under `steps/ch06-*`, and the section labels in that chapter stay 6.1–6.10 so they match the crates. Chapter 10 is `steps/ch07-turn-state`. Chapters 5, 7, 8, 15, and 21 have server step crates. `mcp-gateway` re-exports the chapter 21 learned gateway, which wraps the chapter 15 limits and still opens an empty catalog. Chapter 6's 10,000-tool benches still use a synthetic catalog. A real `tools/list` enters that cache through `cards_from_listed`. Chapter 9 starts a saved eval set that later chapters re-run, and chapter 48 scores that set. Pull requests and pushes to `main` report the Criterion median, low, and high in the Benchmarks workflow and upload one JSON artifact per commit. A push to `main` appends the run to the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/) on `gh-pages`. The same job still updates the `dev/bench` chart when it can publish. There is no fail threshold. Chapters 41 through 48 are written. Their step crates are in the workspace, and `steps/gw-capstone` does not bind a socket. The same list is `.github/chapters.json`, which CI uses. Every chapter row in `book/SUMMARY.md` links a chapter file. Planned harness steps keep the directory names already in the CI filters (`ch07-turn-state` is book chapter 10). Server steps use the `gw-` prefix.
 
 **Recurring sidebars:**
 

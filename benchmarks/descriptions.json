@@ -2449,6 +2449,34 @@
       "fake": "Every dispatch is a function call in this process. FakeModel returns tool_07. No listener and no oha. The demo's p99_ns is a debug-build sample and is not this Criterion mean.",
       "source": "steps/gw-capstone/benches/capstone.rs",
       "reading": "Smaller is better. Tens of microseconds is 100 in-memory compares plus a sort of 100 timestamps. That rate is not a server throughput number. Milliseconds would still be an in-memory loop. A number taken from a listening socket would be a different program."
+    },
+    {
+      "id": "48/append_event",
+      "section": "chapter 48 evals",
+      "chapter": "Chapter 48 Evals",
+      "function": "append_event",
+      "summary": "Push one trajectory JSON object onto an empty vec.",
+      "what": "append_event for the name echo-hello and passed true. The vec gains one string, {\"name\":\"echo-hello\",\"passed\":true}.",
+      "why": "Appending one trajectory event has to stay under a millisecond. This sample is that push. The file writer in Hermes is not this function.",
+      "timing": "iter_batched. Setup is Vec::new and is not timed. The timed routine calls append_event with the vec, echo-hello, and true passed through black_box, then black_box of the vec. The format and the push are inside the sample. run_saved, run_red_team, run_trajectories, and FakeModel are not called.",
+      "inputs": "One name, echo-hello. passed true. The vec is empty at the start of each sample.",
+      "fake": "The log is a Vec of strings. No JSONL file is opened. FAIL_THRESHOLD is not read.",
+      "source": "steps/ch41-evals/benches/evals.rs",
+      "reading": "Smaller is better. Tens of nanoseconds is one format and one push. One millisecond would still meet the budget and would mean the sample started a file lock or the 100-thread run."
+    },
+    {
+      "id": "48/saved_set",
+      "section": "chapter 48 evals",
+      "chapter": "Chapter 48 Evals",
+      "function": "saved_set",
+      "summary": "Score the three saved task names on FakeModel.",
+      "what": "run_saved returns three Score values: echo-hello, direct, and eight-reads. Each passed flag is true. The eight reads stay inside the worker bound of 8.",
+      "why": "The saved tasks from chapter 9 stay the regression set and have to be re-scored with no fail threshold. This sample is those three names. The red-team cases are the test.",
+      "timing": "The timed closure is b.iter. Inside: run_saved, then black_box of the score vec. Three FakeModel completes and the 8-step read count are inside the sample. No sleep. run_stress, run_red_team, and run_trajectories are not called. FAIL_THRESHOLD is not read.",
+      "inputs": "Three names. Replies hello, ok, and done. Eight counted reads. WORKER_BOUND is 8. No deadline and no threshold.",
+      "fake": "FakeModel returns a fixed string and ignores the prompt. No chapter 9 crate is linked. No file of saved tasks is loaded.",
+      "source": "steps/ch41-evals/benches/evals.rs",
+      "reading": "Smaller is better. Tens of nanoseconds is three mock replies and a short count. There is no fail threshold, so a slower number does not fail CI. A number that includes 100 threads would be the trajectory run, not this one."
     }
   ]
 }

@@ -135,10 +135,10 @@ Chapters 0 through 48, in six parts. Eight chapters are a standalone MCP gateway
 | 44 | Shared Team Skills | `steps/ch38-team-skills` | a layered store, `skill_propose`, a librarian as the single writer |
 | 45 | A2A for External Agents | `steps/ch39-a2a` | A2A only for agents outside this process |
 | 46 | Seeing Inside | `steps/ch40-tracing` | spans on the chapter 1 events and across the gateway |
-| 47 | Load and Token Capstone *(server)* | `steps/gw-capstone` | load test plus tokens per completed task. Not written |
-| 48 | Evals | `steps/ch41-evals` | re-run the chapter 9 tasks, plus trajectories |
+| 47 | Load and Token Capstone *(server)* | `steps/gw-capstone` | load test plus tokens per completed task. No socket |
+| 48 | Evals | `steps/ch41-evals` | re-run the chapter 9 task names, plus trajectories, still with no fail threshold |
 
-Chapters 1 through 4, 6, and 9 have harness step crates. Chapter 5 has the `mcp-gateway` skeleton. Later server rows are the plan, not empty crates. The same list drives CI (`.github/chapters.json`).
+Chapters 1 through 48 have step crates. Chapter 5 has the `mcp-gateway` skeleton. The server steps, including `steps/gw-capstone`, do not bind a socket. The same list drives CI (`.github/chapters.json`).
 
 The book builds with [mdBook](https://rust-lang.github.io/mdBook/): `mdbook build` in `book/` (output in `book/_build/`, not committed).
 

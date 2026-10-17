@@ -69,4 +69,4 @@ Written chapters link to `book/chapter-….md`. A chapter that has no page yet i
 - [Chapter 45: A2A for External Agents](book/chapter-45-a2a.md) — [`steps/ch39-a2a`](steps/ch39-a2a)
 - [Chapter 46: Seeing Inside](book/chapter-46-tracing.md) — [`steps/ch40-tracing`](steps/ch40-tracing)
 - [Chapter 47: Load and Token Capstone](book/chapter-47-capstone.md) *(server)* — [`steps/gw-capstone`](steps/gw-capstone)
-- Chapter 48: Evals (not yet written)
+- [Chapter 48: Evals](book/chapter-48-evals.md) — [`steps/ch41-evals`](steps/ch41-evals)

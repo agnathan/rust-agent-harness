@@ -69,4 +69,4 @@ Server-track chapters are marked *(server)*. They are interleaved with the harne
 - [Chapter 45: A2A for External Agents](chapter-45-a2a.md)
 - [Chapter 46: Seeing Inside](chapter-46-tracing.md)
 - [Chapter 47: Load and Token Capstone](chapter-47-capstone.md) *(server)*
-- [Chapter 48: Evals]()
+- [Chapter 48: Evals](chapter-48-evals.md)
