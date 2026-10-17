@@ -135,6 +135,8 @@ jobs:
         run: bash .github/scripts/run_bench_section.sh 31 "chapter 31 composition" ch27-composition composition
       - name: Chapter 32 context
         run: bash .github/scripts/run_bench_section.sh 32 "chapter 32 context" ch28-context context
+      - name: Chapter 33 actors
+        run: bash .github/scripts/run_bench_section.sh 33 "chapter 33 actors" ch29-actors actors
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"
