@@ -55,7 +55,7 @@ Written chapters link to `book/chapter-….md`. A chapter that has no page yet i
 ## Part V: Running as a service
 
 - [Chapter 36: Profiles](book/chapter-36-profiles.md) — [`steps/ch31-profiles`](steps/ch31-profiles)
-- Chapter 37: The Gateway (not yet written)
+- [Chapter 37: The Gateway](book/chapter-37-gateway.md) — [`steps/ch32-gateway`](steps/ch32-gateway)
 - Chapter 38: MCP Gateway Service *(server)* (not yet written)
 - Chapter 39: Cron (not yet written)
 - Chapter 40: Editor Integration (not yet written)

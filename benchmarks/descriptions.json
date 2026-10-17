@@ -2253,6 +2253,20 @@
       "fake": "The secret is a string in the profile map. No environment variable is read. FakeModel is not constructed. No file is loaded.",
       "source": "steps/ch31-profiles/benches/profiles.rs",
       "reading": "Smaller is better. Tens of nanoseconds is two map lookups and an Arc clone. A millisecond would still meet the budget and would mean the sample started copying a large prompt or reading a file."
+    },
+    {
+      "id": "37/enqueue_platform",
+      "section": "chapter 37 gateway",
+      "chapter": "Chapter 37 The Gateway",
+      "function": "enqueue_platform",
+      "summary": "Push one platform turn onto an empty inbox of 64.",
+      "what": "submit of Message::Turn with the text hello. The inbox has room, so the result is Accepted. The receiver side is the same VecDeque.",
+      "why": "Enqueue of a platform message has to stay under a millisecond. A steer is the same push. Pairing and the bot-loop guard are not this sample.",
+      "timing": "iter_batched. The setup closure calls Inbox::new(64) and is not timed. The timed routine builds the string hello, calls submit with Message::Turn of that string passed through black_box, then black_box of Submit. The length check and push_back are inside the sample. Pairing, authorize, fold, handoff_request, and FakeModel are not called. The Full path is not taken.",
+      "inputs": "One message, text hello. Inbox capacity 64. The inbox is empty at the start of each sample.",
+      "fake": "The message is a string. No platform socket is opened. FakeModel is not constructed. The allowlist is not consulted.",
+      "source": "steps/ch32-gateway/benches/gateway.rs",
+      "reading": "Smaller is better. Tens of nanoseconds is one bounded push of a short string. Milliseconds would mean the sample started a pairing check, a file stat, or a network send."
     }
   ]
 }
