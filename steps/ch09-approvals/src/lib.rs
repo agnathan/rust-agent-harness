@@ -172,7 +172,11 @@ pub fn check(policy: &Policy, session: &mut Session, command: &str) -> Verdict {
     if let Some(description) = hardline(command) {
         session.denials = session.denials.saturating_add(1);
         return Verdict::Deny {
-            message: hardline_message(&description),
+            message: format!(
+                "{}{STOP_COMMAND}{}",
+                hardline_message(&description),
+                breaker_addendum(session, policy)
+            ),
             hardline: true,
         };
     }
@@ -180,7 +184,8 @@ pub fn check(policy: &Policy, session: &mut Session, command: &str) -> Verdict {
         session.denials = session.denials.saturating_add(1);
         return Verdict::Deny {
             message: format!(
-                "BLOCKED: password piping to sudo -S. Do not pipe passwords to 'sudo -S'.{STOP_COMMAND}"
+                "BLOCKED: password piping to sudo -S. Do not pipe passwords to 'sudo -S'.{STOP_COMMAND}{}",
+                breaker_addendum(session, policy)
             ),
             hardline: false,
         };
@@ -532,9 +537,7 @@ fn dangerous_text(text: &str) -> Option<String> {
     }) {
         return Some("write to a sensitive path".to_string());
     }
-    if lower.contains("curl")
-        && (lower.contains("--upload-file") || lower.contains(" -t ") || lower.contains("-t"))
-    {
+    if lower.contains("curl") && (lower.contains("--upload-file") || lower.contains(" -t ")) {
         return Some("curl upload".to_string());
     }
     for word in ["python", "python3", "perl", "ruby", "node"] {
@@ -668,6 +671,10 @@ pub async fn run_call(
             let free = permits.available();
             let allowed = prompt.wait(policy.timeout, free).await;
             if allowed {
+                {
+                    let mut guard = session.lock().await;
+                    guard.denials = 0;
+                }
                 let _permit = permits
                     .sem
                     .clone()

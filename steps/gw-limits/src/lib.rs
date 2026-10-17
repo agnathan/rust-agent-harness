@@ -166,6 +166,12 @@ impl LimitedGateway {
         self.gate(tool).execute.available_permits()
     }
 
+    /// Zero the per-turn web-search and subagent counters.
+    pub fn reset_for_turn(&self) {
+        self.web_searches.store(0, Ordering::SeqCst);
+        self.subagents.store(0, Ordering::SeqCst);
+    }
+
     /// Take one execute permit and drop it. The bench times this pair.
     pub fn roundtrip_execute(&self, tool: &str) -> Result<(), CallError> {
         let permit = self.try_execute(tool)?;

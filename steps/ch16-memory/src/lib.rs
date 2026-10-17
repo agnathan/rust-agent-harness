@@ -172,7 +172,11 @@ impl MemoryBackend for MemoryFiles {
 }
 
 pub fn first_threat_message(content: &str) -> Option<String> {
-    let content = &content[..MAX_SCAN_CHARS.min(content.len())];
+    let mut end = MAX_SCAN_CHARS.min(content.len());
+    while !content.is_char_boundary(end) {
+        end -= 1;
+    }
+    let content = &content[..end];
     if let Some(ch) = content.chars().find(|ch| INVISIBLE.contains(ch)) {
         return Some(format!(
             "Blocked: content contains invisible unicode character U+{:04X} (possible injection).",
