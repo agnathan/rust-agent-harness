@@ -112,10 +112,8 @@ impl LearnedGateway {
     pub fn session_tools(&self, session_id: &str) -> Option<SessionView> {
         let mut view = self.inner.session_tools(session_id)?;
         let offered = self.offered_arc();
-        if !offered.is_empty() {
-            view.tools = offered.as_ref().clone();
-            view.list_changed = self.pending_change.swap(false, Ordering::SeqCst);
-        }
+        view.tools = offered.as_ref().clone();
+        view.list_changed = self.pending_change.swap(false, Ordering::SeqCst);
         Some(view)
     }
 

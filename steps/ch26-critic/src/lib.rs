@@ -36,16 +36,26 @@ pub fn parse_verdict(raw: &str) -> Verdict {
     let rest = lower[pos + "verdict".len()..].trim_start_matches(|ch: char| {
         ch == ':' || ch == '"' || ch == ' ' || ch == '=' || ch == '\''
     });
-    if rest.starts_with("done") {
+    if verdict_token(rest, "done") {
         Verdict::Done
-    } else if rest.starts_with("blocked") {
+    } else if verdict_token(rest, "blocked") {
         Verdict::Blocked
-    } else if rest.starts_with("wait") {
+    } else if verdict_token(rest, "wait") {
         Verdict::Wait
-    } else if rest.starts_with("continue") {
+    } else if verdict_token(rest, "continue") {
         Verdict::Continue
     } else {
         Verdict::Reject
+    }
+}
+
+fn verdict_token(rest: &str, token: &str) -> bool {
+    let Some(after) = rest.strip_prefix(token) else {
+        return false;
+    };
+    match after.chars().next() {
+        Some(ch) if ch.is_ascii_alphanumeric() || ch == '_' => false,
+        _ => true,
     }
 }
 

@@ -4,7 +4,7 @@
 
 use std::collections::VecDeque;
 use std::fs::{self, File};
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 use std::sync::Mutex;
 
 use flate2::write::GzEncoder;
@@ -66,6 +66,7 @@ pub struct Counts {
 pub enum CuratorError {
     Scan(String),
     Staged(String),
+    Path(String),
     Io(String),
 }
 
@@ -163,11 +164,14 @@ impl Curator {
             }
         }
         let name = front_name(raw).unwrap_or_else(|| "skill".into());
+        let dir = self.root.join(&name);
+        if !within_root(&self.root, &dir) {
+            return Err(CuratorError::Path(name));
+        }
         let label = format!("install {name}");
         if self.hold(&label) {
             return Err(CuratorError::Staged(label));
         }
-        let dir = self.root.join(&name);
         fs::create_dir_all(&dir).map_err(io)?;
         fs::write(dir.join("SKILL.md"), raw).map_err(io)?;
         Ok(())
@@ -211,12 +215,16 @@ impl Curator {
 
     fn archive_dir(&self, name: &str) -> Result<(), CuratorError> {
         let from = self.root.join(name);
+        let dest_dir = self.root.join(".archive");
+        let dest = dest_dir.join(name);
+        if !within_root(&self.root, &from) || !within_root(&dest_dir, &dest) {
+            return Err(CuratorError::Path(name.to_string()));
+        }
         if !from.exists() {
             return Ok(());
         }
-        let dest_dir = self.root.join(".archive");
         fs::create_dir_all(&dest_dir).map_err(io)?;
-        fs::rename(&from, dest_dir.join(name)).map_err(io)?;
+        fs::rename(&from, dest).map_err(io)?;
         Ok(())
     }
 }
@@ -282,6 +290,27 @@ fn prune_snapshots(dir: &Path) -> Result<(), CuratorError> {
         fs::remove_file(path).map_err(io)?;
     }
     Ok(())
+}
+
+fn within_root(root: &Path, path: &Path) -> bool {
+    let Ok(rel) = path.strip_prefix(root) else {
+        return false;
+    };
+    let mut depth = 0i32;
+    for part in rel.components() {
+        match part {
+            Component::Normal(_) => depth += 1,
+            Component::CurDir => {}
+            Component::ParentDir => {
+                depth -= 1;
+                if depth < 0 {
+                    return false;
+                }
+            }
+            Component::RootDir | Component::Prefix(_) => return false,
+        }
+    }
+    true
 }
 
 fn front_name(raw: &str) -> Option<String> {

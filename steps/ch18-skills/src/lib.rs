@@ -108,8 +108,20 @@ pub fn skills_list(skills: &[SkillMeta], category: Option<&str>) -> Vec<SkillMet
         .collect()
 }
 
+pub fn skill_dir(root: &Path, name: &str) -> Result<PathBuf, SkillError> {
+    find_dir(root, name)
+}
+
+pub fn validate_skill(text: &str, dir_name: &str) -> Result<(), SkillError> {
+    if text.chars().count() > MAX_BODY_CHARS {
+        return Err(SkillError::Body(text.chars().count()));
+    }
+    parse_skill(text, "", dir_name)?;
+    Ok(())
+}
+
 pub fn skill_view(root: &Path, name: &str, file: Option<&str>) -> Result<String, SkillError> {
-    let dir = find_dir(root, name)?;
+    let dir = skill_dir(root, name)?;
     let path = match file {
         None => dir.join("SKILL.md"),
         Some(rel) => support_path(&dir, rel)?,

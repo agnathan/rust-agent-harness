@@ -4,7 +4,7 @@
 
 use std::collections::{HashMap, VecDeque};
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 use std::sync::{Mutex, OnceLock};
 
 use regex::Regex;
@@ -244,11 +244,15 @@ impl Writer {
     ) -> Result<(), WriteError> {
         self.scan_or_stop(raw, trust, force)?;
         let name = front_value(raw, "name").ok_or_else(|| WriteError::Missing("name".into()))?;
+        skills::validate_skill(raw, &name).map_err(skill_err)?;
+        let dir = self.root.join(category).join(&name);
+        if !within_root(&self.root, &dir) {
+            return Err(WriteError::Path(format!("{category}/{name}")));
+        }
         let label = format!("create {name}");
         if self.hold(&label) {
             return Err(WriteError::Staged(label));
         }
-        let dir = self.root.join(category).join(&name);
         fs::create_dir_all(&dir).map_err(|err| WriteError::Io(err.to_string()))?;
         atomic_write(&dir.join("SKILL.md"), raw.as_bytes())
     }
@@ -450,21 +454,28 @@ fn front_value(raw: &str, key: &str) -> Option<String> {
 }
 
 fn find_skill_dir(root: &Path, name: &str) -> Result<PathBuf, WriteError> {
-    skills::skill_view(root, name, None).map_err(skill_err)?;
-    let mut hit = None;
-    for category in read_dirs(root)? {
-        for skill_dir in read_dirs(&category)? {
-            let path = skill_dir.join("SKILL.md");
-            if !path.is_file() {
-                continue;
+    skills::skill_dir(root, name).map_err(skill_err)
+}
+
+fn within_root(root: &Path, path: &Path) -> bool {
+    let Ok(rel) = path.strip_prefix(root) else {
+        return false;
+    };
+    let mut depth = 0i32;
+    for part in rel.components() {
+        match part {
+            Component::Normal(_) => depth += 1,
+            Component::CurDir => {}
+            Component::ParentDir => {
+                depth -= 1;
+                if depth < 0 {
+                    return false;
+                }
             }
-            let text = fs::read_to_string(&path).map_err(|err| WriteError::Io(err.to_string()))?;
-            if front_value(&text, "name").as_deref() == Some(name) {
-                hit = Some(skill_dir);
-            }
+            Component::RootDir | Component::Prefix(_) => return false,
         }
     }
-    hit.ok_or_else(|| WriteError::Missing(name.to_string()))
+    true
 }
 
 fn support_path(dir: &Path, rel: &str) -> Result<PathBuf, WriteError> {
@@ -481,21 +492,6 @@ fn support_path(dir: &Path, rel: &str) -> Result<PathBuf, WriteError> {
         return Err(WriteError::Path(rel.to_string()));
     }
     Ok(dir.join(path))
-}
-
-fn read_dirs(root: &Path) -> Result<Vec<PathBuf>, WriteError> {
-    let mut dirs = Vec::new();
-    if !root.exists() {
-        return Ok(dirs);
-    }
-    for entry in fs::read_dir(root).map_err(|err| WriteError::Io(err.to_string()))? {
-        let entry = entry.map_err(|err| WriteError::Io(err.to_string()))?;
-        if entry.path().is_dir() {
-            dirs.push(entry.path());
-        }
-    }
-    dirs.sort();
-    Ok(dirs)
 }
 
 fn atomic_write(path: &Path, bytes: &[u8]) -> Result<(), WriteError> {
