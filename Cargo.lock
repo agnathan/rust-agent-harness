@@ -1504,6 +1504,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "gw-balancing"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+]
+
+[[package]]
 name = "gw-catalog"
 version = "0.1.0"
 dependencies = [

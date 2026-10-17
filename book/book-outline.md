@@ -141,7 +141,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 | 32 | Managing Context | `steps/ch28-context` | slicing a `Vec` | compression, structured summaries from the side model in chapter 16, `[SKILL_PRUNED]` markers, a memory flush before compression. Deferred from chapter 9: preflight compression before the model call (`agent/turn_context.py`, `agent/context_compressor.py`) |
 | 33 | Agents as Actors | `steps/ch29-actors` | bounded channels | one tokio task per agent; the mailbox is the session inbox from chapter 2; steering and backpressure |
 | 34 | Supervision and Restart | `steps/ch30-supervision` | atomics | restart a failed child. The cancellation token and the budget are already on the call from chapter 9 |
-| 35 | Balancing and Federation *(server)* | `steps/gw-balancing` | a pool per tool | least-outstanding or power-of-two-choices across a per-tool backend pool, and federation of upstream MCP servers through that pool. Placed after cancellation (chapter 9) and supervision (chapter 34). Not written |
+| 35 | Balancing and Federation *(server)* | `steps/gw-balancing` | a pool per tool | least-outstanding or power-of-two-choices across a per-tool backend pool, and federation of upstream MCP servers through that pool. Placed after cancellation (chapter 9) and supervision (chapter 34) |
 
 **Guardrail notes**
 
@@ -152,7 +152,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 - **Chapter 32.** Compression and the memory flush run between turns or in the background. The hot path sends the `Arc` snapshot (measured 15.12 ns). Preflight compression, deferred from chapter 9, runs before the model call.
 - **Chapter 33.** The session inbox capacity is 64. One hundred or more mock agents at once. A full inbox applies backpressure. One submit measured 208.2 ns.
 - **Chapter 34.** Restarting a failed child adds < 1 ms, excluding the child's work (one record measured 32.47 ns).
-- **Chapter 35.** *(server)* Picking a backend is a local choice among a pool. No measurement yet.
+- **Chapter 35.** *(server)* Picking a backend is a local choice among a pool (one least-outstanding pick measured 2.502 ns). Discovery connects at most 4 at once.
 
 ### Part V: Running as a service
 

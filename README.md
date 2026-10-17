@@ -113,7 +113,7 @@ Chapters 0 through 48, in six parts. Eight chapters are a standalone MCP gateway
 | 32 | Managing Context | `steps/ch28-context` | compression, summaries, `[SKILL_PRUNED]`, a memory flush |
 | 33 | Agents as Actors | `steps/ch29-actors` | one task per agent, the session inbox, backpressure |
 | 34 | Supervision and Restart | `steps/ch30-supervision` | restart a failed child |
-| 35 | Balancing and Federation *(server)* | `steps/gw-balancing` | per-tool pools and upstream MCP federation. Not written |
+| 35 | Balancing and Federation *(server)* | `steps/gw-balancing` | per-tool pools and upstream MCP federation |
 
 **Part V: Running as a service**
 
