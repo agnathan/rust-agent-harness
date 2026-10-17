@@ -1,0 +1,21 @@
+[package]
+name = "ch38-team-skills"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+description = "Chapter 44: a layered skill library and one librarian."
+
+[lib]
+name = "team_skills"
+
+[[bin]]
+name = "ch38-team-skills"
+path = "src/main.rs"
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "skills"
+harness = false

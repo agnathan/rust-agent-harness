@@ -1052,6 +1052,58 @@ dependencies = [
 ]
 
 [[package]]
+name = "ch35-blackboard"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+]
+
+[[package]]
+name = "ch36-kanban"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "ch37-message-bus"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+]
+
+[[package]]
+name = "ch38-team-skills"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+]
+
+[[package]]
+name = "ch39-a2a"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+]
+
+[[package]]
+name = "ch40-tracing"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+ "tracing",
+]
+
+[[package]]
+name = "ch41-evals"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+]
+
+[[package]]
 name = "chacha20"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1534,6 +1586,13 @@ dependencies = [
 
 [[package]]
 name = "gw-balancing"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+]
+
+[[package]]
+name = "gw-capstone"
 version = "0.1.0"
 dependencies = [
  "criterion",

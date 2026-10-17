@@ -151,6 +151,22 @@ jobs:
         run: bash .github/scripts/run_bench_section.sh 39 "chapter 39 cron" ch33-cron cron
       - name: Chapter 40 acp
         run: bash .github/scripts/run_bench_section.sh 40 "chapter 40 acp" ch34-acp acp
+      - name: Chapter 41 blackboard
+        run: bash .github/scripts/run_bench_section.sh 41 "chapter 41 blackboard" ch35-blackboard blackboard
+      - name: Chapter 42 kanban
+        run: bash .github/scripts/run_bench_section.sh 42 "chapter 42 kanban" ch36-kanban kanban
+      - name: Chapter 43 message bus
+        run: bash .github/scripts/run_bench_section.sh 43 "chapter 43 message bus" ch37-message-bus bus
+      - name: Chapter 44 team skills
+        run: bash .github/scripts/run_bench_section.sh 44 "chapter 44 team skills" ch38-team-skills skills
+      - name: Chapter 45 a2a
+        run: bash .github/scripts/run_bench_section.sh 45 "chapter 45 a2a" ch39-a2a a2a
+      - name: Chapter 46 tracing
+        run: bash .github/scripts/run_bench_section.sh 46 "chapter 46 tracing" ch40-tracing spans
+      - name: Chapter 47 capstone
+        run: bash .github/scripts/run_bench_section.sh 47 "chapter 47 capstone" gw-capstone capstone
+      - name: Chapter 48 evals
+        run: bash .github/scripts/run_bench_section.sh 48 "chapter 48 evals" ch41-evals evals
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"

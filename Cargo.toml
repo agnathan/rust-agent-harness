@@ -83,4 +83,12 @@ members = [
     "steps/gw-service",
     "steps/ch33-cron",
     "steps/ch34-acp",
+    "steps/ch35-blackboard",
+    "steps/ch36-kanban",
+    "steps/ch37-message-bus",
+    "steps/ch38-team-skills",
+    "steps/ch39-a2a",
+    "steps/ch40-tracing",
+    "steps/gw-capstone",
+    "steps/ch41-evals",
 ]

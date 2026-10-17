@@ -21,7 +21,7 @@ impl Temp {
             .duration_since(UNIX_EPOCH)
             .map(|d| d.as_nanos())
             .unwrap_or(0);
-        let path = std::env::temp_dir().join(format!("ch18-{nanos}-{n}"));
+        let path = std::env::temp_dir().join(format!("ch18-{}-{nanos}-{n}", std::process::id()));
         fs::create_dir_all(&path).expect("dir");
         Self { path }
     }
