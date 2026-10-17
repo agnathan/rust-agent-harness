@@ -49,7 +49,7 @@ Written chapters link to `book/chapter-….md`. A chapter that has no page yet i
 
 - [Chapter 32: Managing Context](book/chapter-32-context.md) — [`steps/ch28-context`](steps/ch28-context)
 - [Chapter 33: Agents as Actors](book/chapter-33-actors.md) — [`steps/ch29-actors`](steps/ch29-actors)
-- Chapter 34: Supervision and Restart (not yet written)
+- [Chapter 34: Supervision and Restart](book/chapter-34-supervision.md) — [`steps/ch30-supervision`](steps/ch30-supervision)
 - Chapter 35: Balancing and Federation *(server)* (not yet written)
 
 ## Part V: Running as a service

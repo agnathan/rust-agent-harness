@@ -49,7 +49,7 @@ Server-track chapters are marked *(server)*. They are interleaved with the harne
 
 - [Chapter 32: Managing Context](chapter-32-context.md)
 - [Chapter 33: Agents as Actors](chapter-33-actors.md)
-- [Chapter 34: Supervision and Restart]()
+- [Chapter 34: Supervision and Restart](chapter-34-supervision.md)
 - [Chapter 35: Balancing and Federation]() *(server)*
 
 # Part V: Running as a service

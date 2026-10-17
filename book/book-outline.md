@@ -151,7 +151,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 
 - **Chapter 32.** Compression and the memory flush run between turns or in the background. The hot path sends the `Arc` snapshot (measured 15.12 ns). Preflight compression, deferred from chapter 9, runs before the model call.
 - **Chapter 33.** The session inbox capacity is 64. One hundred or more mock agents at once. A full inbox applies backpressure. One submit measured 208.2 ns.
-- **Chapter 34.** Restarting a failed child adds < 1 ms, excluding the child's work.
+- **Chapter 34.** Restarting a failed child adds < 1 ms, excluding the child's work (one record measured 32.47 ns).
 - **Chapter 35.** *(server)* Picking a backend is a local choice among a pool. No measurement yet.
 
 ### Part V: Running as a service

@@ -65,6 +65,7 @@ cargo run -p ch02-harness-cli -- --mock chat
 | ch27-composition | 31 | nested fan-out under one pool, a handoff only when ownership moves, the critic loop |
 | ch28-context | 32 | a scan, a 20,000-character cap, an untrusted wrap, preflight compression |
 | ch29-actors | 33 | one task per agent, an inbox of 64, steer and interrupt |
+| ch30-supervision | 34 | one restart, a chain of three, cancel and budget |
 | gw-limits | 15 *(server)* | Per-tool permits, idempotent retry, a breaker, caps of 50 |
 | gw-minimal-server | 5 *(server)* | Empty `mcp-gateway` catalog. No socket |
 

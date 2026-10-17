@@ -76,4 +76,5 @@ members = [
     "steps/ch27-composition",
     "steps/ch28-context",
     "steps/ch29-actors",
+    "steps/ch30-supervision",
 ]

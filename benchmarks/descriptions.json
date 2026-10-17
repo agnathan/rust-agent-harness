@@ -2211,6 +2211,20 @@
       "fake": "The message is a string. No model runs. The 100-agent fan is not this sample.",
       "source": "steps/ch29-actors/benches/actors.rs",
       "reading": "Smaller is better. A few hundred nanoseconds is one bounded send. Milliseconds would mean the sample started waiting or spawned the agent task. A number that includes 64 sends would be the fill test, not this one."
+    },
+    {
+      "id": "34/restart_bookkeeping",
+      "section": "chapter 34 supervision",
+      "chapter": "Chapter 34 Supervision and Restart",
+      "function": "restart_bookkeeping",
+      "summary": "Record one restart on an empty supervisor.",
+      "what": "Supervisor::record at timestamp 0. The chain length becomes 1. The breaker does not trip. The child is not called.",
+      "why": "Restarting a failed child has to add less than a millisecond, and that number must not include the child's work. This is the decision.",
+      "timing": "iter_batched. The setup closure calls Supervisor::new and is not timed. The timed routine calls record with timestamp 0 passed through black_box, then black_box of the bool. The mutex is taken inside the sample. The boot vec starts empty. FakeModel is not constructed. restart_child is not called. No sleep runs. The 300 second gap is a comparison, not a wait.",
+      "inputs": "One timestamp, 0 seconds. An empty boot log. MAX_RESTARTS is 3. The gap limit is 300 seconds.",
+      "fake": "There is no child and no model. The I/O-failure flag is left false. Nothing is written to disk.",
+      "source": "steps/ch30-supervision/benches/supervision.rs",
+      "reading": "Smaller is better. Tens of nanoseconds is a mutex and a one-element vec. A millisecond would still meet the budget and would mean the sample started doing the child's work or sleeping."
     }
   ]
 }
