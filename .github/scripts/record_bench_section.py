@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Append one section's Criterion medians to target/bench-run.json.
+"""Append one section's Criterion estimates to target/bench-run.json.
 
 Times are nanoseconds. median/low/high are the median point estimate and the
-median confidence interval from estimates.json, not the printed slope.
+median confidence interval from estimates.json. mean_ns is
+mean.point_estimate from the same file. The printed `time:` line is the
+slope and is not stored.
 """
 
 from __future__ import annotations
@@ -13,7 +15,7 @@ import os
 from pathlib import Path
 
 
-def read_median(path: Path) -> dict[str, float]:
+def read_estimates(path: Path) -> dict[str, float]:
     data = json.loads(path.read_text(encoding="utf-8"))
     median = data["median"]
     interval = median["confidence_interval"]
@@ -21,6 +23,7 @@ def read_median(path: Path) -> dict[str, float]:
         "median_ns": float(median["point_estimate"]),
         "low_ns": float(interval["lower_bound"]),
         "high_ns": float(interval["upper_bound"]),
+        "mean_ns": float(data["mean"]["point_estimate"]),
     }
 
 
@@ -30,7 +33,7 @@ def harvest(criterion_dir: Path, section_id: str) -> dict[str, dict[str, float]]
         return found
     for path in sorted(criterion_dir.glob("*/new/estimates.json")):
         name = path.parts[-3]
-        found[f"{section_id}/{name}"] = read_median(path)
+        found[f"{section_id}/{name}"] = read_estimates(path)
     return found
 
 

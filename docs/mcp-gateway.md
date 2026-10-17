@@ -1,6 +1,6 @@
 # MCP gateway
 
-The book builds two processes. The harness decides what enters a prompt. The MCP gateway is a standalone server: a large catalog, a filtered tool list per session, and later a highly available HTTP front. The server chapters are outline only. The code in the tree today is the skeleton in `mcp-gateway/` and `steps/gw-minimal-server`. It compiles, it offers an empty catalog, and it binds no socket.
+The book builds two processes. The harness decides what enters a prompt. The MCP gateway is a standalone server: a large catalog, a filtered tool list per session, and later a highly available HTTP front. Chapters 5, 7, and 8 are written. They bind no socket. `mcp-gateway/` re-exports the chapter 8 session gateway. `Gateway::new` still starts from an empty catalog.
 
 Priority 1 is token efficiency through dynamic toolsets. Priority 2 is high availability. The benchmark targets are at the bottom. None of the server numbers have been measured.
 
@@ -68,7 +68,9 @@ These are the designs that sit in front of many MCP servers. The notes are from 
 - Hosted-room replica promotion is not the MCP replica design. MCP replicas are mostly stateless, routed by session id, with shared state in Redis or something like it.
 - OAuth 2.1 on the server follows the MCP spec (the resource server). Hermes's `mcp_oauth.py` is the client that will talk to it. This server does not implement the client flow.
 
-**Deferred with the unwritten chapters.** Search, embeddings, plugins, federation, `search_tools` on the server, `set_task`, telemetry, composite tools, code mode, paging, limits, breakers, hedging, backpressure, replica routing, hot reload via `arc-swap`, health, quotas, audit logs, and OpenTelemetry. The skeleton does not pretend to do any of those.
+**In chapters 5, 7, and 8.** A 32/8 call gate, BM25 over native, plugin, and in-memory upstream tools, an `Arc` reload, `search_tools`, `set_task`, `describe`, a `list_changed` flag, paging, and schema/call/result tokens.
+
+**Deferred with the unwritten chapters.** A real embedder, live federation, composite tools, code mode, limits, breakers, hedging, backpressure, replica routing, health, quotas, audit logs, and OpenTelemetry. The server still does not bind a socket.
 
 ## Reading order
 
@@ -95,7 +97,7 @@ Server-track chapters are marked *(server)*. Each one sits after the harness cha
 
 ## Benchmark targets
 
-Recorded here so the chapters have a number to hit. No server measurement exists yet. Do not quote one.
+Chapters 5, 7, and 8 quote the means from their own benches. The targets below that those chapters did not measure are still targets.
 
 - **Tokens per completed task**, three arms (every tool, a static set, a dynamic set), each with task success. Chapter 8 collects the telemetry. Chapter 47 is the capstone that reports it.
 - **Search latency over 10,000 tools** on the server, and the cost of a catalog reload that swaps an `Arc` without blocking an in-flight call. Chapter 7. The client BM25 search in chapter 6 already measured 146.8 µs. That number is the harness, not the server.
@@ -103,4 +105,4 @@ Recorded here so the chapters have a number to hit. No server measurement exists
 - **Replica-kill failover time**, and drain that finishes in-flight calls. Chapter 38.
 - **Catalog reload cost.** Chapter 7.
 
-The old MCP-server budget moves to chapter 5: 32 in-flight calls accepted, 8 executed at once. The skeleton does not accept calls yet, so that budget is still a target.
+Chapter 5 accepts 32 calls and executes 8. A permit round trip measured 45.53 ns. Eight 1 ms sleeps measured 2.129 ms.

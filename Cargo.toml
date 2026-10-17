@@ -50,4 +50,7 @@ members = [
     "my-harness",
     "mcp-gateway",
     "steps/gw-minimal-server",
+    "steps/gw-catalog",
+    "steps/gw-session-toolsets",
+    "steps/ch07-turn-state/crates/harness-core",
 ]
