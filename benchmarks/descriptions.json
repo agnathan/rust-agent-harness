@@ -2001,6 +2001,34 @@
       "fake": "The files are generated in the bench. They are not a Hermes skills directory. The scripted model is not constructed.",
       "source": "steps/ch18-skills/benches/skills.rs",
       "reading": "Smaller is better. It should stay under 10 ms. A number in the tens of milliseconds means the sample started rewriting the index on every turn, or the files got much larger."
+    },
+    {
+      "id": "23/scan_one_skill",
+      "section": "chapter 23 writing",
+      "chapter": "Chapter 23 Writing Skills",
+      "function": "scan_one_skill",
+      "summary": "Scan one in-memory skill of about 1 KB.",
+      "what": "scan_text on a SKILL.md string. The verdict is Safe. The five rules are already compiled.",
+      "why": "A write scans before it lands. The budget is under 5 ms for one skill. The request path must not be where an unsolicited write does this work.",
+      "timing": "Before the bench, the harness builds a skill string of at least 1,024 bytes and calls scan_text once so OnceLock compiles the Regex values. The timed closure is b.iter. Inside: scan_text with the text passed through black_box, then black_box of the ScanResult. No file is written. No Writer is constructed. No model is called.",
+      "inputs": "One skill. Name rename. Description Rename a file by its path. Body repeats Keep the old name in the note. until the string is at least 1,024 bytes.",
+      "fake": "The string is generated in the bench. It is not a directory of SKILL.md files. The five patterns are a subset of THREAT_PATTERNS. The scripted model is not constructed.",
+      "source": "steps/ch19-skill-writing/benches/writing.rs",
+      "reading": "Smaller is better. It should stay under 5 ms. A number in the milliseconds means the sample started compiling the regexes, or the skill got much larger than 1 KB."
+    },
+    {
+      "id": "23/enqueue_unsolicited",
+      "section": "chapter 23 writing",
+      "chapter": "Chapter 23 Writing Skills",
+      "function": "enqueue_unsolicited",
+      "summary": "Enqueue a write the model did not ask for.",
+      "what": "enqueue_background of the job create notes. The skill root stays empty. The queue holds at most 64 jobs.",
+      "why": "An unsolicited write is a background task. The request path only records that the job exists.",
+      "timing": "Before the bench, Writer::open creates an empty temp directory. The timed closure is b.iter. Inside: enqueue_background with the job string passed through black_box. No scan runs. No SKILL.md is written. When the queue is already at 64, the oldest job is dropped inside the timed call.",
+      "inputs": "One job string, create notes. Queue cap 64. Empty skill root.",
+      "fake": "The job is a string. No model asked for it. No skill directory is created by the call.",
+      "source": "steps/ch19-skill-writing/benches/writing.rs",
+      "reading": "Smaller is better. Tens of nanoseconds is a mutex and a short string. Milliseconds would mean the sample started scanning or writing a file."
     }
   ]
 }

@@ -115,6 +115,8 @@ jobs:
         run: bash .github/scripts/run_bench_section.sh 21 "chapter 21 learned" gw-learned-tools learned
       - name: Chapter 22 skills
         run: bash .github/scripts/run_bench_section.sh 22 "chapter 22 skills" ch18-skills skills
+      - name: Chapter 23 writing
+        run: bash .github/scripts/run_bench_section.sh 23 "chapter 23 writing" ch19-skill-writing writing
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"

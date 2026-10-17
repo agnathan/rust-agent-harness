@@ -919,6 +919,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ch19-skill-writing"
+version = "0.1.0"
+dependencies = [
+ "ch18-skills",
+ "criterion",
+ "regex",
+]
+
+[[package]]
 name = "chacha20"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

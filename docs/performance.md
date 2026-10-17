@@ -56,7 +56,7 @@ Principles and the way to choose a team shape live next to this page: [team patt
 | 20 | Recall | Discover over **10,000** messages **< 20 ms** (measured **59.35 µs**). Search runs only when the model calls the tool. |
 | 21 | Learned Tools *(server)* | Prediction stays off the request path except for the offered set. Applying a 32-name offer measured **94.69 ns**. Scoring 1,000 usage rows against 64 names measured **174.4 µs**, and that function is not called from `session_tools`. |
 | 22 | Using Skills | Load and render **500** skills **< 10 ms**, once per session (measured **1.946 ms**). The rendered index is `Arc` and byte-stable. |
-| 23 | Writing Skills | Security scan of one skill **< 5 ms**. A write the model did not ask for is a background task. |
+| 23 | Writing Skills | Security scan of one skill **< 5 ms** (measured **255.1 ns**). A write the model did not ask for is a background task (enqueue measured **21.15 ns**). |
 | 24 | The Reflection Loop | Spawning the reviewer adds **< 1 ms** to turn finalize. Cancelling it when the user returns takes **< 50 ms**. |
 | 25 | Curation | The curator never runs on the request path. |
 | 26 | The Sequential Pipeline | The next stage receives `Arc` context. No full transcript copy. |
