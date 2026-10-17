@@ -61,6 +61,7 @@ cargo run -p ch02-harness-cli -- --mock chat
 | ch23-supervisor | 27 | eight specialists, one `Arc`, blocked child tools, depth 1 |
 | ch24-handoffs | 28 | a filtered transcript and a cap of four handoffs |
 | ch25-fan-out | 29 | a queue of 100, the supervisor bound, summaries in index order |
+| ch26-critic | 30 | a verdict, one permit, accept only on done |
 | gw-limits | 15 *(server)* | Per-tool permits, idempotent retry, a breaker, caps of 50 |
 | gw-minimal-server | 5 *(server)* | Empty `mcp-gateway` catalog. No socket |
 

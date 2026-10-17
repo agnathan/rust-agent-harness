@@ -981,6 +981,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "ch26-critic"
+version = "0.1.0"
+dependencies = [
+ "ch23-supervisor",
+ "criterion",
+]
+
+[[package]]
 name = "chacha20"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

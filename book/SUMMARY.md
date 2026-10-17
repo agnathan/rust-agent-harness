@@ -42,7 +42,7 @@ Server-track chapters are marked *(server)*. They are interleaved with the harne
 - [Chapter 27: The Supervisor](chapter-27-supervisor.md)
 - [Chapter 28: Handoffs](chapter-28-handoffs.md)
 - [Chapter 29: Fan-out and Gather](chapter-29-fan-out.md)
-- [Chapter 30: The Critic]()
+- [Chapter 30: The Critic](chapter-30-critic.md)
 - [Chapter 31: Composing Patterns]()
 
 # Part IV: Making it robust
