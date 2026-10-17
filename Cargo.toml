@@ -70,4 +70,5 @@ members = [
     "steps/ch21-curation",
     "steps/ch22-pipeline",
     "steps/ch23-supervisor",
+    "steps/ch24-handoffs",
 ]

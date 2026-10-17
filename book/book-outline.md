@@ -129,7 +129,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 
 - **Chapter 26.** The next stage receives `Arc` context (measured 10.78 ns). Copying 100 messages measured 7.089 µs and is not the hand-off.
 - **Chapter 27.** Up to eight specialists at once, each with `Arc` context. Eight specialists that each slept 40 ms finished in 0.044 s in nextest. Scheduling eight with no sleep measured 98.54 µs. A reflection note measured 21.23 ns and does not run the reviewer.
-- **Chapter 28.** Filtering a 100-message transcript for a handoff < 1 ms.
+- **Chapter 28.** Filtering a 100-message transcript for a handoff < 1 ms (measured 2.740 µs).
 - **Chapter 29.** The worker limit holds. One hundred mock subagents can be scheduled without an unbounded queue.
 - **Chapter 30.** The critic shares `Arc` context and takes one permit from the same bound.
 - **Chapter 31.** Nested fan-out cannot exceed the worker limit.
@@ -159,7 +159,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 | Ch | Title | Step | Rust, just in time | What the harness gains |
 |---|---|---|---|---|
 | 36 | Profiles | `steps/ch31-profiles` | config, a secret map | several personas in one config, each with its own secrets, kept out of the system prompt |
-| 37 | The Gateway | `steps/ch32-gateway` | the session inbox | platform adapters submit to the chapter 2 inbox; a mid-turn message becomes an interrupt or a steer; streaming folds chapter 1 events into one message. This is the chat gateway, not the MCP server |
+| 37 | The Gateway | `steps/ch32-gateway` | the session inbox | platform adapters submit to the chapter 2 inbox; a mid-turn message becomes an interrupt or a steer; streaming folds chapter 1 events into one message. This is the chat gateway, not the MCP server. Chapter 28 defers the platform re-bind from `handoff.request` to here |
 | 38 | MCP Gateway Service *(server)* | `steps/gw-service` | `rmcp`, axum, a shared store | mostly stateless replicas routed by session id, hot reload via `arc-swap`, shared sessions and rate limits in Redis or something like it, health and readiness, OAuth 2.1 as the MCP resource server, per-tenant quotas, audit logs, OpenTelemetry, and a drain that finishes in-flight calls. Not written |
 | 39 | Cron | `steps/ch33-cron` | a durable claim | at-most-once runs across crashes, catch-up, a watchdog, and chaining the next job by submitting to the same inbox |
 | 40 | Editor Integration | `steps/ch34-acp` | a protocol adapter | ACP (Agent Client Protocol) as another client of the chapter 2 session inbox |
