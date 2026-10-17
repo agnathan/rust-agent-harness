@@ -111,6 +111,8 @@ jobs:
         run: bash .github/scripts/run_bench_section.sh 19 "chapter 19 memory" ch16-memory memory
       - name: Chapter 20 recall
         run: bash .github/scripts/run_bench_section.sh 20 "chapter 20 recall" ch17-recall recall
+      - name: Chapter 21 learned tools
+        run: bash .github/scripts/run_bench_section.sh 21 "chapter 21 learned" gw-learned-tools learned
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"

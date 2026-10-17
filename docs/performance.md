@@ -54,7 +54,7 @@ Principles and the way to choose a team shape live next to this page: [team patt
 | 18 | Sessions on Disk | One local WAL append of a turn **< 1 ms** (measured **142.9 µs**). FTS updates run in the background. The chapter re-runs the chapter 9 eval set. |
 | 19 | Memory Files | The frozen snapshot is built once and shared by `Arc`. A memory write does not rewrite the system prompt. Enqueue of a background write **< 1 ms** (measured **54.94 ns**). |
 | 20 | Recall | Discover over **10,000** messages **< 20 ms** (measured **59.35 µs**). Search runs only when the model calls the tool. |
-| 21 | Learned Tools *(server)* | Prediction stays off the request path except for the offered set. No measurement yet. |
+| 21 | Learned Tools *(server)* | Prediction stays off the request path except for the offered set. Applying a 32-name offer measured **94.69 ns**. Scoring 1,000 usage rows against 64 names measured **174.4 µs**, and that function is not called from `session_tools`. |
 | 22 | Using Skills | Load and render **500** skills **< 10 ms**, once per session. The rendered index is `Arc` and byte-stable. |
 | 23 | Writing Skills | Security scan of one skill **< 5 ms**. A write the model did not ask for is a background task. |
 | 24 | The Reflection Loop | Spawning the reviewer adds **< 1 ms** to turn finalize. Cancelling it when the user returns takes **< 50 ms**. |
