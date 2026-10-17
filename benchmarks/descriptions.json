@@ -2225,6 +2225,20 @@
       "fake": "There is no child and no model. The I/O-failure flag is left false. Nothing is written to disk.",
       "source": "steps/ch30-supervision/benches/supervision.rs",
       "reading": "Smaller is better. Tens of nanoseconds is a mutex and a one-element vec. A millisecond would still meet the budget and would mean the sample started doing the child's work or sleeping."
+    },
+    {
+      "id": "35/pick_least",
+      "section": "chapter 35 balancing",
+      "chapter": "Chapter 35 Balancing and Federation",
+      "function": "pick_least",
+      "summary": "Pick the least-outstanding backend among four counters.",
+      "what": "pick of Policy::LeastOutstanding on a pool of four backends. Outstanding counters are 3, 1, 4, and 2. The quieter index is 1. The function returns Some(1).",
+      "why": "A tool with several upstreams has to choose one without opening a connection. This is that choice. Discovery and the call itself are not this sample.",
+      "timing": "Before the bench, four backends are built with outstanding 3, 1, 4, and 2. The timed closure is b.iter. Inside: pick with LeastOutstanding passed through black_box, then black_box of the Option. The four AtomicUsize loads and the comparison are inside the sample. Backend construction is excluded. call, discover, and FakeModel are not called. No sleep runs. No socket is opened.",
+      "inputs": "Four backends. Names a, b, c, d. Replies unused. Outstanding 3, 1, 4, 2. One policy, LeastOutstanding.",
+      "fake": "The backends are structs in this process. No upstream MCP server is contacted. FakeModel is not constructed. PowerOfTwo is not this sample.",
+      "source": "steps/gw-balancing/benches/balancing.rs",
+      "reading": "Smaller is better. A few nanoseconds is four atomic loads and a compare. Microseconds would mean the sample started a thread or a connect. Milliseconds would mean a sleep or a socket."
     }
   ]
 }

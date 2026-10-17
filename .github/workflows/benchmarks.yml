@@ -139,6 +139,8 @@ jobs:
         run: bash .github/scripts/run_bench_section.sh 33 "chapter 33 actors" ch29-actors actors
       - name: Chapter 34 supervision
         run: bash .github/scripts/run_bench_section.sh 34 "chapter 34 supervision" ch30-supervision supervision
+      - name: Chapter 35 balancing
+        run: bash .github/scripts/run_bench_section.sh 35 "chapter 35 balancing" gw-balancing balancing
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"
