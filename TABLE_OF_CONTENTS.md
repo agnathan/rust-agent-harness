@@ -64,7 +64,7 @@ Written chapters link to `book/chapter-….md`. A chapter that has no page yet i
 
 - [Chapter 41: The Blackboard](book/chapter-41-blackboard.md) — [`steps/ch35-blackboard`](steps/ch35-blackboard)
 - [Chapter 42: The Kanban Board](book/chapter-42-kanban.md) — [`steps/ch36-kanban`](steps/ch36-kanban)
-- Chapter 43: The Message Bus (not yet written)
+- [Chapter 43: The Message Bus](book/chapter-43-message-bus.md) — [`steps/ch37-message-bus`](steps/ch37-message-bus)
 - Chapter 44: Shared Team Skills (not yet written)
 - Chapter 45: A2A for External Agents (not yet written)
 - Chapter 46: Seeing Inside (not yet written)

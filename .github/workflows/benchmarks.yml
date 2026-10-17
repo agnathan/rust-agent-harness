@@ -155,6 +155,8 @@ jobs:
         run: bash .github/scripts/run_bench_section.sh 41 "chapter 41 blackboard" ch35-blackboard blackboard
       - name: Chapter 42 kanban
         run: bash .github/scripts/run_bench_section.sh 42 "chapter 42 kanban" ch36-kanban kanban
+      - name: Chapter 43 message bus
+        run: bash .github/scripts/run_bench_section.sh 43 "chapter 43 message bus" ch37-message-bus bus
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"

@@ -2337,6 +2337,20 @@
       "fake": "The board is a JSON file in the temp directory. No SQLite and no worker process. FakeModel is not constructed.",
       "source": "steps/ch36-kanban/benches/kanban.rs",
       "reading": "Smaller is better. Tens of microseconds is a lock file plus two JSON writes. Five milliseconds would still meet the budget. A number that includes two processes and the retry sleep is the race test, not this one."
+    },
+    {
+      "id": "43/publish_to_agents",
+      "section": "chapter 43 message bus",
+      "chapter": "Chapter 43 The Message Bus",
+      "function": "publish_to_agents",
+      "summary": "Publish ping to 100 subscribers on topic work.",
+      "what": "publish of an envelope with topic work and body ping. One hundred subscribers, a0 through a99, are already on that topic. Each channel is empty, so the result is Delivered(100).",
+      "why": "One small publish has to stay under a millisecond at 100 agents, and a slow subscriber has to hit a bounded channel. This sample is the successful fan-out. The full channel is the test.",
+      "timing": "iter_batched. The setup closure builds a Bus, subscribes a0 through a99 on work, keeps the 100 receivers, and is not timed. The timed routine calls publish with the envelope passed through black_box, then black_box of the result and the receivers. The 100 clones of the envelope and the 100 try_send calls are inside the sample. redact_for_egress, publish_bot, and FakeModel are not called. The Slow path is not taken.",
+      "inputs": "100 subscribers. Topic work. Body ping, 4 characters. Channel capacity 64. Every channel is empty. The bot-event counter stays 0.",
+      "fake": "The subscribers are sync_channel endpoints in this process. No socket. FakeModel is not constructed. The 300 second window is not a clock.",
+      "source": "steps/ch37-message-bus/benches/bus.rs",
+      "reading": "Smaller is better. Tens of microseconds is 100 short clones and 100 try_send calls. One millisecond would still meet the budget. A number that fills 64 first would be the slow-subscriber test."
     }
   ]
 }

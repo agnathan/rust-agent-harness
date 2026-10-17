@@ -85,4 +85,5 @@ members = [
     "steps/ch34-acp",
     "steps/ch35-blackboard",
     "steps/ch36-kanban",
+    "steps/ch37-message-bus",
 ]
