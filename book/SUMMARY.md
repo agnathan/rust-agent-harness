@@ -39,7 +39,7 @@ Server-track chapters are marked *(server)*. They are interleaved with the harne
 # Part III: The team patterns
 
 - [Chapter 26: The Sequential Pipeline](chapter-26-pipeline.md)
-- [Chapter 27: The Supervisor]()
+- [Chapter 27: The Supervisor](chapter-27-supervisor.md)
 - [Chapter 28: Handoffs]()
 - [Chapter 29: Fan-out and Gather]()
 - [Chapter 30: The Critic]()

@@ -39,7 +39,7 @@ Written chapters link to `book/chapter-….md`. A chapter that has no page yet i
 ## Part III: The team patterns
 
 - [Chapter 26: The Sequential Pipeline](book/chapter-26-pipeline.md) — [`steps/ch22-pipeline`](steps/ch22-pipeline)
-- Chapter 27: The Supervisor (not yet written)
+- [Chapter 27: The Supervisor](book/chapter-27-supervisor.md) — [`steps/ch23-supervisor`](steps/ch23-supervisor)
 - Chapter 28: Handoffs (not yet written)
 - Chapter 29: Fan-out and Gather (not yet written)
 - Chapter 30: The Critic (not yet written)
