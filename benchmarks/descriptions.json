@@ -2351,6 +2351,34 @@
       "fake": "The subscribers are sync_channel endpoints in this process. No socket. FakeModel is not constructed. The 300 second window is not a clock.",
       "source": "steps/ch37-message-bus/benches/bus.rs",
       "reading": "Smaller is better. Tens of microseconds is 100 short clones and 100 try_send calls. One millisecond would still meet the budget. A number that fills 64 first would be the slow-subscriber test."
+    },
+    {
+      "id": "44/skill_propose",
+      "section": "chapter 44 team skills",
+      "chapter": "Chapter 44 Shared Team Skills",
+      "function": "skill_propose",
+      "summary": "Enqueue one community proposal on an empty deque.",
+      "what": "skill_propose of a Proposal named cite, body Name the file., force false, trust Community. The deque starts empty. The result is Queued.",
+      "why": "A worker has to enqueue a proposal in under a millisecond and must not wait on the librarian. This sample is the push. The install decision is not in it.",
+      "timing": "The Proposal is built before the bench. iter_batched. Setup is VecDeque::new and is not timed. The timed routine clones the proposal, calls skill_propose with the queue and that clone passed through black_box, then black_box of the result and the queue. The length check and push_back are inside the sample. librarian_accept, allow_install, swap_index, and FakeModel are not called. The Full path is not taken.",
+      "inputs": "One proposal. Name cite. Body Name the file., 14 characters. force false. Trust Community. Queue capacity 64. The queue is empty at the start of each sample.",
+      "fake": "The proposal is a struct. No skill file is written. FakeModel is not constructed. The dangerous-body scan is not this function.",
+      "source": "steps/ch38-team-skills/benches/skills.rs",
+      "reading": "Smaller is better. Tens of nanoseconds is one push of a short struct. A millisecond would still meet the budget and would mean the sample started the librarian or the model."
+    },
+    {
+      "id": "44/index_swap",
+      "section": "chapter 44 team skills",
+      "chapter": "Chapter 44 Shared Team Skills",
+      "function": "index_swap",
+      "summary": "Replace the library index pointer with a prebuilt Arc.",
+      "what": "swap_index from a version-1 index that holds the bundled skill echo to a version-2 Arc that holds the team skill cite and a three-line TEAM.md. The previous Arc is returned.",
+      "why": "Workers read an Arc and must not wait while the librarian rebuilds the list. This sample is the pointer replace. Building the next index is setup.",
+      "timing": "iter_batched. The setup closure builds Library::new of the bundled echo skill and an Arc of the version-2 index, and is not timed. The timed routine calls swap_index with that library and Arc passed through black_box, then black_box of the previous Arc. The mutex and mem::replace are inside the sample. Cloning the skill vec, rendering TEAM.md, and FakeModel are not called.",
+      "inputs": "One old skill, name echo, body Say it back. One new skill, name cite, body Name the file., layer Team, version 2. TEAM.md is the string # TEAM\\n- cite (team)\\n.",
+      "fake": "Both indexes are in memory. No manifest hash and no file copy. FakeModel is not constructed.",
+      "source": "steps/ch38-team-skills/benches/skills.rs",
+      "reading": "Smaller is better. Around 200 nanoseconds is a mutex and an Arc replace. A millisecond would mean the sample rebuilt the skill list or called the model under the lock."
     }
   ]
 }
