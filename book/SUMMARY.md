@@ -58,7 +58,7 @@ Server-track chapters are marked *(server)*. They are interleaved with the harne
 - [Chapter 37: The Gateway](chapter-37-gateway.md)
 - [Chapter 38: MCP Gateway Service](chapter-38-service.md) *(server)*
 - [Chapter 39: Cron](chapter-39-cron.md)
-- [Chapter 40: Editor Integration]()
+- [Chapter 40: Editor Integration](chapter-40-acp.md)
 
 # Part VI: Loosely coupled teams
 

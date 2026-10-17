@@ -73,7 +73,7 @@ Principles and the way to choose a team shape live next to this page: [team patt
 | 37 | The Gateway | Enqueue onto the session inbox is **< 1 ms** (one enqueue measured **77.90 ns**). A steer is a push onto that inbox. Streaming folds chapter 1 events into one message. This is the chat gateway, not the MCP server. |
 | 38 | MCP Gateway Service *(server)* | Killing one replica fails over by session id. Drain finishes in-flight calls. One route lookup measured **11.89 ns**. oha throughput is not measured: this step does not bind a socket. |
 | 39 | Cron | A crash retries a claimed job at most once. Scanning **1,000** due jobs is **< 10 ms** (measured **1.338 µs**). The watchdog and a chained job stay off the request path. |
-| 40 | Editor Integration | Translating an ACP update onto the session queue is **< 1 ms**. |
+| 40 | Editor Integration | Translating an ACP update onto the session queue is **< 1 ms** (one translate measured **58.97 ns**). |
 | 41 | The Blackboard | A claim **< 1 ms** with **100** waiters. The lock is not held across a model call. |
 | 42 | The Kanban Board | Claim, complete, review, or block is one transaction **< 5 ms**. Two processes cannot hold the same task. |
 | 43 | The Message Bus | Publish of one small envelope **< 1 ms** at **100** agents. Slow subscribers hit a bounded channel. |

@@ -2295,6 +2295,20 @@
       "fake": "The jobs are structs. No clock and no jobs file. The threat regex is not compiled by this function. FakeModel is not constructed.",
       "source": "steps/ch33-cron/benches/cron.rs",
       "reading": "Smaller is better. Around a microsecond is a walk of 1,000 short jobs plus the index vec. Ten milliseconds would still meet the budget. A number that includes the prompt regex would be the threat scan, not this one."
+    },
+    {
+      "id": "40/translate_update",
+      "section": "chapter 40 acp",
+      "chapter": "Chapter 40 Editor Integration",
+      "function": "translate_update",
+      "summary": "Copy one ACP update onto an empty inbox of 64.",
+      "what": "translate of an update whose text is hello and whose cancelled flag is false, then submit of that mail. The inbox has room, so the result is Accepted.",
+      "why": "An editor update has to land on the session queue in under a millisecond. Encoding the JSON-RPC line and writing stdout are not this sample.",
+      "timing": "Before the bench, the Update is built with text hello and cancelled false. iter_batched. The setup closure calls Inbox::new(64) and is not timed. The timed routine calls translate with that update passed through black_box, then submit of the mail, then black_box of Submit. The string clone and the push are inside the sample. write_result, log_line, map_permission, and FakeModel are not called. The Full path is not taken.",
+      "inputs": "One update. Text hello, 5 characters. cancelled is false. Inbox capacity 64. The inbox is empty at the start of each sample.",
+      "fake": "The update is a struct. No editor process and no stdio handle. FakeModel is not constructed. The permission map is not consulted.",
+      "source": "steps/ch34-acp/benches/acp.rs",
+      "reading": "Smaller is better. Tens of nanoseconds is a short string clone and one push. A millisecond would still meet the budget and would mean the sample started encoding JSON or writing a pipe."
     }
   ]
 }
