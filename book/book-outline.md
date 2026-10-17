@@ -132,7 +132,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 - **Chapter 28.** Filtering a 100-message transcript for a handoff < 1 ms (measured 2.664 µs).
 - **Chapter 29.** The worker limit holds. One hundred mock subagents can be scheduled without an unbounded queue (scheduling 100 measured 4.285 µs). The 101st is refused.
 - **Chapter 30.** The critic shares `Arc` context and takes one permit from the same bound (one judgment measured 196.6 ns).
-- **Chapter 31.** Nested fan-out cannot exceed the worker limit.
+- **Chapter 31.** Nested fan-out cannot exceed the worker limit. Eight children on the shared pool measured 103.0 µs. Width 9 is refused before any task is scheduled.
 
 ### Part IV: Making it robust
 

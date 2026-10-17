@@ -64,7 +64,7 @@ Principles and the way to choose a team shape live next to this page: [team patt
 | 28 | Handoffs | Filtering a **100**-message transcript for a handoff **< 1 ms** (measured **2.664 µs**). |
 | 29 | Fan-out and Gather | The worker limit holds. **100** mock subagents can be scheduled without an unbounded queue (scheduling 100 measured **4.285 µs**). The 101st is refused. |
 | 30 | The Critic | The critic shares `Arc` context and takes one permit from the same bound (one judgment measured **196.6 ns**). |
-| 31 | Composing Patterns | Nested fan-out cannot exceed the worker limit. |
+| 31 | Composing Patterns | Nested fan-out cannot exceed the worker limit. Eight children on the shared pool measured **103.0 µs**. Width 9 is refused before any task is scheduled. |
 | 32 | Managing Context | Compression and the memory flush run between turns or in the background. The hot path sends the `Arc` snapshot. Preflight compression, deferred from chapter 9, runs before the model call. |
 | 33 | Agents as Actors | Session inbox capacity **64**. **100+** mock agents at once. A full inbox applies backpressure. |
 | 34 | Supervision and Restart | Restarting a failed child adds **< 1 ms**, excluding the child's work. |

@@ -43,7 +43,7 @@ Written chapters link to `book/chapter-….md`. A chapter that has no page yet i
 - [Chapter 28: Handoffs](book/chapter-28-handoffs.md) — [`steps/ch24-handoffs`](steps/ch24-handoffs)
 - [Chapter 29: Fan-out and Gather](book/chapter-29-fan-out.md) — [`steps/ch25-fan-out`](steps/ch25-fan-out)
 - [Chapter 30: The Critic](book/chapter-30-critic.md) — [`steps/ch26-critic`](steps/ch26-critic)
-- Chapter 31: Composing Patterns (not yet written)
+- [Chapter 31: Composing Patterns](book/chapter-31-composition.md) — [`steps/ch27-composition`](steps/ch27-composition)
 
 ## Part IV: Making it robust
 

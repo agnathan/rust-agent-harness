@@ -1,0 +1,27 @@
+[package]
+name = "ch27-composition"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+description = "Chapter 31: a supervisor that fans out, and hands off only when ownership moves."
+
+[lib]
+name = "composition"
+
+[[bin]]
+name = "ch27-composition"
+path = "src/main.rs"
+
+[dependencies]
+ch23-supervisor = { path = "../ch23-supervisor" }
+ch24-handoffs = { path = "../ch24-handoffs" }
+ch25-fan-out = { path = "../ch25-fan-out" }
+ch26-critic = { path = "../ch26-critic" }
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "composition"
+harness = false

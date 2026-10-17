@@ -73,4 +73,5 @@ members = [
     "steps/ch24-handoffs",
     "steps/ch25-fan-out",
     "steps/ch26-critic",
+    "steps/ch27-composition",
 ]

@@ -2169,6 +2169,20 @@
       "fake": "The reply is a string constant. No model is constructed. limits() is not called inside the sample.",
       "source": "steps/ch26-critic/benches/critic.rs",
       "reading": "Smaller is better. Hundreds of nanoseconds is a mutex permit and a short parse. Milliseconds would mean the sample started a model call or slept for the judge timeout."
+    },
+    {
+      "id": "31/nested_eight",
+      "section": "chapter 31 composition",
+      "chapter": "Chapter 31 Composing Patterns",
+      "function": "nested_eight",
+      "summary": "Schedule and gather eight nested children on one supervisor pool.",
+      "what": "nested_fanout with held 0 and width 8. The bound check passes. Eight tasks are gathered. Each takes one permit and returns a short reply.",
+      "why": "Nested fan-out has to stay inside the worker limit. This is the cost of the fan-out that is allowed. The refusal of width 9 does not start threads and is not this sample.",
+      "timing": "Before the bench, Pool::new(8) builds the pool. The timed closure is b.iter. Inside: nested_fanout with the pool, held 0, and width 8 passed through black_box, then black_box of the summary string. Scheduling, thread start, the permit, the reply clone, and the join are inside the sample. The hold is Duration::ZERO. No model is called. The judge timeout and the gate timeout are not slept.",
+      "inputs": "Eight tasks. Replies are n0 through n7, joined by newlines in task_index order. Pool limit 8. held is 0. tool_trace is an empty string.",
+      "fake": "The replies are formatted in nested_fanout. FakeModel is not constructed. No shell is spawned. Width 9 is not called.",
+      "source": "steps/ch27-composition/benches/composition.rs",
+      "reading": "Smaller is better. Around 100 microseconds is thread start for eight short jobs. A number near eight times a sleep would mean the sample started holding. Milliseconds still fit a fan-out that starts threads. A multi-millisecond jump means the sample started a model call."
     }
   ]
 }

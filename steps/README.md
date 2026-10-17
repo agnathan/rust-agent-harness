@@ -62,6 +62,7 @@ cargo run -p ch02-harness-cli -- --mock chat
 | ch24-handoffs | 28 | a filtered transcript and a cap of four handoffs |
 | ch25-fan-out | 29 | a queue of 100, the supervisor bound, summaries in index order |
 | ch26-critic | 30 | a verdict, one permit, accept only on done |
+| ch27-composition | 31 | nested fan-out under one pool, a handoff only when ownership moves, the critic loop |
 | gw-limits | 15 *(server)* | Per-tool permits, idempotent retry, a breaker, caps of 50 |
 | gw-minimal-server | 5 *(server)* | Empty `mcp-gateway` catalog. No socket |
 
