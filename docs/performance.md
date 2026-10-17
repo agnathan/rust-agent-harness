@@ -54,16 +54,16 @@ Principles and the way to choose a team shape live next to this page: [team patt
 | 18 | Sessions on Disk | One local WAL append of a turn **< 1 ms** (measured **142.9 µs**). FTS updates run in the background. The chapter re-runs the chapter 9 eval set. |
 | 19 | Memory Files | The frozen snapshot is built once and shared by `Arc`. A memory write does not rewrite the system prompt. Enqueue of a background write **< 1 ms** (measured **54.94 ns**). |
 | 20 | Recall | Discover over **10,000** messages **< 20 ms** (measured **59.35 µs**). Search runs only when the model calls the tool. |
-| 21 | Learned Tools *(server)* | Prediction stays off the request path except for the offered set. Applying a 32-name offer measured **94.69 ns**. Scoring 1,000 usage rows against 64 names measured **174.4 µs**, and that function is not called from `session_tools`. |
-| 22 | Using Skills | Load and render **500** skills **< 10 ms**, once per session (measured **1.946 ms**). The rendered index is `Arc` and byte-stable. |
-| 23 | Writing Skills | Security scan of one skill **< 5 ms** (measured **255.1 ns**). A write the model did not ask for is a background task (enqueue measured **21.15 ns**). |
-| 24 | The Reflection Loop | Spawning the reviewer adds **< 1 ms** to turn finalize (measured **60.01 ns**). Cancelling it when the user returns takes **< 50 ms** (measured **758.7 µs**). |
-| 25 | Curation | The curator never runs on the request path. Enqueue measured **29.05 ns**. |
-| 26 | The Sequential Pipeline | The next stage receives `Arc` context (measured **10.78 ns**). Copying 100 messages measured **7.089 µs** and is not the hand-off. |
-| 27 | The Supervisor | Up to **8** specialists at once, each with `Arc` context. Eight specialists that each slept 40 ms finished in **0.044 s** in nextest. Scheduling eight with no sleep measured **98.54 µs**. A reflection note measured **21.23 ns**. |
-| 28 | Handoffs | Filtering a **100**-message transcript for a handoff **< 1 ms** (measured **2.740 µs**). |
-| 29 | Fan-out and Gather | The worker limit holds. **100** mock subagents can be scheduled without an unbounded queue (scheduling 100 measured **4.635 µs**). The 101st is refused. |
-| 30 | The Critic | The critic shares `Arc` context and takes one permit from the same bound (one judgment measured **175.3 ns**). |
+| 21 | Learned Tools *(server)* | Prediction stays off the request path except for the offered set. Applying a 32-name offer measured **79.01 ns**. Scoring 1,000 usage rows against 64 names measured **153.1 µs**, and that function is not called from `session_tools`. |
+| 22 | Using Skills | Load and render **500** skills **< 10 ms**, once per session (measured **2.162 ms**). The rendered index is `Arc` and byte-stable. |
+| 23 | Writing Skills | Security scan of one skill **< 5 ms** (measured **242.5 ns**). A write the model did not ask for is a background task (enqueue measured **17.96 ns**). |
+| 24 | The Reflection Loop | Spawning the reviewer adds **< 1 ms** to turn finalize (measured **60.16 ns**). Cancelling it when the user returns takes **< 50 ms** (measured **819.8 µs**). |
+| 25 | Curation | The curator never runs on the request path. Enqueue measured **27.80 ns**. |
+| 26 | The Sequential Pipeline | The next stage receives `Arc` context (measured **10.46 ns**). Copying 100 messages measured **6.568 µs** and is not the hand-off. |
+| 27 | The Supervisor | Up to **8** specialists at once, each with `Arc` context. Eight specialists that each slept 40 ms finished in **0.044 s** in nextest. Scheduling eight with no sleep measured **148.1 µs**. A reflection note measured **20.81 ns**. |
+| 28 | Handoffs | Filtering a **100**-message transcript for a handoff **< 1 ms** (measured **2.664 µs**). |
+| 29 | Fan-out and Gather | The worker limit holds. **100** mock subagents can be scheduled without an unbounded queue (scheduling 100 measured **4.285 µs**). The 101st is refused. |
+| 30 | The Critic | The critic shares `Arc` context and takes one permit from the same bound (one judgment measured **196.6 ns**). |
 | 31 | Composing Patterns | Nested fan-out cannot exceed the worker limit. |
 | 32 | Managing Context | Compression and the memory flush run between turns or in the background. The hot path sends the `Arc` snapshot. Preflight compression, deferred from chapter 9, runs before the model call. |
 | 33 | Agents as Actors | Session inbox capacity **64**. **100+** mock agents at once. A full inbox applies backpressure. |

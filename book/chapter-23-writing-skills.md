@@ -74,14 +74,14 @@ The binary writes one skill under a temp directory, scans it, and prints the ver
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `scan_one_skill` | 255.1 ns | under 5 ms | scan one in-memory skill of about 1 KB |
-| `enqueue_unsolicited` | 21.15 ns | off the request path as a queue push | enqueue a write the model did not ask for |
+| `scan_one_skill` | 242.5 ns | under 5 ms | scan one in-memory skill of about 1 KB |
+| `enqueue_unsolicited` | 17.96 ns | off the request path as a queue push | enqueue a write the model did not ask for |
 
 `scan_one_skill` builds a skill string of at least 1,024 bytes before the bench and calls `scan_text` once so the `Regex` values are compiled. The timed closure is `b.iter`. Inside: `scan_text` with the text passed through `black_box`. No file is written. No model is called.
 
 `enqueue_unsolicited` opens a `Writer` on a temp directory before the bench. The timed closure is `b.iter`. Inside: `enqueue_background` of the string `create notes`. The queue is capped at 64, so a long sample drops the oldest job. No skill directory is created.
 
-The table is `mean.point_estimate` from Criterion on this machine, with the Benchmarks flags `--warm-up-time 1 --measurement-time 2 --sample-size 10`. The workflow mean on ubuntu-latest replaces these numbers when that run is green.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38986915984](https://github.com/agnathan/rust-agent-harness/actions/runs/38986915984), section `23`.
 
 ### Milestone demo
 
@@ -121,7 +121,7 @@ The approval gate and the agent-created ask are different holds. Turning the gat
 - **Scan.** Critical is dangerous, high is caution. `force` does not override a dangerous community skill.
 - **Reviewer.** `view` before `patch`. The agent in the foreground can patch without that view.
 - **Delete.** A pin and a bundled, hub, or team origin are refused.
-- **Background.** An unsolicited write is a queue entry. Scanning one skill measured **255.1 ns**.
+- **Background.** An unsolicited write is a queue entry. Scanning one skill measured **242.5 ns**.
 
 [personal note: a write you were glad the gate held]
 

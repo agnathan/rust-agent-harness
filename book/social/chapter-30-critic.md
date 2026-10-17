@@ -13,7 +13,7 @@ Hermes Agent's goal judge is hermes_cli/goals.py. Verdicts are done, blocked, co
 This gate has to accept before the answer leaves, so a missing verdict is Reject. The 20 turns and the 30 seconds are named. This crate does not loop and does not sleep. wait parses and does not wait.
 
 4/
-One judgment measured 175.3 ns. The demo prints "accepted: done". No key.
+One judgment measured 196.6 ns. The demo prints "accepted: done". No key.
 
 [personal note]
 
@@ -29,7 +29,7 @@ Chapter 30 is out: The Critic.
 
 Someone has to say the work is finished, and that someone should not be the worker who just did it. Hermes Agent's goal judge returns done, blocked, continue, or wait, and it fails open: a reply it cannot parse becomes continue. I kept the four names and the 4,000-character snippet. A missing verdict rejects, because this gate has to accept before the answer leaves.
 
-The critic takes one permit from the same pool of eight and reads the shared context. It does not write the notes. One judgment measured 175.3 ns.
+The critic takes one permit from the same pool of eight and reads the shared context. It does not write the notes. One judgment measured 196.6 ns.
 
 [personal note: one takeaway from writing this chapter]
 

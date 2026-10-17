@@ -69,11 +69,11 @@ The binary writes one skill, ages it 14 days, and runs the pass. No key. The enq
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `enqueue_curation` | 29.05 ns | off the request path | record that a curator pass should run |
+| `enqueue_curation` | 27.80 ns | off the request path | record that a curator pass should run |
 
 `enqueue_curation` opens a `Curator` on a temp directory before the bench. The timed closure is `b.iter`. Inside: `enqueue`, then `queue_len` passed through `black_box`. No snapshot is built. No skill is scanned or moved. The queue is capped at 64, so a long sample drops the oldest job.
 
-The table is `mean.point_estimate` from Criterion on this machine, with the Benchmarks flags `--warm-up-time 1 --measurement-time 2 --sample-size 10`. The workflow mean on ubuntu-latest replaces this number when that run is green.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38986915984](https://github.com/agnathan/rust-agent-harness/actions/runs/38986915984), section `25`.
 
 ### Milestone demo
 
@@ -97,7 +97,7 @@ The age is whatever the caller stored. A bad record of 30 days archives a skill 
 
 **H1.** `install` calls `scan_text` and `should_allow_install`. `force` does not save a dangerous community skill. That call sits inside `install` and `pass`, which `enqueue` does not call.
 
-**Off the request path.** `enqueue` is the only function the turn should call. Measured **29.05 ns**. The snapshot, the scan, and the rename run when something later drains the queue.
+**Off the request path.** `enqueue` is the only function the turn should call. Measured **27.80 ns**. The snapshot, the scan, and the rename run when something later drains the queue.
 
 **Left for later.** E1 and E2 are still absent. The aux-model consolidation and rollback are not in this book yet.
 
@@ -107,7 +107,7 @@ The age is whatever the caller stored. A bad record of 30 days archives a skill 
 - **Exempt.** Pin, cron, bundled, hub.
 - **Snapshot.** A gzip of the tree, two kept, `.git` left out. Taken before the moves.
 - **Gate and scan.** Chapter 23's flag and chapter 23's install scan. Neither runs from `enqueue`.
-- **Time.** Enqueue measured **29.05 ns**.
+- **Time.** Enqueue measured **27.80 ns**.
 
 [personal note: a directory you were glad got a tarball before it moved]
 

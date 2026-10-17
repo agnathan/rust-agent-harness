@@ -70,14 +70,14 @@ The binary counts ten user turns, forks, and runs the scripted memory line. No k
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `spawn_reviewer` | 60.01 ns | under 1 ms added to turn finalize | build one reviewer fork |
-| `cancel_review` | 758.7 µs | under 50 ms | set the cancel flag and join the spinner |
+| `spawn_reviewer` | 60.16 ns | under 1 ms added to turn finalize | build one reviewer fork |
+| `cancel_review` | 819.8 µs | under 50 ms | set the cancel flag and join the spinner |
 
 `spawn_reviewer` times `spawn_reviewer(true)` inside `iter_custom`. The `Vec` of forks is dropped after the timer stops. No thread is started. No model is called. The memory nudge flag is the `true` argument, passed through `black_box`.
 
 `cancel_review` uses `iter_batched`. The setup closure calls `ReviewRun::spawn_spinner`, which starts the thread. That setup is not timed. The timed closure is `cancel_and_join`: one atomic store and a join. The worker sleeps 1 ms between flag checks, so the join waits out at most one sleep.
 
-The table is `mean.point_estimate` from Criterion on this machine, with the Benchmarks flags `--warm-up-time 1 --measurement-time 2 --sample-size 10`. The workflow mean on ubuntu-latest replaces these numbers when that run is green.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38986915984](https://github.com/agnathan/rust-agent-harness/actions/runs/38986915984), section `24`.
 
 ### Milestone demo
 
@@ -112,8 +112,8 @@ The note vec is not `MEMORY.md`. Chapter 19's scan does not run on it.
 - **Counters.** Memory every 10 user turns. Skills every 10 tool iterations.
 - **Fork.** Intervals are 0. Memory is on the list only for a memory nudge.
 - **Refuse.** `terminal` is not a review tool.
-- **Cancel.** A flag, then a join. Measured **758.7 µs**.
-- **Finalize.** Building the fork measured **60.01 ns**.
+- **Cancel.** A flag, then a join. Measured **819.8 µs**.
+- **Finalize.** Building the fork measured **60.16 ns**.
 
 [personal note: a review that was worth running after the turn, not during it]
 

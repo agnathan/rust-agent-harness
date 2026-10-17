@@ -13,7 +13,7 @@ Hermes Agent does not have that four-stage writer. The closest pass is mixture-o
 hand_off returns the same Arc. Arc::ptr_eq is the test. A separate bench clones 100 messages so the copy has a number. The pipeline does not call it.
 
 4/
-Handing off the Arc measured 10.78 ns. Copying 100 messages measured 7.089 µs. The demo ends on "revise: the revision". No key.
+Handing off the Arc measured 10.46 ns. Copying 100 messages measured 6.568 µs. The demo ends on "revise: the revision". No key.
 
 [personal note]
 
@@ -29,7 +29,7 @@ Chapter 26 is out: The Sequential Pipeline.
 
 A draft that cannot see the outline is a second conversation. Hermes Agent's mixture-of-agents path appends reference-model context onto the message the main model sees. I used that idea for four named stages, outline through revise, and gave every stage the same Arc. The message vec stays one allocation.
 
-Handing off that Arc measured 10.78 ns. Cloning the 100 messages measured 7.089 µs, and the pipeline does not do that clone.
+Handing off that Arc measured 10.46 ns. Cloning the 100 messages measured 6.568 µs, and the pipeline does not do that clone.
 
 [personal note: one takeaway from writing this chapter]
 

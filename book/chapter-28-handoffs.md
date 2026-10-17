@@ -65,11 +65,11 @@ The binary filters one scratch line and moves the owner. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `filter_100` | 2.740 µs | under 1 ms | drop scratch from 100 messages |
+| `filter_100` | 2.664 µs | under 1 ms | drop scratch from 100 messages |
 
 `filter_100` builds 100 messages before the bench. Every fifth role is `scratch`. The rest are `user`. Each text is `message N about the rename procedure`. The timed closure is `b.iter`. Inside: `filter_transcript` with the slice passed through `black_box`, then `black_box` of the new vec. No board is updated. No model is called.
 
-The table is `mean.point_estimate` from Criterion on this machine, with the Benchmarks flags `--warm-up-time 1 --measurement-time 2 --sample-size 10`. The workflow mean on ubuntu-latest replaces this number when that run is green.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38986915984](https://github.com/agnathan/rust-agent-harness/actions/runs/38986915984), section `28`.
 
 ### Milestone demo
 
@@ -100,7 +100,7 @@ The fifth refusal restores the count. Forgetting the `fetch_sub` would leave the
 - **Filter.** Role `scratch` is dropped. Order of the rest is kept.
 - **Cap.** Four handoffs. The fifth is refused. The number is the harness cap.
 - **Owner.** Changes only after a non-empty filtered transcript is accepted.
-- **Time.** Filtering 100 messages measured **2.740 µs**.
+- **Time.** Filtering 100 messages measured **2.664 µs**.
 
 [personal note: a transfer that was really a platform change, and the filter you still wanted]
 

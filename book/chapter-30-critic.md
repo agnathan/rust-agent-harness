@@ -69,11 +69,11 @@ The binary judges one scripted reply. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `judge_one_permit` | 175.3 ns | one permit from the shared bound | judge `verdict: done` |
+| `judge_one_permit` | 196.6 ns | one permit from the shared bound | judge `verdict: done` |
 
 `judge_one_permit` builds a pool with limit 8 before the bench. The timed closure is `b.iter`. Inside: `as_tool` with the pool and the reply `verdict: done\nThe note is short enough.` passed through `black_box`. That acquires one permit, locks the notes, parses the verdict, copies the short snippet, and drops the permit. No model is called. The 30 second timeout is not slept. The notes vec is not appended.
 
-The table is `mean.point_estimate` from Criterion on this machine, with the Benchmarks flags `--warm-up-time 1 --measurement-time 2 --sample-size 10`. The workflow mean on ubuntu-latest replaces this number when that run is green.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38986915984](https://github.com/agnathan/rust-agent-harness/actions/runs/38986915984), section `30`.
 
 ### Milestone demo
 
@@ -107,7 +107,7 @@ The snippet cut is 4,000 bytes of the raw reply, verdict line included. It is no
 - **Permit.** One, from the pool of 8. The context `Arc` is the pool's.
 - **Work.** The critic does not write the notes.
 - **Named, unused.** 20 turns and a 30 second timeout. This crate does not loop or sleep.
-- **Time.** One judgment measured **175.3 ns**.
+- **Time.** One judgment measured **196.6 ns**.
 
 [personal note: a gate you wanted to fail closed]
 

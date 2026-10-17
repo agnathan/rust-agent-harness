@@ -74,11 +74,11 @@ The binary writes one skill under a temp directory, renders the index, and views
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `load_render_500` | 1.946 ms | under 10 ms, once per session | load 500 skills and render the index |
+| `load_render_500` | 2.162 ms | under 10 ms, once per session | load 500 skills and render the index |
 
 `load_render_500` writes 500 `SKILL.md` files before the bench, ten categories, names `skill000` through `skill499`. The timed closure is `b.iter`. Inside: `load_tree` and `render_index`, both inputs passed through `black_box`. Writing the files is excluded. No model is called.
 
-The table is `mean.point_estimate` from Criterion on this machine, with the Benchmarks flags `--warm-up-time 1 --measurement-time 2 --sample-size 10`. The workflow mean on ubuntu-latest replaces this number when that run is green.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38986915984](https://github.com/agnathan/rust-agent-harness/actions/runs/38986915984), section `22`.
 
 ### Milestone demo
 
@@ -112,7 +112,7 @@ The view has no offset. A 100,000-character file comes back whole. That is the l
 - **Index.** Sorted, byte-stable, stored in an `Arc`. A missing server is `[needs: …]`.
 - **Tools.** `skills_list` filters by category. `skill_view` returns the whole file.
 - **Note.** An added or removed name is announced. The `Arc` stays.
-- **Time.** Loading and rendering 500 skills measured **1.946 ms**.
+- **Time.** Loading and rendering 500 skills measured **2.162 ms**.
 
 [personal note: a procedure that belonged in a skill instead of in the prompt]
 

@@ -67,14 +67,14 @@ The binary runs four scripted stages. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `arc_pass` | 10.78 ns | the next stage receives `Arc` | clone the context pointer |
-| `copy_transcript` | 7.089 µs | the copy the pipeline does not do | clone 100 messages |
+| `arc_pass` | 10.46 ns | the next stage receives `Arc` | clone the context pointer |
+| `copy_transcript` | 6.568 µs | the copy the pipeline does not do | clone 100 messages |
 
 `arc_pass` builds a context of 100 messages before the bench. The timed closure is `b.iter`. Inside: `hand_off` of an `Arc::clone` passed through `black_box`, then `Arc::ptr_eq` passed through `black_box`. No stage reply is formatted. No model is called.
 
 `copy_transcript` uses the same 100 messages. The timed closure clones `messages`. The pipeline does not call this function. The number is what a hand-off would cost if it copied the transcript.
 
-The table is `mean.point_estimate` from Criterion on this machine, with the Benchmarks flags `--warm-up-time 1 --measurement-time 2 --sample-size 10`. The workflow mean on ubuntu-latest replaces these numbers when that run is green.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38986915984](https://github.com/agnathan/rust-agent-harness/actions/runs/38986915984), section `26`.
 
 ### Milestone demo
 
@@ -94,7 +94,7 @@ A scripted reply does not read the previous note. The next chapter's specialists
 
 [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). This chapter passes context. It does not write a skill or a memory file.
 
-**Context.** The next stage gets `Arc`. The 100 messages stay in one allocation. A copy of those messages measured 7.089 µs and is not on the path.
+**Context.** The next stage gets `Arc`. The 100 messages stay in one allocation. A copy of those messages measured 6.568 µs and is not on the path.
 
 **Order.** The stage slice is the order. Critique cannot run before draft unless the caller rearranges the slice.
 
@@ -105,7 +105,7 @@ A scripted reply does not read the previous note. The next chapter's specialists
 - **Stages.** Outline, draft, critique, revise, in that order.
 - **Context.** One `Arc`. `ptr_eq` holds. Messages are not cloned between stages.
 - **Replies.** Scripted. No key.
-- **Time.** Handing off the `Arc` measured **10.78 ns**. Copying 100 messages measured **7.089 µs**.
+- **Time.** Handing off the `Arc` measured **10.46 ns**. Copying 100 messages measured **6.568 µs**.
 
 [personal note: a pipeline stage that only made sense because it could see the previous note]
 

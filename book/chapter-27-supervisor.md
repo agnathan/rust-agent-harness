@@ -73,14 +73,14 @@ The binary runs two scripted specialists and enqueues a reflection note. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `schedule_eight` | 98.54 µs | eight specialists, one context | run eight jobs that do not sleep |
-| `enqueue_reflection` | 21.23 ns | off the hot path | record a reflection note |
+| `schedule_eight` | 148.1 µs | eight specialists, one context | run eight jobs that do not sleep |
+| `enqueue_reflection` | 20.81 ns | off the hot path | record a reflection note |
 
 `schedule_eight` builds the pool and eight jobs before the bench. The jobs' `hold` is `None`. The timed closure is `b.iter`. Inside: `run_specialists` with the pool and the jobs passed through `black_box`. That starts eight threads, takes eight permits, clones the context `Arc`, and joins. No model is called. The 40 ms sleep from the test is not in this sample.
 
 `enqueue_reflection` times `enqueue_reflection` of the string `team run finished`. No specialist runs. The queue is capped at 64.
 
-The table is `mean.point_estimate` from Criterion on this machine, with the Benchmarks flags `--warm-up-time 1 --measurement-time 2 --sample-size 10`. The workflow mean on ubuntu-latest replaces these numbers when that run is green.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38986915984](https://github.com/agnathan/rust-agent-harness/actions/runs/38986915984), section `27`.
 
 ### Milestone demo
 
@@ -108,7 +108,7 @@ The pool limit is 8. Hermes will run 10. Copying the Hermes default into `Pool::
 
 **D6.** `worktree` follows `_get_worktree_isolation`: off unless opted in. Opt-in does not create a worktree.
 
-**Reflection.** `enqueue_reflection` does not run chapter 24's reviewer. The team run records the note. Measured **21.23 ns**.
+**Reflection.** `enqueue_reflection` does not run chapter 24's reviewer. The team run records the note. Measured **20.81 ns**.
 
 **Left for later.** Chapter 29 is the queue of 100 and the aggregator. Chapter 30's critic takes one permit from this pool. E1 and E2 are still absent.
 
@@ -118,7 +118,7 @@ The pool limit is 8. Hermes will run 10. Copying the Hermes default into `Pool::
 - **Context.** One `Arc` per pool. Specialists clone the pointer.
 - **Child.** The five blocked tools at depth 1. Depth stops at 1.
 - **Worktree.** Off by default. Opt-in is a marker, not a git command.
-- **Time.** Scheduling eight empty specialists measured **98.54 µs**. The 40 ms overlap test finished in **0.044 s**.
+- **Time.** Scheduling eight empty specialists measured **148.1 µs**. The 40 ms overlap test finished in **0.044 s**.
 
 [personal note: the specialist that only worked because it could not call the parent's tools]
 

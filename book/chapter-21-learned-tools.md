@@ -76,14 +76,14 @@ The binary opens one session, refreshes from one usage row and a memory sentence
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `apply_offered` | 94.69 ns | the offered set only | copy 32 names into a session view |
-| `predict_offline` | 174.4 µs | off the request path | score 1,000 rows against 64 names |
+| `apply_offered` | 79.01 ns | the offered set only | copy 32 names into a session view |
+| `predict_offline` | 153.1 µs | off the request path | score 1,000 rows against 64 names |
 
 `apply_offered` builds the gateway, opens `desk`, and calls `refresh_prediction` before the bench. One `session_tools` also runs first, so `list_changed` is already clear. The timed closure is `b.iter`. Inside: `session_tools` with the session id passed through `black_box`. That clones the `Arc` and copies 32 names. `predict` is not called.
 
 `predict_offline` builds 64 names and 1,000 usage rows before the bench. The timed closure is `b.iter`. Inside: `predict` with the input passed through `black_box`. No gateway, no session, no model.
 
-The table is `mean.point_estimate` from Criterion on this machine, with the Benchmarks flags `--warm-up-time 1 --measurement-time 2 --sample-size 10`. The workflow mean on ubuntu-latest replaces these two numbers when that run is green.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38986915984](https://github.com/agnathan/rust-agent-harness/actions/runs/38986915984), section `21`.
 
 ### Milestone demo
 
@@ -119,7 +119,7 @@ The underscore is part of the tool name. `read_file` matches as one name, not as
 - **Rank.** A memory or session mention is 3. A matching use is 1. Zero stays out.
 - **Names.** A composite and a macro expand to steps. They do not run them.
 - **Code mode.** `call tool json`, allowlist, offer, and 50 calls.
-- **Time.** Applying 32 names measured **94.69 ns**. Scoring 1,000 rows measured **174.4 µs**.
+- **Time.** Applying 32 names measured **79.01 ns**. Scoring 1,000 rows measured **153.1 µs**.
 
 [personal note: the first time the offer was right without a search]
 

@@ -69,11 +69,11 @@ The binary schedules three tasks out of order and prints the gathered summaries.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `schedule_100` | 4.635 µs | 100 tasks, no unbounded queue | schedule 100 tasks onto a fresh board |
+| `schedule_100` | 4.285 µs | 100 tasks, no unbounded queue | schedule 100 tasks onto a fresh board |
 
 `schedule_100` uses `iter_batched`. The setup closure calls `Board::new` and is not timed. The timed closure schedules 100 tasks, indexes 0 through 99, reply `reply N`, tool trace `secret-tool`, then passes `len` through `black_box`. No pool is built. No thread is started. No model is called.
 
-The table is `mean.point_estimate` from Criterion on this machine, with the Benchmarks flags `--warm-up-time 1 --measurement-time 2 --sample-size 10`. The workflow mean on ubuntu-latest replaces this number when that run is green.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38986915984](https://github.com/agnathan/rust-agent-harness/actions/runs/38986915984), section `29`.
 
 ### Milestone demo
 
@@ -107,7 +107,7 @@ Hermes refuses an async dispatch at the concurrency cap instead of queueing it. 
 - **Bound.** Gather uses the supervisor pool of 8.
 - **Aggregator.** Sort by `task_index`. The summary is the replies.
 - **Trace.** Child tool text is not in the summary.
-- **Time.** Scheduling 100 tasks measured **4.635 µs**.
+- **Time.** Scheduling 100 tasks measured **4.285 µs**.
 
 [personal note: a batch that came back sorted, and the tool log you were glad the parent never saw]
 

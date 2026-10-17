@@ -13,7 +13,7 @@ Hermes Agent lists those five names in tools/delegate_tool_toolsets.py (DELEGATE
 The harness bound stays 8. That is the measurement, not the Hermes default. The code names 10 so the default stays visible, and the pool does not use it. A worktree is opt-in (tools/subagent_worktree.py) and this chapter does not create one.
 
 4/
-Eight specialists that each slept 40 ms finished in 0.044 s in nextest, with max in flight at 8. Scheduling eight with no sleep measured 98.54 µs. The demo prints "three steps | the draft". No key.
+Eight specialists that each slept 40 ms finished in 0.044 s in nextest, with max in flight at 8. Scheduling eight with no sleep measured 148.1 µs. The demo prints "three steps | the draft". No key.
 
 [personal note]
 

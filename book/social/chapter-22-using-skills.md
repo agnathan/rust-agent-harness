@@ -13,7 +13,7 @@ Hermes Agent renders that block in agent/prompt_builder.py (_render_skills_index
 skills_list can filter by category. skill_view returns the whole file, or one supporting file under references, templates, scripts, or assets. A path with .. is refused.
 
 4/
-Loading and rendering 500 skills measured 1.946 ms. The demo views rename. No key.
+Loading and rendering 500 skills measured 2.162 ms. The demo views rename. No key.
 
 [personal note]
 
@@ -29,7 +29,7 @@ Chapter 22 is out: Using Skills.
 
 Procedures do not belong in the system prompt as a full document. Hermes Agent puts a short index in the prompt and loads SKILL.md on demand. I did the same: one sorted <available_skills> block, stored in an Arc for the session. Adding a skill after that render produces the note Hermes uses, and the cached bytes stay.
 
-skill_view returns the whole file. A supporting file has to sit in one of four directories. Loading and rendering 500 skills measured 1.946 ms.
+skill_view returns the whole file. A supporting file has to sit in one of four directories. Loading and rendering 500 skills measured 2.162 ms.
 
 [personal note: one takeaway from writing this chapter]
 
