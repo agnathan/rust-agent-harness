@@ -2029,6 +2029,34 @@
       "fake": "The job is a string. No model asked for it. No skill directory is created by the call.",
       "source": "steps/ch19-skill-writing/benches/writing.rs",
       "reading": "Smaller is better. Tens of nanoseconds is a mutex and a short string. Milliseconds would mean the sample started scanning or writing a file."
+    },
+    {
+      "id": "24/spawn_reviewer",
+      "section": "chapter 24 reflection",
+      "chapter": "Chapter 24 The Reflection Loop",
+      "function": "spawn_reviewer",
+      "summary": "Build one reviewer fork on the turn-finalize path.",
+      "what": "spawn_reviewer(true). The fork lists memory and skill tools. Both nudge intervals are 0.",
+      "why": "Spawning the reviewer is allowed to add under 1 ms to turn finalize. The review itself runs after the turn.",
+      "timing": "The timed region is iter_custom. The timer starts, then the harness calls spawn_reviewer once per iteration with true passed through black_box, and pushes each fork into a Vec. The timer stops. The Vec is dropped after that. No thread is started. No model is called. No skill file is opened.",
+      "inputs": "One boolean, true, meaning the memory nudge fired. The tool list is the static memory list.",
+      "fake": "The fork is a struct. It is not an AIAgent and it does not share a session id. The scripted model is not constructed.",
+      "source": "steps/ch20-reflection/benches/reflection.rs",
+      "reading": "Smaller is better. It should stay under 1 ms. A number in the milliseconds means the sample started a thread or called the model."
+    },
+    {
+      "id": "24/cancel_review",
+      "section": "chapter 24 reflection",
+      "chapter": "Chapter 24 The Reflection Loop",
+      "function": "cancel_review",
+      "summary": "Set the cancel flag and join a spinner that checks it.",
+      "what": "cancel_and_join on a ReviewRun whose worker sleeps 1 ms until the flag is set.",
+      "why": "When the user returns, cancel has to finish in under 50 ms. Hermes waits up to 2 seconds. This number is the flag and the join.",
+      "timing": "iter_batched. The setup closure calls ReviewRun::spawn_spinner and is not timed. The timed closure is cancel_and_join: one AtomicBool store and a join. The worker is already running. No model is called.",
+      "inputs": "One spinner thread. Sleep between flag checks is 1 ms. No review lines.",
+      "fake": "The worker does not call tools. It only watches the flag. The 2 second Hermes timeout is not slept.",
+      "source": "steps/ch20-reflection/benches/reflection.rs",
+      "reading": "Smaller is better. It should stay under 50 ms. The 1 ms sleep is inside the join, so a number well under that sleep means the flag was already visible. Tens of milliseconds is still inside the budget. A number near 2 seconds would mean the sample started using the Hermes wait."
     }
   ]
 }

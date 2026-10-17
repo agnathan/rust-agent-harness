@@ -107,7 +107,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 - **Chapter 21.** *(server)* Prediction stays off the request path except for the offered set. Applying that set measured 94.69 ns. Scoring 1,000 usage rows against 64 names measured 174.4 µs, and `session_tools` does not call it.
 - **Chapter 22.** Load and render 500 skills < 10 ms, once per session (measured 1.946 ms). The index is `Arc` and byte-stable.
 - **Chapter 23.** Security scan of one skill < 5 ms (measured 255.1 ns). A write the model did not ask for is a background task (enqueue measured 21.15 ns).
-- **Chapter 24.** Spawning the reviewer adds < 1 ms to turn finalize. Cancelling it when the user returns takes < 50 ms.
+- **Chapter 24.** Spawning the reviewer adds < 1 ms to turn finalize (measured 60.01 ns). Cancelling it when the user returns takes < 50 ms (measured 758.7 µs).
 - **Chapter 25.** Curation never runs on the request path.
 
 ### Part III: The team patterns
@@ -115,7 +115,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 | Ch | Title | Step | Rust, just in time | What the harness gains |
 |---|---|---|---|---|
 | 26 | The Sequential Pipeline | `steps/ch22-pipeline` | an agent as a value you can pass around | outline, draft, critique, revise; each stage is an agent run in order |
-| 27 | The Supervisor | `steps/ch23-supervisor` | the tool trait, used for agents | the default team: a manager, specialists called as tools and fanned out under a bound, one `Arc`-shared context object; the reflection loop learns from team runs off the hot path |
+| 27 | The Supervisor | `steps/ch23-supervisor` | the tool trait, used for agents | the default team: a manager, specialists called as tools and fanned out under a bound, one `Arc`-shared context object; the reflection loop learns from team runs off the hot path. Chapter 24's forked agent and prompt-cache parity stay out of that note: the team run only enqueues it |
 | 28 | Handoffs | `steps/ch24-handoffs` | a pointer to the current agent | routing and ownership transfer; handoff-as-tool; a max-handoff limit; context filtered before the next agent sees it |
 | 29 | Fan-out and Gather | `steps/ch25-fan-out` | a worker limit, an aggregator | the dedicated gather: the supervisor already runs specialists in parallel; this chapter adds the worker limit's tests and the aggregator |
 | 30 | The Critic | `steps/ch26-critic` | the same tool trait | an evaluator agent, both as a tool and as a final gate |
