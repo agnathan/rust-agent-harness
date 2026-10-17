@@ -3,7 +3,7 @@
 
 use std::collections::VecDeque;
 use std::path::Path;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use rusqlite::{params, Connection};
 
@@ -34,6 +34,9 @@ pub struct Store {
 impl Store {
     pub fn open(path: &Path) -> Result<Self, rusqlite::Error> {
         let conn = Connection::open(path)?;
+        // Parallel tests can open neighboring files while macOS still reports
+        // the new file busy. Wait briefly instead of failing the migrate.
+        conn.busy_timeout(Duration::from_secs(2))?;
         Ok(Self {
             conn,
             pending_fts: VecDeque::new(),

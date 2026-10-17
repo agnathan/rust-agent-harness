@@ -18,7 +18,7 @@ impl TempDb {
             .duration_since(UNIX_EPOCH)
             .map(|duration| duration.as_nanos())
             .unwrap_or(0);
-        let path = std::env::temp_dir().join(format!("ch15-{nanos}-{n}.db"));
+        let path = std::env::temp_dir().join(format!("ch15-{}-{nanos}-{n}.db", std::process::id()));
         let store = Store::open(&path).expect("open");
         store.migrate().expect("migrate");
         Self { path, store }
