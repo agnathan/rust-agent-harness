@@ -70,7 +70,7 @@ Principles and the way to choose a team shape live next to this page: [team patt
 | 34 | Supervision and Restart | Restarting a failed child adds **< 1 ms**, excluding the child's work (one record measured **32.47 ns**). |
 | 35 | Balancing and Federation *(server)* | A per-tool pool picks a backend by least outstanding requests, or by power of two choices. Federated upstream MCP servers share that pool. One least-outstanding pick measured **2.502 ns**. Discovery connects at most **4** at once. |
 | 36 | Profiles | Resolving a profile and its secrets is **< 1 ms** (one resolve measured **59.49 ns**). Secrets are not copied into the prompt. |
-| 37 | The Gateway | Enqueue onto the session inbox is **< 1 ms**. A steer is a push onto that inbox. Streaming folds chapter 1 events into one message. This is the chat gateway, not the MCP server. |
+| 37 | The Gateway | Enqueue onto the session inbox is **< 1 ms** (one enqueue measured **77.90 ns**). A steer is a push onto that inbox. Streaming folds chapter 1 events into one message. This is the chat gateway, not the MCP server. |
 | 38 | MCP Gateway Service *(server)* | Throughput and p99 under load (oha or something like it). Killing one replica fails over by session id. Drain finishes in-flight calls. No measurement yet. |
 | 39 | Cron | A crash retries a claimed job at most once. Scanning **1,000** due jobs is **< 10 ms**. The watchdog and a chained job stay off the request path. |
 | 40 | Editor Integration | Translating an ACP update onto the session queue is **< 1 ms**. |
