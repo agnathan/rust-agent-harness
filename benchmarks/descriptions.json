@@ -1987,6 +1987,20 @@
       "fake": "The rows are generated in the bench. They are not a restored session database. No model is called.",
       "source": "steps/gw-learned-tools/benches/learned.rs",
       "reading": "Smaller is better. This may be much larger than apply_offered. That gap is the point: the score is not the request. Over a millisecond is still fine here. It would not be fine inside session_tools."
+    },
+    {
+      "id": "22/load_render_500",
+      "section": "chapter 22 skills",
+      "chapter": "Chapter 22 Using Skills",
+      "function": "load_render_500",
+      "summary": "Load 500 SKILL.md files and render the available-skills index.",
+      "what": "load_tree of a directory with 500 skills, then render_index of that list with no connected MCP server.",
+      "why": "The index is built once per session. The budget is under 10 ms for 500 skills. A later turn must not pay this again.",
+      "timing": "Before the bench, the harness writes 500 SKILL.md files under 10 category directories. The timed closure is b.iter. Inside: load_tree with the root passed through black_box, then render_index of those metas with an empty connected list, both passed through black_box. Writing the files is excluded. No model is called. The returned string is discarded after black_box.",
+      "inputs": "500 skills. Names skill000 through skill499. Ten categories, cat0 through cat9. Each description is Skill N. Each body is one line, Body N.",
+      "fake": "The files are generated in the bench. They are not a Hermes skills directory. The scripted model is not constructed.",
+      "source": "steps/ch18-skills/benches/skills.rs",
+      "reading": "Smaller is better. It should stay under 10 ms. A number in the tens of milliseconds means the sample started rewriting the index on every turn, or the files got much larger."
     }
   ]
 }

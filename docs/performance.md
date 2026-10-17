@@ -55,7 +55,7 @@ Principles and the way to choose a team shape live next to this page: [team patt
 | 19 | Memory Files | The frozen snapshot is built once and shared by `Arc`. A memory write does not rewrite the system prompt. Enqueue of a background write **< 1 ms** (measured **53.23 ns**). |
 | 20 | Recall | Discover over **10,000** messages **< 20 ms** (measured **60.27 µs**). Search runs only when the model calls the tool. |
 | 21 | Learned Tools *(server)* | Prediction stays off the request path except for the offered set. Applying a 32-name offer measured **94.69 ns**. Scoring 1,000 usage rows against 64 names measured **174.4 µs**, and that function is not called from `session_tools`. |
-| 22 | Using Skills | Load and render **500** skills **< 10 ms**, once per session. The rendered index is `Arc` and byte-stable. |
+| 22 | Using Skills | Load and render **500** skills **< 10 ms**, once per session (measured **1.946 ms**). The rendered index is `Arc` and byte-stable. |
 | 23 | Writing Skills | Security scan of one skill **< 5 ms**. A write the model did not ask for is a background task. |
 | 24 | The Reflection Loop | Spawning the reviewer adds **< 1 ms** to turn finalize. Cancelling it when the user returns takes **< 50 ms**. |
 | 25 | Curation | The curator never runs on the request path. |
