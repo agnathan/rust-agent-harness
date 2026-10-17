@@ -2393,6 +2393,34 @@
       "fake": "The in-flight call is a yield loop, not a peer. No HTTP client is built. FakeModel is not constructed.",
       "source": "steps/ch39-a2a/benches/a2a.rs",
       "reading": "Smaller is better. Tens of microseconds is a flag store plus a thread join. Fifty milliseconds would still meet the budget. A number that includes a connect would be a client this crate does not open."
+    },
+    {
+      "id": "46/event_without_span",
+      "section": "chapter 46 tracing",
+      "chapter": "Chapter 46 Seeing Inside",
+      "function": "event_without_span",
+      "summary": "One FakeModel complete of hello, with the subscriber installed and no span entered.",
+      "what": "complete of the prompt hello. The reply is ok. CountingSubscriber is the default subscriber, and this function does not enter a span.",
+      "why": "The chapter 1 mock floor has to stay visible next to the spanned turn. This sample is that floor. The span cost is the other function.",
+      "timing": "CountingSubscriber::new and with_default run before either bench function and are not timed. FakeModel { reply: ok } is built outside. The timed closure is b.iter. Inside: complete of hello passed through black_box, then black_box of the reply. mock_turn, research_team, and the sink allocation are not called.",
+      "inputs": "One prompt, hello, 5 characters. Reply ok. The subscriber's next id starts at 1.",
+      "fake": "FakeModel returns its reply and ignores the prompt. No provider and no exporter. The prompt is not written to a sink.",
+      "source": "steps/ch40-tracing/benches/spans.rs",
+      "reading": "Smaller is better. Around 10 nanoseconds is the mock return. This number is the floor under span_per_event. Milliseconds would mean the subscriber started waiting on a collector."
+    },
+    {
+      "id": "46/span_per_event",
+      "section": "chapter 46 tracing",
+      "chapter": "Chapter 46 Seeing Inside",
+      "function": "span_per_event",
+      "summary": "One mock turn that enters the turn, three event spans, and a gateway child.",
+      "what": "mock_turn of prompt hello into a new sink. The sink receives request, response, and gateway. The reply is ok. The span field is the word request, not the prompt.",
+      "why": "A span per event has to add less than 0.1 milliseconds, and the chapter 1 budget of 1 millisecond still has to hold with tracing on. This sample is that turn. The 100-agent team is not in it.",
+      "timing": "The same with_default that wraps event_without_span wraps this function, so subscriber install is outside both samples. The timed closure is b.iter. Inside: a Vec with capacity 3, mock_turn of the model and hello passed through black_box, then black_box of the reply and the sink. The turn span, the three emit spans, the gateway span, and one complete are inside the sample. research_team is not called. No file is written.",
+      "inputs": "One prompt, hello. Reply ok. Sink capacity 3. Five spans per sample: turn, request event, response event, gateway, gateway event.",
+      "fake": "CountingSubscriber increments an atomic and returns. No OTLP client and no socket. The prompt is discarded by safe_field.",
+      "source": "steps/ch40-tracing/benches/spans.rs",
+      "reading": "Smaller is better. Around 100 nanoseconds above event_without_span is the span tax and stays under 0.1 milliseconds. One millisecond would still meet the chapter 1 budget and would mean the sample started a collector or the 100-agent team."
     }
   ]
 }

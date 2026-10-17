@@ -88,4 +88,5 @@ members = [
     "steps/ch37-message-bus",
     "steps/ch38-team-skills",
     "steps/ch39-a2a",
+    "steps/ch40-tracing",
 ]
