@@ -55,6 +55,7 @@ cargo run -p ch02-harness-cli -- --mock chat
 | gw-learned-tools | 21 *(server)* | Predicted offer, composite and macro tools, code-mode lines |
 | ch18-skills | 22 | `SKILL.md`, a cache-stable index, `skills_list` / `skill_view` |
 | ch19-skill-writing | 23 | create, patch, delete, a scanner, the approval gate, read-before-write |
+| ch20-reflection | 24 | nudge counters, a forked reviewer, cancel on return |
 | gw-limits | 15 *(server)* | Per-tool permits, idempotent retry, a breaker, caps of 50 |
 | gw-minimal-server | 5 *(server)* | Empty `mcp-gateway` catalog. No socket |
 

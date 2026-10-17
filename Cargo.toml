@@ -66,4 +66,5 @@ members = [
     "steps/gw-learned-tools",
     "steps/ch18-skills",
     "steps/ch19-skill-writing",
+    "steps/ch20-reflection",
 ]

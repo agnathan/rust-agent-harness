@@ -33,7 +33,7 @@ Server-track chapters are marked *(server)*. They are interleaved with the harne
 - [Chapter 21: Learned Tools](chapter-21-learned-tools.md) *(server)*
 - [Chapter 22: Using Skills](chapter-22-using-skills.md)
 - [Chapter 23: Writing Skills](chapter-23-writing-skills.md)
-- [Chapter 24: The Reflection Loop]()
+- [Chapter 24: The Reflection Loop](chapter-24-reflection.md)
 - [Chapter 25: Curation]()
 
 # Part III: The team patterns
