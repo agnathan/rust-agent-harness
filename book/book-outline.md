@@ -105,7 +105,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 - **Chapter 19.** The frozen snapshot is built once and shared by `Arc`. A memory write does not rewrite the system prompt. Enqueue of a background write < 1 ms (measured 54.94 ns).
 - **Chapter 20.** Discover over 10,000 messages < 20 ms (measured 59.35 µs), and only when the model calls the tool.
 - **Chapter 21.** *(server)* Prediction stays off the request path except for the offered set. Applying that set measured 94.69 ns. Scoring 1,000 usage rows against 64 names measured 174.4 µs, and `session_tools` does not call it.
-- **Chapter 22.** Load and render 500 skills < 10 ms, once per session. The index is `Arc` and byte-stable.
+- **Chapter 22.** Load and render 500 skills < 10 ms, once per session (measured 1.946 ms). The index is `Arc` and byte-stable.
 - **Chapter 23.** Security scan of one skill < 5 ms. A write the model did not ask for is a background task.
 - **Chapter 24.** Spawning the reviewer adds < 1 ms to turn finalize. Cancelling it when the user returns takes < 50 ms.
 - **Chapter 25.** Curation never runs on the request path.
