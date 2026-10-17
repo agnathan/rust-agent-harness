@@ -34,7 +34,7 @@ Server-track chapters are marked *(server)*. They are interleaved with the harne
 - [Chapter 22: Using Skills](chapter-22-using-skills.md)
 - [Chapter 23: Writing Skills](chapter-23-writing-skills.md)
 - [Chapter 24: The Reflection Loop](chapter-24-reflection.md)
-- [Chapter 25: Curation]()
+- [Chapter 25: Curation](chapter-25-curation.md)
 
 # Part III: The team patterns
 

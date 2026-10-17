@@ -34,7 +34,7 @@ Written chapters link to `book/chapter-….md`. A chapter that has no page yet i
 - [Chapter 22: Using Skills](book/chapter-22-using-skills.md) — [`steps/ch18-skills`](steps/ch18-skills)
 - [Chapter 23: Writing Skills](book/chapter-23-writing-skills.md) — [`steps/ch19-skill-writing`](steps/ch19-skill-writing)
 - [Chapter 24: The Reflection Loop](book/chapter-24-reflection.md) — [`steps/ch20-reflection`](steps/ch20-reflection)
-- Chapter 25: Curation (not yet written)
+- [Chapter 25: Curation](book/chapter-25-curation.md) — [`steps/ch21-curation`](steps/ch21-curation)
 
 ## Part III: The team patterns
 

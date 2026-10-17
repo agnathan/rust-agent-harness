@@ -119,6 +119,8 @@ jobs:
         run: bash .github/scripts/run_bench_section.sh 23 "chapter 23 writing" ch19-skill-writing writing
       - name: Chapter 24 reflection
         run: bash .github/scripts/run_bench_section.sh 24 "chapter 24 reflection" ch20-reflection reflection
+      - name: Chapter 25 curation
+        run: bash .github/scripts/run_bench_section.sh 25 "chapter 25 curation" ch21-curation curation
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"

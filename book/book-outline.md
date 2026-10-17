@@ -108,7 +108,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 - **Chapter 22.** Load and render 500 skills < 10 ms, once per session (measured 1.946 ms). The index is `Arc` and byte-stable.
 - **Chapter 23.** Security scan of one skill < 5 ms (measured 255.1 ns). A write the model did not ask for is a background task (enqueue measured 21.15 ns).
 - **Chapter 24.** Spawning the reviewer adds < 1 ms to turn finalize (measured 60.01 ns). Cancelling it when the user returns takes < 50 ms (measured 758.7 µs).
-- **Chapter 25.** Curation never runs on the request path.
+- **Chapter 25.** Curation never runs on the request path. Enqueue measured 29.05 ns.
 
 ### Part III: The team patterns
 

@@ -2057,6 +2057,20 @@
       "fake": "The worker does not call tools. It only watches the flag. The 2 second Hermes timeout is not slept.",
       "source": "steps/ch20-reflection/benches/reflection.rs",
       "reading": "Smaller is better. It should stay under 50 ms. The 1 ms sleep is inside the join, so a number well under that sleep means the flag was already visible. Tens of milliseconds is still inside the budget. A number near 2 seconds would mean the sample started using the Hermes wait."
+    },
+    {
+      "id": "25/enqueue_curation",
+      "section": "chapter 25 curation",
+      "chapter": "Chapter 25 Curation",
+      "function": "enqueue_curation",
+      "summary": "Record that a curator pass should run.",
+      "what": "Curator::enqueue. The queue gains one job string, curate. No skill moves.",
+      "why": "Curation stays off the request path. The turn is only allowed to note that the pass is due.",
+      "timing": "Before the bench, Curator::open creates an empty temp directory. The timed closure is b.iter. Inside: enqueue, then queue_len passed through black_box. No snapshot is built. scan_text is not called. No directory is renamed. When the queue is already at 64, the oldest job is dropped inside the timed call.",
+      "inputs": "One job string, curate. Queue cap 64. Empty skill root.",
+      "fake": "The job is a string. No clock is read. Age is not computed. The scripted model is not constructed.",
+      "source": "steps/ch21-curation/benches/curation.rs",
+      "reading": "Smaller is better. Tens of nanoseconds is a mutex and a short string. Milliseconds would mean the sample started the snapshot or the archive move."
     }
   ]
 }
