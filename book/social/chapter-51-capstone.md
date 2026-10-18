@@ -4,21 +4,21 @@
 1/
 Chapter 51 is up: Load and Token Capstone.
 
-Thirty-two tool cards. Every card, the first eight, or the one named tool_07. Success is the tool offered and the model reply matching. No socket. 🧵
+Thirty-two tool cards. Every card, the first eight, or the one named tool_07. The schema is 18 bytes, five tokens. The arms are 160, 40, and 5. No socket. 🧵
 
 2/
-Hermes Agent counts schema characters with 4 per token in tools/tool_search_catalog.py. A deadline that the wide arms miss still leaves the dynamic arm inside the limit. The call bound stays 8.
+I read tools/tool_search_catalog.py on Hermes at 9e01b44. CHARS_PER_TOKEN is 4.0, and the comment says it slightly underestimates. math.ceil of the length over that constant decides whether a catalog listing fits.
 
 3/
-Integer division makes an 18-byte schema 4 tokens. The arms are 128, 32, and 4. One hundred requests run as 13 waves. Fake replies. No key. oha is not run.
+This crate uses integer div_ceil. tool_07 sits inside the first eight, so all three arms succeed. One hundred SessionGateway calls run as 13 waves of at most 8. p99 is computed and left off the line. oha is not run.
 
 4/
-The dynamic arm measured 245.5 ns. The load of 100 measured 30.05 µs. The demo prints "capstone: every=128 static=32 dynamic=4 success=1/1/1 load=100/100 p99_ns=1160". That p99 is the debug run, not the Criterion mean.
+The demo prints "capstone: every=160 static=40 dynamic=5 success=1/1/1 task=1/1/1 load=100/100 waves=13". The bench ids are 51/dynamic_tokens and 51/load_100. The old ids 49/dynamic_tokens, 47/dynamic_tokens, 49/load_100, and 47/load_100 are aliases. The means are MEAN_PENDING_51_TOKENS and MEAN_PENDING_51_LOAD, mean.point_estimate.
 
 [personal note]
 
 5/
-Next is evals: the saved task names, one red-team case per layer, and no fail threshold.
+Next is chapter 52, evals: chapter 9's saved tasks on the full harness. That chapter copies the tracing tree, not this server crate.
 
 Read Chapter 51: [link]
 
@@ -27,14 +27,14 @@ Read Chapter 51: [link]
 ## LinkedIn
 Chapter 51 is out: Load and Token Capstone.
 
-The server track ends by comparing what a completed task costs in schema tokens. Hermes Agent divides schema characters by 4. This chapter builds 32 cards, `tool_00` through `tool_31`, and scores three arms: every card, a static set of the first eight, and the dynamic card whose name is the one the task needs. An arm succeeds only when that card is offered and, if a deadline is set, the token count is inside it. `tool_07` succeeds on all three. `tool_31` fails the static arm. A missing name fails all three.
+The server track ends by comparing what a completed task costs in schema tokens. Hermes Agent at 9e01b44 sets CHARS_PER_TOKEN to 4.0 in tools/tool_search_catalog.py, with a comment that the rule slightly underestimates, and it uses math.ceil of the length over that constant. This chapter builds 32 cards, tool_00 through tool_31. Each schema is {"name":"tool_NN"}, 18 bytes. approx_tokens is integer div_ceil of the length by 4, so each card is 5 tokens. The arms are every card (160), the first eight (40), and the one card named tool_07 (5). tool_07 is inside the first eight, so all three arms succeed when there is no deadline. A deadline equal to the dynamic total fails the wide arms and keeps the dynamic arm.
 
-The load runs 100 of those dispatches in memory, eight at a time, so 100 requests are 13 waves. Nothing listens. oha is not invoked. The debug demo's `p99_ns` is a nearest-rank sample from that process, separate from the Criterion mean of the whole batch.
+The load runs 100 calls through SessionGateway in memory. CALL_BOUND is 8. The wave counter increments when the in-flight count returns to 0, so 100 calls are 13 waves. Nothing listens. oha is not invoked. p99 is computed on the samples and is not printed.
 
-The dynamic arm measured 245.5 ns. The load of 100 measured 30.05 µs. The demo does not need an API key.
+The bench ids are 51/dynamic_tokens and 51/load_100. Aliases: 49/dynamic_tokens, 47/dynamic_tokens, 49/load_100, and 47/load_100. The means are MEAN_PENDING_51_TOKENS and MEAN_PENDING_51_LOAD, mean.point_estimate. The demo does not need an API key.
 
 [personal note: one takeaway from writing this chapter]
 
-Next: evals. Read Chapter 51: [link]
+Next: chapter 52 re-runs the saved tasks on the harness. Read Chapter 51: [link]
 
 #Rust #AIAgents #LearningInPublic #SoftwareEngineering
