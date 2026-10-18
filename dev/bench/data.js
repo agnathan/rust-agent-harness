@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792312492450,
+  "lastUpdate": 1792316142339,
   "repoUrl": "https://github.com/agnathan/rust-agent-harness",
   "entries": {
     "Harness criterion": [
@@ -37091,6 +37091,931 @@ window.BENCHMARK_DATA = {
           {
             "name": "9.9/validate_repair",
             "value": 268.6979632366525,
+            "unit": "ns"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "agnathan",
+            "username": "agnathan"
+          },
+          "committer": {
+            "name": "agnathan",
+            "username": "agnathan"
+          },
+          "id": "eec8a208e58db71588b0a5d8bbd50b25ebca8fbf",
+          "message": "Grow chapters 10–20 as one harness, and plan 21–48",
+          "timestamp": "2026-10-18T05:29:46Z",
+          "url": "https://github.com/agnathan/rust-agent-harness/pull/10/commits/eec8a208e58db71588b0a5d8bbd50b25ebca8fbf"
+        },
+        "date": 1792316141662,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "1.1/serde_50_message_request",
+            "value": 10371.824322814857,
+            "unit": "ns"
+          },
+          {
+            "name": "1.2/mock_100_concurrent",
+            "value": 80495.1081505848,
+            "unit": "ns"
+          },
+          {
+            "name": "1.2/mock_turn_overhead",
+            "value": 249.2851761540111,
+            "unit": "ns"
+          },
+          {
+            "name": "1.3/build_request_and_parse_response",
+            "value": 2959.0522604422604,
+            "unit": "ns"
+          },
+          {
+            "name": "1.4/parse_response_edges",
+            "value": 1110.301556363805,
+            "unit": "ns"
+          },
+          {
+            "name": "10/scripted_turn",
+            "value": 19.289460578059824,
+            "unit": "ns"
+          },
+          {
+            "name": "10/turn_transition",
+            "value": 1.2495024287097996,
+            "unit": "ns"
+          },
+          {
+            "name": "11/skip_decision",
+            "value": 249.79258799670015,
+            "unit": "ns"
+          },
+          {
+            "name": "12/api_request_hook",
+            "value": 2.1773077228830657,
+            "unit": "ns"
+          },
+          {
+            "name": "12/empty_pre_post",
+            "value": 10.894771073709858,
+            "unit": "ns"
+          },
+          {
+            "name": "12/memory_enqueue",
+            "value": 57.01519536790262,
+            "unit": "ns"
+          },
+          {
+            "name": "13/checkpoint_1000",
+            "value": 50256.1873282967,
+            "unit": "ns"
+          },
+          {
+            "name": "13/rewind_1000",
+            "value": 82875.31655430712,
+            "unit": "ns"
+          },
+          {
+            "name": "13/warm_accept",
+            "value": 29828.538487908252,
+            "unit": "ns"
+          },
+          {
+            "name": "14/empty_budget",
+            "value": 0.9032946496800276,
+            "unit": "ns"
+          },
+          {
+            "name": "14/repetition_guard",
+            "value": 2783.520260889465,
+            "unit": "ns"
+          },
+          {
+            "name": "15/open_breaker",
+            "value": 32.012708596453784,
+            "unit": "ns"
+          },
+          {
+            "name": "15/permit_release",
+            "value": 57.891178678798475,
+            "unit": "ns"
+          },
+          {
+            "name": "16/fake_search",
+            "value": 5601.571172003284,
+            "unit": "ns"
+          },
+          {
+            "name": "16/ssrf_block",
+            "value": 322.79835563622134,
+            "unit": "ns"
+          },
+          {
+            "name": "17/patch_apply",
+            "value": 417645.9974085366,
+            "unit": "ns"
+          },
+          {
+            "name": "17/todo_merge",
+            "value": 140.84441761963626,
+            "unit": "ns"
+          },
+          {
+            "name": "18/choose_route",
+            "value": 5.606585701836127,
+            "unit": "ns"
+          },
+          {
+            "name": "18/rotate_key",
+            "value": 3.4464268858721354,
+            "unit": "ns"
+          },
+          {
+            "name": "19/buffer_join",
+            "value": 705.8673956004795,
+            "unit": "ns"
+          },
+          {
+            "name": "19/fold_deltas",
+            "value": 2704.828525284028,
+            "unit": "ns"
+          },
+          {
+            "name": "2/chat_turn_overhead",
+            "value": 650.753712710647,
+            "unit": "ns"
+          },
+          {
+            "name": "2/inbox_submit",
+            "value": 40.50979373396533,
+            "unit": "ns"
+          },
+          {
+            "name": "20/wal_append",
+            "value": 148505.23821989528,
+            "unit": "ns"
+          },
+          {
+            "name": "21/memory_enqueue",
+            "value": 53.54178269354931,
+            "unit": "ns"
+          },
+          {
+            "name": "22/discover_10k",
+            "value": 61468.031879194634,
+            "unit": "ns"
+          },
+          {
+            "name": "23/apply_offered",
+            "value": 112.31830595819125,
+            "unit": "ns"
+          },
+          {
+            "name": "23/predict_offline",
+            "value": 294625.82177419355,
+            "unit": "ns"
+          },
+          {
+            "name": "24/load_render_500",
+            "value": 5757030.214285715,
+            "unit": "ns"
+          },
+          {
+            "name": "25/enqueue_unsolicited",
+            "value": 19.321885703990116,
+            "unit": "ns"
+          },
+          {
+            "name": "25/scan_one_skill",
+            "value": 281.5574308678199,
+            "unit": "ns"
+          },
+          {
+            "name": "26/cancel_review",
+            "value": 744321.1495098039,
+            "unit": "ns"
+          },
+          {
+            "name": "26/spawn_reviewer",
+            "value": 86.33090925397765,
+            "unit": "ns"
+          },
+          {
+            "name": "27/enqueue_curation",
+            "value": 19.93502988370696,
+            "unit": "ns"
+          },
+          {
+            "name": "28/arc_pass",
+            "value": 4.398026279383184,
+            "unit": "ns"
+          },
+          {
+            "name": "28/copy_transcript",
+            "value": 7491.712553618376,
+            "unit": "ns"
+          },
+          {
+            "name": "29/enqueue_reflection",
+            "value": 19.018284377580933,
+            "unit": "ns"
+          },
+          {
+            "name": "29/schedule_eight",
+            "value": 276662.7686868687,
+            "unit": "ns"
+          },
+          {
+            "name": "3.1/registry_lookup",
+            "value": 25.74452401572128,
+            "unit": "ns"
+          },
+          {
+            "name": "3.2/available_tools_50",
+            "value": 30886.103849407784,
+            "unit": "ns"
+          },
+          {
+            "name": "3.3/dispatch_8_reads_concurrent",
+            "value": 2135558.053921568,
+            "unit": "ns"
+          },
+          {
+            "name": "3.3/dispatch_8_reads_sequential",
+            "value": 16706208.30952381,
+            "unit": "ns"
+          },
+          {
+            "name": "30/filter_100",
+            "value": 4067.62889737637,
+            "unit": "ns"
+          },
+          {
+            "name": "31/schedule_100",
+            "value": 6852.5077279269135,
+            "unit": "ns"
+          },
+          {
+            "name": "32/judge_one_permit",
+            "value": 385.3093504498263,
+            "unit": "ns"
+          },
+          {
+            "name": "33/nested_eight",
+            "value": 280610.8176068376,
+            "unit": "ns"
+          },
+          {
+            "name": "34/share_snapshot",
+            "value": 4.76458682592749,
+            "unit": "ns"
+          },
+          {
+            "name": "35/inbox_submit",
+            "value": 258.5910127712539,
+            "unit": "ns"
+          },
+          {
+            "name": "36/restart_bookkeeping",
+            "value": 28.19287465154138,
+            "unit": "ns"
+          },
+          {
+            "name": "37/pick_least",
+            "value": 3.7377487666075266,
+            "unit": "ns"
+          },
+          {
+            "name": "38/resolve_profile",
+            "value": 95.40510720454702,
+            "unit": "ns"
+          },
+          {
+            "name": "39/enqueue_platform",
+            "value": 157.71154015867552,
+            "unit": "ns"
+          },
+          {
+            "name": "4.1/stdio_echo_round_trip",
+            "value": 209143.26387987012,
+            "unit": "ns"
+          },
+          {
+            "name": "4.2/http_echo_round_trip",
+            "value": 416707.49425505055,
+            "unit": "ns"
+          },
+          {
+            "name": "4.3/mcp_50_concurrent",
+            "value": 4956871.333333334,
+            "unit": "ns"
+          },
+          {
+            "name": "4.3/mcp_50_sequential",
+            "value": 10609032.854166666,
+            "unit": "ns"
+          },
+          {
+            "name": "4.4/mcp_list_cold",
+            "value": 217837.87686011905,
+            "unit": "ns"
+          },
+          {
+            "name": "4.4/mcp_list_hit",
+            "value": 255.5851902992419,
+            "unit": "ns"
+          },
+          {
+            "name": "40/route_session",
+            "value": 19.50580978667238,
+            "unit": "ns"
+          },
+          {
+            "name": "41/scan_thousand",
+            "value": 1608.4875189552877,
+            "unit": "ns"
+          },
+          {
+            "name": "42/translate_update",
+            "value": 134.16988881417637,
+            "unit": "ns"
+          },
+          {
+            "name": "43/claim_with_waiters",
+            "value": 5492.762145262145,
+            "unit": "ns"
+          },
+          {
+            "name": "44/claim_transaction",
+            "value": 299203.0010893246,
+            "unit": "ns"
+          },
+          {
+            "name": "45/publish_to_agents",
+            "value": 39354.45614406779,
+            "unit": "ns"
+          },
+          {
+            "name": "46/index_swap",
+            "value": 194.9413999630258,
+            "unit": "ns"
+          },
+          {
+            "name": "46/skill_propose",
+            "value": 74.19106020131267,
+            "unit": "ns"
+          },
+          {
+            "name": "47/cancel_inflight",
+            "value": 51925.42784313725,
+            "unit": "ns"
+          },
+          {
+            "name": "48/event_without_span",
+            "value": 18.051199360149326,
+            "unit": "ns"
+          },
+          {
+            "name": "48/span_per_event",
+            "value": 114.8974978214807,
+            "unit": "ns"
+          },
+          {
+            "name": "49/dynamic_tokens",
+            "value": 247.10430544687512,
+            "unit": "ns"
+          },
+          {
+            "name": "49/load_100",
+            "value": 30981.635201624,
+            "unit": "ns"
+          },
+          {
+            "name": "5/echo_through_gate",
+            "value": 51.65042409279508,
+            "unit": "ns"
+          },
+          {
+            "name": "5/eight_concurrent_sleeps",
+            "value": 2119728.111111111,
+            "unit": "ns"
+          },
+          {
+            "name": "50/append_event",
+            "value": 78.3047780769056,
+            "unit": "ns"
+          },
+          {
+            "name": "50/saved_set",
+            "value": 50.16225390795897,
+            "unit": "ns"
+          },
+          {
+            "name": "6.1/schema_tokens_1000",
+            "value": 1268897.5166666666,
+            "unit": "ns"
+          },
+          {
+            "name": "6.1/schema_tokens_10000",
+            "value": 40154840.45555556,
+            "unit": "ns"
+          },
+          {
+            "name": "6.2/index_build_10000",
+            "value": 20995094.092857145,
+            "unit": "ns"
+          },
+          {
+            "name": "6.2/index_search_10000",
+            "value": 335655.29128440365,
+            "unit": "ns"
+          },
+          {
+            "name": "6.3/full_schema_tokens_10000",
+            "value": 19947039.308035716,
+            "unit": "ns"
+          },
+          {
+            "name": "6.3/lazy_visible_prompt_10000",
+            "value": 15518.902010658914,
+            "unit": "ns"
+          },
+          {
+            "name": "6.4/routed_search_10000",
+            "value": 26423.837735166424,
+            "unit": "ns"
+          },
+          {
+            "name": "6.4/shrink_schemas_10000",
+            "value": 59305717.47777778,
+            "unit": "ns"
+          },
+          {
+            "name": "6.5/agent_filter_10000",
+            "value": 130173.28651433691,
+            "unit": "ns"
+          },
+          {
+            "name": "6.5/cache_cold_10000",
+            "value": 25581728.42857143,
+            "unit": "ns"
+          },
+          {
+            "name": "6.5/cache_hit_10000",
+            "value": 13.876292112975818,
+            "unit": "ns"
+          },
+          {
+            "name": "7/catalog_arc_swap",
+            "value": 2410.4616019408295,
+            "unit": "ns"
+          },
+          {
+            "name": "7/catalog_reload_10k",
+            "value": 26871174.1875,
+            "unit": "ns"
+          },
+          {
+            "name": "7/catalog_search_10k",
+            "value": 299345.47764227644,
+            "unit": "ns"
+          },
+          {
+            "name": "8/dynamic_rename_task",
+            "value": 5698006.398809524,
+            "unit": "ns"
+          },
+          {
+            "name": "8/every_tool_rename_task",
+            "value": 8360736.383333333,
+            "unit": "ns"
+          },
+          {
+            "name": "9.1/gate_check",
+            "value": 3.4247564013316563,
+            "unit": "ns"
+          },
+          {
+            "name": "9.1/live_tool_body",
+            "value": 1870.0903701412517,
+            "unit": "ns"
+          },
+          {
+            "name": "9.1/loop_8_reads",
+            "value": 2157667.588235294,
+            "unit": "ns"
+          },
+          {
+            "name": "9.1/loop_iteration",
+            "value": 355.68852729031084,
+            "unit": "ns"
+          },
+          {
+            "name": "9.10/budget_notice",
+            "value": 76.91459975095307,
+            "unit": "ns"
+          },
+          {
+            "name": "9.10/cancel_select",
+            "value": 96.28850070233887,
+            "unit": "ns"
+          },
+          {
+            "name": "9.10/canonical_args",
+            "value": 1045.9816276086706,
+            "unit": "ns"
+          },
+          {
+            "name": "9.10/gate_check",
+            "value": 7.470774314318744,
+            "unit": "ns"
+          },
+          {
+            "name": "9.10/live_tool_body",
+            "value": 1780.7167654405644,
+            "unit": "ns"
+          },
+          {
+            "name": "9.10/loop_8_reads",
+            "value": 2187186.0882352944,
+            "unit": "ns"
+          },
+          {
+            "name": "9.10/loop_iteration",
+            "value": 751.9552527540867,
+            "unit": "ns"
+          },
+          {
+            "name": "9.10/outcome_label",
+            "value": 8.396921500231883,
+            "unit": "ns"
+          },
+          {
+            "name": "9.10/stall_observe",
+            "value": 134.64451082531457,
+            "unit": "ns"
+          },
+          {
+            "name": "9.10/steer_append",
+            "value": 73.4956142687981,
+            "unit": "ns"
+          },
+          {
+            "name": "9.10/stress_repair",
+            "value": 52357.69041409831,
+            "unit": "ns"
+          },
+          {
+            "name": "9.10/truncate_output",
+            "value": 4595.147446294308,
+            "unit": "ns"
+          },
+          {
+            "name": "9.10/validate_repair",
+            "value": 254.4853843533606,
+            "unit": "ns"
+          },
+          {
+            "name": "9.2/cancel_select",
+            "value": 96.79358943272635,
+            "unit": "ns"
+          },
+          {
+            "name": "9.2/gate_check",
+            "value": 7.477537035887515,
+            "unit": "ns"
+          },
+          {
+            "name": "9.2/live_tool_body",
+            "value": 1804.1279545283753,
+            "unit": "ns"
+          },
+          {
+            "name": "9.2/loop_8_reads",
+            "value": 2160615.1735294117,
+            "unit": "ns"
+          },
+          {
+            "name": "9.2/loop_iteration",
+            "value": 556.1377280772367,
+            "unit": "ns"
+          },
+          {
+            "name": "9.3/cancel_select",
+            "value": 96.29632769701814,
+            "unit": "ns"
+          },
+          {
+            "name": "9.3/gate_check",
+            "value": 8.657774938144584,
+            "unit": "ns"
+          },
+          {
+            "name": "9.3/live_tool_body",
+            "value": 1720.980702833089,
+            "unit": "ns"
+          },
+          {
+            "name": "9.3/loop_8_reads",
+            "value": 2173958.727205883,
+            "unit": "ns"
+          },
+          {
+            "name": "9.3/loop_iteration",
+            "value": 501.81852334252983,
+            "unit": "ns"
+          },
+          {
+            "name": "9.3/validate_repair",
+            "value": 254.82718340319423,
+            "unit": "ns"
+          },
+          {
+            "name": "9.4/cancel_select",
+            "value": 96.65582968079852,
+            "unit": "ns"
+          },
+          {
+            "name": "9.4/gate_check",
+            "value": 7.472684050105906,
+            "unit": "ns"
+          },
+          {
+            "name": "9.4/live_tool_body",
+            "value": 1740.551378790327,
+            "unit": "ns"
+          },
+          {
+            "name": "9.4/loop_8_reads",
+            "value": 2171994.857026144,
+            "unit": "ns"
+          },
+          {
+            "name": "9.4/loop_iteration",
+            "value": 506.5431381888311,
+            "unit": "ns"
+          },
+          {
+            "name": "9.4/stall_observe",
+            "value": 139.53489604078706,
+            "unit": "ns"
+          },
+          {
+            "name": "9.4/validate_repair",
+            "value": 263.95338872893814,
+            "unit": "ns"
+          },
+          {
+            "name": "9.5/budget_notice",
+            "value": 80.362464938724,
+            "unit": "ns"
+          },
+          {
+            "name": "9.5/cancel_select",
+            "value": 96.01814277028687,
+            "unit": "ns"
+          },
+          {
+            "name": "9.5/gate_check",
+            "value": 7.474318222947934,
+            "unit": "ns"
+          },
+          {
+            "name": "9.5/live_tool_body",
+            "value": 1825.1900175438595,
+            "unit": "ns"
+          },
+          {
+            "name": "9.5/loop_8_reads",
+            "value": 2179954.56302521,
+            "unit": "ns"
+          },
+          {
+            "name": "9.5/loop_iteration",
+            "value": 620.5273757822386,
+            "unit": "ns"
+          },
+          {
+            "name": "9.5/stall_observe",
+            "value": 138.92554734926392,
+            "unit": "ns"
+          },
+          {
+            "name": "9.5/validate_repair",
+            "value": 246.17792749546783,
+            "unit": "ns"
+          },
+          {
+            "name": "9.6/budget_notice",
+            "value": 78.33979985041493,
+            "unit": "ns"
+          },
+          {
+            "name": "9.6/cancel_select",
+            "value": 97.61494690705592,
+            "unit": "ns"
+          },
+          {
+            "name": "9.6/gate_check",
+            "value": 7.490075296531122,
+            "unit": "ns"
+          },
+          {
+            "name": "9.6/live_tool_body",
+            "value": 1734.5134292748994,
+            "unit": "ns"
+          },
+          {
+            "name": "9.6/loop_8_reads",
+            "value": 2175006.617647059,
+            "unit": "ns"
+          },
+          {
+            "name": "9.6/loop_iteration",
+            "value": 619.176757738335,
+            "unit": "ns"
+          },
+          {
+            "name": "9.6/stall_observe",
+            "value": 141.03242495560536,
+            "unit": "ns"
+          },
+          {
+            "name": "9.6/truncate_output",
+            "value": 4613.888926253794,
+            "unit": "ns"
+          },
+          {
+            "name": "9.6/validate_repair",
+            "value": 298.9504889238613,
+            "unit": "ns"
+          },
+          {
+            "name": "9.7/budget_notice",
+            "value": 78.98637207806134,
+            "unit": "ns"
+          },
+          {
+            "name": "9.7/cancel_select",
+            "value": 95.51319640701848,
+            "unit": "ns"
+          },
+          {
+            "name": "9.7/gate_check",
+            "value": 7.477672032157621,
+            "unit": "ns"
+          },
+          {
+            "name": "9.7/live_tool_body",
+            "value": 1643.7750821998018,
+            "unit": "ns"
+          },
+          {
+            "name": "9.7/loop_8_reads",
+            "value": 2182085.896638655,
+            "unit": "ns"
+          },
+          {
+            "name": "9.7/loop_iteration",
+            "value": 595.0944299461752,
+            "unit": "ns"
+          },
+          {
+            "name": "9.7/stall_observe",
+            "value": 136.541742187382,
+            "unit": "ns"
+          },
+          {
+            "name": "9.7/steer_append",
+            "value": 58.267294560440796,
+            "unit": "ns"
+          },
+          {
+            "name": "9.7/truncate_output",
+            "value": 4648.972345152931,
+            "unit": "ns"
+          },
+          {
+            "name": "9.7/validate_repair",
+            "value": 266.7415024738707,
+            "unit": "ns"
+          },
+          {
+            "name": "9.8/budget_notice",
+            "value": 75.4969995610822,
+            "unit": "ns"
+          },
+          {
+            "name": "9.8/cancel_select",
+            "value": 96.40369506629429,
+            "unit": "ns"
+          },
+          {
+            "name": "9.8/canonical_args",
+            "value": 1065.3212491566194,
+            "unit": "ns"
+          },
+          {
+            "name": "9.8/gate_check",
+            "value": 7.47272171885547,
+            "unit": "ns"
+          },
+          {
+            "name": "9.8/live_tool_body",
+            "value": 1768.909952333206,
+            "unit": "ns"
+          },
+          {
+            "name": "9.8/loop_8_reads",
+            "value": 2184395.467728758,
+            "unit": "ns"
+          },
+          {
+            "name": "9.8/loop_iteration",
+            "value": 683.9191304698311,
+            "unit": "ns"
+          },
+          {
+            "name": "9.8/stall_observe",
+            "value": 138.42094189586481,
+            "unit": "ns"
+          },
+          {
+            "name": "9.8/steer_append",
+            "value": 58.144227801975006,
+            "unit": "ns"
+          },
+          {
+            "name": "9.8/truncate_output",
+            "value": 4732.147995391705,
+            "unit": "ns"
+          },
+          {
+            "name": "9.8/validate_repair",
+            "value": 274.8627413939454,
+            "unit": "ns"
+          },
+          {
+            "name": "9.9/budget_notice",
+            "value": 75.78164373505996,
+            "unit": "ns"
+          },
+          {
+            "name": "9.9/cancel_select",
+            "value": 95.28012164192145,
+            "unit": "ns"
+          },
+          {
+            "name": "9.9/canonical_args",
+            "value": 1097.2422148461073,
+            "unit": "ns"
+          },
+          {
+            "name": "9.9/gate_check",
+            "value": 7.479037835187347,
+            "unit": "ns"
+          },
+          {
+            "name": "9.9/live_tool_body",
+            "value": 1727.3032931420676,
+            "unit": "ns"
+          },
+          {
+            "name": "9.9/loop_8_reads",
+            "value": 2188886.117647059,
+            "unit": "ns"
+          },
+          {
+            "name": "9.9/loop_iteration",
+            "value": 761.144352470794,
+            "unit": "ns"
+          },
+          {
+            "name": "9.9/outcome_label",
+            "value": 8.396348803285859,
+            "unit": "ns"
+          },
+          {
+            "name": "9.9/stall_observe",
+            "value": 138.02727290505155,
+            "unit": "ns"
+          },
+          {
+            "name": "9.9/steer_append",
+            "value": 58.57918596973175,
+            "unit": "ns"
+          },
+          {
+            "name": "9.9/truncate_output",
+            "value": 4651.248059433841,
+            "unit": "ns"
+          },
+          {
+            "name": "9.9/validate_repair",
+            "value": 267.8478519209085,
             "unit": "ns"
           }
         ]
