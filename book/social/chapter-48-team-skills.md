@@ -4,21 +4,21 @@
 1/
 Chapter 48 is up: Shared Team Skills.
 
-Workers enqueue a proposal. The librarian is the only writer. The index the workers read is an Arc, swapped after the model returns. 🧵
+Workers enqueue. The librarian is the only writer. The queue holds 64. A dangerous community skill is refused even with force. Readers keep an Arc. The swap is a pointer replace. 🧵
 
 2/
-Hermes Agent syncs bundled skills into a library and hashes a manifest. tools/skills_guard.py refuses a dangerous community install, and force does not override that verdict. tools/write_approval.py stages a skill write when the gate is on.
+I read Hermes at 9e01b44. tools/skills_sync.py tracks an origin hash in .bundled_manifest. An update runs only when the bundled copy changed and the user copy still matches. User-deleted skills are not re-added.
 
 3/
-This crate rejects an empty body and a community body that contains rm -rf / or the injection phrase, even with force. TEAM.md is rendered from the new index. Fake replies. No key.
+tools/skills_guard.py should_allow_install lets force override every block except a dangerous verdict on a community or trusted source. The refusal ends "--force does not override a dangerous verdict." This crate also calls chapter 25's scanner. rm -rf / is a local check, because that scanner does not name the command.
 
 4/
-One skill_propose measured 73.7 ns. One index swap measured 199.9 ns. The demo prints "skills: v2 3".
+The demo prints "skills: v2 3". The bench id 48/skill_propose has aliases 46/skill_propose and 44/skill_propose. Its mean is MEAN_PENDING_48_PROPOSE. The bench id 48/index_swap has aliases 46/index_swap and 44/index_swap. Its mean is MEAN_PENDING_48_SWAP. Both are mean.point_estimate from this PR's Benchmarks workflow. The Criterion time: line is the slope.
 
 [personal note]
 
 5/
-Next is A2A for agents outside this process. A local:// name is refused before it takes a permit.
+Next is chapter 49, A2A for agents outside this process.
 
 Read Chapter 48: [link]
 
@@ -27,14 +27,18 @@ Read Chapter 48: [link]
 ## LinkedIn
 Chapter 48 is out: Shared Team Skills.
 
-A team that shares skills still needs one writer. Hermes Agent installs bundled skills into the user library and blocks a dangerous community verdict even when the caller passes force. This chapter splits the same idea into a queue and a pointer. `skill_propose` pushes onto a deque of 64. `librarian_accept` is the only function that builds the next index. The model runs before `swap_index`. Workers keep the old `Arc` until that replace.
+The harness is the chapter 47 tree copied forward, plus a team skills module. skill_propose pushes onto a VecDeque until 64. The next call is Full and does not push. The push does not scan, does not take the library lock, and does not wait on the model.
 
-A community proposal whose body is `rm -rf /` or `ignore previous instructions` is rejected with force set. A builtin dangerous body is allowed. The rendered team file is a `# TEAM` list.
+allow_install rejects an empty body. It rejects a community body that contains rm -rf / or ignore previous instructions, even when force is true. Then it calls chapter 25's scan_text and should_allow_install. Builtin maps to that scanner's Trusted trust, so a dangerous builtin can still be allowed when the scanner does not flag it. Community plus force does not override Dangerous. skill_write does not flag rm -rf /. That check stays local.
 
-One enqueue measured 73.7 ns. One index swap measured 199.9 ns. The demo does not need an API key.
+librarian_accept runs FakeModel before swap_index. The swap is mem::replace of an Arc under a short mutex. Workers load an Arc and do not hold that lock across the model. The notice kind is skills.updated. render_team writes the heading and one bullet per skill. The demo line is "skills: v2 3".
 
-[personal note: one takeaway from writing this chapter]
+Hermes Agent at 9e01b44 syncs bundled skills through a manifest hash in .bundled_manifest. I did not find a file in that tree that writes the heading this chapter renders. The sync path is the manifest, not that string. should_allow_install is the install decision I read. stage_write exists for pending skill writes. This chapter does not call it.
 
-Next: A2A for external agents. Read Chapter 48: [link]
+The demo prints "skills: v2 3". The bench ids are 48/skill_propose and 48/index_swap. Aliases: 46/skill_propose, 44/skill_propose, 46/index_swap, and 44/index_swap. The means are MEAN_PENDING_48_PROPOSE and MEAN_PENDING_48_SWAP, each mean.point_estimate from this PR's Benchmarks workflow.
+
+[personal note]
+
+Next: chapter 49, A2A for agents outside this process. Read Chapter 48: [link]
 
 #Rust #AIAgents #LearningInPublic #SoftwareEngineering
