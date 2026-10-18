@@ -13,7 +13,7 @@ Hermes Agent runs children in parallel in tools/delegate_tool_dispatch.py (_run_
 QUEUE_CAP here is 100, not the concurrent-children number. The pool that runs the tasks is still WORKER_BOUND of 8. Heartbeats are not this chapter. They stay in chapter 36.
 
 4/
-The mean for schedule_100 is MEAN_31_schedule_100, mean.point_estimate from run BENCH_RUN_URL. The demo prints three lines: a, b, c. No key.
+The mean for schedule_100 is 4.12 µs, mean.point_estimate from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589). The demo prints three lines: a, b, c. No key.
 
 [personal note]
 
@@ -29,7 +29,7 @@ Chapter 31 is out: Fan-out and Gather.
 
 Parallel children need a stop. Hermes Agent runs them together, and a new async dispatch at the concurrency cap is rejected rather than queued. The background cap equals delegation.max_concurrent_children. I queued up to 100 and then returned FanError::Full, and gather still takes permits from the pool of 8. Replies come back sorted by task_index. The tool trace is not in the summary.
 
-The mean for schedule_100 is MEAN_31_schedule_100.
+The mean for schedule_100 is 4.12 µs.
 
 [personal note]
 

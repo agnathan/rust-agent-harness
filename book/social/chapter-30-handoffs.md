@@ -13,7 +13,7 @@ Hermes Agent's handoff.request in tui_gateway/methods_session.py only writes pen
 This board filters before it counts. MAX_HANDOFFS is 4, and that cap is this harness, not a Hermes constant. An empty filtered transcript is HandoffError::Empty and does not move the owner. Platform re-bind stays chapter 39.
 
 4/
-The mean for filter_100 is MEAN_30_filter_100, mean.point_estimate from run BENCH_RUN_URL. The demo prints "draft sees 2". No key.
+The mean for filter_100 is 2.13 µs, mean.point_estimate from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589). The demo prints "draft sees 2". No key.
 
 [personal note]
 
@@ -29,7 +29,7 @@ Chapter 30 is out: Handoffs.
 
 The next agent should receive a filtered transcript. Hermes Agent's handoff.request writes a pending transfer for a watcher to claim and re-bind. A running session is error 4009, and platform is required. I kept the idea that a handoff is a recorded transfer, not a model call. This board drops role scratch first, then allows four transfers. The fifth is Limit, and the owner string stays.
 
-The mean for filter_100 is MEAN_30_filter_100.
+The mean for filter_100 is 2.13 µs.
 
 [personal note]
 

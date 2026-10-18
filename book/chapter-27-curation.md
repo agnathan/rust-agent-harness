@@ -539,11 +539,11 @@ The binary writes one skill, ages it 14 days, and runs the pass. No key. The enq
 
 | Benchmark | Mean | What it is |
 |---|---|---|
-| `enqueue_curation` | MEAN_27_enqueue_curation | record that a curator pass should run |
+| `enqueue_curation` | 25.5 ns | record that a curator pass should run |
 
 `enqueue_curation` opens a `Curator` on a temp directory before the bench. The timed closure is `b.iter`. Inside it: `enqueue`, then `queue_len` passed through `black_box`. No snapshot is built. No skill is scanned or moved. The queue drops the oldest job at 64.
 
-The Mean cell is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, run BENCH_RUN_URL, section `27`. The id is `27/enqueue_curation`. The old id `25/enqueue_curation` is an alias in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. Criterion also prints a `time:` line. That line is the slope. It is not the mean.
+The Mean cell is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `27`. The id is `27/enqueue_curation`. The old id `25/enqueue_curation` is an alias in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. Criterion also prints a `time:` line. That line is the slope. It is not the mean.
 
 ### Milestone demo
 
@@ -586,7 +586,7 @@ The queue drops the oldest `curate` at 64. The entries are the same word. The le
 ## Chapter summary
 
 - **Clock.** Stale at 14 days. Archive at 30. Idle at 2 hours. Interval `24 * 7` hours. The numbers are arguments and fields.
-- **Enqueue.** Pushes `curate`. The skill directory stays. Measured **MEAN_27_enqueue_curation**. That is the mean.
+- **Enqueue.** Pushes `curate`. The skill directory stays. Measured **25.5 ns**. That is the mean.
 - **Exempt.** Pin, cron, bundled, hub.
 - **Snapshot.** A gzip of the tree, two kept, `.git` left out. Taken at the start of `pass`.
 - **Scan and gate.** Chapter 25's `scan_text` and `should_allow_install`. The curator's own approval flag. Neither runs from `enqueue`.

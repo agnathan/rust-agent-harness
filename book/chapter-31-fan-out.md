@@ -38,7 +38,7 @@ The step crate is `steps/ch31-fan-out`. The package is `ch31-fan-out`. The libra
 
 `demo` schedules indexes 2, 0, and 1, and returns `a`, `b`, and `c` on three lines. No key.
 
-`schedule_100` fills a fresh board inside the timed closure. It does not call `gather`. The mean is `MEAN_31_schedule_100`.
+`schedule_100` fills a fresh board inside the timed closure. It does not call `gather`. The mean is `4.12 µs`.
 
 ## 31.1 The task is an index, a reply, and a trace
 
@@ -336,7 +336,7 @@ criterion_main!(benches);
 
 `iter_batched` takes a setup closure, a timed closure, and a batch size. `Board::new` is the setup. It is not the timed work. The timed closure schedules indexes `0..100`, which is 0 through 99, one hundred tasks. Reply text is `reply {index}`. The trace is `secret-tool` again. `expect("schedule")` is safe inside this loop because the board starts empty and the loop stops at 100. `black_box(board.len())` keeps the pushes in the sample. `len` locks and returns 100.
 
-No `Pool` is built. No `thread::scope` runs. No `gather`. The mean is the cost of filling the queue, which is the rejection boundary the next `schedule` would hit. The mean token is `MEAN_31_schedule_100`. It is `mean.point_estimate`. The printed Criterion `time:` line is the slope, not the mean.
+No `Pool` is built. No `thread::scope` runs. No `gather`. The mean is the cost of filling the queue, which is the rejection boundary the next `schedule` would hit. The mean is `4.12 µs`. It is `mean.point_estimate`. The printed Criterion `time:` line is the slope, not the mean.
 
 `BatchSize::SmallInput` is the Criterion batch size argument on this call. The setup produces a small board, an empty deque, and the routine fills it.
 
@@ -386,7 +386,7 @@ The rows before `sort_by_key` follow join order. The handles were collected from
 
 The bench's loop is `0..QUEUE_CAP`. The last index that is stored is 99. The task the unit test refuses uses index `QUEUE_CAP`, which is 100, and reply `no`. That task is a different value from the last successful one. Both can exist as Rust values. Only the successful ones are in the deque when `len` is read.
 
-Index 0 in `schedule_100` is a `Task` with `task_index` 0, reply `reply 0`, and trace `secret-tool`. Index 99 is `task_index` 99, reply `reply 99`, and the same trace. The loop variable is both the index and the source of the reply text. `format!` allocates that reply on every push. Those allocations are inside the timed closure, so they are part of `MEAN_31_schedule_100`. `Board::new` is outside it. A reader who moves the `format!` into the setup closure would be measuring a different sample than this file. The file formats inside the routine.
+Index 0 in `schedule_100` is a `Task` with `task_index` 0, reply `reply 0`, and trace `secret-tool`. Index 99 is `task_index` 99, reply `reply 99`, and the same trace. The loop variable is both the index and the source of the reply text. `format!` allocates that reply on every push. Those allocations are inside the timed closure, so they are part of `4.12 µs`. `Board::new` is outside it. A reader who moves the `format!` into the setup closure would be measuring a different sample than this file. The file formats inside the routine.
 
 `expect("schedule")` panics with that message if `schedule` returns `Err`. Inside `0..QUEUE_CAP` on a new board the `Result` is `Ok(())` every time. The panic path is the 101st call, and the bench does not make that call. The unit test does, and it uses `assert_eq!` rather than `expect`, so `Full` is a value the test holds, not a panic. `FanError` is `Copy`, so the `assert_eq!` can compare `Err(FanError::Full)` without moving a unique error out of the call. The right-hand side is a fresh `Err`. The left-hand side is the call. They match on the variant.
 
@@ -439,11 +439,11 @@ The binary schedules three tasks out of order and prints the gathered replies. N
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `schedule_100` | MEAN_31_schedule_100 | fill the queue, then the next call is `Full` | `schedule` of indexes 0 through 99 on a fresh board |
+| `schedule_100` | 4.12 µs | fill the queue, then the next call is `Full` | `schedule` of indexes 0 through 99 on a fresh board |
 
 `schedule_100` does not include `Board::new` in the timed closure. It does not include `gather`. The tool trace is stored on the task and never formatted into the bench's `black_box` value, which is `len`.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, run BENCH_RUN_URL, section `31`. The id is `31/schedule_100`. The old id `29/schedule_100` is an alias in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The printed Criterion `time:` line is the slope, not the mean.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `31`. The id is `31/schedule_100`. The old id `29/schedule_100` is an alias in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The printed Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 
@@ -483,7 +483,7 @@ Heartbeats are not hiding in `thread::sleep`. The sleep is the test hold. `gathe
 - **Bound.** `gather` uses the supervisor pool. `WORKER_BOUND` is 8. `max_seen` peaks at 8.
 - **Aggregator.** `sort_by_key` on `task_index`. The summary is the replies joined with newlines.
 - **Trace.** `tool_trace` is not in the summary. The demo's trace is `secret-tool` and the printed lines are `a`, `b`, `c`.
-- **Time.** `schedule_100` mean `MEAN_31_schedule_100`. That is `mean.point_estimate`. The Criterion `time:` line is the slope.
+- **Time.** `schedule_100` mean `4.12 µs`. That is `mean.point_estimate`. The Criterion `time:` line is the slope.
 
 [personal note: a batch that came back sorted, and the tool log you were glad the parent never saw]
 

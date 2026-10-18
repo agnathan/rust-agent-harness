@@ -303,13 +303,13 @@ fn eight_specialists_share_the_bound_and_the_context() {
 
 `jobs` uses the range `0..n`. Each reply is `reply {i}`. The same `hold` is stored in every job, which is legal because `Option<Duration>` is `Copy` when `Duration` is `Copy`. `pool.context()` before the run and `pool.context()` after the run are two `Arc::clone` calls. `ptr_eq` asks whether the pool still holds the allocation it was born with. `run_specialists` only clones that `Arc` inside the worker and drops the clone. It does not replace `Pool.context`.
 
-`Instant::now` and `elapsed` wrap the call. The clock includes thread start, the eight sleeps, and the join. It is not a Criterion mean. The Criterion mean for eight jobs with `hold: None` is `MEAN_29_schedule_eight`, from `schedule_eight`. This test's job is the overlap assert, the peak of 8, and the side-by-side of 8 and 10.
+`Instant::now` and `elapsed` wrap the call. The clock includes thread start, the eight sleeps, and the join. It is not a Criterion mean. The Criterion mean for eight jobs with `hold: None` is `149.22 µs`, from `schedule_eight`. This test's job is the overlap assert, the peak of 8, and the side-by-side of 8 and 10.
 
 The assertion is `elapsed < hold * 7`. Seven holds of 40 ms is 280 ms. Eight serial sleeps would be `hold * 8`, which is 320 ms. The comment in the test says macOS CI measured about 186 ms, still under seven holds and above a fully parallel 40 ms. The `assert!` is the upper bound. The comment is the comment. `replies.len()` is 8. `pool.max_seen()` is 8. `Arc::ptr_eq` on a context cloned before the run and `pool.context()` after the run is true. `HERMES_MAX_CONCURRENT_CHILDREN` equals 10. `pool.limit()` is not 10.
 
 The ninth-job test uses `WORKER_BOUND + 1` jobs and a hold of 20 ms. `replies.len()` is 9. `pool.max_seen()` is 8. All nine strings come back. The peak stays at the limit.
 
-The bench `schedule_eight` uses the same eight jobs with `hold: None`. No sleep. The mean is `MEAN_29_schedule_eight`.
+The bench `schedule_eight` uses the same eight jobs with `hold: None`. No sleep. The mean is `149.22 µs`.
 
 ## 29.4 `child_call` is a `Result`
 
@@ -406,7 +406,7 @@ pub fn spawn_reviewer(review_memory: bool) -> Fork {
 
 `MEMORY_TOOLS` is `memory`, `skill_view`, `skill_manage`, `read_file`, `search_files`. `SKILL_TOOLS` is that list without `memory`. `Loop::finalize` calls `spawn_reviewer` when a nudge is due. `enqueue_reflection` does not call `finalize` and does not call `spawn_reviewer`. I read the body. The statements are the lock, the optional `pop_front`, and the `push_back`. The milestone `chapter_29_reflection_starts_reviewer` is false for that reason. A string on the deque is not a `Fork`.
 
-The bench `enqueue_reflection` times that push of `"team run finished"`. The mean is `MEAN_29_enqueue_reflection`. A long Criterion sample will hit the cap of 64 and start dropping the front. The timed function is still the one above. No reviewer is constructed inside it.
+The bench `enqueue_reflection` times that push of `"team run finished"`. The mean is `18.4 ns`. A long Criterion sample will hit the cap of 64 and start dropping the front. The timed function is still the one above. No reviewer is constructed inside it.
 
 `demo` joins two replies and then enqueues.
 
@@ -523,14 +523,14 @@ The binary runs two scripted specialists and enqueues a reflection note that is 
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `schedule_eight` | MEAN_29_schedule_eight | eight specialists, one context | `run_specialists` on eight jobs that do not sleep |
-| `enqueue_reflection` | MEAN_29_enqueue_reflection | the note, without a reviewer | `push_back` of one string |
+| `schedule_eight` | 149.22 µs | eight specialists, one context | `run_specialists` on eight jobs that do not sleep |
+| `enqueue_reflection` | 18.4 ns | the note, without a reviewer | `push_back` of one string |
 
 `schedule_eight` excludes pool setup and job setup. The timed work is the scope, the permits, the context clone, and the join.
 
 `enqueue_reflection` excludes `Pool::new`. The timed work is the lock and the push. `max_seen` stays 0 across that call. The queue cap inside the function is 64.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, run BENCH_RUN_URL, section `29`. The ids are `29/schedule_eight` and `29/enqueue_reflection`. The old ids `27/schedule_eight` and `27/enqueue_reflection` are aliases in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The printed Criterion `time:` line is the slope, not the mean.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `29`. The ids are `29/schedule_eight` and `29/enqueue_reflection`. The old ids `27/schedule_eight` and `27/enqueue_reflection` are aliases in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The printed Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 
@@ -562,7 +562,7 @@ The ninth job blocks inside `acquire`. It does not fail the `Result`. `run_speci
 
 **D6.** The guardrails doc names subagent worktree isolation as opt-in. `_get_worktree_isolation` defaults to false. `worktree(false)` is `None`. `worktree(true)` is the marker `opt-in`. `tools/subagent_worktree.py` is the Hermes module. This function does not create a git worktree.
 
-**Reflection.** `enqueue_reflection` pushes a string. `chapter_29_reflection_starts_reviewer` stays false. The mean of that push is `MEAN_29_enqueue_reflection`.
+**Reflection.** `enqueue_reflection` pushes a string. `chapter_29_reflection_starts_reviewer` stays false. The mean of that push is `18.4 ns`.
 
 **Left for later.** Heartbeats are chapter 36. Chapter 31 is the queue of 100 and the gather in `task_index` order. Chapter 32's critic takes one permit from this pool. A real git worktree stays out.
 
@@ -573,7 +573,7 @@ The ninth job blocks inside `acquire`. It does not fail the `Result`. `run_speci
 - **Child.** The five blocked tools at depth 1. Any tool at depth greater than 1. The parent at depth 0 may call `delegate_task`.
 - **Worktree.** `None` unless opt-in. The opt-in value is `opt-in`. No git worktree is created.
 - **Reflection.** A `push_back` on a deque of 64. `max_seen` stays 0. `spawn_reviewer` is not called.
-- **Time.** `schedule_eight` mean `MEAN_29_schedule_eight`. `enqueue_reflection` mean `MEAN_29_enqueue_reflection`. Both are `mean.point_estimate`. The Criterion `time:` line is the slope.
+- **Time.** `schedule_eight` mean `149.22 µs`. `enqueue_reflection` mean `18.4 ns`. Both are `mean.point_estimate`. The Criterion `time:` line is the slope.
 
 [personal note: the specialist that only worked because it could not call the parent's tools]
 

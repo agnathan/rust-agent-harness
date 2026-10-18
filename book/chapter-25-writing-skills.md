@@ -691,14 +691,14 @@ The binary writes one skill under a temp directory and prints the verdict. No ke
 
 | Benchmark | Mean | What it is |
 |---|---|---|
-| `scan_one_skill` | MEAN_25_scan_one_skill | scan one in-memory skill |
-| `enqueue_unsolicited` | MEAN_25_enqueue_unsolicited | enqueue a write the model did not ask for |
+| `scan_one_skill` | 155.3 ns | scan one in-memory skill |
+| `enqueue_unsolicited` | 17.4 ns | enqueue a write the model did not ask for |
 
 `scan_one_skill` builds a skill of at least 1,024 bytes before the bench. The frontmatter names `rename`. The loop appends `Keep the old name in the note. ` until `body.len() >= 1024`. One `scan_text` runs before the timer so the five `Regex` values are compiled. The timed closure is `b.iter`. Inside it: `scan_text` with the text passed through `black_box`. No file is written.
 
 `enqueue_unsolicited` opens a `Writer` on a temp directory before the bench. The timed closure is `b.iter`. Inside it: `enqueue_background` of `create notes`, passed through `black_box`. The queue drops the oldest job at 64. No skill directory is created.
 
-The Mean cells are `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, run BENCH_RUN_URL, section `25`. The ids are `25/scan_one_skill` and `25/enqueue_unsolicited`. The old ids `23/scan_one_skill` and `23/enqueue_unsolicited` are aliases in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. Criterion also prints a `time:` line. That line is the slope. It is not the mean.
+The Mean cells are `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `25`. The ids are `25/scan_one_skill` and `25/enqueue_unsolicited`. The old ids `23/scan_one_skill` and `23/enqueue_unsolicited` are aliases in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. Criterion also prints a `time:` line. That line is the slope. It is not the mean.
 
 ### Milestone demo
 
@@ -745,7 +745,7 @@ The five rules are a subset of `THREAT_PATTERNS`. A pattern that exists only in 
 - **Force.** A dangerous community or trusted skill stays blocked.
 - **Reviewer.** `view` before `patch`. The hash is FNV-1a of the bytes that were loaded.
 - **Delete.** A pin, and origin `bundled`, `hub`, or `team`, are refused.
-- **Queue.** An unsolicited write is `enqueue_background`. Scanning one skill measured **MEAN_25_scan_one_skill**. Enqueue measured **MEAN_25_enqueue_unsolicited**. Those are the means.
+- **Queue.** An unsolicited write is `enqueue_background`. Scanning one skill measured **155.3 ns**. Enqueue measured **17.4 ns**. Those are the means.
 
 [personal note: a write you were glad the gate held]
 

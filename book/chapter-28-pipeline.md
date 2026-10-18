@@ -348,7 +348,7 @@ fn arc_pass(c: &mut Criterion) {
 
 `bench_function` names the sample `arc_pass`. `b.iter` is the timed loop. Inside, `Arc::clone` bumps the strong count, `black_box` keeps the compiler from deleting the clone, `hand_off` moves that `Arc`, and `Arc::ptr_eq` compares it with the original. `black_box` comes from `std::hint::black_box`. It is an identity function the optimizer has to treat as unknown. The result of `ptr_eq` is true for this sample. The bench does not assert that. It passes the bool through `black_box` so the compare stays in the sample.
 
-No `Stage` is built. No `format!` runs. No note is pushed. The mean for this function is `MEAN_28_arc_pass`. That token is `mean.point_estimate` from the Benchmarks workflow. It is the mean. The `time:` line Criterion prints on the runner is the slope, and it is not the number in the table.
+No `Stage` is built. No `format!` runs. No note is pushed. The mean for this function is `9.15 ns`. That number is `mean.point_estimate` from the Benchmarks workflow. It is the mean. The `time:` line Criterion prints on the runner is the slope, and it is not the number in the table.
 
 `copy_transcript` times the clone the pipeline does not do.
 
@@ -366,7 +366,7 @@ fn copy_transcript(c: &mut Criterion) {
 
 `&context.messages` is `&Vec<Message>`. `clone` on that vec clones every `Message`, and each `Message` clones two `String`s. `black_box` on the borrow and on the result keeps the clone alive for the measurement. The notes mutex is not cloned. `Message`'s `Clone` derive is why this line compiles. `Context` has no such derive, which is why the pipeline cannot "just clone the context" and why the bench has to name the vec.
 
-The mean for this function is `MEAN_28_copy_transcript`. Same workflow, same rule: `mean.point_estimate`, and the printed `time:` line is the slope.
+The mean for this function is `6.12 µs`. Same workflow, same rule: `mean.point_estimate`, and the printed `time:` line is the slope.
 
 ```rust
 criterion_group!(benches, arc_pass, copy_transcript);
@@ -407,7 +407,7 @@ Iteration two pushes `draft: the draft`. Iteration three pushes `critique: short
 
 That last clone is one `String`. It is not a clone of the message vec. The message `Write a note on rename.` dies with the `Context`. The process prints the note and exits. The next chapter's pool keeps its `Arc<Context>` inside the `Pool` so specialists can clone the pointer for the whole join. This chapter's demo does not need the context after the last note is in hand.
 
-`copy_transcript` never builds those four notes. Its clone is the hundred `Message` values from `sample`. Each text contains `about the rename procedure`, which is longer than the test helper's `message {i}`. The bench and the test use different sentences on purpose. The test checks length and pointer equality. The bench gives the clone a transcript-sized body so the mean is the mean of that clone. I do not substitute one number for the other. `MEAN_28_arc_pass` is only `arc_pass`. `MEAN_28_copy_transcript` is only `copy_transcript`.
+`copy_transcript` never builds those four notes. Its clone is the hundred `Message` values from `sample`. Each text contains `about the rename procedure`, which is longer than the test helper's `message {i}`. The bench and the test use different sentences on purpose. The test checks length and pointer equality. The bench gives the clone a transcript-sized body so the mean is the mean of that clone. I do not substitute one number for the other. `9.15 ns` is only `arc_pass`. `6.12 µs` is only `copy_transcript`.
 
 ## Tests
 
@@ -438,14 +438,14 @@ The binary builds one context, runs outline, draft, critique, and revise, and pr
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `arc_pass` | MEAN_28_arc_pass | the next stage receives the same `Arc` | `hand_off` of a cloned pointer, then `Arc::ptr_eq` |
-| `copy_transcript` | MEAN_28_copy_transcript | the copy `run` does not do | `clone` of 100 messages |
+| `arc_pass` | 9.15 ns | the next stage receives the same `Arc` | `hand_off` of a cloned pointer, then `Arc::ptr_eq` |
+| `copy_transcript` | 6.12 µs | the copy `run` does not do | `clone` of 100 messages |
 
 `arc_pass` builds the 100-message context before `b.iter`. The timed closure clones the `Arc`, calls `hand_off`, and compares pointers. Both calls go through `black_box`. No stage reply is formatted.
 
 `copy_transcript` uses the same context. The timed closure clones `messages`. `run` does not call this. `hand_off` does not call this.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, run BENCH_RUN_URL, section `28`. The ids are `28/arc_pass` and `28/copy_transcript`. The old ids `26/arc_pass` and `26/copy_transcript` are aliases in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The printed Criterion `time:` line is the slope, not the mean.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `28`. The ids are `28/arc_pass` and `28/copy_transcript`. The old ids `26/arc_pass` and `26/copy_transcript` are aliases in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The printed Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 
@@ -471,7 +471,7 @@ A scripted reply does not read the previous note. The revise reply is the litera
 
 [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). This chapter attaches context. It does not write a skill and it does not write a memory file.
 
-**Context.** The next stage gets the same `Arc`. The messages stay in the vec that was built before `run`. The mean for handing that pointer across is `MEAN_28_arc_pass`. The mean for cloning the 100 messages is `MEAN_28_copy_transcript`. The pipeline takes the first path.
+**Context.** The next stage gets the same `Arc`. The messages stay in the vec that was built before `run`. The mean for handing that pointer across is `9.15 ns`. The mean for cloning the 100 messages is `6.12 µs`. The pipeline takes the first path.
 
 **Order.** The stage slice is the order. `STAGE_NAMES` is outline, draft, critique, revise. `run` follows the slice it was given.
 
@@ -483,7 +483,7 @@ A scripted reply does not read the previous note. The revise reply is the litera
 - **Context.** One `Arc<Context>`. `hand_off` returns it. `Arc::ptr_eq` holds. `messages` is not cloned between stages.
 - **Notes.** Each stage pushes `name: reply` under the mutex. The demo's last line is `revise: the revision`.
 - **Replies.** Scripted. No key. No model.
-- **Time.** `arc_pass` mean `MEAN_28_arc_pass`. `copy_transcript` mean `MEAN_28_copy_transcript`. Both are `mean.point_estimate`. The Criterion `time:` line is the slope.
+- **Time.** `arc_pass` mean `9.15 ns`. `copy_transcript` mean `6.12 µs`. Both are `mean.point_estimate`. The Criterion `time:` line is the slope.
 
 [personal note: a pipeline stage that only made sense because it could see the previous note]
 

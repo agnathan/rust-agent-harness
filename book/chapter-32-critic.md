@@ -143,7 +143,7 @@ Chapter 31's demo string is `a\nb\nc`. Put that string through `parse_verdict` a
 
 The separators in the trim closure are five characters. Colon is the demo's separator, in `verdict: done`. Space is what a line like `verdict done` would need, and the closure includes it. Equals is included. A double quote is included. A single quote is included. A comma is not. A suffix that starts with a comma after the word `verdict` does not lose that comma, and `,done` does not start with `done`. The tests do not pass a comma. The closure is the list of characters the source strips, and it is only a prefix strip. Characters later in the suffix stay, which is why `done\nThe note is short enough.` still starts with `done`.
 
-`to_ascii_lowercase` copies the whole reply before `find`. A 5,000-`x` reply allocates that lowercase string inside `parse_verdict`, and `snippet_of` allocates another string of 4,000 bytes from the original. Both allocations happen inside `judge`, while the notes guard is held. The lowercase `String` is a local inside `parse_verdict`. It drops when `parse_verdict` returns, before `Outcome` is built. The snippet is moved into the `Outcome` and lives as long as that value does. The lowercase copy is not stored on `Outcome`. The bench's reply is one short line plus a second short line, so both allocations are small. The mean `MEAN_32_judge_one_permit` includes them, plus the permit and the lock. It does not include a 5,000-character reply. That longer reply is the unit test `the_snippet_stops_at_four_thousand_chars`.
+`to_ascii_lowercase` copies the whole reply before `find`. A 5,000-`x` reply allocates that lowercase string inside `parse_verdict`, and `snippet_of` allocates another string of 4,000 bytes from the original. Both allocations happen inside `judge`, while the notes guard is held. The lowercase `String` is a local inside `parse_verdict`. It drops when `parse_verdict` returns, before `Outcome` is built. The snippet is moved into the `Outcome` and lives as long as that value does. The lowercase copy is not stored on `Outcome`. The bench's reply is one short line plus a second short line, so both allocations are small. The mean `278.9 ns` includes them, plus the permit and the lock. It does not include a 5,000-character reply. That longer reply is the unit test `the_snippet_stops_at_four_thousand_chars`.
 
 `Outcome` for the demo input, if you kept it, would have `accepted` true, `verdict` `Done`, and a snippet equal to the whole raw string, because that string is far shorter than 4,000 bytes. `demo` does not read `snippet` or `verdict`. It reads `accepted` and returns a different literal, `accepted: done`. The `else` literal `rejected` is what a `Reject`, a `Blocked`, a `Wait`, or a `Continue` would print. One boolean. Four non-accepting verdicts share that branch. `final_gate` keeps them distinct, because `Err` carries the variant. `demo` uses `as_tool` and collapses them. The test `the_demo_accepts` only requires the accepting line.
 
@@ -333,13 +333,13 @@ criterion_main!(benches);
 
 The pool and the raw string are built before `b.iter`. The timed closure calls `as_tool`, which calls `judge`: one `acquire`, one context clone, one notes lock, one parse, one snippet of a short string, one `Drop` of the permit. `black_box` keeps the pool borrow, the reply, and the `Outcome` in the sample. No model is called. The 30 second timeout is not slept. The notes vec is not appended. Each iteration's permit is released before the next iteration, so the bench does not queue eight critics. It takes one permit, over and over.
 
-The mean is `MEAN_32_judge_one_permit`. It is `mean.point_estimate`. The printed Criterion `time:` line is the slope, not the mean.
+The mean is `278.9 ns`. It is `mean.point_estimate`. The printed Criterion `time:` line is the slope, not the mean.
 
 The bench imports `as_tool` from `harness_core::critic` and `Pool`, `WORKER_BOUND` from `harness_core::supervisor`. `final_gate` is not in the sample. The unit test is where both entry points run.
 
 One critic on an idle pool does not wait. `acquire` locks state, sees `inflight` of 0, skips the `while`, sets `inflight` to 1, and sets `max_seen` to 1. The `Condvar` is not waited on. `Drop` later sets `inflight` back with `saturating_sub` and calls `notify_one`. If no thread is waiting, the notify wakes nobody. The bench does that pair on every iteration: take one, drop one. Eight critics at once would be a different program. The ninth would wait in `acquire` the way chapter 31's sixteenth task waits. This file's tests never start that ninth critic. `max_seen` of 1 is the observation they record, and it is the observation that the critic took a permit at all. A `judge` that parsed without `acquire` would leave `max_seen` at 0. The test would fail. The permit is how the critic shares the chapter 29 bound instead of running beside it with no limit.
 
-`black_box(&pool)` is still a `&Pool`. `as_tool` takes `&Pool`. The opaque wrapper stops the optimizer from noticing that the pool is unmodified across iterations and deleting the call. The pool is modified: `max_seen` changes on the first iteration and `inflight` moves during each call. After the iteration, `inflight` is 0 again and `max_seen` stays 1. The notes length stays 0. A benchmark that asserted those facts inside `b.iter` would still be measuring `judge`. This bench does not assert. The unit test asserts. The mean `MEAN_32_judge_one_permit` is the timing of the call the test already checked for behavior.
+`black_box(&pool)` is still a `&Pool`. `as_tool` takes `&Pool`. The opaque wrapper stops the optimizer from noticing that the pool is unmodified across iterations and deleting the call. The pool is modified: `max_seen` changes on the first iteration and `inflight` moves during each call. After the iteration, `inflight` is 0 again and `max_seen` stays 1. The notes length stays 0. A benchmark that asserted those facts inside `b.iter` would still be measuring `judge`. This bench does not assert. The unit test asserts. The mean `278.9 ns` is the timing of the call the test already checked for behavior.
 
 `snippet_of` on the bench's raw string takes `min(4000, len)`. The len of `verdict: done\nThe note is short enough.` is the byte length of that literal, which is under 4000, so `end` starts at that length. `is_char_boundary` is true for the end of a string. The `while` does not run. The snippet is a full copy. The `Outcome` the bench passes to `black_box` holds that copy, the bool `true`, and `Verdict::Done`. Then the iteration ends and the `Outcome` drops. The next iteration repeats the copy. That repeated short copy, plus the lock and the permit, is the sample.
 
@@ -384,11 +384,11 @@ The binary judges one scripted reply. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `judge_one_permit` | MEAN_32_judge_one_permit | one permit from the pool of 8 | `as_tool` on `verdict: done` |
+| `judge_one_permit` | 278.9 ns | one permit from the pool of 8 | `as_tool` on `verdict: done` |
 
 `judge_one_permit` builds the pool before `b.iter`. The timed closure acquires one permit, locks the notes, parses, copies the short snippet, and drops the permit. The 30 second constant is not a sleep in that closure.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, run BENCH_RUN_URL, section `32`. The id is `32/judge_one_permit`. The old id `30/judge_one_permit` is an alias in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The printed Criterion `time:` line is the slope, not the mean.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `32`. The id is `32/judge_one_permit`. The old id `30/judge_one_permit` is an alias in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The printed Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 
@@ -433,7 +433,7 @@ The notes lock is held across the parse and the snippet allocation. It is not he
 - **Notes.** The critic locks them and does not push.
 - **Snippet.** At most 4,000 bytes of `raw`, on a character boundary.
 - **Constants.** 20 turns and 30 seconds, returned by `limits`. The 30 seconds are not slept.
-- **Time.** `judge_one_permit` mean `MEAN_32_judge_one_permit`. That is `mean.point_estimate`. The Criterion `time:` line is the slope.
+- **Time.** `judge_one_permit` mean `278.9 ns`. That is `mean.point_estimate`. The Criterion `time:` line is the slope.
 
 [personal note: a gate you wanted to fail closed]
 

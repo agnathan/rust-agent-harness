@@ -654,11 +654,11 @@ The binary writes one skill under a temp directory, renders the index, and views
 
 | Benchmark | Mean | What it is |
 |---|---|---|
-| `load_render_500` | MEAN_24_load_render_500 | load 500 skills and render the index |
+| `load_render_500` | 4.15 ms | load 500 skills and render the index |
 
 `load_render_500` writes 500 `SKILL.md` files before the bench. Category is `cat` plus `n % 10`. Name is `skill` plus the index zero-padded to three digits, from `skill000` through `skill499`. The description is `Skill {n}`. The body is `Body {n}.` The timed closure is `b.iter`. Inside it: `load_tree` and `render_index`, the root and the slice and the connected list passed through `black_box`. The writes sit outside the timer. No model is called. The bench deletes the directory after the samples.
 
-The Mean cell is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, run BENCH_RUN_URL, section `24`. The id is `24/load_render_500`. The old id `22/load_render_500` is an alias in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. Criterion also prints a `time:` line. That line is the slope. It is not the mean.
+The Mean cell is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `24`. The id is `24/load_render_500`. The old id `22/load_render_500` is an alias in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. Criterion also prints a `time:` line. That line is the slope. It is not the mean.
 
 ### Milestone demo
 
@@ -697,7 +697,7 @@ One file over the body cap, or one name over 64 characters, fails `load_tree` fo
 - **Index.** `render_index` writes `<available_skills>`. `SkillSession` stores an `Arc`. The same inputs render the same bytes.
 - **Tools.** `skills_list` filters by category. `skill_view` returns one whole file, or one supporting file under the four directories.
 - **Note.** Added and removed names become the note. The `Arc` stays.
-- **Time.** Loading and rendering 500 skills measured **MEAN_24_load_render_500**. That is the mean.
+- **Time.** Loading and rendering 500 skills measured **4.15 ms**. That is the mean.
 
 [personal note: a procedure that belonged in a skill instead of in the prompt]
 

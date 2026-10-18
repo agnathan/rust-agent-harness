@@ -36,7 +36,7 @@ The step crate is `steps/ch30-handoffs`. The package is `ch30-handoffs`. The lib
 
 `demo` starts at `outline`, hands three messages to `draft`, and returns `draft sees 2`. No key.
 
-`filter_100` times the filter on 100 messages. It does not call `handoff`. The mean is `MEAN_30_filter_100`.
+`filter_100` times the filter on 100 messages. It does not call `handoff`. The mean is `2.13 µs`.
 
 ## 30.1 The board is a count and an owner
 
@@ -316,13 +316,13 @@ criterion_main!(benches);
 
 The vec is built before `b.iter`. Indexes `0, 5, 10, ...` are role `scratch`, because `i % 5 == 0`. The other indexes are role `user`. Every text is `message {i} about the rename procedure`. One hundred messages. The timed closure calls `filter_transcript` and passes the slice through `black_box`. The new vec goes through `black_box` so the clone stays in the sample. `Board` is not constructed. `fetch_add` does not run. The mean is the filter, which is the allocation the next owner receives.
 
-The mean token is `MEAN_30_filter_100`. It is `mean.point_estimate`. The Criterion `time:` line is the slope, not this mean.
+The mean is `2.13 µs`. It is `mean.point_estimate`. The Criterion `time:` line is the slope, not this mean.
 
 `black_box` is `std::hint::black_box`, imported at the top of the bench file. It stops the compiler from deleting a result that the function does not otherwise use.
 
 A handoff of this vec would also pay for the atomic and the owner lock. Those are not in the sample. The chapter's question for the bench is the cost of dropping scratch out of a hundred-row transcript. The cap is what the unit test walks, four successes and then `Limit`.
 
-The iterator chain is lazy until `collect`. `filter` decides. `.cloned()` runs only for a row the predicate kept. A scratch row is borrowed long enough to read `role`, then dropped from the pipeline of the iterator. It is not cloned. In `filter_100`, `i % 5 == 0` is true for 20 indexes in `0..100`: 0, 5, 10, and so on through 95. The other 80 rows are role `user` and are cloned. Each clone copies two `String`s, the role and the text. The mean `MEAN_30_filter_100` is that work, repeated by `b.iter`, on the same input vec. The input vec is not cleared. The next iteration filters it again.
+The iterator chain is lazy until `collect`. `filter` decides. `.cloned()` runs only for a row the predicate kept. A scratch row is borrowed long enough to read `role`, then dropped from the pipeline of the iterator. It is not cloned. In `filter_100`, `i % 5 == 0` is true for 20 indexes in `0..100`: 0, 5, 10, and so on through 95. The other 80 rows are role `user` and are cloned. Each clone copies two `String`s, the role and the text. The mean `2.13 µs` is that work, repeated by `b.iter`, on the same input vec. The input vec is not cleared. The next iteration filters it again.
 
 ## 30.6 The count moves one accepted call at a time
 
@@ -379,7 +379,7 @@ The Hermes method this replaces as the idea, not as a port, writes pending and r
 
 The `Ok` value from the demo is worth writing out as two structs, because the length `2` is the only number the binary prints. The first kept `Message` has role `user` and text `Write a note.` The second has role `assistant` and text `three steps`. The dropped `Message` has role `scratch` and text `draft junk`. `filtered.len()` is 2 because those are the two clones `collect` produced. `board.owner()` is the `String` `draft` stored by the assignment. The format string `"{} sees {}"` puts a space, the word `sees`, and a space between them. No other punctuation. The scratch text is not interpolated. A reader of the terminal line knows the owner and the count of rows, and does not know the row text. The test `the_demo_shows_the_next_owner` compares that line and does not look at the notes a pipeline would have pushed. `handoffs::demo` does not call `pipeline::demo`.
 
-`Clone` on `Message` is derived, so the clone is field-wise. `role.clone()` and `text.clone()` each allocate. A handoff that keeps two short rows allocates two small strings for roles and two for texts, plus the vec buffer. The bench scales that to 80 kept rows of a longer sentence, `message {i} about the rename procedure`. The chapter's mean for that scale is `MEAN_30_filter_100`, and it is only the filter. I keep the atomic out of the sample so a change to `fetch_add` does not move the filter's mean, and a change to `filter` does not hide inside the cap test. The cap test is the correctness check. It runs once. The bench runs the filter in `b.iter`.
+`Clone` on `Message` is derived, so the clone is field-wise. `role.clone()` and `text.clone()` each allocate. A handoff that keeps two short rows allocates two small strings for roles and two for texts, plus the vec buffer. The bench scales that to 80 kept rows of a longer sentence, `message {i} about the rename procedure`. The chapter's mean for that scale is `2.13 µs`, and it is only the filter. I keep the atomic out of the sample so a change to `fetch_add` does not move the filter's mean, and a change to `filter` does not hide inside the cap test. The cap test is the correctness check. It runs once. The bench runs the filter in `b.iter`.
 
 `MAX_HANDOFFS` as a `u32` matches `AtomicU32`. Comparing `current >= MAX_HANDOFFS` does not need a cast. `count()` returns `u32` from `load`. The test's `assert_eq!(board.count(), MAX_HANDOFFS)` compares those two `u32` values. Four fits in a `u32` with room to spare. The undo uses `fetch_sub(1)`, not a store of a constant, so the atomic goes back by one from whatever the `fetch_add` left, which on this path is 5 going back to 4. I am describing that path for a count that was already 4. The test reaches that state through the four successes and then one refusal.
 
@@ -420,11 +420,11 @@ The binary filters one scratch line and moves the owner from `outline` to `draft
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `filter_100` | MEAN_30_filter_100 | the transcript the next owner receives | drop role `scratch` from 100 messages |
+| `filter_100` | 2.13 µs | the transcript the next owner receives | drop role `scratch` from 100 messages |
 
 `filter_100` builds the vec before `b.iter`. The timed closure is `filter_transcript` and `black_box` of the new vec. No board. No model.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, run BENCH_RUN_URL, section `30`. The id is `30/filter_100`. The old id `28/filter_100` is an alias in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The printed Criterion `time:` line is the slope, not the mean.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `30`. The id is `30/filter_100`. The old id `28/filter_100` is an alias in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The printed Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 
@@ -464,7 +464,7 @@ Error 4009 is the Hermes response when the session is running. `HandoffError` ha
 - **Cap.** Four accepted handoffs. The next is `Limit`. `MAX_HANDOFFS` is this harness, not a Hermes constant.
 - **Owner.** Changes only after a non-empty filtered transcript is accepted. `Empty` and `Limit` leave the owner as it was.
 - **Atomic.** `AtomicU32` with `Ordering::Relaxed`. `fetch_add` returns the previous count. The refusal undoes itself.
-- **Time.** `filter_100` mean `MEAN_30_filter_100`. That is `mean.point_estimate`. The Criterion `time:` line is the slope.
+- **Time.** `filter_100` mean `2.13 µs`. That is `mean.point_estimate`. The Criterion `time:` line is the slope.
 
 [personal note: a transfer that was really a platform change, and the filter you still wanted]
 

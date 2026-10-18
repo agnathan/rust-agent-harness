@@ -13,7 +13,7 @@ Hermes Agent's _append_moa_context in agent/turn_request_assembly.py runs MoA re
 Four stages share one Arc<Context>. The message vec stays one allocation. A separate bench clones 100 messages so the copy has a mean. The pipeline does not call that clone.
 
 4/
-The mean for handing off the Arc is MEAN_28_arc_pass, and the mean for copying the transcript is MEAN_28_copy_transcript, both mean.point_estimate from run BENCH_RUN_URL. The demo ends on "revise: the revision". No key.
+The mean for handing off the Arc is 9.15 ns, and the mean for copying the transcript is 6.12 µs, both mean.point_estimate from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589). The demo ends on "revise: the revision". No key.
 
 [personal note]
 
@@ -29,7 +29,7 @@ Chapter 28 is out: The Sequential Pipeline.
 
 A later stage should read what the earlier stage attached, on the same context. Hermes Agent's _append_moa_context appends aggregated reference-model context to the last user message, via aggregate_moa_context. I used that idea for four scripted stages, outline through revise, and gave every stage the same Arc. hand_off returns that Arc.
 
-The mean for handing off the Arc is MEAN_28_arc_pass, and the mean for copying the transcript is MEAN_28_copy_transcript.
+The mean for handing off the Arc is 9.15 ns, and the mean for copying the transcript is 6.12 µs.
 
 [personal note]
 

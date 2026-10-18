@@ -503,14 +503,14 @@ The binary opens one session, refreshes from one usage row and a memory sentence
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `apply_offered` | MEAN_23_apply_offered | the offered set only | copy 32 names into a session view |
-| `predict_offline` | MEAN_23_predict_offline | off the request path | score 1,000 rows against 64 names |
+| `apply_offered` | 76.1 ns | the offered set only | copy 32 names into a session view |
+| `predict_offline` | 149.64 µs | off the request path | score 1,000 rows against 64 names |
 
 `apply_offered` builds the gateway, opens `desk`, and calls `refresh_prediction` before the bench. One `session_tools` also runs first, so `list_changed` is already clear. The timed closure is `b.iter`. Inside: `session_tools` with the session id passed through `black_box`. That clones the `Arc` and copies 32 names. `predict` is not called.
 
 `predict_offline` builds 64 names and 1,000 usage rows before the bench. The timed closure is `b.iter`. Inside: `predict` with the input passed through `black_box`. No gateway, no session, no model.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, run BENCH_RUN_URL. The printed Criterion `time:` line is the slope, not the mean. The ids stay `23/apply_offered` and `23/predict_offline`. The old ids `21/apply_offered` and `21/predict_offline` are aliases in `benchmarks/descriptions.json`. I did not rewrite gh-pages history.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589). The printed Criterion `time:` line is the slope, not the mean. The ids stay `23/apply_offered` and `23/predict_offline`. The old ids `21/apply_offered` and `21/predict_offline` are aliases in `benchmarks/descriptions.json`. I did not rewrite gh-pages history.
 
 ### Milestone demo
 
@@ -557,7 +557,7 @@ The two caps of 50 are easy to mix up. `CODE_MODE_MAX_CALLS` stops a script. Cha
 - **Rank.** A memory or session mention is 3. A matching use is 1. Zero stays out. Ties break by name.
 - **Names.** A composite and a macro expand to steps. They do not run them.
 - **Code mode.** `call tool json`, allowlist, offer, and 50 calls. The backend runs only after the script parses.
-- **Time.** Applying 32 names measured **MEAN_23_apply_offered**. Scoring 1,000 rows measured **MEAN_23_predict_offline**.
+- **Time.** Applying 32 names measured **76.1 ns**. Scoring 1,000 rows measured **149.64 µs**.
 
 [personal note: the first time the offer was right without a search]
 

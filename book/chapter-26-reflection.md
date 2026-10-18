@@ -502,14 +502,14 @@ The binary counts ten user turns, forks, and runs the scripted memory line. No k
 
 | Benchmark | Mean | What it is |
 |---|---|---|
-| `spawn_reviewer` | MEAN_26_spawn_reviewer | build one reviewer fork |
-| `cancel_review` | MEAN_26_cancel_review | set the cancel flag and join the spinner |
+| `spawn_reviewer` | 47.5 ns | build one reviewer fork |
+| `cancel_review` | 873.74 µs | set the cancel flag and join the spinner |
 
 `spawn_reviewer` uses `iter_custom`. The closure receives `iters`. It allocates a `Vec` with that capacity, starts an `Instant`, pushes `spawn_reviewer(black_box(true))` in a loop, reads `elapsed`, drops the vec, and returns the duration. The drop sits after the instant is read. No thread starts. No model runs.
 
 `cancel_review` uses `iter_batched` with `BatchSize::SmallInput`. The setup closure is `ReviewRun::spawn_spinner`. The timed closure is `cancel_and_join`. The worker sleeps 1 millisecond between flag checks, so the join waits out at most one of those sleeps.
 
-The Mean cells are `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, run BENCH_RUN_URL, section `26`. The ids are `26/spawn_reviewer` and `26/cancel_review`. The old ids `24/spawn_reviewer` and `24/cancel_review` are aliases in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. Criterion also prints a `time:` line. That line is the slope. It is not the mean.
+The Mean cells are `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `26`. The ids are `26/spawn_reviewer` and `26/cancel_review`. The old ids `24/spawn_reviewer` and `24/cancel_review` are aliases in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. Criterion also prints a `time:` line. That line is the slope. It is not the mean.
 
 ### Milestone demo
 
@@ -554,7 +554,7 @@ The note vec is a `Vec<String>` in the caller. It is not `MEMORY.md`. Chapter 21
 - **Refuse.** `terminal` is `NotAllowed`. A skill nudge has no `memory` tool.
 - **Cancel.** A flag, then a join. The two-second Hermes wait is a constant this crate does not sleep.
 - **Turn.** `run_loop` and `drive_loop` do not call `finalize`.
-- **Time.** Building the fork measured **MEAN_26_spawn_reviewer**. Cancelling the spinner measured **MEAN_26_cancel_review**. Those are the means.
+- **Time.** Building the fork measured **47.5 ns**. Cancelling the spinner measured **873.74 µs**. Those are the means.
 
 [personal note: a review that was worth running after the turn, not during it]
 

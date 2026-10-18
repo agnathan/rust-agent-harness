@@ -13,7 +13,7 @@ Hermes Agent's code_execution toolset runs Python that calls tools (toolsets.py)
 A memory mention is worth 3. A past use that shares a task token is worth 1. A zero stays out. Composite and macro names expand to steps. They do not run the steps.
 
 4/
-Copying 32 names measured MEAN_23_apply_offered. Scoring 1,000 rows measured MEAN_23_predict_offline. The demo offer is read_file. No key. No socket.
+Copying 32 names measured 76.1 ns. Scoring 1,000 rows measured 149.64 µs. The demo offer is read_file. No key. No socket.
 
 [personal note]
 
@@ -31,7 +31,7 @@ This is the server crate. It vendors the chapter 15 gateway instead of path-depe
 
 Hermes Agent allows seven tools inside code execution and stops a script at 50 calls. The Rust script is `call tool json` lines, checked against that allowlist and against the offer. A composite or a macro is a saved name. Expanding it does not run the steps.
 
-Copying 32 names measured MEAN_23_apply_offered. Scoring 1,000 rows measured MEAN_23_predict_offline. The demo prints read_file and ok. No key.
+Copying 32 names measured 76.1 ns. Scoring 1,000 rows measured 149.64 µs. The demo prints read_file and ok. No key.
 
 [personal note: one takeaway from writing this chapter]
 
