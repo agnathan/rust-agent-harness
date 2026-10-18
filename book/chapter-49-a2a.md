@@ -534,7 +534,7 @@ The binary calls one fake peer. No key. No socket. `examples/demo.rs` is the eva
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `cancel_inflight` | MEAN_PENDING_49 | cancel reaches an in-flight waiter | `cancel` then `join` |
+| `cancel_inflight` | 46.13 µs | cancel reaches an in-flight waiter | `cancel` then `join` |
 
 The function name is `cancel_inflight`. The bench id is `49/cancel_inflight`. The aliases are `47/cancel_inflight` and `45/cancel_inflight` in `benchmarks/descriptions.json`.
 
@@ -566,7 +566,7 @@ fn cancel_inflight(c: &mut Criterion) {
 
 `descriptions.json` says the setup closure spawns a thread running `wait_cancel`, spins until `started` is true, and is not timed. The timed routine calls `cancel` with the flag passed through `black_box`, joins the thread, then `black_box` of the unit. The atomic store and the waiter's exit are inside the sample. `HttpPool`, `FakeModel`, `redact_for_egress`, `call`, and the permit pool are not used. There is no sleep and no socket.
 
-The mean cell is `MEAN_PENDING_49`. It is the place `mean.point_estimate` goes for id `49/cancel_inflight`. `.github/scripts/run_bench_section.sh` runs `cargo bench -p ch49-a2a --bench a2a --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10` for section 49. The same flags are in `steps/ch49-a2a/README.md`. The Criterion `time:` line is the slope, not the mean. `descriptions.json` says the budget is under 50 milliseconds, and that a number that includes a connect would be a client this crate does not open.
+The mean cell is `46.13 µs`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196), for id `49/cancel_inflight`. `.github/scripts/run_bench_section.sh` runs `cargo bench -p ch49-a2a --bench a2a --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10` for section 49. The same flags are in `steps/ch49-a2a/README.md`. The Criterion `time:` line is the slope, not the mean. `descriptions.json` says the budget is under 50 milliseconds, and that a number that includes a connect would be a client this crate does not open.
 
 ### Milestone demo
 
@@ -638,7 +638,7 @@ pub fn chapter_49_cancel_reached() -> bool {
 - **Cancel.** `cancel` stores `true`. `wait_cancel` yields until the load is `true`.
 - **Card.** The name is `harness`. The skill is `research`.
 - **Model.** `FakeModel` answers `ok`. The demo line is `a2a: ok`.
-- **Time.** `cancel_inflight` mean `MEAN_PENDING_49`. That cell is `mean.point_estimate` for id `49/cancel_inflight`. The Criterion `time:` line is the slope.
+- **Time.** `cancel_inflight` mean `46.13 µs`. That cell is `mean.point_estimate` for id `49/cancel_inflight`. The Criterion `time:` line is the slope.
 
 [personal note: a permit that came back when the flag was already set]
 

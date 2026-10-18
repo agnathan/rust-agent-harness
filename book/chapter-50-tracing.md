@@ -436,8 +436,8 @@ The binary records one turn and a team of 101 notes. No key. No socket. `example
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `event_without_span` | MEAN_PENDING_50_BARE | one `FakeModel::complete` with the subscriber installed and no span entered | `complete("hello")` |
-| `span_per_event` | MEAN_PENDING_50_SPAN | one `mock_turn` under that same subscriber | the turn, three event spans, and the gateway span |
+| `event_without_span` | 18.1 ns | one `FakeModel::complete` with the subscriber installed and no span entered | `complete("hello")` |
+| `span_per_event` | 236.4 ns | one `mock_turn` under that same subscriber | the turn, three event spans, and the gateway span |
 
 The ids are `50/event_without_span` and `50/span_per_event`. The aliases are `48/event_without_span`, `46/event_without_span`, `48/span_per_event`, and `46/span_per_event` in `benchmarks/descriptions.json`.
 
@@ -465,11 +465,11 @@ fn both(c: &mut Criterion) {
 
 Subscriber install is outside both samples. `CountingSubscriber::new` and `with_default` run before either `bench_function` body is timed. `descriptions.json` says the same thing. `FakeModel { reply: "ok" }` is built outside the samples.
 
-`event_without_span` is `b.iter` of `complete` on `"hello"` passed through `black_box`, then `black_box` of the reply. The reply is `ok`. The function does not enter a span. `mock_turn`, `research_team`, and the sink allocation are not called. The prompt is not written to a sink. The id is `50/event_without_span`. The mean cell is `MEAN_PENDING_50_BARE`.
+`event_without_span` is `b.iter` of `complete` on `"hello"` passed through `black_box`, then `black_box` of the reply. The reply is `ok`. The function does not enter a span. `mock_turn`, `research_team`, and the sink allocation are not called. The prompt is not written to a sink. The id is `50/event_without_span`. The mean cell is `18.1 ns`.
 
-`span_per_event` is `b.iter` of a `Vec` with capacity 3, then `mock_turn` of the model and `"hello"` passed through `black_box`, then `black_box` of the reply and the sink. The turn span, the three `emit` spans, the gateway span, and one `complete` are inside the sample. That is five spans: turn, request event, response event, gateway, gateway event. The sink receives `request`, `response`, and `gateway`. The span field on the turn is the word `request`, not the prompt. `research_team` is not called. No file is written. The id is `50/span_per_event`. The mean cell is `MEAN_PENDING_50_SPAN`.
+`span_per_event` is `b.iter` of a `Vec` with capacity 3, then `mock_turn` of the model and `"hello"` passed through `black_box`, then `black_box` of the reply and the sink. The turn span, the three `emit` spans, the gateway span, and one `complete` are inside the sample. That is five spans: turn, request event, response event, gateway, gateway event. The sink receives `request`, `response`, and `gateway`. The span field on the turn is the word `request`, not the prompt. `research_team` is not called. No file is written. The id is `50/span_per_event`. The mean cell is `236.4 ns`.
 
-`descriptions.json` says a span per event has to add less than 0.1 milliseconds, and the chapter 1 budget of 1 millisecond still has to hold with tracing on. It says the 100-agent team is not in the sample. It says around 100 nanoseconds above `event_without_span` is the span tax the reading expects, and that one millisecond would still meet the chapter 1 budget. Those sentences are the file's reading of the sample. They are not a measured mean. The means are `MEAN_PENDING_50_BARE` and `MEAN_PENDING_50_SPAN`, the `mean.point_estimate` cells for the two ids.
+`descriptions.json` says a span per event has to add less than 0.1 milliseconds, and the chapter 1 budget of 1 millisecond still has to hold with tracing on. It says the 100-agent team is not in the sample. It says around 100 nanoseconds above `event_without_span` is the span tax the reading expects, and that one millisecond would still meet the chapter 1 budget. Those sentences are the file's reading of the sample. They are not a measured mean. The means are `18.1 ns` and `236.4 ns`. They are `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196), section `50`.
 
 `.github/scripts/run_bench_section.sh` runs `cargo bench -p ch50-tracing --bench spans --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10` for section 50. The same flags are in `steps/ch50-tracing/README.md`. The Criterion `time:` line is the slope, not the mean.
 
@@ -537,7 +537,7 @@ pub fn chapter_50_span_finishes_turn() -> bool {
 - **Turn.** The sink holds `request`, `response`, and `gateway`. Five spans open: turn, request event, response event, gateway, gateway event.
 - **Team.** `research_team(100)` then `research_team(1)` leaves 101 notes. The second call sees the earlier notes. The note text is the mock reply.
 - **Model.** `FakeModel` answers `ok` or `kept` in `demo`. The line is `trace: ok events=3 spans=5 team=101`.
-- **Time.** `event_without_span` mean `MEAN_PENDING_50_BARE`. `span_per_event` mean `MEAN_PENDING_50_SPAN`. Those cells are `mean.point_estimate`. The Criterion `time:` line is the slope.
+- **Time.** `event_without_span` mean `18.1 ns`. `span_per_event` mean `236.4 ns`. Those cells are `mean.point_estimate`. The Criterion `time:` line is the slope.
 
 [personal note: five spans, and the sink held three names]
 

@@ -13,7 +13,7 @@ I read plugins/platforms/a2a/security.py at 9e01b44. redact_outbound calls redac
 I read DESIGN.md around the bind bullet and the true-abort bullet. No token means bind 127.0.0.1. A token alone does not widen the bind. Remote exposure requires a token and A2A_HOST. Nothing in the request body can assert identity. tasks/cancel marks the task canceled and drops the reply. It cannot abort the live session's in-flight turn.
 
 4/
-The demo prints "a2a: ok". The bench id is 49/cancel_inflight. The aliases are 47/cancel_inflight and 45/cancel_inflight. The mean is MEAN_PENDING_49, mean.point_estimate for that id.
+The demo prints "a2a: ok". The bench id is 49/cancel_inflight. The aliases are 47/cancel_inflight and 45/cancel_inflight. The mean is 46.13 µs, mean.point_estimate from [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196).
 
 [personal note]
 
@@ -31,7 +31,7 @@ The harness is the chapter 48 tree copied forward, plus an A2A module. ExternalA
 
 I read Hermes at 9e01b44. security.py frames every inbound message and scrubs outbound text, including emails. DESIGN.md binds 127.0.0.1 unless a token and A2A_HOST are both set. Peer identity comes from tokens. tasks/cancel marks the task canceled and drops the reply, and it cannot abort the live in-flight turn.
 
-The demo prints "a2a: ok". The bench id is 49/cancel_inflight. Aliases: 47/cancel_inflight and 45/cancel_inflight. The mean is MEAN_PENDING_49.
+The demo prints "a2a: ok". The bench id is 49/cancel_inflight. Aliases: 47/cancel_inflight and 45/cancel_inflight. The mean is 46.13 µs, mean.point_estimate from [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196).
 
 [personal note]
 

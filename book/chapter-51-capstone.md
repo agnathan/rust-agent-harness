@@ -274,7 +274,7 @@ pub fn p99(mut samples: Vec<u128>) -> u128 {
 
 ### Rust: nearest rank on a sorted vec
 
-The index is into the sorted vec, low to high. Index 0 is the smallest sample. Index 98 of 100 sorted samples is near the top. `sort_unstable` does not preserve the order of equal keys. The load's samples are times, and ties are possible. The function does not break ties by insertion order. The demo leaves the result off the line because a reader would treat one debug process's rank as a benchmark. The bench times the whole `load`, including this sort, and reports a Criterion mean of that whole call. The mean cell is `MEAN_PENDING_51_LOAD`. It is not a `p99`.
+The index is into the sorted vec, low to high. Index 0 is the smallest sample. Index 98 of 100 sorted samples is near the top. `sort_unstable` does not preserve the order of equal keys. The load's samples are times, and ties are possible. The function does not break ties by insertion order. The demo leaves the result off the line because a reader would treat one debug process's rank as a benchmark. The bench times the whole `load`, including this sort, and reports a Criterion mean of that whole call. The mean cell is `122.77 µs`. It is not a `p99`.
 
 ## 51.7 `load`
 
@@ -525,8 +525,8 @@ cargo bench -p ch51-capstone --bench capstone --locked -- --warm-up-time 1 --mea
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `dynamic_tokens` | `MEAN_PENDING_51_TOKENS` | the dynamic arm's token count, which is 5 | `compare` of `tool_07`, then `arms[2].tokens` |
-| `load_100` | `MEAN_PENDING_51_LOAD` | 100 in-memory calls, the sort, and `p99` | `load(100)` |
+| `dynamic_tokens` | `264.8 ns` | the dynamic arm's token count, which is 5 | `compare` of `tool_07`, then `arms[2].tokens` |
+| `load_100` | `122.77 µs` | 100 in-memory calls, the sort, and `p99` | `load(100)` |
 
 The ids are `51/dynamic_tokens` and `51/load_100`. The old ids `49/dynamic_tokens` and `47/dynamic_tokens` alias the first. The old ids `49/load_100` and `47/load_100` alias the second. They are the `aliases` arrays in `benchmarks/descriptions.json`. I did not rewrite gh-pages history.
 
@@ -555,7 +555,7 @@ fn load_100(c: &mut Criterion) {
 
 `load_100` has no setup outside the iteration. Every sample calls `load(100)` and `black_box` of the report. Inside that call: `synthetic(32)`, `reload`, one `search_tools`, 100 `SessionGateway::call`s, the wave counter, the sample vec, the sort, and the `p99` index. There is no sleep. There is no socket. `compare` and `run_rename_task` are not called. The deadline path is not taken. All 100 succeed, and the report carries 13 waves. The Criterion mean is the whole load, not one call. The descriptions file says microseconds would be surprising and milliseconds are the honest band, and that this rate is not a server throughput number. `oha` is not measured.
 
-The mean cells are `mean.point_estimate`. `MEAN_PENDING_51_TOKENS` and `MEAN_PENDING_51_LOAD` stand in those cells until the Benchmarks workflow publishes this sample. The Criterion `time:` line is the slope, not the mean.
+The means are `264.8 ns` and `122.77 µs`. They are `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196), section `51`. The Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 
@@ -622,7 +622,7 @@ pub fn chapter_51_arm_succeeded(name: &str) -> bool {
 - **Tasks.** `task_arms` runs the rename task on `SessionGateway` three times. All three succeed. Their schema tokens are the telemetry blobs.
 - **Load.** 100 in-memory calls, bound 8, 13 waves. `p99` is computed and not printed.
 - **Process.** `mcp-gateway` re-exports `LearnedGateway` as `Gateway`. It binds no socket.
-- **Time.** `dynamic_tokens` mean `MEAN_PENDING_51_TOKENS`. `load_100` mean `MEAN_PENDING_51_LOAD`. Both are `mean.point_estimate`. The Criterion `time:` line is the slope.
+- **Time.** `dynamic_tokens` mean `264.8 ns`. `load_100` mean `122.77 µs`. Both are `mean.point_estimate`. The Criterion `time:` line is the slope.
 
 [personal note: a wide arm that failed its deadline and a narrow arm that finished]
 

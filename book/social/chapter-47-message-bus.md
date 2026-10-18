@@ -13,7 +13,7 @@ I read Hermes at 9e01b44. hermes_cli/kanban_db_notify.py claim_unseen_events_for
 agent/redact.py redact_for_egress is the one scrub for text leaving the process. It runs redact_sensitive_text, then a Bearer residue of 20 or more opaque characters. An exception returns "[redaction-unavailable]" and never the raw text. This crate calls that chapter 20 function. bus.rs does not define a second scrubber.
 
 4/
-The demo prints "bus: ping ok". The bench id is 47/publish_to_agents. The old ids 45/publish_to_agents and 43/publish_to_agents are aliases. The mean is MEAN_PENDING_47, mean.point_estimate from this PR's Benchmarks workflow. The Criterion time: line is the slope.
+The demo prints "bus: ping ok". The bench id is 47/publish_to_agents. The old ids 45/publish_to_agents and 43/publish_to_agents are aliases. The mean is 47.98 µs, mean.point_estimate from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196). The Criterion time: line is the slope.
 
 [personal note]
 
@@ -33,7 +33,7 @@ deliver calls crate::redact::redact_for_egress before try_send. That is E2, the 
 
 Hermes Agent at 9e01b44 claims kanban notify events inside BEGIN IMMEDIATE and advances the subscriber cursor in that transaction. BotLoopGuardSettings admits 20 bot messages, then cools down. admit returns tripped when the window fills and cooldown while that deadline still holds. redact_for_egress is the one scrub for text leaving the process, and it fails closed.
 
-The demo prints "bus: ping ok". The bench id is 47/publish_to_agents. Aliases: 45/publish_to_agents and 43/publish_to_agents. The mean is MEAN_PENDING_47, mean.point_estimate from this PR's Benchmarks workflow.
+The demo prints "bus: ping ok". The bench id is 47/publish_to_agents. Aliases: 45/publish_to_agents and 43/publish_to_agents. The mean is 47.98 µs, mean.point_estimate from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196).
 
 [personal note]
 

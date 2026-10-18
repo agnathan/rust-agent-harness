@@ -677,8 +677,8 @@ cargo bench -p ch52-evals --bench evals --locked -- --warm-up-time 1 --measureme
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `append_event` | `MEAN_PENDING_52_APPEND` | one JSON object pushed onto an empty vec | `append_event` of `echo-hello` |
-| `saved_set` | `MEAN_PENDING_52_SAVED` | the three saved tasks, including the 20 ms sleep | `run_saved_evals` on a runtime built outside the loop |
+| `append_event` | `82.2 ns` | one JSON object pushed onto an empty vec | `append_event` of `echo-hello` |
+| `saved_set` | `21.26 ms` | the three saved tasks, including the 20 ms sleep | `run_saved_evals` on a runtime built outside the loop |
 
 The ids are `52/append_event` and `52/saved_set`. The old ids `50/append_event` and `48/append_event` alias the first. The old ids `50/saved_set` and `48/saved_set` alias the second. They are the `aliases` arrays in `benchmarks/descriptions.json`. I did not rewrite gh-pages history.
 
@@ -714,7 +714,7 @@ fn saved_set(c: &mut Criterion) {
 
 `saved_set` builds the current-thread runtime before the bench. That build is not timed. The timed closure is `b.iter`. Inside it: `block_on` of `run_saved_evals`, then `black_box` of the score vec. The scripted turns and the dispatcher are inside the sample. `eight-reads` sleeps 20 milliseconds inside each concurrent `delay_read`. That sleep is inside the sample. `run_stress_evals`, `run_red_team`, and `run_trajectories` are not called. `FAIL_THRESHOLD` is not read. The descriptions file says the floor is that 20 millisecond sleep, a number near the sleep is the concurrent fan-out, and seconds would mean the eight reads ran one after another. There is no fail threshold, so a slower mean does not fail CI. Do not read this sample as a few tens of nanoseconds. That description belongs to `append_event`.
 
-The mean cells are `mean.point_estimate`. `MEAN_PENDING_52_APPEND` and `MEAN_PENDING_52_SAVED` stand in those cells until the Benchmarks workflow publishes this sample. The Criterion `time:` line is the slope, not the mean.
+The means are `82.2 ns` and `21.26 ms`. They are `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196), section `52`. The Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 
@@ -800,7 +800,7 @@ pub fn chapter_52_saved_passed(name: &str) -> bool {
 - **Stress.** The four names pass, including `unknown-tool-repair`, which is `repair_name` inside `run_loop` turning `eco` into `echo`.
 - **Layers.** L1 through L9 and X each call the real module. `FAIL_THRESHOLD` is `None`.
 - **Trajectories.** One append is one JSON object. One hundred tasks stay within the worker bound of 8. The ninth permit is refused. The peak is not printed.
-- **Time.** `append_event` mean `MEAN_PENDING_52_APPEND`. `saved_set` mean `MEAN_PENDING_52_SAVED`. Both are `mean.point_estimate`. The Criterion `time:` line is the slope. The saved-set sample includes the sleep.
+- **Time.** `append_event` mean `82.2 ns`. `saved_set` mean `21.26 ms`. Both are `mean.point_estimate`. The Criterion `time:` line is the slope. The saved-set sample includes the sleep.
 
 [personal note: the last score, still just a bool]
 

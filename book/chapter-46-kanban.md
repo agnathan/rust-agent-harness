@@ -609,7 +609,7 @@ The binary writes a temp board, claims it, and completes it. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `claim_transaction` | MEAN_PENDING_46 | one claim transaction under 5 ms | lock file, JSON rewrite, `remove_dir_all` |
+| `claim_transaction` | 328.02 µs | one claim transaction under 5 ms | lock file, JSON rewrite, `remove_dir_all` |
 
 The function name is `claim_transaction`. The bench id is `46/claim_transaction`. The old ids `44/claim_transaction` and `42/claim_transaction` are aliases in `benchmarks/descriptions.json`. The function name did not change when the id moved.
 
@@ -646,7 +646,7 @@ fn claim_transaction(c: &mut Criterion) {
 
 `iter_batched` runs the setup closure outside the timer. The counter `n` gives each sample its own directory, `ch38-bench-` plus the process id plus `n`. The setup removes that path, writes one ready task `t1`, and is not timed. Directory creation is that `write_board`, which calls `create_dir_all`, and it is excluded. The timed routine calls `transact` of `Op::Claim` with owner `worker`, then `remove_dir_all`, then `black_box` of the status. `create_new` of `board.lock`, the JSON read, the status swap, and the JSON write are inside the sample. `remove_dir_all` is inside the sample too. The second process is not spawned. `FakeModel` is not called. Complete, review, and block are not this sample. The 100 microsecond retry loop runs only when the lock file already exists. The descriptions file states those timing facts in the `timing` field of `46/claim_transaction`. The `inputs` field says one task, id `t1`, status `ready`, no owner, no parents, owner string `worker`, one lock file in a private temp directory. The `fake` field says the board is a JSON file in the temp directory, there is no SQLite and no worker process, and `FakeModel` is not constructed. The `why` field says claim, complete, review, or block has to be one transaction under 5 milliseconds, and two processes must not both own the task. This sample is one uncontended claim. The race is the test.
 
-The mean is MEAN_PENDING_46. It is `mean.point_estimate` from this PR's Benchmarks workflow. The id is `46/claim_transaction`. The aliases are `44/claim_transaction` and `42/claim_transaction`. `.github/workflows/benchmarks.yml` runs `bash .github/scripts/run_bench_section.sh 46 "chapter 46 kanban" ch46-kanban kanban`. That script runs `cargo bench -p ch46-kanban --bench kanban --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10`. The same flags are in `steps/ch46-kanban/README.md`. The Criterion `time:` line is the slope, not the mean.
+The mean is 328.02 µs. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196). The id is `46/claim_transaction`. The aliases are `44/claim_transaction` and `42/claim_transaction`. `.github/workflows/benchmarks.yml` runs `bash .github/scripts/run_bench_section.sh 46 "chapter 46 kanban" ch46-kanban kanban`. That script runs `cargo bench -p ch46-kanban --bench kanban --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10`. The same flags are in `steps/ch46-kanban/README.md`. The Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 
@@ -715,7 +715,7 @@ pub fn chapter_46_claims_won(attempts: usize) -> usize {
 - **Verbs.** Claim, complete, review, block. Each call to `transact` is one of them.
 - **Race.** Two processes. One `claimed`. One `lost`.
 - **Model.** `FakeModel` runs after `!lock_path.exists()`. The demo line is `kanban: done`.
-- **Time.** `claim_transaction` mean MEAN_PENDING_46. That is `mean.point_estimate` from this PR's Benchmarks workflow. The id is `46/claim_transaction`. The aliases are `44/claim_transaction` and `42/claim_transaction`. The Criterion `time:` line is the slope.
+- **Time.** `claim_transaction` mean 328.02 µs. That is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196). The id is `46/claim_transaction`. The aliases are `44/claim_transaction` and `42/claim_transaction`. The Criterion `time:` line is the slope.
 
 [personal note: the lock file that had to disappear before the reply]
 

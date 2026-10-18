@@ -516,7 +516,7 @@ The binary posts one fact and claims it. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `claim_with_waiters` | MEAN_PENDING_45 | a claim under 1 ms with 100 waiters | lock, scan, remove the fact |
+| `claim_with_waiters` | 4.96 µs | a claim under 1 ms with 100 waiters | lock, scan, remove the fact |
 
 The function name is `claim_with_waiters`. The bench id is `45/claim_with_waiters`. The old ids `43/claim_with_waiters` and `41/claim_with_waiters` are aliases in `benchmarks/descriptions.json`. The function name did not change when the id moved.
 
@@ -546,7 +546,7 @@ fn claim_with_waiters(c: &mut Criterion) {
 
 `iter_batched` runs the setup closure outside the timer. That closure builds waiters `w0` through `w98` on keys `k0` through `k98`, then `chosen` on `ready`, posts `notes`, wraps the board in a `Mutex`, and is not timed. The timed routine calls `tick` with that mutex passed through `black_box`, then `black_box` of the `Claim`. The lock, the scan of 100 waiters, the wake increment, the name and key clones, and the removal of the fact are inside the sample. Building the waiters is excluded. `FakeModel`, `answer`, `pause`, and the `Condvar` are not called. The descriptions file states those timing facts in the `timing` field of `45/claim_with_waiters`. The `inputs` field says 100 waiters, the matching key `ready` last, the fact value `notes` at 5 characters, `MAX_WAKES` at 8, and the board not paused. The `fake` field says the waiters are records, not threads, `FakeModel` is not constructed, and there is no condvar wait and no sleep. The `why` field says a claim has to stay under a millisecond with 100 waiters, and the lock must not be held across a model call. This sample is the claim. The model is not in it.
 
-The mean is MEAN_PENDING_45. It is `mean.point_estimate` from this PR's Benchmarks workflow. The id is `45/claim_with_waiters`. The aliases are `43/claim_with_waiters` and `41/claim_with_waiters`. `.github/workflows/benchmarks.yml` runs `bash .github/scripts/run_bench_section.sh 45 "chapter 45 blackboard" ch45-blackboard blackboard`. That script runs `cargo bench -p ch45-blackboard --bench blackboard --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10`. The same flags are in `steps/ch45-blackboard/README.md`. The Criterion `time:` line is the slope, not the mean.
+The mean is 4.96 µs. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196). The id is `45/claim_with_waiters`. The aliases are `43/claim_with_waiters` and `41/claim_with_waiters`. `.github/workflows/benchmarks.yml` runs `bash .github/scripts/run_bench_section.sh 45 "chapter 45 blackboard" ch45-blackboard blackboard`. That script runs `cargo bench -p ch45-blackboard --bench blackboard --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10`. The same flags are in `steps/ch45-blackboard/README.md`. The Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 
@@ -620,7 +620,7 @@ pub fn chapter_45_one_claim(waiters: usize) -> usize {
 - **Pause.** `Claim::Paused`. The fact stays. A claim already in hand still reaches `answer`.
 - **Injection.** Four exact phrases. `post` does not store them.
 - **Cap.** Eight wakes. The next fact stays on the board.
-- **Time.** `claim_with_waiters` mean MEAN_PENDING_45. That is `mean.point_estimate` from this PR's Benchmarks workflow. The id is `45/claim_with_waiters`. The aliases are `43/claim_with_waiters` and `41/claim_with_waiters`. The Criterion `time:` line is the slope.
+- **Time.** `claim_with_waiters` mean 4.96 µs. That is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196). The id is `45/claim_with_waiters`. The aliases are `43/claim_with_waiters` and `41/claim_with_waiters`. The Criterion `time:` line is the slope.
 
 [personal note: a guard that ended in the right function]
 

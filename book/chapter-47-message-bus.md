@@ -587,7 +587,7 @@ The binary publishes one envelope and prints the line. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `publish_to_agents` | MEAN_PENDING_47 | one small publish under 1 ms at 100 agents | `redact_for_egress` of `ping`, then `try_send` to 100 empty channels |
+| `publish_to_agents` | 47.98 µs | one small publish under 1 ms at 100 agents | `redact_for_egress` of `ping`, then `try_send` to 100 empty channels |
 
 The function name is `publish_to_agents`. The bench id is `47/publish_to_agents`. The old ids `45/publish_to_agents` and `43/publish_to_agents` are aliases in `benchmarks/descriptions.json`. The function name did not change when the id moved.
 
@@ -621,7 +621,7 @@ fn publish_to_agents(c: &mut Criterion) {
 
 `iter_batched` runs the setup closure outside the timer. That closure builds a `Bus`, subscribes `a0` through `a99` on topic `work`, and keeps the 100 receivers. It is not timed. The timed routine calls `publish` with the envelope passed through `black_box`, then `black_box` of the result and the receivers. `redact_for_egress` of the body `ping` runs inside `deliver` before the 100 clones and the 100 `try_send` calls. `publish_bot` and `FakeModel` are not called. The `Slow` path is not taken. Every channel is empty, so the result is `Delivered(100)`. The bot-event counter stays 0. The descriptions file says the budget is under a millisecond, and that a number that fills 64 first would be the slow-subscriber test.
 
-The mean is MEAN_PENDING_47. It is `mean.point_estimate` from this PR's Benchmarks workflow, section `47`. The id is `47/publish_to_agents`. The old ids `45/publish_to_agents` and `43/publish_to_agents` are aliases in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. `.github/scripts/run_bench_section.sh` runs `cargo bench -p ch47-message-bus --bench bus --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10` for that section. The same flags are in `steps/ch47-message-bus/README.md`. The Criterion `time:` line is the slope, not the mean.
+The mean is 47.98 µs. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196), section `47`. The id is `47/publish_to_agents`. The old ids `45/publish_to_agents` and `43/publish_to_agents` are aliases in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. `.github/scripts/run_bench_section.sh` runs `cargo bench -p ch47-message-bus --bench bus --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10` for that section. The same flags are in `steps/ch47-message-bus/README.md`. The Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 
@@ -690,7 +690,7 @@ pub fn chapter_47_published(body: &str) -> String {
 - **Bots.** `MAX_BOT_EVENTS` is 20. The 21st `publish_bot` is `Cooldown` and is not sent.
 - **Egress.** E2. `deliver` calls `crate::redact::redact_for_egress`. There is no second scrubber in this file.
 - **Model.** `FakeModel` answers `ok`. The demo line is `bus: ping ok`.
-- **Time.** `publish_to_agents` mean MEAN_PENDING_47. That is `mean.point_estimate` from this PR's Benchmarks workflow. The Criterion `time:` line is the slope.
+- **Time.** `publish_to_agents` mean 47.98 µs. That is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196). The Criterion `time:` line is the slope.
 
 [personal note: a channel that stayed at 64]
 
