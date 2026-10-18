@@ -92,11 +92,19 @@
       return `<td class="num ${cls}">${text} <span class="badge">${label}</span></td>`;
     }
 
-    function seriesFor(id, runs) {
+    function seriesFor(bench, runs) {
+      const ids = [bench.id].concat(Array.isArray(bench.aliases) ? bench.aliases : []);
       const points = [];
       for (const run of runs) {
-        const sample = run.benches && run.benches[id];
-        if (!sample || sample.median_ns == null) continue;
+        let sample = null;
+        for (const id of ids) {
+          const candidate = run.benches && run.benches[id];
+          if (candidate && candidate.median_ns != null) {
+            sample = candidate;
+            break;
+          }
+        }
+        if (!sample) continue;
         points.push({
           sha: run.sha,
           date: run.date,
@@ -127,7 +135,7 @@
         return;
       }
       const rows = catalog.map((bench) => {
-        const points = seriesFor(bench.id, runs);
+        const points = seriesFor(bench, runs);
         const latest = points[points.length - 1];
         const previous = points.length > 1 ? points[points.length - 2] : null;
         return { bench, latest, previous, ratio: change(latest && latest.median_ns, previous && previous.median_ns) };
@@ -161,7 +169,7 @@
         heading.textContent = chapter;
         section.appendChild(heading);
         for (const bench of benches) {
-          section.appendChild(chartCard(bench, seriesFor(bench.id, runs)));
+          section.appendChild(chartCard(bench, seriesFor(bench, runs)));
         }
         host.appendChild(section);
       }
@@ -251,6 +259,7 @@
         <p><strong>Inputs.</strong> ${esc(bench.inputs)}</p>
         <p><strong>What is mocked.</strong> ${esc(bench.fake)}</p>
         <p><strong>Source.</strong> <code>${esc(bench.source)}</code>, function <code>${esc(bench.function)}</code>.</p>
+        ${Array.isArray(bench.aliases) && bench.aliases.length ? `<p><strong>Earlier id.</strong> Runs from before the chapter renumbering stored this row as <code>${esc(bench.aliases.join(", "))}</code>. Those points stay on this chart.</p>` : ""}
         <p><strong>How to read it.</strong> ${esc(bench.reading)}</p>`;
       card.appendChild(details);
       return card;
