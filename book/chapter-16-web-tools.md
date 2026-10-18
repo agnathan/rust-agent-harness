@@ -305,12 +305,12 @@ The scripted provider never sees a network. `ScriptedReply::tool` names `web_sea
 
 `ssrf_block` calls `is_safe_url` on `http://169.254.169.254/latest` with `allow_private` true. The host is a literal. The sample is the address check, not DNS.
 
-Both means below are `mean.point_estimate` from this pull request's Benchmarks workflow. The Criterion `time:` line is the slope. I am not quoting it.
+Both means below are `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39114427940](https://github.com/agnathan/rust-agent-harness/actions/runs/39114427940), section `16`. The Criterion `time:` line is the slope. I am not quoting it.
 
 | Bench | Mean |
 |---|---|
-| `16/fake_search` | MEAN16_FAKE |
-| `16/ssrf_block` | MEAN16_SSRF |
+| `16/fake_search` | 5.023 µs |
+| `16/ssrf_block` | 335.1 ns |
 
 ## Build, run, and benchmark
 

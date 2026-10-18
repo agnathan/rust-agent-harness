@@ -312,12 +312,12 @@ child: BLOCKED: a child agent may not call clarify
 
 `todo_merge` builds a store, applies one item at revision 0, then merges an update at revision 1. The store is built inside the sample so each iteration starts from an empty list. The merged content is `black_box`ed.
 
-Both means below are `mean.point_estimate` from this pull request's Benchmarks workflow. The Criterion `time:` line is the slope. I am not quoting it.
+Both means below are `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39114427940](https://github.com/agnathan/rust-agent-harness/actions/runs/39114427940), section `17`. The Criterion `time:` line is the slope. I am not quoting it.
 
 | Bench | Mean |
 |---|---|
-| `17/patch_apply` | MEAN17_PATCH |
-| `17/todo_merge` | MEAN17_TODO |
+| `17/patch_apply` | 255.1 µs |
+| `17/todo_merge` | 131.2 ns |
 
 The samples do not spawn the worker and do not read an API key. The terminal test is a nextest case, not a bench, because it starts a process.
 

@@ -81,8 +81,8 @@ The harness decides what enters the prompt. The server holds the catalog, search
 - **Chapter 13.** A warm sandbox accepts a job in < 50 ms (measured 30.49 µs). Checkpoint and rewind of a 1,000-path manifest are each < 10 ms (measured 50.37 µs and 83.79 µs).
 - **Chapter 14.** A timeout cancels the in-flight call and releases its permit. Retries stay inside the bound. The empty-response budget check measured 0.9046 ns. The repetition guard on an 800-character loop measured 2.77 µs.
 - **Chapter 15.** *(server)* A timeout releases that tool's permit. A retry runs only when the tool is marked idempotent. An open breaker stops new calls to that backend (measured 31.97 ns). One execute-permit round trip measured 57.73 ns.
-- **Chapter 16.** A fake search measured MEAN16_FAKE. Blocking the metadata address measured MEAN16_SSRF. No network.
-- **Chapter 17.** Applying one patch measured MEAN17_PATCH. Merging one todo measured MEAN17_TODO. No network.
+- **Chapter 16.** A fake search measured 5.023 µs. Blocking the metadata address measured 335.1 ns. No network.
+- **Chapter 17.** Applying one patch measured 255.1 µs. Merging one todo measured 131.2 ns. No network.
 - **Chapter 18.** Choosing the next native adapter, or the next OpenRouter route, adds < 1 ms, excluding the failed call (measured 5.990 ns). Rotation reuses the pooled client from chapter 1 (measured 3.465 ns). A side-model summary does not run on the user turn unless that turn asked for it.
 - **Chapter 19.** Assembling a streamed reply from chapter 1 events adds < 1 ms versus a buffered reply, excluding model time. Folding 100 plain chunks measured 2.67 µs. Joining the same chunks measured 689.3 ns.
 

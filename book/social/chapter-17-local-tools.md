@@ -13,7 +13,7 @@ Hermes Agent stamps a file on read and blocks a write when the stamp is missing 
 The terminal calls the same deny_tool as chapter 11, then the chapter 13 worker. A hardline command never reaches the binary. Output is cut on line length, then line count, then bytes. The foreground timeout stops at 600 seconds.
 
 4/
-todo is a list in memory, merged by id, with a revision that rejects a stale writer. clarify pauses the turn for one queued reply. A child agent may not call it. `17/patch_apply` measured MEAN17_PATCH. `17/todo_merge` measured MEAN17_TODO. No key. No prompt.
+todo is a list in memory, merged by id, with a revision that rejects a stale writer. clarify pauses the turn for one queued reply. A child agent may not call it. `17/patch_apply` measured 255.1 µs. `17/todo_merge` measured 131.2 ns. No key. No prompt.
 
 [personal note]
 
@@ -29,7 +29,7 @@ Chapter 17 is out: Built-in Tools II, Files, Terminal, Todo, and Clarify.
 
 Search was not enough. The harness needed to read a workspace without walking out of it, and to run a command without growing a second approval path. A write of a file this task has not read is `stale_write_blocked`. The terminal calls `deny_tool` first. `rm -rf /` comes back blocked, and the worker is not spawned.
 
-Hermes Agent keeps the todo list as agent state and refuses `clarify` for a child. Both landed here. Tests use a scripted model and a queued reply, not a person at a keyboard. `17/patch_apply` measured MEAN17_PATCH. `17/todo_merge` measured MEAN17_TODO.
+Hermes Agent keeps the todo list as agent state and refuses `clarify` for a child. Both landed here. Tests use a scripted model and a queued reply, not a person at a keyboard. `17/patch_apply` measured 255.1 µs. `17/todo_merge` measured 131.2 ns.
 
 [personal note: one takeaway from writing this chapter]
 

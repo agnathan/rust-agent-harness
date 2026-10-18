@@ -218,7 +218,7 @@ Do not move existing `step-NN` tags. After this batch merges, tags `step-10` thr
 
 ## Planned chapters: built-in tools, browser, and vision
 
-Chapters 16 and 17 are built. The +2 rename of the old chapters 16–48 is applied; the book is chapters 0–50. Browser Tools and Vision stay unwritten. Means for the shifted chapters 10–15 and 18–22 stay the `mean.point_estimate` values from [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918). Means for `16/fake_search`, `16/ssrf_block`, `17/patch_apply`, and `17/todo_merge` come from this pull request's Benchmarks workflow.
+Chapters 16 and 17 are built. The +2 rename of the old chapters 16–48 is applied; the book is chapters 0–50. Browser Tools and Vision stay unwritten. Means for the shifted chapters 10–15 and 18–22 stay the `mean.point_estimate` values from [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918). Means for `16/fake_search`, `16/ssrf_block`, `17/patch_apply`, and `17/todo_merge` are `mean.point_estimate` from [run 39114427940](https://github.com/agnathan/rust-agent-harness/actions/runs/39114427940).
 
 ### Where the two tool chapters go
 
