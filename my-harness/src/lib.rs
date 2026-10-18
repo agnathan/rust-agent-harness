@@ -25,6 +25,9 @@ pub use milestones::{
     chapter_39_enqueue_calls_model, chapter_39_gateway_restart_allowed,
     chapter_40_navigates_metadata, chapter_41_accepts_image, chapter_42_route_after_kill,
     chapter_43_lifecycle_allowed, chapter_43_retries_claimed, chapter_44_update_submits_once,
+    chapter_45_one_claim, chapter_46_claims_won, chapter_47_published, chapter_48_propose_waits,
+    chapter_49_cancel_reached, chapter_50_span_finishes_turn, chapter_51_arm_succeeded,
+    chapter_52_saved_passed,
 };
 
 pub use chat::{ChatCommand, ChatSession, Outcome};

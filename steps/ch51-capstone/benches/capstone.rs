@@ -1,7 +1,7 @@
 use std::hint::black_box;
 
-use capstone::{compare, load, sample_catalog};
 use criterion::{criterion_group, criterion_main, Criterion};
+use gwservice::capstone::{compare, load, sample_catalog};
 
 fn dynamic_tokens(c: &mut Criterion) {
     let catalog = sample_catalog();
@@ -14,10 +14,9 @@ fn dynamic_tokens(c: &mut Criterion) {
 }
 
 fn load_100(c: &mut Criterion) {
-    let catalog = sample_catalog();
     c.bench_function("load_100", |b| {
         b.iter(|| {
-            let report = load(black_box(&catalog), 100);
+            let report = load(black_box(100));
             black_box(report);
         });
     });

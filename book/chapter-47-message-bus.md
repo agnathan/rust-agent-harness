@@ -655,7 +655,7 @@ The Rust egress function does not return `"[redaction-unavailable]"`. Hermes's d
 
 **Backpressure.** `BUS_CAP` is 64. `try_send` returns `Slow(name)` instead of allocating a 65th slot. A missing name on `send_to` is `Disconnected`. A different topic is `Delivered(0)`.
 
-**Left for later.** The 300 second window, the 600 second cooldown, and the notify cursor. A real socket is chapter 49. That chapter calls this same egress function again on the way out of the process. It should not grow a third scrubber either.
+**Left for later.** The 300 second window, the 600 second cooldown, and the notify cursor. Chapter 49 calls this same egress function on the way out of `call`. That chapter's pool records urls and bodies in memory. It does not open a socket, and it does not grow another scrubber.
 
 ## What you implement
 
