@@ -4,11 +4,11 @@
 
 Chapter 27 can run specialists and take their replies back. It does not give the conversation to someone else. This chapter moves ownership. The next agent sees the transcript with `scratch` removed. A turn may do this four times. The fifth call is refused, and the owner does not change.
 
-The step crate is `steps/ch24-handoffs`. The book number is 28. The package is `ch24-handoffs`.
+The step crate is `steps/ch28-handoffs`. The book number is 28. The package is `ch28-handoffs`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 28 | `steps/ch24-handoffs` | a filtered transcript and a cap of four handoffs |
+| 28 | `steps/ch28-handoffs` | a filtered transcript and a cap of four handoffs |
 
 > **How Hermes does it**
 >
@@ -45,7 +45,7 @@ Four tests. Scratch is dropped, two messages remain, and the owner is `draft`. T
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch24-handoffs
+cargo nextest run --locked -p ch28-handoffs
 ```
 
 ```text
@@ -54,7 +54,7 @@ Starting 4 tests across 3 binaries
 ```
 
 ```bash
-cargo run -p ch24-handoffs
+cargo run -p ch28-handoffs
 ```
 
 ```text

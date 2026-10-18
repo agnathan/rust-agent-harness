@@ -4,11 +4,11 @@
 
 Chapter 1 talks to OpenRouter. A turn that needs Anthropic or Bedrock has a different JSON body, and a failed key should not build a new client. This chapter builds those bodies, an OpenRouter route, and a rotation that keeps one client id. The cheaper side model stays off unless the turn asked for a summary. Nothing here opens a socket.
 
-The step crate is `steps/ch13-providers`. The book number is 16. The package is `ch13-providers`.
+The step crate is `steps/ch16-providers`. The book number is 16. The package is `ch16-providers`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 16 | `steps/ch13-providers` | Anthropic and Bedrock bodies, a route, key rotation, outbound repair |
+| 16 | `steps/ch16-providers` | Anthropic and Bedrock bodies, a route, key rotation, outbound repair |
 
 > **How Hermes does it**
 >
@@ -57,7 +57,7 @@ Six tests. Both bodies have the fields above, and a zero `max_tokens` fails. An 
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch13-providers
+cargo nextest run --locked -p ch16-providers
 ```
 
 ```text
@@ -66,7 +66,7 @@ Starting 6 tests across 3 binaries
 ```
 
 ```bash
-cargo run -p ch13-providers
+cargo run -p ch16-providers
 ```
 
 ```text

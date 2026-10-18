@@ -6,11 +6,11 @@
 
 Chapter 46 can see a turn. It does not say whether offering every tool, a fixed set, or a searched set spent fewer schema tokens on a task that still succeeded. Chapter 8 collects that telemetry. This chapter is the comparison, plus a load of 100 in-memory dispatches. There is still no socket.
 
-The step crate is `steps/gw-capstone`. The book number is 47. The package is `gw-capstone`. It does not bind a port. `mcp-gateway/` is unchanged.
+The step crate is `steps/ch47-capstone`. The book number is 47. The package is `ch47-capstone`. It does not bind a port. `mcp-gateway/` is unchanged.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 47 | `steps/gw-capstone` | three arms, a deadline, a load of 100, a nearest-rank p99 |
+| 47 | `steps/ch47-capstone` | three arms, a deadline, a load of 100, a nearest-rank p99 |
 
 > **How Hermes does it**
 >
@@ -51,7 +51,7 @@ Four tests. The three arms are 128, 32, and 4 tokens, all successful for `tool_0
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p gw-capstone
+cargo nextest run --locked -p ch47-capstone
 ```
 
 ```text
@@ -59,7 +59,7 @@ cargo nextest run --locked -p gw-capstone
 ```
 
 ```bash
-cargo run -p gw-capstone
+cargo run -p ch47-capstone
 ```
 
 ```text

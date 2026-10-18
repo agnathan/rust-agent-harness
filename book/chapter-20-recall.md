@@ -4,11 +4,11 @@
 
 Chapter 18 stores the messages and queues their ids. It cannot search them. This chapter builds an FTS5 trigram index on that file and adds `session_search`. The tool returns rows from the database. It does not call a model. A subagent session stays out of the results. A cron session sorts after the user's own sessions.
 
-The step crate is `steps/ch17-recall`. The book number is 20. The package is `ch17-recall`. It uses the store from `steps/ch15-sessions`.
+The step crate is `steps/ch20-recall`. The book number is 20. The package is `ch20-recall`. It uses the store from `steps/ch18-sessions`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 20 | `steps/ch17-recall` | trigram FTS, discover, scroll, read, browse |
+| 20 | `steps/ch20-recall` | trigram FTS, discover, scroll, read, browse |
 
 > **How Hermes does it**
 >
@@ -49,7 +49,7 @@ Three tests. Discover hides the subagent and lists the user session before cron.
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch17-recall
+cargo nextest run --locked -p ch20-recall
 ```
 
 ```text
@@ -58,7 +58,7 @@ Starting 3 tests across 3 binaries
 ```
 
 ```bash
-cargo run -p ch17-recall
+cargo run -p ch20-recall
 ```
 
 ```text

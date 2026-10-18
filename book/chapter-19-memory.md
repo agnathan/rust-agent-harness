@@ -4,11 +4,11 @@
 
 Chapter 12 can enqueue a turn. It does not have a file. This chapter is that file backend. `MEMORY.md` is the agent's notes. `USER.md` is the user profile. Entries are separated by a section mark. A snapshot taken when the store opens is what the prompt sees. A write during the session changes the file and does not change that snapshot.
 
-The step crate is `steps/ch16-memory`. The book number is 19. The package is `ch16-memory`. It implements the `MemoryBackend` trait from chapter 12.
+The step crate is `steps/ch19-memory`. The book number is 19. The package is `ch19-memory`. It implements the `MemoryBackend` trait from chapter 12.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 19 | `steps/ch16-memory` | two files, a frozen snapshot, a strict scan |
+| 19 | `steps/ch19-memory` | two files, a frozen snapshot, a strict scan |
 
 > **How Hermes does it**
 >
@@ -55,7 +55,7 @@ Five tests. Add, replace, and remove round-trip the delimiter, and a duplicate i
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch16-memory
+cargo nextest run --locked -p ch19-memory
 ```
 
 ```text
@@ -64,7 +64,7 @@ Starting 5 tests across 3 binaries
 ```
 
 ```bash
-cargo run -p ch16-memory
+cargo run -p ch19-memory
 ```
 
 ```text

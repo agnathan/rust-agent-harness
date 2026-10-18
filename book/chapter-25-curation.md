@@ -4,11 +4,11 @@
 
 Chapter 24 can fork a reviewer. It does not decide that a skill has gone quiet. This chapter marks an agent-created skill stale after 14 days and archives it after 30. A pin, a cron reference, a bundled skill, and a hub skill stay where they are. The request path only enqueues the pass. The pass snapshots the tree first, then moves directories. An archive is a write, so the chapter 23 gate can hold it. An install is scanned with the chapter 23 rules.
 
-The step crate is `steps/ch21-curation`. The book number is 25. The package is `ch21-curation`.
+The step crate is `steps/ch25-curation`. The book number is 25. The package is `ch25-curation`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 25 | `steps/ch21-curation` | stale, then archived, a snapshot, the gate and the scan off the request path |
+| 25 | `steps/ch25-curation` | stale, then archived, a snapshot, the gate and the scan off the request path |
 
 > **How Hermes does it**
 >
@@ -49,7 +49,7 @@ Four tests. A 14-day skill is stale and still in place. A 30-day skill moves und
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch21-curation
+cargo nextest run --locked -p ch25-curation
 ```
 
 ```text
@@ -58,7 +58,7 @@ Starting 4 tests across 3 binaries
 ```
 
 ```bash
-cargo run -p ch21-curation
+cargo run -p ch25-curation
 ```
 
 ```text

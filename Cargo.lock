@@ -500,239 +500,72 @@ dependencies = [
 ]
 
 [[package]]
-name = "ch05-1-harness-core"
-version = "0.2.0"
-dependencies = [
- "criterion",
- "serde_json",
-]
-
-[[package]]
-name = "ch05-2-harness-core"
-version = "0.2.0"
-dependencies = [
- "criterion",
- "serde_json",
-]
-
-[[package]]
-name = "ch05-3-harness-core"
-version = "0.2.0"
-dependencies = [
- "criterion",
- "serde_json",
-]
-
-[[package]]
-name = "ch05-4-harness-core"
-version = "0.2.0"
-dependencies = [
- "criterion",
- "serde_json",
-]
-
-[[package]]
-name = "ch05-5-harness-cli"
-version = "0.2.0"
-dependencies = [
- "ch05-5-harness-core",
- "clap",
- "serde_json",
- "tokio",
- "wiremock",
-]
-
-[[package]]
-name = "ch05-5-harness-core"
-version = "0.2.0"
-dependencies = [
- "async-trait",
- "criterion",
- "reqwest 0.12.28",
- "serde",
- "serde_json",
- "thiserror",
-]
-
-[[package]]
-name = "ch06-1-harness-cli"
-version = "0.1.0"
-dependencies = [
- "ch06-1-harness-core",
- "clap",
- "serde_json",
- "tokio",
-]
-
-[[package]]
 name = "ch06-1-harness-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
- "anyhow",
- "async-trait",
- "axum",
  "criterion",
- "reqwest 0.12.28",
- "rmcp",
- "serde",
  "serde_json",
- "thiserror",
- "tokio",
- "wiremock",
-]
-
-[[package]]
-name = "ch06-10-harness-cli"
-version = "0.1.0"
-dependencies = [
- "ch06-10-harness-core",
- "clap",
- "serde_json",
- "tokio",
-]
-
-[[package]]
-name = "ch06-10-harness-core"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "axum",
- "criterion",
- "reqwest 0.12.28",
- "rmcp",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
- "tokio-util",
- "wiremock",
-]
-
-[[package]]
-name = "ch06-2-harness-cli"
-version = "0.1.0"
-dependencies = [
- "ch06-2-harness-core",
- "clap",
- "serde_json",
- "tokio",
 ]
 
 [[package]]
 name = "ch06-2-harness-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
- "anyhow",
- "async-trait",
- "axum",
  "criterion",
- "reqwest 0.12.28",
- "rmcp",
- "serde",
  "serde_json",
- "thiserror",
- "tokio",
- "tokio-util",
- "wiremock",
-]
-
-[[package]]
-name = "ch06-3-harness-cli"
-version = "0.1.0"
-dependencies = [
- "ch06-3-harness-core",
- "clap",
- "serde_json",
- "tokio",
 ]
 
 [[package]]
 name = "ch06-3-harness-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
- "anyhow",
- "async-trait",
- "axum",
  "criterion",
- "reqwest 0.12.28",
- "rmcp",
- "serde",
  "serde_json",
- "thiserror",
- "tokio",
- "tokio-util",
- "wiremock",
-]
-
-[[package]]
-name = "ch06-4-harness-cli"
-version = "0.1.0"
-dependencies = [
- "ch06-4-harness-core",
- "clap",
- "serde_json",
- "tokio",
 ]
 
 [[package]]
 name = "ch06-4-harness-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
- "anyhow",
- "async-trait",
- "axum",
  "criterion",
- "reqwest 0.12.28",
- "rmcp",
- "serde",
  "serde_json",
- "thiserror",
- "tokio",
- "tokio-util",
- "wiremock",
 ]
 
 [[package]]
 name = "ch06-5-harness-cli"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "ch06-5-harness-core",
  "clap",
  "serde_json",
  "tokio",
+ "wiremock",
 ]
 
 [[package]]
 name = "ch06-5-harness-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
- "anyhow",
  "async-trait",
- "axum",
  "criterion",
  "reqwest 0.12.28",
- "rmcp",
  "serde",
  "serde_json",
  "thiserror",
- "tokio",
- "tokio-util",
- "wiremock",
 ]
 
 [[package]]
-name = "ch06-6-harness-cli"
+name = "ch09-1-harness-cli"
 version = "0.1.0"
 dependencies = [
- "ch06-6-harness-core",
+ "ch09-1-harness-core",
  "clap",
  "serde_json",
  "tokio",
 ]
 
 [[package]]
-name = "ch06-6-harness-core"
+name = "ch09-1-harness-core"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -745,22 +578,21 @@ dependencies = [
  "serde_json",
  "thiserror",
  "tokio",
- "tokio-util",
  "wiremock",
 ]
 
 [[package]]
-name = "ch06-7-harness-cli"
+name = "ch09-10-harness-cli"
 version = "0.1.0"
 dependencies = [
- "ch06-7-harness-core",
+ "ch09-10-harness-core",
  "clap",
  "serde_json",
  "tokio",
 ]
 
 [[package]]
-name = "ch06-7-harness-core"
+name = "ch09-10-harness-core"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -778,17 +610,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "ch06-8-harness-cli"
+name = "ch09-2-harness-cli"
 version = "0.1.0"
 dependencies = [
- "ch06-8-harness-core",
+ "ch09-2-harness-core",
  "clap",
  "serde_json",
  "tokio",
 ]
 
 [[package]]
-name = "ch06-8-harness-core"
+name = "ch09-2-harness-core"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -806,17 +638,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "ch06-9-harness-cli"
+name = "ch09-3-harness-cli"
 version = "0.1.0"
 dependencies = [
- "ch06-9-harness-core",
+ "ch09-3-harness-core",
  "clap",
  "serde_json",
  "tokio",
 ]
 
 [[package]]
-name = "ch06-9-harness-core"
+name = "ch09-3-harness-core"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -834,14 +666,182 @@ dependencies = [
 ]
 
 [[package]]
-name = "ch07-turn-state"
+name = "ch09-4-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch09-4-harness-core",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "ch09-4-harness-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "criterion",
+ "reqwest 0.12.28",
+ "rmcp",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch09-5-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch09-5-harness-core",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "ch09-5-harness-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "criterion",
+ "reqwest 0.12.28",
+ "rmcp",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch09-6-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch09-6-harness-core",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "ch09-6-harness-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "criterion",
+ "reqwest 0.12.28",
+ "rmcp",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch09-7-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch09-7-harness-core",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "ch09-7-harness-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "criterion",
+ "reqwest 0.12.28",
+ "rmcp",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch09-8-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch09-8-harness-core",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "ch09-8-harness-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "criterion",
+ "reqwest 0.12.28",
+ "rmcp",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch09-9-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch09-9-harness-core",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "ch09-9-harness-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "criterion",
+ "reqwest 0.12.28",
+ "rmcp",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch10-turn-state"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch09-approvals"
+name = "ch11-approvals"
 version = "0.1.0"
 dependencies = [
  "criterion",
@@ -849,24 +849,24 @@ dependencies = [
 ]
 
 [[package]]
-name = "ch10-hooks"
+name = "ch12-hooks"
 version = "0.1.0"
 dependencies = [
- "ch09-approvals",
+ "ch11-approvals",
  "criterion",
  "serde_json",
  "tokio",
 ]
 
 [[package]]
-name = "ch11-sandbox"
+name = "ch13-sandbox"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch12-when-things-fail"
+name = "ch14-when-things-fail"
 version = "0.1.0"
 dependencies = [
  "criterion",
@@ -874,7 +874,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ch13-providers"
+name = "ch16-providers"
 version = "0.1.0"
 dependencies = [
  "criterion",
@@ -883,124 +883,124 @@ dependencies = [
 ]
 
 [[package]]
-name = "ch14-streaming"
+name = "ch17-streaming"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch15-sessions"
+name = "ch18-sessions"
 version = "0.1.0"
 dependencies = [
- "ch06-10-harness-core",
+ "ch09-10-harness-core",
  "criterion",
  "rusqlite",
  "tokio",
 ]
 
 [[package]]
-name = "ch16-memory"
+name = "ch19-memory"
 version = "0.1.0"
 dependencies = [
- "ch10-hooks",
+ "ch12-hooks",
  "criterion",
  "regex",
 ]
 
 [[package]]
-name = "ch17-recall"
+name = "ch20-recall"
 version = "0.1.0"
 dependencies = [
- "ch15-sessions",
+ "ch18-sessions",
  "criterion",
  "rusqlite",
 ]
 
 [[package]]
-name = "ch18-skills"
+name = "ch22-skills"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch19-skill-writing"
+name = "ch23-skill-writing"
 version = "0.1.0"
 dependencies = [
- "ch18-skills",
+ "ch22-skills",
  "criterion",
  "regex",
 ]
 
 [[package]]
-name = "ch20-reflection"
+name = "ch24-reflection"
 version = "0.1.0"
 dependencies = [
- "ch18-skills",
+ "ch22-skills",
  "criterion",
 ]
 
 [[package]]
-name = "ch21-curation"
+name = "ch25-curation"
 version = "0.1.0"
 dependencies = [
- "ch19-skill-writing",
+ "ch23-skill-writing",
  "criterion",
  "flate2",
  "tar",
 ]
 
 [[package]]
-name = "ch22-pipeline"
+name = "ch26-pipeline"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch23-supervisor"
+name = "ch27-supervisor"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch24-handoffs"
+name = "ch28-handoffs"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch25-fan-out"
+name = "ch29-fan-out"
 version = "0.1.0"
 dependencies = [
- "ch23-supervisor",
+ "ch27-supervisor",
  "criterion",
 ]
 
 [[package]]
-name = "ch26-critic"
+name = "ch30-critic"
 version = "0.1.0"
 dependencies = [
- "ch23-supervisor",
+ "ch27-supervisor",
  "criterion",
 ]
 
 [[package]]
-name = "ch27-composition"
+name = "ch31-composition"
 version = "0.1.0"
 dependencies = [
- "ch23-supervisor",
- "ch24-handoffs",
- "ch25-fan-out",
- "ch26-critic",
+ "ch27-supervisor",
+ "ch28-handoffs",
+ "ch29-fan-out",
+ "ch30-critic",
  "criterion",
 ]
 
 [[package]]
-name = "ch28-context"
+name = "ch32-context"
 version = "0.1.0"
 dependencies = [
  "criterion",
@@ -1008,7 +1008,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ch29-actors"
+name = "ch33-actors"
 version = "0.1.0"
 dependencies = [
  "criterion",
@@ -1016,28 +1016,28 @@ dependencies = [
 ]
 
 [[package]]
-name = "ch30-supervision"
+name = "ch34-supervision"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch31-profiles"
+name = "ch36-profiles"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch32-gateway"
+name = "ch37-gateway"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch33-cron"
+name = "ch39-cron"
 version = "0.1.0"
 dependencies = [
  "criterion",
@@ -1045,21 +1045,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "ch34-acp"
+name = "ch40-acp"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch35-blackboard"
+name = "ch41-blackboard"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch36-kanban"
+name = "ch42-kanban"
 version = "0.1.0"
 dependencies = [
  "criterion",
@@ -1068,28 +1068,28 @@ dependencies = [
 ]
 
 [[package]]
-name = "ch37-message-bus"
+name = "ch43-message-bus"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch38-team-skills"
+name = "ch44-team-skills"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch39-a2a"
+name = "ch45-a2a"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch40-tracing"
+name = "ch46-tracing"
 version = "0.1.0"
 dependencies = [
  "criterion",
@@ -1097,7 +1097,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ch41-evals"
+name = "ch48-evals"
 version = "0.1.0"
 dependencies = [
  "criterion",
@@ -1585,21 +1585,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "gw-balancing"
+name = "ch35-balancing"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "gw-capstone"
+name = "ch47-capstone"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "gw-catalog"
+name = "ch07-catalog"
 version = "0.1.0"
 dependencies = [
  "criterion",
@@ -1609,49 +1609,49 @@ dependencies = [
 ]
 
 [[package]]
-name = "gw-learned-tools"
+name = "ch21-learned-tools"
 version = "0.1.0"
 dependencies = [
  "criterion",
- "gw-limits",
+ "ch15-limits",
  "serde_json",
 ]
 
 [[package]]
-name = "gw-limits"
+name = "ch15-limits"
 version = "0.1.0"
 dependencies = [
  "criterion",
- "gw-catalog",
- "gw-session-toolsets",
- "serde_json",
- "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "gw-minimal-mcp-gateway"
-version = "0.1.0"
-dependencies = [
- "criterion",
+ "ch07-catalog",
+ "ch08-session-toolsets",
  "serde_json",
  "thiserror",
  "tokio",
 ]
 
 [[package]]
-name = "gw-service"
+name = "ch05-minimal-server"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+ "serde_json",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "ch38-service"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "gw-session-toolsets"
+name = "ch08-session-toolsets"
 version = "0.1.0"
 dependencies = [
  "criterion",
- "gw-catalog",
+ "ch07-catalog",
  "serde_json",
  "thiserror",
 ]
@@ -2088,9 +2088,9 @@ checksum = "47e1ffaa40ddd1f3ed91f717a33c8c0ee23fff369e3aa8772b9605cc1d22f4c3"
 name = "mcp-gateway"
 version = "0.1.0"
 dependencies = [
- "gw-learned-tools",
- "gw-limits",
- "gw-session-toolsets",
+ "ch21-learned-tools",
+ "ch15-limits",
+ "ch08-session-toolsets",
 ]
 
 [[package]]

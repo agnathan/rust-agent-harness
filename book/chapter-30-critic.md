@@ -4,11 +4,11 @@
 
 Chapter 29 can gather a summary. It does not decide whether that summary is finished. This chapter is the critic. It reads a reply, takes one permit from the chapter 27 pool, and looks at the shared context. `verdict: done` accepts. `blocked`, `wait`, and `continue` do not. A missing verdict, or a verdict this crate does not know, rejects. The critic does not write the answer into the context notes.
 
-The step crate is `steps/ch26-critic`. The book number is 30. The package is `ch26-critic`. It depends on `ch23-supervisor`.
+The step crate is `steps/ch30-critic`. The book number is 30. The package is `ch30-critic`. It depends on `ch27-supervisor`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 30 | `steps/ch26-critic` | a verdict, one permit, accept only on done |
+| 30 | `steps/ch30-critic` | a verdict, one permit, accept only on done |
 
 > **How Hermes does it**
 >
@@ -49,7 +49,7 @@ Four tests. The four known verdicts parse. An empty string, `looks fine`, and `v
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch26-critic
+cargo nextest run --locked -p ch30-critic
 ```
 
 ```text
@@ -58,7 +58,7 @@ Starting 4 tests across 3 binaries
 ```
 
 ```bash
-cargo run -p ch26-critic
+cargo run -p ch30-critic
 ```
 
 ```text

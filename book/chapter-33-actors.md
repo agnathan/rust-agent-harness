@@ -4,11 +4,11 @@
 
 Chapter 32 can share a snapshot. It still runs the agent on the caller's thread, and a burst of messages has nowhere to wait. This chapter gives each agent a task and a mailbox. The mailbox is the session inbox, with room for 64 messages. The 65th send is refused. A steer is stored and appended to the next turn. An interrupt drops that turn before the model runs.
 
-The step crate is `steps/ch29-actors`. The book number is 33. The package is `ch29-actors`.
+The step crate is `steps/ch33-actors`. The book number is 33. The package is `ch33-actors`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 33 | `steps/ch29-actors` | one task per agent, an inbox of 64, steer and interrupt |
+| 33 | `steps/ch33-actors` | one task per agent, an inbox of 64, steer and interrupt |
 
 > **How Hermes does it**
 >
@@ -47,7 +47,7 @@ Five tests. Sixty-four turns fill the inbox. The 65th is `Full`, and the length 
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch29-actors
+cargo nextest run --locked -p ch33-actors
 ```
 
 ```text
@@ -56,7 +56,7 @@ Starting 5 tests across 3 binaries
 ```
 
 ```bash
-cargo run -p ch29-actors
+cargo run -p ch33-actors
 ```
 
 ```text

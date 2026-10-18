@@ -4,11 +4,11 @@
 
 The turns so far live in memory. A new process starts from nothing. This chapter appends a turn to SQLite in WAL mode and can read it back. The search index is a queue of row ids. The virtual table is chapter 20. The chapter 9 eval set runs again, on the mock, and it still passes.
 
-The step crate is `steps/ch15-sessions`. The book number is 18. The package is `ch15-sessions`.
+The step crate is `steps/ch18-sessions`. The book number is 18. The package is `ch18-sessions`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 18 | `steps/ch15-sessions` | WAL sessions, an append of one turn, a queued FTS id |
+| 18 | `steps/ch18-sessions` | WAL sessions, an append of one turn, a queued FTS id |
 
 > **How Hermes does it**
 >
@@ -34,7 +34,7 @@ The step crate is `steps/ch15-sessions`. The book number is 18. The package is `
 
 A second `append_turn` on `s1` makes four messages and still one session row.
 
-The demo writes `ch15-sessions-demo.db` under the temp directory, appends the fake reply `pong`, prints the row count and the journal mode, and deletes the file. No key.
+The demo writes `ch18-sessions-demo.db` under the temp directory, appends the fake reply `pong`, prints the row count and the journal mode, and deletes the file. No key.
 
 The third test calls `run_saved_evals` and `run_stress_evals` from chapter 9. Both lists are all `passed`. That work is the mock loop. It does not open this database.
 
@@ -53,7 +53,7 @@ Three tests. A turn appends two rows, the journal is `wal`, and the trigram tabl
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch15-sessions
+cargo nextest run --locked -p ch18-sessions
 ```
 
 ```text
@@ -62,7 +62,7 @@ Starting 3 tests across 3 binaries
 ```
 
 ```bash
-cargo run -p ch15-sessions
+cargo run -p ch18-sessions
 ```
 
 ```text

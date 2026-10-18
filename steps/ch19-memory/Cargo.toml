@@ -1,0 +1,25 @@
+[package]
+name = "ch19-memory"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+description = "Chapter 19: MEMORY.md and USER.md, a frozen snapshot, a strict scan."
+
+[lib]
+name = "memory_files"
+
+[[bin]]
+name = "ch19-memory"
+path = "src/main.rs"
+
+[dependencies]
+ch12-hooks = { path = "../ch12-hooks" }
+regex = "1"
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "memory"
+harness = false

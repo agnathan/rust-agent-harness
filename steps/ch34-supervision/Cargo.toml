@@ -1,0 +1,21 @@
+[package]
+name = "ch34-supervision"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+description = "Chapter 34: restart a failed child, and stop auto-resume after a restart loop."
+
+[lib]
+name = "supervision"
+
+[[bin]]
+name = "ch34-supervision"
+path = "src/main.rs"
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "supervision"
+harness = false

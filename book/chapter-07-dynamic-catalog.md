@@ -4,11 +4,11 @@
 
 Chapter 5 can list the tools it was given at startup. A gateway that only does that cannot pick up a plugin, or a second server's tools, without restarting the process. Chapter 6 already measured what a 10,000-tool list costs when the client holds it. This chapter moves the catalog into the server: native tools, plugin tools, and an in-memory upstream list, one BM25 index, and a reload that swaps an `Arc`.
 
-The step crate is `steps/gw-catalog`. The package is `gw-catalog`. It still binds no socket. A live connection to an upstream MCP server is chapter 35.
+The step crate is `steps/ch07-catalog`. The package is `ch07-catalog`. It still binds no socket. A live connection to an upstream MCP server is chapter 35.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 7 | `steps/gw-catalog` | BM25, exact-name rank, plugin and upstream merge, `Arc` reload |
+| 7 | `steps/ch07-catalog` | BM25, exact-name rank, plugin and upstream merge, `Arc` reload |
 
 > **How Hermes does it**
 >
@@ -57,7 +57,7 @@ The synthetic generator uses eight server names, eight verbs, and eight nouns. T
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p gw-catalog
+cargo nextest run --locked -p ch07-catalog
 ```
 
 ```text
@@ -68,7 +68,7 @@ Starting 5 tests across 3 binaries
 The 10,000-tool test is the slow one in that summary.
 
 ```bash
-cargo run -p gw-catalog
+cargo run -p ch07-catalog
 ```
 
 ```text
@@ -86,7 +86,7 @@ The binary loads one native tool and one upstream tool and searches `rename a fi
 
 `catalog_search_10k` builds the gateway and the 10,000-card index outside the sample. The timed closure is `search("rename a file", 8)` and `black_box` of the hits. No embedder is installed. `catalog_reload_10k` clones the 10,000 cards and rebuilds the index inside the sample. That clone is part of the reload the caller pays. `catalog_arc_swap` times a reload of one card while an `Arc` from before the reload is still held. The search number is the server. Chapter 6's client search of 10,000 tools was 146.8 µs. This server search measured 299.0 µs on the Benchmarks runner. They are different crates and different machines.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38863938100](https://github.com/agnathan/rust-agent-harness/actions/runs/38863938100), section `gw7`.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38863938100](https://github.com/agnathan/rust-agent-harness/actions/runs/38863938100), section `7` (recorded as `gw7`).
 
 ### Milestone demo
 

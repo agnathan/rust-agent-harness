@@ -1,0 +1,26 @@
+[package]
+name = "ch18-sessions"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+description = "Chapter 18: append-only SQLite sessions in WAL mode."
+
+[lib]
+name = "sessions"
+
+[[bin]]
+name = "ch18-sessions"
+path = "src/main.rs"
+
+[dependencies]
+rusqlite = { version = "0.32", features = ["bundled"] }
+
+[dev-dependencies]
+ch09-10-harness-core = { path = "../ch09-10-evals/crates/harness-core" }
+criterion = "0.5"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
+
+[[bench]]
+name = "sessions"
+harness = false

@@ -4,11 +4,11 @@
 
 Chapter 36 knows which persona is speaking. It does not know which person is allowed to speak. This chapter is the chat gateway. A user is on the allowlist, already paired, or denied. A pairing code is eight characters and lasts an hour. Twenty bot messages in five minutes start a ten-minute cooldown. A sentinel pauses the process, and a stat error pauses it too. A platform message is a push onto an inbox of 64. Streaming text folds into one string. This is not the MCP server.
 
-The step crate is `steps/ch32-gateway`. The book number is 37. The package is `ch32-gateway`.
+The step crate is `steps/ch37-gateway`. The book number is 37. The package is `ch37-gateway`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 37 | `steps/ch32-gateway` | allowlist, pairing, bot-loop guard, emergency stop, the session inbox |
+| 37 | `steps/ch37-gateway` | allowlist, pairing, bot-loop guard, emergency stop, the session inbox |
 
 > **How Hermes does it**
 >
@@ -51,7 +51,7 @@ Eight tests. A stranger is denied. An allowlisted user and a paired user are not
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch32-gateway
+cargo nextest run --locked -p ch37-gateway
 ```
 
 ```text
@@ -59,7 +59,7 @@ cargo nextest run --locked -p ch32-gateway
 ```
 
 ```bash
-cargo run -p ch32-gateway
+cargo run -p ch37-gateway
 ```
 
 ```text

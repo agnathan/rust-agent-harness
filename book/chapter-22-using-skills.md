@@ -4,11 +4,11 @@
 
 Chapter 21 can remember which tools a task used. It cannot remember a procedure. This chapter loads a directory of `SKILL.md` files and renders them once into an `<available_skills>` block. The block is an `Arc`. A skill added after that render becomes a note. The `Arc` bytes stay. `skill_view` loads one whole file when something asks for it.
 
-The step crate is `steps/ch18-skills`. The book number is 22. The package is `ch18-skills`.
+The step crate is `steps/ch22-skills`. The book number is 22. The package is `ch22-skills`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 22 | `steps/ch18-skills` | `SKILL.md`, a cache-stable index, `skills_list` / `skill_view` |
+| 22 | `steps/ch22-skills` | `SKILL.md`, a cache-stable index, `skills_list` / `skill_view` |
 
 > **How Hermes does it**
 >
@@ -53,7 +53,7 @@ Four tests. The index is sorted, byte-identical across two renders, and marks `g
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch18-skills
+cargo nextest run --locked -p ch22-skills
 ```
 
 ```text
@@ -62,7 +62,7 @@ Starting 4 tests across 3 binaries
 ```
 
 ```bash
-cargo run -p ch18-skills
+cargo run -p ch22-skills
 ```
 
 ```text

@@ -4,11 +4,11 @@
 
 Chapter 42 is a card with an owner. Peers that live at the same time need a different shape: one publishes, the others receive, and a slow receiver must not grow a queue without a limit. This chapter is that bus.
 
-The step crate is `steps/ch37-message-bus`. The book number is 43. The package is `ch37-message-bus`.
+The step crate is `steps/ch43-message-bus`. The book number is 43. The package is `ch43-message-bus`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 43 | `steps/ch37-message-bus` | a bounded publish, a direct send, a bot cooldown |
+| 43 | `steps/ch43-message-bus` | a bounded publish, a direct send, a bot cooldown |
 
 > **How Hermes does it**
 >
@@ -49,7 +49,7 @@ Five tests. Filling 64 and publishing once more returns `Slow("slow")`, and `sen
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch37-message-bus
+cargo nextest run --locked -p ch43-message-bus
 ```
 
 ```text
@@ -57,7 +57,7 @@ cargo nextest run --locked -p ch37-message-bus
 ```
 
 ```bash
-cargo run -p ch37-message-bus
+cargo run -p ch43-message-bus
 ```
 
 ```text

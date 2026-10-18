@@ -10,7 +10,7 @@
 
 **Promise:** By the end, the reader has built a working, tested, concurrent harness for teams of LLM agents, and a standalone MCP gateway server beside it. Rust shows up in short sidebars at the moment a harness problem needs it.
 
-**Approach:** Every chapter builds one more piece of the same harness, or of the gateway. The finished code for a harness chapter is a step crate under `steps/chNN-<slug>/`. Server-track chapters use `steps/gw-<slug>/` and the workspace crate `mcp-gateway/`. The reader's own copy grows in `my-harness/`. Each chapter follows the same shape:
+**Approach:** Every chapter builds one more piece of the same harness, or of the gateway. The finished code for a harness chapter is a step crate under `steps/chNN-<slug>/`. Server-track chapters use `steps/chNN-<slug>/` and the workspace crate `mcp-gateway/`. The reader's own copy grows in `my-harness/`. Each chapter follows the same shape:
 
 1. a problem from agent engineering
 2. a **How Hermes does it** box: the Python design, then the Rust one
@@ -36,19 +36,19 @@ The harness decides what enters the prompt. The server holds the catalog, search
 | 2 | Conversations | `steps/ch02-conversations` | ownership, private fields, `Result` | alternating history, a cache-stable system prompt, trim, JSON save/load, a `chat` REPL, and one per-session inbox the CLI submits to |
 | 3 | Tools | `steps/ch03-1-registry`, `ch03-2-toolsets`, `ch03-3-dispatch` | traits, JSON Schema, a semaphore | 3.1 an MCP-shaped tool trait and registry; 3.2 named toolsets gated on env vars and checks, and the model is told only about tools that passed; 3.3 read-only calls run concurrently, writes run alone, both under a bound |
 | 4 | MCP Client | `steps/ch04-1-stdio`, `ch04-2-http`, `ch04-3-registry`, `ch04-4-cache` | `rmcp`, stdio, HTTP | 4.1 an `rmcp` session over stdio; 4.2 the same session over streamable HTTP; 4.3 MCP tools in the chapter 3 registry and dispatcher; 4.4 a `tools/list` cache dropped by `list_changed` |
-| 5 | A Minimal MCP Server *(server)* | `steps/gw-minimal-server` | a second crate | a fixed tool list, `echo`, and a gate that accepts 32 calls and runs 8. No socket. The process crate grows in chapters 7 and 8 |
-| 6 | Thousands of Tools | `steps/ch05-1-schema-cost`, `ch05-2-tool-index`, `ch05-3-search-tool`, `ch05-4-routing`, `ch05-5-lazy-list` | an inverted index, append-only prompts | the client half of the catalog. Sections stay 5.1–5.5 to match `steps/ch05-*`: measure schema tokens for 1,000–10,000 tools; a BM25 index, with embeddings behind a trait; `search_tools` reveals schemas on the next turn, append-only, with a cap; route by server, then shrink names and descriptions; a cached `tools/list`, invalidated by `tools/list_changed`, a per-agent toolset, and `cards_from_listed` so chapter 4's real list uses the same cache. The 10,000-tool benches still use the synthetic catalog |
-| 7 | Dynamic Catalog *(server)* | `steps/gw-catalog` | BM25 on the server | native tools, an in-memory upstream list, and plugin tools; server-side BM25 with exact-name first; a reload that stores a new `Arc`. Live upstream connections stay chapter 35 |
-| 8 | Session Toolsets *(server)* | `steps/gw-session-toolsets` | a per-session filter | `search_tools` (7 queries), `set_task`, `describe` (10 names), a revealed-name filter, a `list_changed` flag, 2,000-character pages, and schema/call/result tokens for every-tool, static, and dynamic arms. The flag is not on the wire yet |
-| 9 | The Agent Loop | `steps/ch06-10-evals` | enums for replies | ten sections, still numbered 6.1–6.10 to match `steps/ch06-*`: optional live OpenRouter, cancellation token with soft and hard stop, tool-call validation, stall detection, budget warning and wrap-up, output truncation, steering, canonical arguments, a typed turn outcome, and a stress eval set |
-| 10 | The Turn State Machine | `steps/ch07-turn-state` | enum state machines | one `Phase` and a tested `step` table. `run_script` is a fake model. It does not call chapter 9's `run_loop` |
-| 11 | Approvals and Guardrails | `steps/ch09-approvals` | a mutex, risk as an enum | risk levels on a tool call; modes for a human, a second model, or skipping the check; concurrent calls wait on one approval prompt, and the wait does not hold a tool-concurrency permit |
-| 12 | Hooks and Plugins | `steps/ch10-hooks` | traits as extension points | before/after tool hooks, an API-request hook, rewriting a tool result, and a swappable memory backend; a hook may enable a toolset, and the availability check stays in the registry from chapter 3 |
-| 13 | Sandboxed Execution | `steps/ch11-sandbox` | a child process, a snapshot | a code tool that runs outside the harness process, plus a file checkpoint and rewind |
-| 14 | When Things Fail | `steps/ch12-when-things-fail` | matching on errors | classify failures, retry, fall back; MCP crashes, timeouts, reconnects; a timeout releases its concurrency permit. Deferred from chapter 9: empty-response retries after tool calls (`agent/conversation_loop.py`), length continuation when a reply is cut off (`agent/turn_truncation.py`), and the repetition guard (`agent/repetition_guard.py`) |
-| 15 | Limits and Breakers *(server)* | `steps/gw-limits` | a permit and a breaker | per-tool concurrency limits and queues, timeouts, retries only when the tool is marked idempotent, circuit breakers, hedging, and 429/503 backpressure |
-| 16 | Providers | `steps/ch13-providers` | another adapter behind the same trait | native Anthropic and Bedrock adapters beside the chapter 1 OpenRouter client; OpenRouter fallback and routing (a `models` array and provider preferences); key rotation on the pooled client; a cheaper side model for summaries |
-| 17 | Streaming | `steps/ch14-streaming` | folding a stream | server-sent deltas as the chapter 1 `Event` values, overlapped with safe tool execution, for each adapter |
+| 5 | A Minimal MCP Server *(server)* | `steps/ch05-minimal-server` | a second crate | a fixed tool list, `echo`, and a gate that accepts 32 calls and runs 8. No socket. The process crate grows in chapters 7 and 8 |
+| 6 | Thousands of Tools | `steps/ch06-1-schema-cost`, `ch06-2-tool-index`, `ch06-3-search-tool`, `ch06-4-routing`, `ch06-5-lazy-list` | an inverted index, append-only prompts | the client half of the catalog. Sections stay 6.1–6.5 to match `steps/ch06-*`: measure schema tokens for 1,000–10,000 tools; a BM25 index, with embeddings behind a trait; `search_tools` reveals schemas on the next turn, append-only, with a cap; route by server, then shrink names and descriptions; a cached `tools/list`, invalidated by `tools/list_changed`, a per-agent toolset, and `cards_from_listed` so chapter 4's real list uses the same cache. The 10,000-tool benches still use the synthetic catalog |
+| 7 | Dynamic Catalog *(server)* | `steps/ch07-catalog` | BM25 on the server | native tools, an in-memory upstream list, and plugin tools; server-side BM25 with exact-name first; a reload that stores a new `Arc`. Live upstream connections stay chapter 35 |
+| 8 | Session Toolsets *(server)* | `steps/ch08-session-toolsets` | a per-session filter | `search_tools` (7 queries), `set_task`, `describe` (10 names), a revealed-name filter, a `list_changed` flag, 2,000-character pages, and schema/call/result tokens for every-tool, static, and dynamic arms. The flag is not on the wire yet |
+| 9 | The Agent Loop | `steps/ch09-10-evals` | enums for replies | ten sections, still numbered 9.1–9.10 to match `steps/ch09-*`: optional live OpenRouter, cancellation token with soft and hard stop, tool-call validation, stall detection, budget warning and wrap-up, output truncation, steering, canonical arguments, a typed turn outcome, and a stress eval set |
+| 10 | The Turn State Machine | `steps/ch10-turn-state` | enum state machines | one `Phase` and a tested `step` table. `run_script` is a fake model. It does not call chapter 9's `run_loop` |
+| 11 | Approvals and Guardrails | `steps/ch11-approvals` | a mutex, risk as an enum | risk levels on a tool call; modes for a human, a second model, or skipping the check; concurrent calls wait on one approval prompt, and the wait does not hold a tool-concurrency permit |
+| 12 | Hooks and Plugins | `steps/ch12-hooks` | traits as extension points | before/after tool hooks, an API-request hook, rewriting a tool result, and a swappable memory backend; a hook may enable a toolset, and the availability check stays in the registry from chapter 3 |
+| 13 | Sandboxed Execution | `steps/ch13-sandbox` | a child process, a snapshot | a code tool that runs outside the harness process, plus a file checkpoint and rewind |
+| 14 | When Things Fail | `steps/ch14-when-things-fail` | matching on errors | classify failures, retry, fall back; MCP crashes, timeouts, reconnects; a timeout releases its concurrency permit. Deferred from chapter 9: empty-response retries after tool calls (`agent/conversation_loop.py`), length continuation when a reply is cut off (`agent/turn_truncation.py`), and the repetition guard (`agent/repetition_guard.py`) |
+| 15 | Limits and Breakers *(server)* | `steps/ch15-limits` | a permit and a breaker | per-tool concurrency limits and queues, timeouts, retries only when the tool is marked idempotent, circuit breakers, hedging, and 429/503 backpressure |
+| 16 | Providers | `steps/ch16-providers` | another adapter behind the same trait | native Anthropic and Bedrock adapters beside the chapter 1 OpenRouter client; OpenRouter fallback and routing (a `models` array and provider preferences); key rotation on the pooled client; a cheaper side model for summaries |
+| 17 | Streaming | `steps/ch17-streaming` | folding a stream | server-sent deltas as the chapter 1 `Event` values, overlapped with safe tool execution, for each adapter |
 
 **Guardrail notes**
 
@@ -62,15 +62,15 @@ The harness decides what enters the prompt. The server holds the catalog, search
 **Performance budget**
 
 - **Chapter 0.** State the rule: overhead is measured without model latency.
-- **Chapter 1.** Four benches, each under 1 ms. 1.1: serde of 50 messages (measured 6.96 µs). 1.2: one mock call that also builds events (measured 235.7 ns) and 100 concurrent calls (measured 108.9 µs, target < 50 ms). 1.3: build an OpenRouter request and parse a response that carries `model`, `usage`, and `cost` (measured 2.133 µs). 1.4: parse a response with usage and one without (measured 792.7 ns). One HTTP client, pooled, HTTP/2 enabled. The default endpoint is OpenRouter.
+- **Chapter 1.** Four benches, each under 1 ms. 1.1: serde of 50 messages (measured 9.96 µs). 1.2: one mock call that also builds events (measured 235.7 ns) and 100 concurrent calls (measured 108.9 µs, target < 50 ms). 1.3: build an OpenRouter request and parse a response that carries `model`, `usage`, and `cost` (measured 2.133 µs). 1.4: parse a response with usage and one without (measured 792.7 ns). One HTTP client, pooled, HTTP/2 enabled. The default endpoint is OpenRouter.
 - **Chapter 2.** The system prompt is byte-identical across the turns of a session. Per-turn overhead stays < 1 ms (measured 628.2 ns). Submitting one turn to the session inbox is < 1 µs (measured 32.78 ns). The provider borrows the history.
 - **Chapter 3.** A lookup in a 50-tool registry is < 1 µs (measured 13.96 ns). The available-tool list for 50 tools is < 1 ms (measured 21.89 µs). Eight read-only tools that each sleep 1 ms finish together in 2.362 ms, against 17.55 ms one at a time. A write runs alone.
 - **Chapter 4.** Eight remote reads that each sleep 40 ms overlap on the chapter 3 bound. A stdio echo round trip measured 71.29 µs. Streamable HTTP on loopback measured 215.7 µs. Fifty zero-delay calls measured 1.908 ms concurrent and 3.603 ms sequential. A cold tools/list measured 82.87 µs, and the cache hit measured 168.0 ns.
 - **Chapter 5.** *(server)* Thirty-two in-flight calls accepted, eight executed at once. A permit round trip measured 45.53 ns. Eight 1 ms sleeps measured 2.129 ms.
-- **Chapter 6.** Schema-token estimate for 10,000 tools < 50 ms (measured 21.06 ms). Search over that index < 1 ms (measured 146.8 µs). The lazy prompt renders in 12.26 µs, and its core bytes stay identical when a result is revealed or evicted. A cache hit on `tools/list` is 17.56 ns. Filtering one agent's servers out of 10,000 tools is 77.00 µs. These are the client-half numbers. The step crates are `ch05-*`.
+- **Chapter 6.** Schema-token estimate for 10,000 tools < 50 ms (measured 21.06 ms). Search over that index < 1 ms (measured 146.8 µs). The lazy prompt renders in 12.26 µs, and its core bytes stay identical when a result is revealed or evicted. A cache hit on `tools/list` is 17.56 ns. Filtering one agent's servers out of 10,000 tools is 77.00 µs. These are the client-half numbers. The step crates are `ch06-*`.
 - **Chapter 7.** *(server)* Search over 10,000 tools measured 299.0 µs. Rebuilding that index measured 27.42 ms. Swapping a one-tool `Arc` while holding the old one measured 2.467 µs.
 - **Chapter 8.** *(server)* On 2,000 synthetic tools, schema-token estimates were 45,104 (every tool), 153 (static), and 135 (dynamic), all three successful. The dynamic arm measured 5.687 ms. The every-tool arm measured 8.355 ms.
-- **Chapter 9.** Ten sections, crates `ch06-*`, section labels 6.1–6.10. Loop-iteration overhead < 1 ms excluding the model (measured 608.0 ns on the finished loop; 248.5 ns on the section 6.1 loop). Checking the cancellation token or the budget is < 1 µs (measured 11.92 ns). A cancelled call does not start the next model request. Eight 1 ms reads in one turn measured 2.421 ms. Name repair 188.8 ns, stall observe 100.0 ns, a budget notice 58.20 ns, truncation 3.174 µs, a steer append 47.12 ns, canonical arguments 771.0 ns. Re-running the saved eval set and the four stress evals on the mock stays inside the worker bound.
+- **Chapter 9.** Ten sections, crates `ch09-*`, section labels 9.1–9.10. Loop-iteration overhead < 1 ms excluding the model (measured 608.0 ns on the finished loop; 248.5 ns on the section 9.1 loop). Checking the cancellation token or the budget is < 1 µs (measured 11.92 ns). A cancelled call does not start the next model request. Eight 1 ms reads in one turn measured 2.421 ms. Name repair 188.8 ns, stall observe 100.0 ns, a budget notice 58.20 ns, truncation 3.174 µs, a steer append 47.12 ns, canonical arguments 771.0 ns. Re-running the saved eval set and the four stress evals on the mock stays inside the worker bound.
 - **Chapter 10.** A state transition measured 1.103 ns. A three-step scripted turn measured 7.803 ns.
 - **Chapter 11.** A skip decision is < 1 µs (measured 251.1 ns). Concurrent approvals serialize onto one prompt. Waiting on a human releases the tool permit.
 - **Chapter 12.** An empty before/after hook adds < 0.1 ms (measured 10.91 ns). An API-request hook does not copy the conversation (measured 2.834 ns on 1,000 messages). A memory-backend call that only records the turn enqueues in < 1 ms (measured 56.83 ns).
@@ -84,14 +84,14 @@ The harness decides what enters the prompt. The server holds the catalog, search
 
 | Ch | Title | Step | Rust, just in time | What the harness gains |
 |---|---|---|---|---|
-| 18 | Sessions on Disk | `steps/ch15-sessions` | SQLite, WAL | an append-only session store and a way to resume |
-| 19 | Memory Files | `steps/ch16-memory` | bounded text, atomic writes | `MEMORY.md` and `USER.md`, a `memory` tool, a frozen snapshot in the system prompt, injection scanning; the file backend behind the trait from chapter 12 |
-| 20 | Recall | `steps/ch17-recall` | FTS5 | a `session_search` tool: discover, scroll, read, browse |
-| 21 | Learned Tools *(server)* | `steps/gw-learned-tools` | a prediction off the request path | learned tool prediction from memory and sessions, plus composite and macro tools and a code-mode tool. The prediction changes the offered set. It does not run inside the model call |
-| 22 | Using Skills | `steps/ch18-skills` | a directory of markdown | `SKILL.md` (agentskills.io-compatible), a cache-stable `<available_skills>` index, `skills_list` / `skill_view` |
-| 23 | Writing Skills | `steps/ch19-skill-writing` | patch and validate | create, patch, delete, and supporting files, with a scanner, the approval gate from chapter 11, and read-before-write |
-| 24 | The Reflection Loop | `steps/ch20-reflection` | a supervised child task | nudge counters, the post-turn hook from chapter 12, a forked reviewer with only skill and memory tools |
-| 25 | Curation | `steps/ch21-curation` | a scheduled job | usage telemetry, stale then archived, pinning, backups, optional consolidation. A write uses chapter 23's scan and the A9 gate, off the request path |
+| 18 | Sessions on Disk | `steps/ch18-sessions` | SQLite, WAL | an append-only session store and a way to resume |
+| 19 | Memory Files | `steps/ch19-memory` | bounded text, atomic writes | `MEMORY.md` and `USER.md`, a `memory` tool, a frozen snapshot in the system prompt, injection scanning; the file backend behind the trait from chapter 12 |
+| 20 | Recall | `steps/ch20-recall` | FTS5 | a `session_search` tool: discover, scroll, read, browse |
+| 21 | Learned Tools *(server)* | `steps/ch21-learned-tools` | a prediction off the request path | learned tool prediction from memory and sessions, plus composite and macro tools and a code-mode tool. The prediction changes the offered set. It does not run inside the model call |
+| 22 | Using Skills | `steps/ch22-skills` | a directory of markdown | `SKILL.md` (agentskills.io-compatible), a cache-stable `<available_skills>` index, `skills_list` / `skill_view` |
+| 23 | Writing Skills | `steps/ch23-skill-writing` | patch and validate | create, patch, delete, and supporting files, with a scanner, the approval gate from chapter 11, and read-before-write |
+| 24 | The Reflection Loop | `steps/ch24-reflection` | a supervised child task | nudge counters, the post-turn hook from chapter 12, a forked reviewer with only skill and memory tools |
+| 25 | Curation | `steps/ch25-curation` | a scheduled job | usage telemetry, stale then archived, pinning, backups, optional consolidation. A write uses chapter 23's scan and the A9 gate, off the request path |
 
 **Guardrail notes**
 
@@ -114,12 +114,12 @@ The harness decides what enters the prompt. The server holds the catalog, search
 
 | Ch | Title | Step | Rust, just in time | What the harness gains |
 |---|---|---|---|---|
-| 26 | The Sequential Pipeline | `steps/ch22-pipeline` | an agent as a value you can pass around | outline, draft, critique, revise; each stage is an agent run in order |
-| 27 | The Supervisor | `steps/ch23-supervisor` | the tool trait, used for agents | the default team: a manager, specialists called as tools and fanned out under a bound, one `Arc`-shared context object; the reflection loop learns from team runs off the hot path. Chapter 24's forked agent and prompt-cache parity stay out of that note: the team run only enqueues it. Chapter 26's live model per stage is not required here; specialists stay scripted |
-| 28 | Handoffs | `steps/ch24-handoffs` | a pointer to the current agent | routing and ownership transfer; handoff-as-tool; a max-handoff limit; context filtered before the next agent sees it |
-| 29 | Fan-out and Gather | `steps/ch25-fan-out` | a worker limit, an aggregator | the dedicated gather: the supervisor already runs specialists in parallel; this chapter adds the worker limit's tests and the aggregator. Chapter 27 defers the queue of 100 and the `task_index` order to here |
-| 30 | The Critic | `steps/ch26-critic` | the same tool trait | an evaluator agent, both as a tool and as a final gate. It takes one permit from the chapter 27 pool. Chapter 29's summary is what it reads; it does not do the work |
-| 31 | Composing Patterns | `steps/ch27-composition` | nesting the patterns above | a supervisor that fans out and uses a handoff only when ownership should move. Chapter 30 defers the judge continuation loop, the `wait` target, and the quality-gate shell commands to here |
+| 26 | The Sequential Pipeline | `steps/ch26-pipeline` | an agent as a value you can pass around | outline, draft, critique, revise; each stage is an agent run in order |
+| 27 | The Supervisor | `steps/ch27-supervisor` | the tool trait, used for agents | the default team: a manager, specialists called as tools and fanned out under a bound, one `Arc`-shared context object; the reflection loop learns from team runs off the hot path. Chapter 24's forked agent and prompt-cache parity stay out of that note: the team run only enqueues it. Chapter 26's live model per stage is not required here; specialists stay scripted |
+| 28 | Handoffs | `steps/ch28-handoffs` | a pointer to the current agent | routing and ownership transfer; handoff-as-tool; a max-handoff limit; context filtered before the next agent sees it |
+| 29 | Fan-out and Gather | `steps/ch29-fan-out` | a worker limit, an aggregator | the dedicated gather: the supervisor already runs specialists in parallel; this chapter adds the worker limit's tests and the aggregator. Chapter 27 defers the queue of 100 and the `task_index` order to here |
+| 30 | The Critic | `steps/ch30-critic` | the same tool trait | an evaluator agent, both as a tool and as a final gate. It takes one permit from the chapter 27 pool. Chapter 29's summary is what it reads; it does not do the work |
+| 31 | Composing Patterns | `steps/ch31-composition` | nesting the patterns above | a supervisor that fans out and uses a handoff only when ownership should move. Chapter 30 defers the judge continuation loop, the `wait` target, and the quality-gate shell commands to here |
 
 **Guardrail notes**
 
@@ -138,10 +138,10 @@ The harness decides what enters the prompt. The server holds the catalog, search
 
 | Ch | Title | Step | Rust, just in time | What the harness gains |
 |---|---|---|---|---|
-| 32 | Managing Context | `steps/ch28-context` | slicing a `Vec` | compression, structured summaries from the side model in chapter 16, `[SKILL_PRUNED]` markers, a memory flush before compression. Deferred from chapter 9: preflight compression before the model call (`agent/turn_context.py`, `agent/context_compressor.py`) |
-| 33 | Agents as Actors | `steps/ch29-actors` | bounded channels | one tokio task per agent; the mailbox is the session inbox from chapter 2; steering and backpressure |
-| 34 | Supervision and Restart | `steps/ch30-supervision` | atomics | restart a failed child. The cancellation token and the budget are already on the call from chapter 9 |
-| 35 | Balancing and Federation *(server)* | `steps/gw-balancing` | a pool per tool | least-outstanding or power-of-two-choices across a per-tool backend pool, and federation of upstream MCP servers through that pool. Placed after cancellation (chapter 9) and supervision (chapter 34) |
+| 32 | Managing Context | `steps/ch32-context` | slicing a `Vec` | compression, structured summaries from the side model in chapter 16, `[SKILL_PRUNED]` markers, a memory flush before compression. Deferred from chapter 9: preflight compression before the model call (`agent/turn_context.py`, `agent/context_compressor.py`) |
+| 33 | Agents as Actors | `steps/ch33-actors` | bounded channels | one tokio task per agent; the mailbox is the session inbox from chapter 2; steering and backpressure |
+| 34 | Supervision and Restart | `steps/ch34-supervision` | atomics | restart a failed child. The cancellation token and the budget are already on the call from chapter 9 |
+| 35 | Balancing and Federation *(server)* | `steps/ch35-balancing` | a pool per tool | least-outstanding or power-of-two-choices across a per-tool backend pool, and federation of upstream MCP servers through that pool. Placed after cancellation (chapter 9) and supervision (chapter 34) |
 
 **Guardrail notes**
 
@@ -158,11 +158,11 @@ The harness decides what enters the prompt. The server holds the catalog, search
 
 | Ch | Title | Step | Rust, just in time | What the harness gains |
 |---|---|---|---|---|
-| 36 | Profiles | `steps/ch31-profiles` | config, a secret map | several personas in one config, each with its own secrets, kept out of the system prompt |
-| 37 | The Gateway | `steps/ch32-gateway` | the session inbox | platform adapters submit to the chapter 2 inbox; a mid-turn message becomes an interrupt or a steer; streaming folds chapter 1 events into one message. This is the chat gateway, not the MCP server. Chapter 28 defers the platform re-bind from `handoff.request` to here |
-| 38 | MCP Gateway Service *(server)* | `steps/gw-service` | an `Arc` reload, a session map | mostly stateless replicas routed by session id, hot reload by swapping an `Arc`, shared session routes and quotas in memory, health and readiness, a bearer check standing in for the OAuth 2.1 resource server, per-tenant quotas, an audit vec, span names, and a drain that finishes in-flight calls. No socket |
-| 39 | Cron | `steps/ch33-cron` | a durable claim | at-most-once runs across crashes, catch-up, a watchdog, and chaining the next job by submitting to the same inbox |
-| 40 | Editor Integration | `steps/ch34-acp` | a protocol adapter | ACP (Agent Client Protocol) as another client of the chapter 2 session inbox |
+| 36 | Profiles | `steps/ch36-profiles` | config, a secret map | several personas in one config, each with its own secrets, kept out of the system prompt |
+| 37 | The Gateway | `steps/ch37-gateway` | the session inbox | platform adapters submit to the chapter 2 inbox; a mid-turn message becomes an interrupt or a steer; streaming folds chapter 1 events into one message. This is the chat gateway, not the MCP server. Chapter 28 defers the platform re-bind from `handoff.request` to here |
+| 38 | MCP Gateway Service *(server)* | `steps/ch38-service` | an `Arc` reload, a session map | mostly stateless replicas routed by session id, hot reload by swapping an `Arc`, shared session routes and quotas in memory, health and readiness, a bearer check standing in for the OAuth 2.1 resource server, per-tenant quotas, an audit vec, span names, and a drain that finishes in-flight calls. No socket |
+| 39 | Cron | `steps/ch39-cron` | a durable claim | at-most-once runs across crashes, catch-up, a watchdog, and chaining the next job by submitting to the same inbox |
+| 40 | Editor Integration | `steps/ch40-acp` | a protocol adapter | ACP (Agent Client Protocol) as another client of the chapter 2 session inbox |
 
 **Guardrail notes**
 
@@ -183,14 +183,14 @@ The harness decides what enters the prompt. The server holds the catalog, search
 
 | Ch | Title | Step | Rust, just in time | What the harness gains |
 |---|---|---|---|---|
-| 41 | The Blackboard | `steps/ch35-blackboard` | shared state behind a lock | shared state, agents woken by a condition, a thin scheduler |
-| 42 | The Kanban Board | `steps/ch36-kanban` | a compare-and-swap claim | a durable board; separate processes claim, complete, review, or block a task |
-| 43 | The Message Bus | `steps/ch37-message-bus` | bounded channels | peer-to-peer messaging with backpressure |
-| 44 | Shared Team Skills | `steps/ch38-team-skills` | a single writer | a layered skill store, `skill_propose` on the bus, a librarian agent, `skills.updated`, a versioned library, `TEAM.md` |
-| 45 | A2A for External Agents | `steps/ch39-a2a` | traits at the process boundary | A2A only for agents outside this process; MCP already covers tools, agents, and skills we expose |
-| 46 | Seeing Inside | `steps/ch40-tracing` | tracing | spans on the chapter 1 events and across the gateway, the same criterion bench with tracing on, a capstone research team that learns across runs |
-| 47 | Load and Token Capstone *(server)* | `steps/gw-capstone` | a load generator | the load test (throughput and p99) together with tokens per completed task for every tool, a static set, and a dynamic set, each with task success. Written. In memory. No socket |
-| 48 | Evals | `steps/ch41-evals` | a batch over the benches | re-run the saved tasks from chapter 9, plus trajectories, scored with the chapter 1 and chapter 9 benches, still with no fail threshold |
+| 41 | The Blackboard | `steps/ch41-blackboard` | shared state behind a lock | shared state, agents woken by a condition, a thin scheduler |
+| 42 | The Kanban Board | `steps/ch42-kanban` | a compare-and-swap claim | a durable board; separate processes claim, complete, review, or block a task |
+| 43 | The Message Bus | `steps/ch43-message-bus` | bounded channels | peer-to-peer messaging with backpressure |
+| 44 | Shared Team Skills | `steps/ch44-team-skills` | a single writer | a layered skill store, `skill_propose` on the bus, a librarian agent, `skills.updated`, a versioned library, `TEAM.md` |
+| 45 | A2A for External Agents | `steps/ch45-a2a` | traits at the process boundary | A2A only for agents outside this process; MCP already covers tools, agents, and skills we expose |
+| 46 | Seeing Inside | `steps/ch46-tracing` | tracing | spans on the chapter 1 events and across the gateway, the same criterion bench with tracing on, a capstone research team that learns across runs |
+| 47 | Load and Token Capstone *(server)* | `steps/ch47-capstone` | a load generator | the load test (throughput and p99) together with tokens per completed task for every tool, a static set, and a dynamic set, each with task success. Written. In memory. No socket |
+| 48 | Evals | `steps/ch48-evals` | a batch over the benches | re-run the saved tasks from chapter 9, plus trajectories, scored with the chapter 1 and chapter 9 benches, still with no fail threshold |
 
 **Guardrail notes**
 
@@ -207,7 +207,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 - **Chapter 47.** *(server)* The dynamic arm measured 245.5 ns. A load of 100 in-memory dispatches measured 30.05 µs. Tokens are 128, 32, and 4, each with task success for `tool_07`. oha is not measured: this step does not bind a socket.
 - **Chapter 48.** Re-running the saved eval set (measured 51.1 ns), and one hundred mock trajectories, stays inside the worker bound. Appending one trajectory event is < 1 ms (measured 81.3 ns). There is no fail threshold.
 
-Chapters 1 through 4, chapter 6, and chapters 9 through 20 have harness step crates. Chapter 6 is five sections under `steps/ch05-*`. Chapter 9 is ten sections under `steps/ch06-*`, and the section labels in that chapter stay 6.1–6.10 so they match the crates. Chapter 10 is `steps/ch07-turn-state`. Chapters 5, 7, 8, 15, and 21 have server step crates. `mcp-gateway` re-exports the chapter 21 learned gateway, which wraps the chapter 15 limits and still opens an empty catalog. Chapter 6's 10,000-tool benches still use a synthetic catalog. A real `tools/list` enters that cache through `cards_from_listed`. Chapter 9 starts a saved eval set that later chapters re-run, and chapter 48 scores that set. Pull requests and pushes to `main` report the Criterion median, low, and high in the Benchmarks workflow and upload one JSON artifact per commit. A push to `main` appends the run to the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/) on `gh-pages`. The same job still updates the `dev/bench` chart when it can publish. There is no fail threshold. Chapters 41 through 48 are written. Their step crates are in the workspace, and `steps/gw-capstone` does not bind a socket. The same list is `.github/chapters.json`, which CI uses. Every chapter row in `book/SUMMARY.md` links a chapter file. Planned harness steps keep the directory names already in the CI filters (`ch07-turn-state` is book chapter 10). Server steps use the `gw-` prefix.
+Chapters 1 through 4, chapter 6, and chapters 9 through 20 have harness step crates. Chapter 6 is five sections under `steps/ch06-*`. Chapter 9 is ten sections under `steps/ch09-*`, and the section labels in that chapter stay 9.1–9.10 so they match the crates. Chapter 10 is `steps/ch10-turn-state`. Chapters 5, 7, 8, 15, and 21 have server step crates. `mcp-gateway` re-exports the chapter 21 learned gateway, which wraps the chapter 15 limits and still opens an empty catalog. Chapter 6's 10,000-tool benches still use a synthetic catalog. A real `tools/list` enters that cache through `cards_from_listed`. Chapter 9 starts a saved eval set that later chapters re-run, and chapter 48 scores that set. Pull requests and pushes to `main` report the Criterion median, low, and high in the Benchmarks workflow and upload one JSON artifact per commit. A push to `main` appends the run to the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/) on `gh-pages`. The same job still updates the `dev/bench` chart when it can publish. There is no fail threshold. Chapters 41 through 48 are written. Their step crates are in the workspace, and `steps/ch47-capstone` does not bind a socket. The same list is `.github/chapters.json`, which CI uses. Every chapter row in `book/SUMMARY.md` links a chapter file. Planned harness steps keep the directory names already in the CI filters (`ch10-turn-state` is book chapter 10). Server steps use the `gw-` prefix.
 
 **Recurring sidebars:**
 

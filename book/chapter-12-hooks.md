@@ -4,11 +4,11 @@
 
 Chapter 11 can refuse a command. It cannot refuse an arbitrary tool because a plugin said so, and it cannot rewrite the arguments on the way in. This chapter adds that slot. A hook runs before the tool, and another runs after. A third sees the messages that are about to be sent, by borrow. A memory backend records the turn on a queue. The queue is the trait chapter 19 will fill with files.
 
-The step crate is `steps/ch10-hooks`. The book number is 12. The package is `ch10-hooks`. It depends on `ch09-approvals`.
+The step crate is `steps/ch12-hooks`. The book number is 12. The package is `ch12-hooks`. It depends on `ch11-approvals`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 12 | `steps/ch10-hooks` | `ToolHook`, `ApiHook`, `MemoryBackend` |
+| 12 | `steps/ch12-hooks` | `ToolHook`, `ApiHook`, `MemoryBackend` |
 
 > **How Hermes does it**
 >
@@ -60,7 +60,7 @@ Eight tests. A modify sticks when a later hook blocks, and that block beats an e
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch10-hooks
+cargo nextest run --locked -p ch12-hooks
 ```
 
 ```text
@@ -69,7 +69,7 @@ Starting 8 tests across 3 binaries
 ```
 
 ```bash
-cargo run -p ch10-hooks
+cargo run -p ch12-hooks
 ```
 
 ```text

@@ -4,11 +4,11 @@
 
 Chapter 45 calls out of the process. Nothing in that call says how long it took, or which event it was, without putting the prompt in the log. This chapter is a span per event, a gateway child span, and a research team that writes a note the next run can see.
 
-The step crate is `steps/ch40-tracing`. The book number is 46. The package is `ch40-tracing`. The library crate is `spans`, so it does not shadow the `tracing` dependency.
+The step crate is `steps/ch46-tracing`. The book number is 46. The package is `ch46-tracing`. The library crate is `spans`, so it does not shadow the `tracing` dependency.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 46 | `steps/ch40-tracing` | a counting subscriber, content-free event names, 100 mock researchers |
+| 46 | `steps/ch46-tracing` | a counting subscriber, content-free event names, 100 mock researchers |
 
 > **How Hermes does it**
 >
@@ -47,7 +47,7 @@ Three tests. A secret prompt yields sink `["request", "response", "gateway"]`, a
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch40-tracing
+cargo nextest run --locked -p ch46-tracing
 ```
 
 ```text
@@ -55,7 +55,7 @@ cargo nextest run --locked -p ch40-tracing
 ```
 
 ```bash
-cargo run -p ch40-tracing
+cargo run -p ch46-tracing
 ```
 
 ```text

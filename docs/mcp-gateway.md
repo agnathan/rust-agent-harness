@@ -10,7 +10,7 @@ Priority 1 is token efficiency through dynamic toolsets. Priority 2 is high avai
 
 **Server.** It holds the catalog: native tools, tools federated from upstream MCP servers, and tools loaded from runtime plugins. It searches that catalog itself (BM25 plus embeddings). It exposes `search_tools`, a filtered toolset per session and per client, and `set_task` for a task-shaped starter set. When the offered set changes it sends `notifications/tools/list_changed`. Schemas on the wire stay compact; the full docs are a separate request. It can offer a composite (macro) tool and a code-mode tool. Large results are paged or summarized. Per session it records schema tokens, call tokens, result tokens, and tools that were offered and never called.
 
-The harness chapter that is already written (book chapter 6, crates `steps/ch05-*`) is the client half of this split. It measures schema cost, builds a BM25 index, reveals tools append-only, and caches `tools/list`. It does not search a remote catalog. Book chapter 5 is the process that will hold the catalog. Book chapter 7 is the server-side index.
+The harness chapter that is already written (book chapter 6, crates `steps/ch06-*`) is the client half of this split. It measures schema cost, builds a BM25 index, reveals tools append-only, and caches `tools/list`. It does not search a remote catalog. Book chapter 5 is the process that will hold the catalog. Book chapter 7 is the server-side index.
 
 ## What I read
 
@@ -80,7 +80,7 @@ These are the designs that sit in front of many MCP servers. The notes are from 
 
 ## Reading order
 
-Server-track chapters are marked *(server)*. Each one sits after the harness chapter it builds on. Step directories for the written harness chapters stay `steps/ch05-*` (book chapter 6) and `steps/ch06-*` (book chapter 9). `steps/gw-minimal-server`, `steps/gw-catalog`, `steps/gw-session-toolsets`, `steps/gw-limits`, `steps/gw-learned-tools`, `steps/gw-balancing`, `steps/gw-service`, and `steps/gw-capstone` exist. None of them bind a socket.
+Server-track chapters are marked *(server)*. Each one sits after the harness chapter it builds on. Step directories for the written harness chapters stay `steps/ch06-*` (book chapter 6) and `steps/ch09-*` (book chapter 9). `steps/ch05-minimal-server`, `steps/ch07-catalog`, `steps/ch08-session-toolsets`, `steps/ch15-limits`, `steps/ch21-learned-tools`, `steps/ch35-balancing`, `steps/ch38-service`, and `steps/ch47-capstone` exist. None of them bind a socket.
 
 | Ch | Track | After | What it adds |
 |---|---|---|---|
@@ -89,7 +89,7 @@ Server-track chapters are marked *(server)*. Each one sits after the harness cha
 | 6 | harness | — | Thousands of Tools. Written. The client half of the catalog. |
 | 7 | *(server)* | chapter 6 | Dynamic catalog and server-side BM25 plus embeddings. |
 | 8 | *(server)* | chapter 7 | Per-session toolsets, `set_task`, `list_changed`, compact schemas, token telemetry. |
-| 9 | harness | — | The agent loop. Written. Section crates stay `ch06-*`. |
+| 9 | harness | — | The agent loop. Written. Section crates stay `ch09-*`. |
 | 14 | harness | — | When Things Fail. |
 | 15 | *(server)* | chapter 14 | Timeouts, idempotent-only retries, circuit breakers, queues, concurrency limits. |
 | 18–20 | harness | — | Sessions, memory, recall. |

@@ -4,11 +4,11 @@
 
 Chapter 4 can talk to an MCP server. It cannot be one. The harness decides what enters a prompt. Something else has to hold the tool list and run the call. This chapter is that process, in the smallest form that is still a server: a fixed list, a session view of that list, and a gate on how many calls may be inside.
 
-The step crate is `steps/gw-minimal-server`. The package is `gw-minimal-mcp-gateway`. It binds no socket. Streamable HTTP, replicas, and OAuth are chapter 38. The catalog search is chapter 7.
+The step crate is `steps/ch05-minimal-server`. The package is `ch05-minimal-server`. It binds no socket. Streamable HTTP, replicas, and OAuth are chapter 38. The catalog search is chapter 7.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 5 | `steps/gw-minimal-server` | a fixed tool list, `echo`, and a gate of 32 accepted calls with 8 running |
+| 5 | `steps/ch05-minimal-server` | a fixed tool list, `echo`, and a gate of 32 accepted calls with 8 running |
 
 > **How Hermes does it**
 >
@@ -53,7 +53,7 @@ A `Semaphore` starts with N permits. `acquire_owned` returns a permit value. Dro
 From the repository root.
 
 ```bash
-cargo nextest run --locked -p gw-minimal-mcp-gateway
+cargo nextest run --locked -p ch05-minimal-server
 ```
 
 ```text
@@ -64,7 +64,7 @@ Starting 3 tests across 3 binaries
 The three tests are the empty gateway, echo plus the duplicate, and the 32/8 gate. The gate test is the slow one, about 128 ms, because the tasks sleep.
 
 ```bash
-cargo run -p gw-minimal-mcp-gateway
+cargo run -p ch05-minimal-server
 ```
 
 ```text
@@ -84,7 +84,7 @@ The bench is `benches/gate.rs`. Criterion warm-up is 1 second, measurement is 2 
 
 `echo_through_gate` builds the runtime (4 workers) and the gate outside the sample. The timed closure takes one accept permit, waits for an execute permit, and returns the string `hello`. `eight_concurrent_sleeps` spawns eight tasks inside the sample. Each sleeps 1 ms while holding an execute permit. Setup of the runtime is excluded. Nothing is a model. The 2.129 ms number is one wave of eight 1 ms sleeps plus scheduling.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38863938100](https://github.com/agnathan/rust-agent-harness/actions/runs/38863938100), section `gw5`.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38863938100](https://github.com/agnathan/rust-agent-harness/actions/runs/38863938100), section `5` (recorded as `gw5`).
 
 ### Milestone demo
 

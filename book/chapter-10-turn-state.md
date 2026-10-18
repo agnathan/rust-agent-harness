@@ -4,11 +4,11 @@
 
 Chapter 9 returns one `TurnOutcome` when a turn ends. The loop that produces it is a nest of checks. This chapter pulls the legal moves out into a table a test can exhaust. The table does not call a model, repair a name, or run a tool. Chapter 9 still does that work. This chapter says which phase is allowed to follow which event.
 
-The step crate is `steps/ch07-turn-state`. The directory name stays `ch07-turn-state` so it matches the CI filter. The book number is 10. The package is `ch07-turn-state`.
+The step crate is `steps/ch10-turn-state`. The directory name stays `ch10-turn-state` so it matches the CI filter. The book number is 10. The package is `ch10-turn-state`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 10 | `steps/ch07-turn-state` | `Phase`, `TurnEvent`, and `step` |
+| 10 | `steps/ch10-turn-state` | `Phase`, `TurnEvent`, and `step` |
 
 > **How Hermes does it**
 >
@@ -71,7 +71,7 @@ Five tests: the full pair grid, a tool-then-text finish, soft stop versus budget
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch07-turn-state
+cargo nextest run --locked -p ch10-turn-state
 ```
 
 ```text
@@ -80,7 +80,7 @@ Starting 5 tests across 3 binaries
 ```
 
 ```bash
-cargo run -p ch07-turn-state
+cargo run -p ch10-turn-state
 ```
 
 ```text

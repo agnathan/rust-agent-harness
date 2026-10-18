@@ -4,11 +4,11 @@
 
 Chapter 44 shares a skill inside this process. An agent in another process is not a waiter on that board and not a subscriber on that bus. Hermes uses A2A for that boundary. MCP stays the tool boundary. This chapter is the external call: a trait, a pool of 8, and a cancel flag.
 
-The step crate is `steps/ch39-a2a`. The book number is 45. The package is `ch39-a2a`.
+The step crate is `steps/ch45-a2a`. The book number is 45. The package is `ch45-a2a`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 45 | `steps/ch39-a2a` | `ExternalAgent` for a remote peer, the bound of 8, cancel |
+| 45 | `steps/ch45-a2a` | `ExternalAgent` for a remote peer, the bound of 8, cancel |
 
 > **How Hermes does it**
 >
@@ -49,7 +49,7 @@ Six tests. `local://supervisor` is `InProcess`, the pool stays at 0, and the URL
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch39-a2a
+cargo nextest run --locked -p ch45-a2a
 ```
 
 ```text
@@ -57,7 +57,7 @@ cargo nextest run --locked -p ch39-a2a
 ```
 
 ```bash
-cargo run -p ch39-a2a
+cargo run -p ch45-a2a
 ```
 
 ```text

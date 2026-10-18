@@ -4,11 +4,11 @@
 
 Chapter 39 claims a job that nobody is watching. An editor is watching. This chapter is ACP, the Agent Client Protocol, as another client of the session inbox. An update becomes one message. A finished turn and a cancelled turn are different stop reasons. The JSON-RPC line is stdout. A log line is stderr. An unknown permission denies.
 
-The step crate is `steps/ch34-acp`. The book number is 40. The package is `ch34-acp`.
+The step crate is `steps/ch40-acp`. The book number is 40. The package is `ch40-acp`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 40 | `steps/ch34-acp` | one inbox message per update, `end_turn` or `cancelled`, stdout kept for the protocol |
+| 40 | `steps/ch40-acp` | one inbox message per update, `end_turn` or `cancelled`, stdout kept for the protocol |
 
 > **How Hermes does it**
 >
@@ -47,7 +47,7 @@ Five tests. The two stop reasons stringify to `end_turn` and `cancelled`. A log 
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch34-acp
+cargo nextest run --locked -p ch40-acp
 ```
 
 ```text
@@ -55,7 +55,7 @@ cargo nextest run --locked -p ch34-acp
 ```
 
 ```bash
-cargo run -p ch34-acp
+cargo run -p ch40-acp
 ```
 
 ```text

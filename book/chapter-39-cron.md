@@ -4,11 +4,11 @@
 
 Chapter 38 routes a live call. A cron job is not a live call. It is due, or it is not, and two processes must not both run it. This chapter claims a job for one owner. A crash may release that claim once. The second crash leaves it held. The prompt is scanned before the claim. A job that would restart or stop the gateway is blocked. Scanning a thousand due jobs does not tick the watchdog and does not chain the next job.
 
-The step crate is `steps/ch33-cron`. The book number is 39. The package is `ch33-cron`.
+The step crate is `steps/ch39-cron`. The book number is 39. The package is `ch39-cron`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 39 | `steps/ch33-cron` | one claim, one crash retry, a prompt scan, the lifecycle guard |
+| 39 | `steps/ch39-cron` | one claim, one crash retry, a prompt scan, the lifecycle guard |
 
 > **How Hermes does it**
 >
@@ -49,7 +49,7 @@ Six tests. Owner 1 claims, owner 2 loses, a crash lets owner 2 claim, and a seco
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch33-cron
+cargo nextest run --locked -p ch39-cron
 ```
 
 ```text
@@ -57,7 +57,7 @@ cargo nextest run --locked -p ch33-cron
 ```
 
 ```bash
-cargo run -p ch33-cron
+cargo run -p ch39-cron
 ```
 
 ```text

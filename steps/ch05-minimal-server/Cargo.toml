@@ -1,0 +1,27 @@
+[package]
+name = "ch05-minimal-server"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+description = "Chapter 5: a minimal MCP gateway with a fixed tool list and a 32/8 call gate."
+
+[lib]
+name = "gw_minimal"
+
+[[bin]]
+name = "ch05-minimal-server"
+path = "src/main.rs"
+
+[dependencies]
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync", "time"] }
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["async_tokio"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync", "time"] }
+
+[[bench]]
+name = "gate"
+harness = false

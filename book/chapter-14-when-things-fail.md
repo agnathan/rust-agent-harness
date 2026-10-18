@@ -4,11 +4,11 @@
 
 Chapter 13 can kill a child that does not finish. It does not decide what the turn should do next. An empty reply, a reply cut off for length, a reply that repeats one span, a timeout, and a crashed session are different failures. This chapter names them and picks retry, fallback, or stop. The empty-reply retries and the repetition guard were deferred from chapter 9. They land here.
 
-The step crate is `steps/ch12-when-things-fail`. The book number is 14. The package is `ch12-when-things-fail`.
+The step crate is `steps/ch14-when-things-fail`. The book number is 14. The package is `ch14-when-things-fail`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 14 | `steps/ch12-when-things-fail` | `Kind`, empty retries, repetition, a timeout that drops its permit |
+| 14 | `steps/ch14-when-things-fail` | `Kind`, empty retries, repetition, a timeout that drops its permit |
 
 > **How Hermes does it**
 >
@@ -55,7 +55,7 @@ Eight tests. The budgets are 3 and 1. Two matching zero-output empties are deter
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch12-when-things-fail
+cargo nextest run --locked -p ch14-when-things-fail
 ```
 
 ```text
@@ -64,7 +64,7 @@ Starting 8 tests across 3 binaries
 ```
 
 ```bash
-cargo run -p ch12-when-things-fail
+cargo run -p ch14-when-things-fail
 ```
 
 ```text

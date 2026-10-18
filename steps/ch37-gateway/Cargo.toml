@@ -1,0 +1,21 @@
+[package]
+name = "ch37-gateway"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+description = "Chapter 37: the chat gateway. Allowlist, pairing, and the session inbox."
+
+[lib]
+name = "gateway"
+
+[[bin]]
+name = "ch37-gateway"
+path = "src/main.rs"
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "gateway"
+harness = false

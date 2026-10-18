@@ -49,9 +49,9 @@ Open this repo in GitHub Codespaces. The dev container installs stable Rust (cli
 
 ```bash
 rustc --version
-cargo nextest run -p ch01-4-harness-core -p ch02-harness-core -p ch04-4-harness-core -p ch05-5-harness-core -p ch06-10-harness-core --locked
+cargo nextest run -p ch01-4-harness-core -p ch02-harness-core -p ch04-4-harness-core -p ch06-5-harness-core -p ch09-10-harness-core --locked
 cargo run -p ch04-4-harness-cli -- --mock ask "hello"
-cargo run -p ch06-1-harness-cli -- ask "say hello"
+cargo run -p ch09-1-harness-cli -- ask "say hello"
 mdbook build book
 ```
 
@@ -68,77 +68,77 @@ Chapters 0 through 48, in six parts. Eight chapters are a standalone MCP gateway
 | 2 | Conversations | `steps/ch02-conversations` | a real conversation, a cache-stable system prompt, a `chat` REPL, and the session inbox |
 | 3 | Tools | `steps/ch03-1-registry`, `ch03-2-toolsets`, `ch03-3-dispatch` | an MCP-shaped tool trait, named toolsets gated on env and checks, concurrent reads and exclusive writes |
 | 4 | MCP Client | `steps/ch04-1-stdio`, `ch04-2-http`, `ch04-3-registry`, `ch04-4-cache` | `rmcp` over stdio and streamable HTTP; MCP and native tools share one scheduler; a cached `tools/list` |
-| 5 | A Minimal MCP Server *(server)* | `steps/gw-minimal-server` | an empty catalog in `mcp-gateway/`; no socket yet |
-| 6 | Thousands of Tools | `steps/ch05-1-schema-cost`, `ch05-2-tool-index`, `ch05-3-search-tool`, `ch05-4-routing`, `ch05-5-lazy-list` | the client half: schema cost, a search index, `search_tools`, routing, a cached list. Crates stay `ch05-*` |
-| 7 | Dynamic Catalog *(server)* | `steps/gw-catalog` | server-side BM25 plus embeddings, and a catalog reload. Not written |
-| 8 | Session Toolsets *(server)* | `steps/gw-session-toolsets` | per-session toolsets, `set_task`, compact schemas, token telemetry. Not written |
-| 9 | The Agent Loop | `steps/ch06-10-evals` | model, tools, results, repeat; cancellation; validation; stall; budget; truncation; steering; canonical args; a typed outcome; stress evals. Sections stay 6.1–6.10 |
-| 10 | The Turn State Machine | `steps/ch07-turn-state` | one explicit turn, right after the loop |
-| 11 | Approvals and Guardrails | `steps/ch09-approvals` | risk levels, human or second-model review or skip, one approval prompt at a time |
-| 12 | Hooks and Plugins | `steps/ch10-hooks` | before/after tool hooks, API-request hooks, rewritten tool results, a swappable memory backend |
-| 13 | Sandboxed Execution | `steps/ch11-sandbox` | a code tool outside the process, plus file checkpoint and rewind |
-| 14 | When Things Fail | `steps/ch12-when-things-fail` | classify failures, retry, fall back, including MCP crashes and reconnects |
-| 15 | Limits and Breakers *(server)* | `steps/gw-limits` | timeouts, idempotent-only retries, breakers, queues |
-| 16 | Providers | `steps/ch13-providers` | native Anthropic and Bedrock adapters, OpenRouter fallback and routing, key rotation, a cheaper side model |
-| 17 | Streaming | `steps/ch14-streaming` | the same events, as tokens arrive |
+| 5 | A Minimal MCP Server *(server)* | `steps/ch05-minimal-server` | an empty catalog in `mcp-gateway/`; no socket yet |
+| 6 | Thousands of Tools | `steps/ch06-1-schema-cost`, `ch06-2-tool-index`, `ch06-3-search-tool`, `ch06-4-routing`, `ch06-5-lazy-list` | the client half: schema cost, a search index, `search_tools`, routing, a cached list. Crates stay `ch06-*` |
+| 7 | Dynamic Catalog *(server)* | `steps/ch07-catalog` | server-side BM25 plus embeddings, and a catalog reload. Not written |
+| 8 | Session Toolsets *(server)* | `steps/ch08-session-toolsets` | per-session toolsets, `set_task`, compact schemas, token telemetry. Not written |
+| 9 | The Agent Loop | `steps/ch09-10-evals` | model, tools, results, repeat; cancellation; validation; stall; budget; truncation; steering; canonical args; a typed outcome; stress evals. Sections stay 9.1–9.10 |
+| 10 | The Turn State Machine | `steps/ch10-turn-state` | one explicit turn, right after the loop |
+| 11 | Approvals and Guardrails | `steps/ch11-approvals` | risk levels, human or second-model review or skip, one approval prompt at a time |
+| 12 | Hooks and Plugins | `steps/ch12-hooks` | before/after tool hooks, API-request hooks, rewritten tool results, a swappable memory backend |
+| 13 | Sandboxed Execution | `steps/ch13-sandbox` | a code tool outside the process, plus file checkpoint and rewind |
+| 14 | When Things Fail | `steps/ch14-when-things-fail` | classify failures, retry, fall back, including MCP crashes and reconnects |
+| 15 | Limits and Breakers *(server)* | `steps/ch15-limits` | timeouts, idempotent-only retries, breakers, queues |
+| 16 | Providers | `steps/ch16-providers` | native Anthropic and Bedrock adapters, OpenRouter fallback and routing, key rotation, a cheaper side model |
+| 17 | Streaming | `steps/ch17-streaming` | the same events, as tokens arrive |
 
 **Part II: Learning**
 
 | Ch | Title | Step | You add |
 |---|---|---|---|
-| 18 | Sessions on Disk | `steps/ch15-sessions` | SQLite sessions (append-only, WAL) and resume |
-| 19 | Memory Files | `steps/ch16-memory` | `MEMORY.md` / `USER.md`, the `memory` tool, a frozen system-prompt snapshot |
-| 20 | Recall | `steps/ch17-recall` | FTS5 `session_search`: discover, scroll, read, browse |
-| 21 | Learned Tools *(server)* | `steps/gw-learned-tools` | a predicted offer, composite and macro tools, a code-mode script |
-| 22 | Using Skills | `steps/ch18-skills` | `SKILL.md`, a cache-stable `<available_skills>` index, `skills_list` / `skill_view` |
-| 23 | Writing Skills | `steps/ch19-skill-writing` | create, patch, delete, a scanner, the approval gate, read-before-write |
-| 24 | The Reflection Loop | `steps/ch20-reflection` | nudge counters and a forked reviewer with only skill and memory tools |
-| 25 | Curation | `steps/ch21-curation` | stale to archived, pinning, backups, optional consolidation |
+| 18 | Sessions on Disk | `steps/ch18-sessions` | SQLite sessions (append-only, WAL) and resume |
+| 19 | Memory Files | `steps/ch19-memory` | `MEMORY.md` / `USER.md`, the `memory` tool, a frozen system-prompt snapshot |
+| 20 | Recall | `steps/ch20-recall` | FTS5 `session_search`: discover, scroll, read, browse |
+| 21 | Learned Tools *(server)* | `steps/ch21-learned-tools` | a predicted offer, composite and macro tools, a code-mode script |
+| 22 | Using Skills | `steps/ch22-skills` | `SKILL.md`, a cache-stable `<available_skills>` index, `skills_list` / `skill_view` |
+| 23 | Writing Skills | `steps/ch23-skill-writing` | create, patch, delete, a scanner, the approval gate, read-before-write |
+| 24 | The Reflection Loop | `steps/ch24-reflection` | nudge counters and a forked reviewer with only skill and memory tools |
+| 25 | Curation | `steps/ch25-curation` | stale to archived, pinning, backups, optional consolidation |
 
 **Part III: The team patterns**
 
 | Ch | Title | Step | You add |
 |---|---|---|---|
-| 26 | The Sequential Pipeline | `steps/ch22-pipeline` | outline, draft, critique, revise; an agent as a reusable value |
-| 27 | The Supervisor | `steps/ch23-supervisor` | the default team: manager, agents-as-tools, fan-out under a bound, `Arc` context |
-| 28 | Handoffs | `steps/ch24-handoffs` | ownership transfer, handoff-as-tool, max-handoff limit, context filtering |
-| 29 | Fan-out and Gather | `steps/ch25-fan-out` | parallel specialists, a worker limit, an aggregator |
-| 30 | The Critic | `steps/ch26-critic` | an evaluator as a tool and as a final gate |
-| 31 | Composing Patterns | `steps/ch27-composition` | a supervisor that fans out and hands off only when ownership moves |
+| 26 | The Sequential Pipeline | `steps/ch26-pipeline` | outline, draft, critique, revise; an agent as a reusable value |
+| 27 | The Supervisor | `steps/ch27-supervisor` | the default team: manager, agents-as-tools, fan-out under a bound, `Arc` context |
+| 28 | Handoffs | `steps/ch28-handoffs` | ownership transfer, handoff-as-tool, max-handoff limit, context filtering |
+| 29 | Fan-out and Gather | `steps/ch29-fan-out` | parallel specialists, a worker limit, an aggregator |
+| 30 | The Critic | `steps/ch30-critic` | an evaluator as a tool and as a final gate |
+| 31 | Composing Patterns | `steps/ch31-composition` | a supervisor that fans out and hands off only when ownership moves |
 
 **Part IV: Making it robust**
 
 | Ch | Title | Step | You add |
 |---|---|---|---|
-| 32 | Managing Context | `steps/ch28-context` | compression, summaries, `[SKILL_PRUNED]`, a memory flush |
-| 33 | Agents as Actors | `steps/ch29-actors` | one task per agent, the session inbox, backpressure |
-| 34 | Supervision and Restart | `steps/ch30-supervision` | restart a failed child |
-| 35 | Balancing and Federation *(server)* | `steps/gw-balancing` | per-tool pools and upstream MCP federation |
+| 32 | Managing Context | `steps/ch32-context` | compression, summaries, `[SKILL_PRUNED]`, a memory flush |
+| 33 | Agents as Actors | `steps/ch33-actors` | one task per agent, the session inbox, backpressure |
+| 34 | Supervision and Restart | `steps/ch34-supervision` | restart a failed child |
+| 35 | Balancing and Federation *(server)* | `steps/ch35-balancing` | per-tool pools and upstream MCP federation |
 
 **Part V: Running as a service**
 
 | Ch | Title | Step | You add |
 |---|---|---|---|
-| 36 | Profiles | `steps/ch31-profiles` | several personas, each with its own secrets, kept out of the prompt |
-| 37 | The Gateway | `steps/ch32-gateway` | allowlist, pairing, and platform messages into the session inbox. Not the MCP server |
-| 38 | MCP Gateway Service *(server)* | `steps/gw-service` | session routing, quotas, a drain, sampling and an OSV check. No socket |
-| 39 | Cron | `steps/ch33-cron` | one claim, one crash retry, a prompt scan, the lifecycle guard |
-| 40 | Editor Integration | `steps/ch34-acp` | ACP as another client of the session inbox, `end_turn` or `cancelled` |
+| 36 | Profiles | `steps/ch36-profiles` | several personas, each with its own secrets, kept out of the prompt |
+| 37 | The Gateway | `steps/ch37-gateway` | allowlist, pairing, and platform messages into the session inbox. Not the MCP server |
+| 38 | MCP Gateway Service *(server)* | `steps/ch38-service` | session routing, quotas, a drain, sampling and an OSV check. No socket |
+| 39 | Cron | `steps/ch39-cron` | one claim, one crash retry, a prompt scan, the lifecycle guard |
+| 40 | Editor Integration | `steps/ch40-acp` | ACP as another client of the session inbox, `end_turn` or `cancelled` |
 
 **Part VI: Loosely coupled teams**
 
 | Ch | Title | Step | You add |
 |---|---|---|---|
-| 41 | The Blackboard | `steps/ch35-blackboard` | shared state, condition-triggered agents, a thin scheduler |
-| 42 | The Kanban Board | `steps/ch36-kanban` | a durable board; processes claim, complete, review, or block |
-| 43 | The Message Bus | `steps/ch37-message-bus` | peer-to-peer messaging |
-| 44 | Shared Team Skills | `steps/ch38-team-skills` | a layered store, `skill_propose`, a librarian as the single writer |
-| 45 | A2A for External Agents | `steps/ch39-a2a` | A2A only for agents outside this process |
-| 46 | Seeing Inside | `steps/ch40-tracing` | spans on the chapter 1 events and across the gateway |
-| 47 | Load and Token Capstone *(server)* | `steps/gw-capstone` | load test plus tokens per completed task. No socket |
-| 48 | Evals | `steps/ch41-evals` | re-run the chapter 9 task names, plus trajectories, still with no fail threshold |
+| 41 | The Blackboard | `steps/ch41-blackboard` | shared state, condition-triggered agents, a thin scheduler |
+| 42 | The Kanban Board | `steps/ch42-kanban` | a durable board; processes claim, complete, review, or block |
+| 43 | The Message Bus | `steps/ch43-message-bus` | peer-to-peer messaging |
+| 44 | Shared Team Skills | `steps/ch44-team-skills` | a layered store, `skill_propose`, a librarian as the single writer |
+| 45 | A2A for External Agents | `steps/ch45-a2a` | A2A only for agents outside this process |
+| 46 | Seeing Inside | `steps/ch46-tracing` | spans on the chapter 1 events and across the gateway |
+| 47 | Load and Token Capstone *(server)* | `steps/ch47-capstone` | load test plus tokens per completed task. No socket |
+| 48 | Evals | `steps/ch48-evals` | re-run the chapter 9 task names, plus trajectories, still with no fail threshold |
 
-Chapters 1 through 48 have step crates. Chapter 5 has the `mcp-gateway` skeleton. The server steps, including `steps/gw-capstone`, do not bind a socket. The same list drives CI (`.github/chapters.json`).
+Chapters 1 through 48 have step crates. Chapter 5 has the `mcp-gateway` skeleton. The server steps, including `steps/ch47-capstone`, do not bind a socket. The same list drives CI (`.github/chapters.json`).
 
 The book builds with [mdBook](https://rust-lang.github.io/mdBook/): `mdbook build` in `book/` (output in `book/_build/`, not committed).
 

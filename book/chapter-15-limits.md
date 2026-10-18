@@ -6,11 +6,11 @@
 
 Chapter 14 names a failure and decides retry or fallback inside the harness. The tool call still arrives at a backend with no limit of its own. This chapter is the gateway. Each tool accepts 32 calls and runs 8. A retry, and a hedge, run only when that tool is marked idempotent. Three failures open a breaker, and the next call does not reach the backend. `web_search` and `delegate_task` stop at 50 for the turn.
 
-The step crate is `steps/gw-limits`. The book number is 15. The package is `gw-limits`. Chapter 21's process crate wraps `LimitedGateway`. A new gateway still has an empty catalog.
+The step crate is `steps/ch15-limits`. The book number is 15. The package is `ch15-limits`. Chapter 21's process crate wraps `LimitedGateway`. A new gateway still has an empty catalog.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 15 | `steps/gw-limits` | per-tool permits, idempotent retry, a breaker, the caps of 50 |
+| 15 | `steps/ch15-limits` | per-tool permits, idempotent retry, a breaker, the caps of 50 |
 
 > **How Hermes does it**
 >
@@ -59,7 +59,7 @@ Eight tests. An idempotent transport error retries once. A write does not retry,
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p gw-limits
+cargo nextest run --locked -p ch15-limits
 ```
 
 ```text
@@ -68,7 +68,7 @@ Starting 8 tests across 3 binaries
 ```
 
 ```bash
-cargo run -p gw-limits
+cargo run -p ch15-limits
 ```
 
 ```text

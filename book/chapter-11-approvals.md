@@ -4,11 +4,11 @@
 
 Chapter 10 will not start a tool. It will not refuse one either. A turn can sit in `Dispatching` and the loop from chapter 9 will run whatever name it repaired. This chapter is the check that runs first: a command is either allowed, denied, or handed to one human prompt. The prompt is the only place concurrent calls wait, and that wait does not hold a tool-concurrency permit.
 
-The step crate is `steps/ch09-approvals`. The directory name stays `ch09-approvals` so it matches the CI filter. The book number is 11. The package is `ch09-approvals`.
+The step crate is `steps/ch11-approvals`. The directory name stays `ch11-approvals` so it matches the CI filter. The book number is 11. The package is `ch11-approvals`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 11 | `steps/ch09-approvals` | `Risk`, the approval pipeline, one prompt, a fake model |
+| 11 | `steps/ch11-approvals` | `Risk`, the approval pipeline, one prompt, a fake model |
 
 > **How Hermes does it**
 >
@@ -62,7 +62,7 @@ Fourteen tests. Hardline still denies under YOLO and mode off. `echo "rm -rf /"`
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch09-approvals
+cargo nextest run --locked -p ch11-approvals
 ```
 
 ```text
@@ -71,7 +71,7 @@ Starting 14 tests across 3 binaries
 ```
 
 ```bash
-cargo run -p ch09-approvals
+cargo run -p ch11-approvals
 ```
 
 ```text
