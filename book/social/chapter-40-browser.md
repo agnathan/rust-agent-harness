@@ -13,7 +13,7 @@ Hermes Agent: tools/browser_tool.py sets DEFAULT_SNAPSHOT_THRESHOLD to 15000 and
 agent/tool_dispatch_helpers.py wraps names that start with browser_. The floor is 32 characters. A shorter click or type note stays plain text. plugins/browser/ (browserbase, browser_use, firecrawl) stays deferred.
 
 4/
-One canned navigation measured @@MEAN:40/fake_navigate@@. The id is new. The demo prints "browser: Notes".
+One canned navigation measured 1.97 µs, mean.point_estimate from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The id is new. The demo prints "browser: Notes".
 
 [personal note]
 
@@ -31,7 +31,7 @@ Hermes Agent opens a page only after the URL survives a secret check and a safet
 
 This chapter puts that behind PageBackend. Tests use FakeBrowser, which returns a canned page and does not dial. A metadata address is refused before open. The result JSON carries wrap_untrusted("browser_navigate", ...). Browserbase, browser-use, and Firecrawl stay deferred.
 
-One canned navigation measured @@MEAN:40/fake_navigate@@. The demo prints "browser: Notes".
+One canned navigation measured 1.97 µs, mean.point_estimate from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The demo prints "browser: Notes".
 
 [personal note: one takeaway from writing this chapter]
 

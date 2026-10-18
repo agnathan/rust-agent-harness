@@ -13,7 +13,7 @@ I looked for Hermes's ACP server. pyproject.toml names acp_adapter, and hermes_c
 What is there: agent/copilot_acp_client.py appends session/update chunks, and it answers session/request_permission with cancelled. Stdout is the JSON queue. Stderr is a side deque. This chapter's map denies an option id it does not know.
 
 4/
-The demo prints "acp: end_turn". The bench id is 44/translate_update. The old ids 42/translate_update and 40/translate_update are aliases. The mean is @@MEAN:44/translate_update@@ (`mean.point_estimate`).
+The demo prints "acp: end_turn". The bench id is 44/translate_update. The old ids 42/translate_update and 40/translate_update are aliases. The mean is 132.4 ns, mean.point_estimate from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573).
 
 [personal note]
 

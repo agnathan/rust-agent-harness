@@ -590,7 +590,7 @@ The binary places one session on the first replica. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `route_session` | @@MEAN:42/route_session@@ | a session id picks a replica | one map lookup after 64 placements |
+| `route_session` | 19.7 ns | a session id picks a replica | one map lookup after 64 placements |
 
 The function name is `route_session`. The bench id is `42/route_session`. The old ids `40/route_session` and `38/route_session` are aliases in `benchmarks/descriptions.json`. The function name did not change when the id moved. I did not rewrite gh-pages history.
 
@@ -611,7 +611,7 @@ fn route_session(c: &mut Criterion) {
 
 `Service::new` builds replicas `a` through `d` with quota 8 before the timer. `place` runs for `s0` through `s63`. Each lands on `a`, the first live name. The timed closure is `b.iter`. Inside it, `route` of `s0` is passed through `black_box`, then the `Option` is passed through `black_box`. The `HashMap` get is the sample. `place`, `kill`, `accept`, `Sampler`, `OsvCache`, and `FakeModel` are not called. No socket is opened. oha is not this number. The descriptions file says the result is `Some(a)`.
 
-`.github/scripts/run_bench_section.sh` runs `cargo bench -p ch42-service --bench service --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10` for section `42`. The Mean cell is `mean.point_estimate` from that workflow's `estimates.json`. Criterion also prints a `time:` line. That line is the slope. It is not this cell. I am not pasting a nanosecond figure in its place.
+The mean is `19.7 ns`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `42`. `.github/scripts/run_bench_section.sh` runs `cargo bench -p ch42-service --bench service --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10` for that section. The Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 
@@ -687,7 +687,7 @@ pub fn chapter_42_route_after_kill(killed: &str, other: &str) -> Option<String> 
 - **Bearer.** `Bearer ` plus a non-empty token with no space. Issuance stays deferred.
 - **Client checks.** Sampling at 10 per 60 seconds. Form elicitation at 300 seconds. URL mode declined. `MAL-*` cached for 3600 seconds. Network failure uncached.
 - **Model.** `FakeModel` answers `ok` and `demo` drops it. The line is `route: a`.
-- **Time.** `route_session` is `42/route_session`. The mean is @@MEAN:42/route_session@@.
+- **Time.** `route_session` mean `19.7 ns`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The Criterion `time:` line is the slope.
 
 [personal note: a failover that was a map update]
 

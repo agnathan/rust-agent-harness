@@ -413,9 +413,9 @@ The binary submits one turn to an empty inbox and prints the model reply. No key
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `inbox_submit` | @@MEAN:35/inbox_submit@@ | one `try_send` into an empty channel of 64 | `submit` of `Mail::Turn("hello")` |
+| `inbox_submit` | 250.1 ns | one `try_send` into an empty channel of 64 | `submit` of `Mail::Turn("hello")` |
 
-Each sample gets a new channel from the batch setup. The timed closure sends one turn. It does not fill the inbox. The Mean cell is `mean.point_estimate` for id `35/inbox_submit` from this PR's Benchmarks run. The printed Criterion `time:` line is the slope.
+Each sample gets a new channel from the batch setup. The timed closure sends one turn. It does not fill the inbox. The mean is `250.1 ns`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `35`. The id is `35/inbox_submit`. The old id `33/inbox_submit` is an alias in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The printed Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 
@@ -482,7 +482,7 @@ pub fn chapter_35_full_inbox_does_not_grow() -> bool {
 - **Mail.** `Turn` calls the model. `Steer` waits for a turn. `Interrupt` drops the next turn before `complete`.
 - **Tasks.** `fan` starts one tokio task per agent, each with its own channel of 64. One hundred tasks return one hundred replies.
 - **Demo.** `agent: ok`.
-- **Time.** Bench id `35/inbox_submit`. The Mean column is `mean.point_estimate` from this PR's Benchmarks run. The Criterion `time:` line is the slope.
+- **Time.** `inbox_submit` mean `250.1 ns`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The Criterion `time:` line is the slope.
 - **Hermes.** `gateway/turn_executor.py` has no queue and no cap. `gateway/session_bot.py` describes a delivery receipt. This mailbox is the harness inbox.
 
 [personal note: the sixty-fifth message was the one that had to wait outside]

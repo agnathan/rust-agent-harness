@@ -13,7 +13,7 @@ Hermes Agent at 9e01b44 is the MCP client. tools/mcp_tool_sampling.py defaults m
 tools/osv_check.py sets _TIMEOUT to 10 and _CACHE_TTL_S from OSV_CHECK_CACHE_TTL, default 3600. It keeps MAL-* ids, ignores a regular CVE, and on a network error returns without caching. tools/mcp_oauth.py is the OAuth 2.1 client. This crate checks a Bearer token. It does not issue one.
 
 4/
-The demo prints "route: a". The bench id is 42/route_session. The old ids 40/route_session and 38/route_session are aliases. The mean is @@MEAN:42/route_session@@ (`mean.point_estimate`).
+The demo prints "route: a". The bench id is 42/route_session. The old ids 40/route_session and 38/route_session are aliases. The mean is 19.7 ns, mean.point_estimate from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573).
 
 [personal note]
 

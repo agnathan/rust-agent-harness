@@ -555,7 +555,7 @@ The binary queues one turn and denies a stranger. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `enqueue_platform` | @@MEAN:39/enqueue_platform@@ | enqueue a platform message under 1 ms | one turn pushed onto an empty inbox of 64 |
+| `enqueue_platform` | 152.0 ns | enqueue a platform message under 1 ms | one turn pushed onto an empty inbox of 64 |
 
 `enqueue_platform` is `benches/gateway.rs`. The id is `39/enqueue_platform`. The alias `37/enqueue_platform` is the previous id of this same function. `40/fake_navigate` and `41/sniff_png` are new ids with empty alias lists. This one is not new.
 
@@ -576,7 +576,7 @@ fn enqueue_platform(c: &mut Criterion) {
 
 The setup closure calls `Inbox::new(64)` and is not timed. The timed routine builds `hello`, calls `submit` with `Message::Turn`, and passes both the string and the `Submit` through `black_box`. The queue is empty, so the result is `Accepted`. Pairing, `authorize`, `fold`, `handoff_request`, `gateway_lifecycle_block`, `send_out`, and `FakeModel` are not called. The `Full` path is not taken.
 
-The table is `mean.point_estimate` for that id. The Criterion `time:` line is the slope, not this cell. The flags are `--warm-up-time 1 --measurement-time 2 --sample-size 10`, from the chapter README and from `benchmarks/descriptions.json`.
+The mean is `152.0 ns`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `39`. The id is `39/enqueue_platform`. The old id `37/enqueue_platform` is an alias in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The Criterion `time:` line is the slope, not the mean. The flags are `--warm-up-time 1 --measurement-time 2 --sample-size 10`, from the chapter README and from `benchmarks/descriptions.json`.
 
 ### Milestone demo
 
@@ -658,7 +658,7 @@ pub fn chapter_39_enqueue_is_a_model_call() -> bool {
 - **B4.** A supervised restart, stop, or uninstall is blocked. An unsupervised command is not.
 - **Egress.** `send_out` is `redact_for_egress`.
 - **Model.** `demo` calls `FakeModel` and prints `gateway: queued`. The bench does not call it.
-- **Time.** One enqueue measured **@@MEAN:39/enqueue_platform@@**.
+- **Time.** `enqueue_platform` mean `152.0 ns`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The Criterion `time:` line is the slope.
 
 [personal note: a stranger who stayed outside, and a restart the supervised process refused]
 

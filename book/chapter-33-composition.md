@@ -506,9 +506,9 @@ The binary fans out two children, stays with the supervisor, and judges one scri
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `nested_eight` | @@MEAN:33/nested_eight@@ | eight children on the pool of 8 | `nested_fanout` with held 0 and width 8 |
+| `nested_eight` | 271.87 µs | eight children on the pool of 8 | `nested_fanout` with held 0 and width 8 |
 
-The pool is built before `b.iter`. The timed closure schedules eight `n{index}` tasks and gathers them on that pool with a zero hold. Width 9 is not in the sample. The Mean cell is `mean.point_estimate` for id `33/nested_eight` from this PR's Benchmarks run. The printed Criterion `time:` line is the slope.
+The pool is built before `b.iter`. The timed closure schedules eight `n{index}` tasks and gathers them on that pool with a zero hold. Width 9 is not in the sample. The mean is `271.87 µs`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `33`. The id is `33/nested_eight`. The old id `31/nested_eight` is an alias in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The printed Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 
@@ -580,7 +580,7 @@ pub fn chapter_33_refuses_width_nine_before_tasks_start() -> bool {
 - **Gates.** A failing gate does not call `as_tool`. Three retries, then `GatePaused`. The timeouts 30 and 300 are stored and are not slept in the loop.
 - **Cap.** Twenty turns return `LoopStop::Turns`.
 - **Demo.** `fan n0 | n1; owner supervisor; done`.
-- **Time.** Bench id `33/nested_eight`. The Mean column is `mean.point_estimate` from this PR's Benchmarks run. The Criterion `time:` line is the slope.
+- **Time.** `nested_eight` mean `271.87 µs`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The Criterion `time:` line is the slope.
 
 [personal note: the moment the ninth child was the bug]
 

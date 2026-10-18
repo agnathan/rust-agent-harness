@@ -432,11 +432,11 @@ cargo bench -p ch36-supervision --bench supervision --locked -- --warm-up-time 1
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `restart_bookkeeping` | @@MEAN:36/restart_bookkeeping@@ | the record, excluding the child's work | one `record(0)` on an empty supervisor |
+| `restart_bookkeeping` | 29.8 ns | the record, excluding the child's work | one `record(0)` on an empty supervisor |
 
 `restart_bookkeeping` is `benches/supervision.rs`. It uses `iter_batched`. The setup closure calls `Supervisor::new` and is not timed. The timed routine calls `record(0)` with the timestamp passed through `black_box`, then `black_box` of the bool. `BatchSize::SmallInput` builds a new supervisor for each sample. The chain length is 1, so the breaker does not trip. `FakeModel` is not constructed. `restart_child` is not called. `is_stale` is not called. No sleep runs. The 300 second gap is a comparison against the argument `0` on an empty vec, not a wait.
 
-The mean cell is `mean.point_estimate` for bench id `36/restart_bookkeeping`. The Criterion `time:` line is the slope, not that mean.
+The mean is `29.8 ns`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `36`. The id is `36/restart_bookkeeping`. The old id `34/restart_bookkeeping` is an alias in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 

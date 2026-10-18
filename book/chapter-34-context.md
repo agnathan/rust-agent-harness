@@ -505,9 +505,9 @@ The binary loads `AGENTS.md` as the two words `Be direct.`, shares the snapshot,
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `share_snapshot` | @@MEAN:34/share_snapshot@@ | one `Arc` of the rules text | `share`, which is `Arc::clone` |
+| `share_snapshot` | 4.86 ns | one `Arc` of the rules text | `share`, which is `Arc::clone` |
 
-The string is built before `b.iter`. The timed closure clones the `Arc`. It does not scan and it does not compress. The Mean cell is `mean.point_estimate` for id `34/share_snapshot` from this PR's Benchmarks run. The printed Criterion `time:` line is the slope.
+The string is built before `b.iter`. The timed closure clones the `Arc`. It does not scan and it does not compress. The mean is `4.86 ns`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `34`. The id is `34/share_snapshot`. The old id `32/share_snapshot` is an alias in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The printed Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 
@@ -580,7 +580,7 @@ pub fn chapter_34_hot_path_returns_the_same_arc() -> bool {
 - **Preflight.** Under the cap, no model call and no flush. Over the cap, one summary, a prune marker for a middle `skill_view`, and the latest user line in `flushed`.
 - **Snapshot.** Both paths, and `share`, clone the same `Arc`.
 - **Demo.** `shared: clean`.
-- **Time.** Bench id `34/share_snapshot`. The Mean column is `mean.point_estimate` from this PR's Benchmarks run. The Criterion `time:` line is the slope.
+- **Time.** `share_snapshot` mean `4.86 ns`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The Criterion `time:` line is the slope.
 
 [personal note: the rules stayed one allocation, and the transcript was what changed]
 

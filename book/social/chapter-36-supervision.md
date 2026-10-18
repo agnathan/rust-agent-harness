@@ -13,7 +13,7 @@ Hermes Agent at 9e01b44, tools/delegate_tool.py. _HEARTBEAT_INTERVAL = 30. _HEAR
 tools/delegate_tool_child_run.py picks stale_cycles: the in-tool constant when current_tool is set, otherwise the idle constant. The restart breaker is separate. gateway/restart_loop_guard.py uses 3, a 60 second window, and a 300 second gap. An I/O failure fails open. One scripted failure retries once.
 
 4/
-The bench is restart_bookkeeping: one record on an empty supervisor. The mean is @@MEAN:36/restart_bookkeeping@@ (`mean.point_estimate`). The demo prints "restarted: ok". No key.
+The bench is restart_bookkeeping: one record on an empty supervisor. The mean is 29.8 ns, mean.point_estimate from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The demo prints "restarted: ok". No key.
 
 [personal note]
 
@@ -29,7 +29,7 @@ Chapter 36 is out: Supervision and Restart.
 
 A failed child needs two different decisions. Hermes Agent heartbeats a delegated child every 30 seconds. Idle is stale at 15 cycles, 450 seconds. A child inside a tool gets 40 cycles, 1200 seconds. The comment in tools/delegate_tool.py says progress is iteration, current_tool, or last_activity_ts. I implemented that check as is_stale. It divides elapsed seconds by 30 and compares. It does not sleep and it does not start a thread. The restart breaker still trips at three chained boots, with a 300 second gap, and an I/O failure stays open. One scripted failure retries once. The bench records one boot and does not call the child.
 
-The mean for restart_bookkeeping is @@MEAN:36/restart_bookkeeping@@.
+The mean for restart_bookkeeping is 29.8 ns.
 
 [personal note]
 

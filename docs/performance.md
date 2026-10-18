@@ -66,18 +66,18 @@ Principles and the way to choose a team shape live next to this page: [team patt
 | 30 | Handoffs | Filtering a **100**-message transcript for a handoff **< 1 ms** (measured **2.664 µs**). |
 | 31 | Fan-out and Gather | The worker limit holds. **100** mock subagents can be scheduled without an unbounded queue (scheduling 100 measured **4.285 µs**). The 101st is refused. |
 | 32 | The Critic | The critic shares `Arc` context and takes one permit from the same bound (one judgment measured **196.6 ns**). |
-| 33 | Composing Patterns | Nested fan-out cannot exceed the worker limit. Eight children on the shared pool measured **270.8 µs**. Width 9 is refused before any task is scheduled. |
-| 34 | Managing Context | Compression and the memory flush run between turns or in the background. The hot path sends the `Arc` snapshot (measured **5.281 ns**). Preflight compression, deferred from chapter 9, runs before the model call. |
-| 35 | Agents as Actors | Session inbox capacity **64**. **100+** mock agents at once. A full inbox applies backpressure. One submit measured **289.2 ns**. |
-| 36 | Supervision and Restart | Restarting a failed child adds **< 1 ms**, excluding the child's work (one record measured **27.75 ns**). |
-| 37 | Balancing and Federation *(server)* | A per-tool pool picks a backend by least outstanding requests, or by power of two choices. Federated upstream MCP servers share that pool. One least-outstanding pick measured **3.739 ns**. Discovery connects at most **4** at once. |
-| 38 | Profiles | Resolving a profile and its secrets is **< 1 ms** (one resolve measured **95.95 ns**). Secrets are not copied into the prompt. |
-| 39 | The Gateway | Enqueue onto the session inbox is **< 1 ms** (one enqueue measured **174.5 ns**). A steer is a push onto that inbox. Streaming folds chapter 1 events into one message. This is the chat gateway, not the MCP server. |
-| 40 | Browser Tools | A canned navigation checks the URL, then reads a fake page. No browser process. |
-| 41 | Vision | A 1×1 PNG is sniffed in process. An oversized buffer or a bad type is refused. No vision API. |
-| 42 | MCP Gateway Service *(server)* | Killing one replica fails over by session id. Drain finishes in-flight calls. One route lookup measured **19.43 ns**. oha throughput is not measured: this step does not bind a socket. |
-| 43 | Cron | A crash retries a claimed job at most once. Scanning **1,000** due jobs is **< 10 ms** (measured **1.607 µs**). The watchdog and a chained job stay off the request path. |
-| 44 | Editor Integration | Translating an ACP update onto the session queue is **< 1 ms** (one translate measured **119.9 ns**). |
+| 33 | Composing Patterns | Nested fan-out cannot exceed the worker limit. Eight children on the shared pool measured **271.87 µs**. Width 9 is refused before any task is scheduled. |
+| 34 | Managing Context | Compression and the memory flush run between turns or in the background. The hot path sends the `Arc` snapshot (measured **4.86 ns**). Preflight compression, deferred from chapter 9, runs before the model call. |
+| 35 | Agents as Actors | Session inbox capacity **64**. **100+** mock agents at once. A full inbox applies backpressure. One submit measured **250.1 ns**. |
+| 36 | Supervision and Restart | Restarting a failed child adds **< 1 ms**, excluding the child's work (one record measured **29.8 ns**). |
+| 37 | Balancing and Federation *(server)* | A per-tool pool picks a backend by least outstanding requests, or by power of two choices. Federated upstream MCP servers share that pool. One least-outstanding pick measured **3.74 ns**. Discovery connects at most **4** at once. |
+| 38 | Profiles | Resolving a profile and its secrets is **< 1 ms** (one resolve measured **96.7 ns**). Secrets are not copied into the prompt. |
+| 39 | The Gateway | Enqueue onto the session inbox is **< 1 ms** (one enqueue measured **152.0 ns**). A steer is a push onto that inbox. Streaming folds chapter 1 events into one message. This is the chat gateway, not the MCP server. |
+| 40 | Browser Tools | A canned navigation checks the URL, then reads a fake page (measured **1.97 µs**). No browser process. |
+| 41 | Vision | A 1×1 PNG is sniffed in process (measured **11.2 ns**). An oversized buffer or a bad type is refused. No vision API. |
+| 42 | MCP Gateway Service *(server)* | Killing one replica fails over by session id. Drain finishes in-flight calls. One route lookup measured **19.7 ns**. oha throughput is not measured: this step does not bind a socket. |
+| 43 | Cron | A crash retries a claimed job at most once. Scanning **1,000** due jobs is **< 10 ms** (measured **1.75 µs**). The watchdog and a chained job stay off the request path. |
+| 44 | Editor Integration | Translating an ACP update onto the session queue is **< 1 ms** (one translate measured **132.4 ns**). |
 | 45 | The Blackboard | A claim **< 1 ms** with **100** waiters (measured **4.97 µs**). The lock is not held across a model call. |
 | 46 | The Kanban Board | Claim, complete, review, or block is one transaction **< 5 ms** (one claim measured **321.89 µs**). Two processes cannot hold the same task. |
 | 47 | The Message Bus | Publish of one small envelope **< 1 ms** at **100** agents (measured **45.75 µs**). Slow subscribers hit a bounded channel. |

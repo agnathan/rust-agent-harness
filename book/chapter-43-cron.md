@@ -541,7 +541,7 @@ The binary claims one clean job. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `scan_thousand` | @@MEAN:43/scan_thousand@@ | index 1,000 due jobs | `scan_due` at timestamp 0 |
+| `scan_thousand` | 1.75 µs | index 1,000 due jobs | `scan_due` at timestamp 0 |
 
 The function name is `scan_thousand`. The bench id is `43/scan_thousand`. The old ids `41/scan_thousand` and `39/scan_thousand` are aliases in `benchmarks/descriptions.json`. The function name did not change when the id moved.
 
@@ -562,7 +562,7 @@ fn scan_thousand(c: &mut Criterion) {
 
 The thousand `Job::new` calls happen before `b.iter`. Each id is `j0` through `j999`, due at 0, prompt `summarize`. The timed closure calls `scan_due` with timestamp 0 passed through `black_box`, then `black_box` of the index vec. The walk and the allocation of 1,000 indexes are inside the sample. Building the jobs is not. `scan_prompt`, `check_lifecycle`, `watchdog`, `chain`, and `FakeModel` are not called. No sleep runs. The descriptions file says every job is due, unclaimed, and not blocked, and the result is 1,000 indexes. The budget in the outline is that this scan stays under 10 milliseconds. The mean cell is the measurement, not that budget sentence.
 
-`.github/scripts/run_bench_section.sh` runs `cargo bench -p ch43-cron --bench cron --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10` for section `43`. The same flags are in `steps/ch43-cron/README.md`. The Mean cell is `mean.point_estimate` from that workflow's `estimates.json`. The Criterion `time:` line is the slope. It is not this cell.
+The mean is `1.75 µs`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `43`. The id is `43/scan_thousand`. The old ids `41/scan_thousand` and `39/scan_thousand` are aliases in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. `.github/scripts/run_bench_section.sh` runs `cargo bench -p ch43-cron --bench cron --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10` for that section. The same flags are in `steps/ch43-cron/README.md`. The Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 
@@ -638,7 +638,7 @@ pub fn chapter_43_lifecycle_allowed(command: &str) -> bool {
 - **M2.** `check_lifecycle` stays in this module. Chapter 39 does not take it.
 - **Off the path.** `watchdog` and `chain` are separate calls. `scan_due` only returns indexes.
 - **Model.** `FakeModel` answers `ok`. The demo line is `cron: claimed`.
-- **Time.** `scan_thousand` is `43/scan_thousand`. The mean is @@MEAN:43/scan_thousand@@.
+- **Time.** `scan_thousand` mean `1.75 µs`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The Criterion `time:` line is the slope.
 
 [personal note: a due list that was an index, and a job the scanner refused to claim]
 

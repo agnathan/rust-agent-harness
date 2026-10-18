@@ -13,7 +13,7 @@ Hermes Agent at 9e01b44. hermes_cli/goals.py: DEFAULT_MAX_TURNS is 20. DEFAULT_J
 tools/delegate_tool_config.py: MAX_DEPTH is 1. The default concurrent-children cap is 10. This pool's limit is WORKER_BOUND, 8. A red gate does not call as_tool. Four failures pause. The 30 and the 300 are not slept.
 
 4/
-The bench id is 33/nested_eight. The mean is @@MEAN:33/nested_eight@@ (`mean.point_estimate`). The demo prints "fan n0 | n1; owner supervisor; done". No key.
+The bench id is 33/nested_eight. The mean is 271.87 µs, mean.point_estimate from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The demo prints "fan n0 | n1; owner supervisor; done". No key.
 
 [personal note]
 
@@ -29,7 +29,7 @@ Chapter 33 is out: Composing Patterns.
 
 A fan-out under a supervisor still has to fit the pool. Hermes Agent caps a goal at 20 turns, times the judge at 30.0 seconds, times a quality gate at 300 seconds, and allows 3 gate retries. The judge's wait target prefers a session, then a pid, then seconds. I stored those numbers, refused held plus width past the pool limit before schedule, and ran scripted gate exits before as_tool. The pool the tests build has limit 8. Hermes's default concurrent-children cap in tools/delegate_tool_config.py is 10. MAX_DEPTH there is 1. A red gate does not call the judge. Nothing in the loop sleeps 30 or 300.
 
-The bench id is 33/nested_eight. The mean is @@MEAN:33/nested_eight@@ (`mean.point_estimate`).
+The bench id is 33/nested_eight. The mean is 271.87 µs, mean.point_estimate from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573).
 
 [personal note]
 

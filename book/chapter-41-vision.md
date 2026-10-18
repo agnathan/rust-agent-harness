@@ -396,9 +396,9 @@ The binary sniffs the canned PNG and prints the mime family. No download. No key
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `sniff_png` | @@MEAN:41/sniff_png@@ | sniff a 1×1 PNG under 1 ms | magic bytes, the length caps, the IHDR product |
+| `sniff_png` | 11.2 ns | sniff a 1×1 PNG under 1 ms | magic bytes, the length caps, the IHDR product |
 
-The id is `41/sniff_png`. The alias list is empty. This id is new. It is not an alias of `40/fake_navigate`.
+The mean is `11.2 ns`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `41`. The id is `41/sniff_png`. The alias list is empty. This id is new. It is not an alias of `40/fake_navigate`. I did not rewrite gh-pages history. The Criterion `time:` line is the slope, not the mean.
 
 ```rust
 fn sniff_png(c: &mut Criterion) {
@@ -496,7 +496,7 @@ pub fn chapter_41_accepts_image(bytes: &[u8]) -> bool {
 - **URL.** Secret, then SSRF with `allow_private` false, before `load`. A `data:` URL skips that and still passes `prepare`.
 - **Caption.** Wrapped as `vision_analyze`. The model is not called.
 - **Demo.** `vision: png`, from a 1×1 header.
-- **Time.** One sniff measured **@@MEAN:41/sniff_png@@**.
+- **Time.** `sniff_png` mean `11.2 ns`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The Criterion `time:` line is the slope.
 
 [personal note: a header of eight bytes that was enough to name the file, and a buffer that was refused before anyone looked at it]
 

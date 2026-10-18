@@ -13,7 +13,7 @@ Hermes Agent: tools/vision_tools.py sets _VISION_MAX_DOWNLOAD_BYTES to 50*1024*1
 A remote URL uses the same secret and SSRF checks as the browser. data: URLs skip that remote check and still pass prepare. FakeImages does not download. There is no vision model in this crate.
 
 4/
-One sniff of a 1x1 PNG measured @@MEAN:41/sniff_png@@. The id is new. The demo prints "vision: png".
+One sniff of a 1x1 PNG measured 11.2 ns, mean.point_estimate from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The id is new. The demo prints "vision: png".
 
 [personal note]
 
@@ -31,7 +31,7 @@ Hermes Agent refuses a vision download over 50 MB and an inline image over 20 MB
 
 This chapter sniffs the header in process. prepare refuses an empty buffer, either size cap, a foreign type, and a PNG whose IHDR width times height exceeds that pixel cap. analyze checks the URL for secrets and for private or metadata addresses before it loads bytes, then wraps the caption as vision_analyze. The 1x1 fixture is a PNG header. The bench sniffs that header.
 
-One sniff measured @@MEAN:41/sniff_png@@. The demo prints "vision: png".
+One sniff measured 11.2 ns, mean.point_estimate from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The demo prints "vision: png".
 
 [personal note: one takeaway from writing this chapter]
 

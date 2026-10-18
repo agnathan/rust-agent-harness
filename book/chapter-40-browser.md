@@ -481,9 +481,9 @@ The binary opens the canned page and prints the title. No browser process. No ke
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `fake_navigate` | @@MEAN:40/fake_navigate@@ | a canned navigation under 1 ms | secret check, SSRF check, map lookup, clip, wrap, JSON |
+| `fake_navigate` | 1.97 µs | a canned navigation under 1 ms | secret check, SSRF check, map lookup, clip, wrap, JSON |
 
-The id is `40/fake_navigate`. `descriptions.json` records `"aliases": []`. This id is new. It is not another name for `39/enqueue_platform` or for a chapter 16 web bench.
+The mean is `1.97 µs`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `40`. The id is `40/fake_navigate`. `descriptions.json` records `"aliases": []`. This id is new. It is not another name for `39/enqueue_platform` or for a chapter 16 web bench. I did not rewrite gh-pages history. The Criterion `time:` line is the slope, not the mean.
 
 ```rust
 fn fake_navigate(c: &mut Criterion) {
@@ -583,7 +583,7 @@ pub fn chapter_40_navigates_metadata(url: &str) -> bool {
 - **Snapshot.** 15_000 in the result, 2_000_000 on the clipped copy, head and tail, `[TRUNCATED]`.
 - **Untrusted.** `wrap_untrusted("browser_navigate", ...)`. Shorter than 32 characters stays plain text.
 - **Demo.** `browser: Notes`.
-- **Time.** One canned navigation measured **@@MEAN:40/fake_navigate@@**.
+- **Time.** `fake_navigate` mean `1.97 µs`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The Criterion `time:` line is the slope.
 
 [personal note: a title that came back as JSON, and a metadata address that never became a page]
 

@@ -410,7 +410,7 @@ The binary translates one update and ends the turn. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `translate_update` | @@MEAN:44/translate_update@@ | one update onto an empty inbox | `translate` then `submit` |
+| `translate_update` | 132.4 ns | one update onto an empty inbox | `translate` then `submit` |
 
 The function name is `translate_update`. The bench id is `44/translate_update`. The old ids `42/translate_update` and `40/translate_update` are aliases in `benchmarks/descriptions.json`. The function name did not change when the id moved.
 
@@ -436,7 +436,7 @@ fn translate_update(c: &mut Criterion) {
 
 The `Update` is built before the bench, with text `hello` and `cancelled` false. `iter_batched` runs the setup closure outside the timer. That closure calls `Inbox::new(64)` and is not timed. The timed routine calls `translate` with the update passed through `black_box`, then `submit` of the mail, then `black_box` of the `Submit` value. The string clone and the push are inside the sample. The inbox is empty at the start of each sample, so the result is `Accepted`. `write_result`, `log_line`, `map_permission`, and `FakeModel` are not called. The `Full` path is not taken. The descriptions file says the budget is under a millisecond. The mean cell is the measurement.
 
-`.github/scripts/run_bench_section.sh` runs `cargo bench -p ch44-acp --bench acp --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10` for section `44`. The same flags are in `steps/ch44-acp/README.md`. The Mean cell is `mean.point_estimate` from that workflow's `estimates.json`. The Criterion `time:` line is the slope. It is not this cell.
+The mean is `132.4 ns`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `44`. The id is `44/translate_update`. The old ids `42/translate_update` and `40/translate_update` are aliases in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. `.github/scripts/run_bench_section.sh` runs `cargo bench -p ch44-acp --bench acp --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10` for that section. The same flags are in `steps/ch44-acp/README.md`. The Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 
@@ -505,7 +505,7 @@ pub fn chapter_44_update_submits_once(updates: usize) -> usize {
 - **Streams.** JSON on stdout. Logs on stderr.
 - **Permission.** The three allow ids keep their outcomes. `deny`, `deny_always`, and any unknown id deny.
 - **Model.** `FakeModel` answers `ok`. The demo line is `acp: end_turn`.
-- **Time.** `translate_update` is `44/translate_update`. The mean is @@MEAN:44/translate_update@@.
+- **Time.** `translate_update` mean `132.4 ns`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The Criterion `time:` line is the slope.
 
 [personal note: a protocol line that stayed a single string]
 

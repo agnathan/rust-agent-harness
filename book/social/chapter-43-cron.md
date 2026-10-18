@@ -13,7 +13,7 @@ Hermes Agent at 9e01b44 scans the user prompt in tools/cronjob_prompt_scan.py. _
 M2 stays here. cron/lifecycle_guard.py check_gateway_lifecycle raises GatewayLifecycleBlocked. create_job in cron/jobs.py calls it. hermes gateway restart is blocked. hermes gateway start is allowed. I did not move that check to the chapter 39 gateway.
 
 4/
-The demo prints "cron: claimed". The bench id is 43/scan_thousand. The old ids 41/scan_thousand and 39/scan_thousand are aliases. The mean is @@MEAN:43/scan_thousand@@ (`mean.point_estimate`). Scanning a thousand due jobs does not tick the watchdog.
+The demo prints "cron: claimed". The bench id is 43/scan_thousand. The old ids 41/scan_thousand and 39/scan_thousand are aliases. The mean is 1.75 µs, mean.point_estimate from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). Scanning a thousand due jobs does not tick the watchdog.
 
 [personal note]
 

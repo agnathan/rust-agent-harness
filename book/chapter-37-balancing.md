@@ -446,11 +446,11 @@ cargo bench -p ch37-balancing --bench balancing --locked -- --warm-up-time 1 --m
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `pick_least` | @@MEAN:37/pick_least@@ | a local pick among a pool | the quietest of four backends |
+| `pick_least` | 3.74 ns | a local pick among a pool | the quietest of four backends |
 
 `pick_least` is `benches/balancing.rs`. It builds four backends before the bench, with outstanding counts 3, 1, 4, and 2. The timed closure is `b.iter`. Inside: `pick(Policy::LeastOutstanding)` passed through `black_box`, then `black_box` of the index. Each sample loads four atomics and returns index 1. `call` is not used, so the counters do not change and the `via` string is not allocated. No thread is started. `discover` is not called. No socket is opened. `FakeModel` is not constructed. `LearnedGateway` is not constructed. The prediction path is not on this bench.
 
-The mean cell is `mean.point_estimate` for bench id `37/pick_least`. The Criterion `time:` line is the slope, not that mean.
+The mean is `3.74 ns`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `37`. The id is `37/pick_least`. The old id `35/pick_least` is an alias in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 

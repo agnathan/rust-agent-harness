@@ -13,7 +13,7 @@ Hermes Agent at 9e01b44, agent/secret_scope.py. This is E4. get_secret raises Un
 The harness returns Result instead of raising. The maps are HashMaps. There is no ContextVar, and there is no global-env allowlist, so an unscoped multiplex read fails closed for every name. resolve keeps a bool for "the secret was present" and drops the string. The persona Arc is the prompt.
 
 4/
-The bench is resolve_profile, the scoped hit. The mean is @@MEAN:38/resolve_profile@@ (`mean.point_estimate`). The demo prints "profile: writer". The key stays in the map.
+The bench is resolve_profile, the scoped hit. The mean is 96.7 ns, mean.point_estimate from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The demo prints "profile: writer". The key stays in the map.
 
 [personal note]
 
@@ -29,7 +29,7 @@ Chapter 38 is out: Profiles.
 
 One process can hold more than one persona. Hermes Agent's get_secret fails closed when the multiplex gateway has no profile scope installed: UnscopedSecretError, rather than reading another profile's environment. I kept that. Writer and reader each have an API_KEY. The scope selects one map. The prompt is the persona, "you write", and the secret is not copied into it. An unscoped read is the error. The demo prints "profile: writer" and does not print the key.
 
-The mean for resolve_profile is @@MEAN:38/resolve_profile@@.
+The mean for resolve_profile is 96.7 ns.
 
 [personal note]
 

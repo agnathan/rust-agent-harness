@@ -146,7 +146,7 @@ Inherited chapter 9 tests must still pass. If a new guard would deny `echo`, the
 
 ## Chapter length and shape
 
-Chapters 1–4 run about 3,500–7,000 words. Every chapter from 10 through 50 matches that size and this shape. Later batches (23–32, 33–42, 43–50) follow this rule. Do not ship a chapter that only names the new functions.
+Chapters 1–4 run about 3,500–7,000 words. Every chapter from 10 through 44 matches that size and this shape. Chapters 45–52 are the renamed trees and still need that expansion. Later work follows this rule. Do not ship a chapter that only names the new functions.
 
 - Numbered sections (`## N.1`, `## N.2`, …). Each section walks one type or one function.
 - Full listings of that code, copied from the step crate. A reader who has not opened the file can still read the function.
