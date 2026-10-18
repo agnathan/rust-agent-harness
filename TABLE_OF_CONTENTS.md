@@ -25,6 +25,8 @@ Written chapters link to `book/chapter-….md`. A chapter that has no page yet i
 - [Chapter 16: Providers](book/chapter-16-providers.md) — [`steps/ch16-providers`](steps/ch16-providers)
 - [Chapter 17: Streaming](book/chapter-17-streaming.md) — [`steps/ch17-streaming`](steps/ch17-streaming)
 
+Planned, not yet written. No page and no step crate. Built-in Tools I (Web Search and Extract) and Built-in Tools II (Files, Terminal, Todo, and Clarify) will be inserted after chapter 15, in Part I, and today's chapters 16–48 move up by two. Browser Tools and Vision will be inserted later in Part V, between the gateway and Editor Integration. The spec is [docs/harness-architecture.md](docs/harness-architecture.md).
+
 ## Part II: Learning
 
 - [Chapter 18: Sessions on Disk](book/chapter-18-sessions.md) — [`steps/ch18-sessions`](steps/ch18-sessions)

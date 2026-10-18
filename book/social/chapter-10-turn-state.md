@@ -13,7 +13,7 @@ Hermes has a TurnState in gateway/session_state.py. It is the pointers for one g
 Nineteen moves are legal, including NoDone, BudgetAbort, and SoftWrapIgnoredTools. A terminal phase accepts nothing. Soft stop and a budget wrap-up both enter WrappingUp. A text answer leaves as SoftStopped or Budget. A wrap-up that still wants tools is Partial.
 
 4/
-The fake model is a list of script steps. No key. One transition last published at 1.103 ns. The three-step script last published at 7.803 ns.
+The fake model is a list of script steps. No key. One transition measured 1.258 ns. The three-step script measured 19.08 ns.
 
 [personal note]
 
@@ -29,7 +29,7 @@ Chapter 10 is out: The Turn State Machine.
 
 The agent loop in the previous chapter already stops for a cancel, a budget, a stall, or a bad tool call. What it did not have was a single match that says which of those exits can follow which phase. Hermes Agent keeps that information in a dataclass of pointers and a bag of loop locals. I wrote the match, and a test that tries every phase against every event.
 
-A scripted turn with no model goes from a tool call to a tool result to a text answer and ends Finished. One transition last published at 1.103 ns.
+A scripted turn with no model goes from a tool call to a tool result to a text answer and ends Finished. One transition measured 1.258 ns.
 
 [personal note: one takeaway from writing this chapter]
 

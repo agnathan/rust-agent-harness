@@ -122,8 +122,23 @@ Chapter 18: `wal::Store::append_turn` runs both strings through `redact::redact_
 9. Add `my-harness/tests/chNN.rs` that calls a `todo!("chapter NN")` stub. Do not implement the learner's solution in `my-harness/`. The step crate is the reference.
 10. Fix the chapter's pasted nextest summary from a real `cargo nextest run -p <package>`. Count binaries honestly. Many old chapters say "across 3 binaries" for a crate that had one test binary; that sentence is a lie and has to go.
 11. Quote benchmark means from that PR's Benchmarks workflow (`mean.point_estimate` in the uploaded estimates), not from a laptop. Do not rewrite `gh-pages` history. Do not move git tags. List the retag in the PR body.
+12. Write the chapter to the length and shape in the next section. A short tour of the new module is not a chapter.
 
 Inherited chapter 9 tests must still pass. If a new guard would deny `echo`, the guard is wrong.
+
+## Chapter length and shape
+
+Chapters 1–4 run about 3,500–7,000 words. Every chapter from 10 through 48 matches that size and this shape. Later batches (21–30, 31–40, 41–48) follow this rule. Do not ship a chapter that only names the new functions.
+
+- Numbered sections (`## N.1`, `## N.2`, …). Each section walks one type or one function.
+- Full listings of that code, copied from the step crate. A reader who has not opened the file can still read the function.
+- The reason for each design choice, next to the code that embodies it.
+- Rust explained for a reader who is new to the language, in a sidebar at the moment the feature appears (`enum`, `match`, `Result`, `Option`, ownership, `&` and `&mut`, `async`, traits, `Arc`, and whatever else that section uses).
+- Real run output in **Build, run, and benchmark**: the nextest summary from this tree, the milestone demo, and benchmark means from that pull request's Benchmarks workflow (`mean.point_estimate`). The printed Criterion `time:` line is the slope, not the mean.
+- A **Pitfalls** section.
+- A **What you implement** exercise that names `my-harness/tests/chNN.rs` and the assertion the reader has to make pass. The stub stays `todo!`. Do not paste the solution into `my-harness/`. Chapter 10 has no learner stub; its exercise is the phase predictions in that chapter.
+
+The word-count band is the result of walking the code. A paragraph that does not teach a type, a branch, or a design reason does not belong. Do not repeat the summary to inflate the count.
 
 ## Per-chapter plan, 11–48
 
@@ -194,6 +209,83 @@ Bench IDs are `section/function` from `benchmarks/descriptions.json`. Keep both 
 Do not change a bench `id` or `function` to "improve" the name. The gh-pages dashboard appends points for that id. New means belong in the chapter after the PR's Benchmarks workflow, as `mean.point_estimate`. The printed Criterion `time:` line is the slope, not the mean.
 
 Do not move existing `step-NN` tags. After this batch merges, tags `step-10` through `step-20` point at commits whose trees are no longer the chapters. The PR body lists the retag. Nobody force-moves them in the batch itself.
+
+## Planned chapters: built-in tools, browser, and vision
+
+This pull request does not build these chapters and does not renumber the tree. Chapters 12–15 are still being brought up to the length rule above, and the Benchmarks means for chapters 10–20 come from [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918) (`mean.point_estimate` in `bench-run.json`, not the Criterion slope and not the median row in `criterion-summary.json`). A follow-up batch builds the two tool chapters. Browser Tools and Vision stay unwritten until a later batch.
+
+### Where the two tool chapters go
+
+They are adjacent, in Part I, after chapter 15 (Limits and Breakers) and before Providers. That is the first place the loop, the approval floor, the sandbox, and the cap of 50 all exist. Putting them immediately after chapter 9 would teach the tools before the guardrails they call. Part I currently ends at Streaming, so both chapters stay in Part I.
+
+The insert shifts every current chapter from 16 upward by two. The book becomes chapters 0–50.
+
+| After the insert | Was | Title | This batch |
+|---|---|---|---|
+| 16 | new | Built-in Tools I: Web Search and Extract | spec below; not built |
+| 17 | new | Built-in Tools II: Files, Terminal, Todo, and Clarify | spec below; not built |
+| 18 | 16 | Providers | rename when the insert lands |
+| 19 | 17 | Streaming | rename |
+| 20 | 18 | Sessions on Disk | rename |
+| 21 | 19 | Memory Files | rename |
+| 22 | 20 | Recall | rename |
+| 23–50 | 21–48 | the rest, same order | rename |
+
+Server chapters move with the same shift: Learned Tools becomes 23, Balancing 37, MCP Gateway Service 40, Load and Token Capstone 49. Harness copies skip the server directories the way chapter 16 today copies chapter 14 and skips chapter 15. After the insert, Providers (new 18) copies Built-in Tools II (new 17), not chapter 14. Until II exists, a batch that lands only I makes Providers copy I and leaves 17 as the empty slot II will fill. Do that only if II is not in the same batch. One rename is better.
+
+### What the rename must touch
+
+Do not move git tags. After the rename merges, retag `step-16` through `step-48` onto the merge commit (old `step-16` is the new chapter 18, and so on). List that retag in the PR body. `step-01` through `step-15` stay.
+
+For each current chapter N from 16 to 48, the new number is N+2:
+
+- `steps/chNN-<slug>` directory, and every `chNN` package name, bin name, and fixture bin inside it.
+- Workspace members, `.github/chapters.json`, `.github/path-filters.yml`, `.github/workflows/benchmarks.yml` (the section id becomes N+2; the package argument follows the directory).
+- `benchmarks/descriptions.json`: the `id` becomes `"<N+2>/<function>"`. Keep the old id in `aliases`, the same way `6.1/schema_tokens_1000` still aliases `5.1/schema_tokens_1000`. Do not change `function`. That is what keeps the gh-pages history on one line.
+- Book filename `book/chapter-NN-….md`, `book/SUMMARY.md`, `TABLE_OF_CONTENTS.md`, `book/book-outline.md`, `docs/performance.md`, and prose that names the chapter by number. A path like `steps/ch16-providers` changes too.
+- `my-harness/tests/chNN.rs` and the stub in `milestones.rs`.
+- Chapter 15's public API stays so the learned-tools crate still builds. Its path dependency is updated to the new directory name when Learned Tools moves.
+
+Bench ids for the two new chapters are new. Suggested ids, to be created with the crates, not aliases of an older row: `16/fake_search`, `16/ssrf_block`, `17/patch_apply`, `17/todo_merge`. Quote `mean.point_estimate` from the Benchmarks run that builds them.
+
+### Built-in Tools I: Web Search and Extract
+
+Copy the harness at chapter 14 (the previous harness; chapter 15 is the server). Add `web` as `pub mod web`, not a glob re-export. The module is behind a `SearchBackend` trait so tests never need a key.
+
+Hermes, read on current `main` (do not invent a path that is not in this list):
+
+- `tools/web_tools.py` `web_search_tool` returns JSON `{"success", "data": {"web": [{title, url, description, position}]}}`. `limit` is clamped to 1…100, default 5. Metadata only. `_get_search_backend` prefers `web.search_backend`, then `web.backend`, then autodetect. Built-in names in `_BUILTIN_AVAILABILITY`: exa, parallel, keenable, firecrawl, tavily, perplexity, searxng, brave-free, ddgs, xai. Keys are env vars (`TAVILY_API_KEY`, `EXA_API_KEY`, and the rest of that map).
+- `tools/web_tools.py` `web_extract_tool` is async. Order of gates, from `tools/web_tools_extract.py`: secret-URL refusal, then SSRF, then provider resolution, then per-URL website policy, then the disk cache, then the vendor. A cache hit must not skip a gate.
+- `tools/web_tools_extract.py` `_validate_extract_urls` refuses the whole call when the URL or its unquoted form matches the redact prefix regex. The error starts `Blocked: URL contains what appears to be an API key or token.`
+- `tools/url_safety.py` blocks private, loopback, link-local, reserved, and CGNAT (`100.64.0.0/10`). Cloud metadata hostnames `metadata.google.internal` and `metadata.goog`, and the metadata IPs (`169.254.169.254`, `169.254.170.2`, `169.254.169.253`, `100.100.100.200`, `fd00:ec2::254`, and the IPv4-mapped forms) stay blocked even when `security.allow_private_urls` is on. `async_is_safe_url` fails closed on DNS errors. `_MAX_SSRF_CONNECT_IPS` is 8.
+- `tools/web_tools_truncate.py`: default extract budget `DEFAULT_EXTRACT_CHAR_LIMIT = 15000`, clamped to 2_000…500_000. Over budget is about 75% head and 25% tail, cut on line boundaries, plus a `[TRUNCATED]` footer. Stored full text is capped at `MAX_STORED_TEXT_CHARS = 2_000_000`. Inline `data:image/...;base64` becomes `[IMAGE]`. A binary magic-byte body is an error, not page text.
+- `agent/tool_dispatch_helpers.py` `_maybe_wrap_untrusted`: `web_search` and `web_extract` are in `_UNTRUSTED_TOOL_NAMES`. Strings of at least 32 characters are wrapped in `<untrusted_tool_result source="…">` after `_neutralize_delimiters` rewrites an embedded `untrusted_tool_result` token to `untrusted-tool-result`. The wrapper says the block is data, not instructions.
+- `agent/tool_guardrails.py` `_DEFAULT_MAX_WEB_SEARCHES_PER_TURN = 50`. The block text is `loop_web_search_cap`. Chapter 15 already returns `CallError::Cap` for a tool named `web_search` at `MAX_WEB_SEARCHES`. The new tool uses that name so the existing cap applies. Do not add a second counter.
+
+Adopt the result shape, the clamp, the secret-URL refusal, the SSRF floor (metadata always blocked), the head/tail truncation, the base64 rewrite, and the untrusted wrapper. Adapt the backends to one trait: `FakeSearch` for tests and benches, and one optional real backend that reads a single env var (name it in the chapter; do not call the network in CI). Defer the vendor ladder (Firecrawl, Tavily, Exa, Perplexity, ddgs, keyless rescue, TTL memo) and `tools/website_policy.py`. Say so in the Hermes box.
+
+The chapter is the chapter 1–4 shape: numbered sections, full listings, a Rust sidebar when the trait and `async` show up, real nextest output, `mean.point_estimate` from that PR's Benchmarks run, pitfalls, guardrails (I3, the SSRF floor, F4 wrapping), a What you implement exercise, and social posts with `[personal note]` placeholders.
+
+### Built-in Tools II: Files, Terminal, Todo, and Clarify
+
+Same copy chain, one chapter later. The module sits on top of chapter 11's approval floor and chapter 13's sandbox. Hermes, read on current `main`:
+
+- `tools/file_tools.py` `read_file_tool` / `write_file_tool` / `patch_tool`. `_DEFAULT_MAX_READ_CHARS = 100_000`. `patch_tool` takes `mode`, `path`, and `old_string`.
+- `tools/file_tools_paths.py` `_authoritative_workspace_root` and `_path_resolution_warning`. A relative path that resolves outside the workspace root warns. Absolute paths are the caller's way to name a file under the root on purpose.
+- `tools/file_state.py` `FileStateRegistry::check_stale` and `tools/file_tools_write_guards.py` `_stale_overwrite_blocker`. A `write_file` of a file the task has not read, or whose mtime moved, is refused (`stale_write_blocked`). `patch` is the edit that should land instead of clobbering.
+- `tools/terminal_tool.py` routes the command through the environment backend. `FOREGROUND_MAX_TIMEOUT` defaults to 600 seconds (`TERMINAL_MAX_FOREGROUND_TIMEOUT`). `tools/terminal_tool_result.py` `_truncate_head_tail` uses `tools/tool_output_limits.py` `DEFAULT_MAX_BYTES = 50_000`. The approval callback is the same gate as chapter 11. This harness already denies through `deny_tool` before `run_raced`. The terminal tool must call that path, and `execute_code` still calls `check_execute_code`. Do not grow a second approval pipeline.
+- `tools/todo_tool.py` `TodoStore` / `todo_tool`. One list, `merge` to update by id, `MAX_TODO_ITEMS = 256`, `MAX_TODO_CONTENT_CHARS = 4000`. A monotonic revision so a stale write can be rejected. The list is agent-owned state, not a file in the user's repo.
+- `tools/clarify_tool.py` `clarify_tool`. At most `MAX_QUESTIONS = 5` questions and `MAX_CHOICES = 4` choices. It pauses for a user. Tests use the fake model and a fake user reply. `tools/delegate_tool_toolsets.py` `DELEGATE_BLOCKED_TOOLS` includes `clarify` (also `delegate_task`, `memory`, `send_message`, `cronjob_manage`). A child agent must not call `clarify`. Chapter 27 already states that block. This chapter implements the tool and keeps the block. Do not let a child pass it.
+
+Adopt path-root checks, stale-read refusal, the read cap, head/tail terminal truncation, the timeout, todo merge, and the clarify pause. Adapt terminal execution to chapter 13's worker and chapter 11's `deny_tool` rather than porting Docker, sudo, and the gateway lifecycle block (B4 stays chapter 37, which will be chapter 39 after the shift). Defer SSH path resolution, container mirrors, and protected-instruction approval prompts; name them in the Hermes box.
+
+Same chapter shape as Tools I. Milestone ideas: a path outside the workspace is refused; a stale write is refused; a hardline terminal command is denied and the body does not run; a child call to `clarify` is denied; `todo` merge updates one item. Benches stay keyless.
+
+### Browser Tools and Vision
+
+Not built. They belong in Part V, next to the platform adapters and the editor client, not in Part I. After the +2 shift, The Gateway (platform adapters submitting to the session inbox) is chapter 39 and Editor Integration (ACP) is chapter 42. Insert Browser Tools and then Vision between those two when they are written. That is a second insert, not part of the +2 rename. Do not reserve numbers inside the +2 table or the shift will be done twice.
+
+Hermes, for the batch that writes them, starts at `tools/browser_tool.py`, `tools/browser_tool_session.py`, and `tools/url_safety.py` (the same SSRF floor as web extract), and at `tools/vision_tools.py` plus `tools/vision_tools_image_prep.py`. Cite whatever those files still export on the day they are opened. Both chapters are unwritten in the outline and in `TABLE_OF_CONTENTS.md`. They have no step crate and no bench id yet.
 
 ## What batch 1 changed that later batches must not undo
 

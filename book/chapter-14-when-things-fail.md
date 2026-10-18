@@ -98,8 +98,8 @@ The binary runs two fake models. The first emits two empty replies at $0.30. The
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `empty_budget` | 0.9040 ns | under 1 µs | `retry_budget(Some(0.30))` |
-| `repetition_guard` | 2.551 µs | under 1 ms | the window scan on an 800-character loop |
+| `empty_budget` | 0.9046 ns | under 1 µs | `retry_budget(Some(0.30))` |
+| `repetition_guard` | 2.77 µs | under 1 ms | the window scan on an 800-character loop |
 
 `empty_budget` calls `retry_budget` with `Some(0.30)` passed through `black_box`. The timed closure is `b.iter`. There is no model and no session. The result is the reduced budget, 1.
 
@@ -107,7 +107,7 @@ The binary runs two fake models. The first emits two empty replies at $0.30. The
 
 The timeout is not a bench. The test above is the measurement of the cancel: a 30 millisecond timeout against a 5 second sleep, permits back to 8, elapsed under 2 seconds. A bench that slept would measure the timer, not the permit.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38993207081](https://github.com/agnathan/rust-agent-harness/actions/runs/38993207081), section `14`.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `14`.
 
 ### Milestone demo
 
@@ -149,7 +149,7 @@ A length reply under 400 characters is continued even if it is `"ok ok ok"`. The
 - **Repeat.** An 800-character loop is not continued. The turn stores the interrupted sentence.
 - **Timeout.** The permit is back. The 5 second sleep does not finish.
 - **Session.** One crash, one reconnect, then `pong`.
-- **Time.** The budget check measured **0.9040 ns**. The repetition scan measured **2.551 µs**.
+- **Time.** The budget check measured **0.9046 ns**. The repetition scan measured **2.77 µs**.
 
 [personal note: a fallback you did not expect, and which empty rule sent the turn there]
 

@@ -25,6 +25,8 @@ Server-track chapters are marked *(server)*. They are interleaved with the harne
 - [Chapter 16: Providers](chapter-16-providers.md)
 - [Chapter 17: Streaming](chapter-17-streaming.md)
 
+<!-- Planned, not yet written: Built-in Tools I (Web Search and Extract) and Built-in Tools II (Files, Terminal, Todo, and Clarify), inserted after chapter 15. Browser Tools and Vision, inserted later in Part V. Spec: docs/harness-architecture.md. -->
+
 # Part II: Learning
 
 - [Chapter 18: Sessions on Disk](chapter-18-sessions.md)

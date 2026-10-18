@@ -126,9 +126,9 @@ The binary installs one hook that blocks `rm`, then a script of `rm` and `echo`.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `empty_pre_post` | 10.91 ns | under 0.1 ms | one empty before hook and one empty after hook |
-| `api_request_hook` | 2.834 ns | under 0.1 ms | `pre_api_request` on 1,000 borrowed messages |
-| `memory_enqueue` | 56.83 ns | under 1 ms | one turn pushed onto the queue |
+| `empty_pre_post` | 10.90 ns | under 0.1 ms | one empty before hook and one empty after hook |
+| `api_request_hook` | 2.182 ns | under 0.1 ms | `pre_api_request` on 1,000 borrowed messages |
+| `memory_enqueue` | 61.70 ns | under 1 ms | one turn pushed onto the queue |
 
 `empty_pre_post` calls `NopHook::pre_tool_call` and `post_tool_call` inside `b.iter`. The JSON arguments `{}` are built before the bench. No tool runs.
 
@@ -136,7 +136,7 @@ The binary installs one hook that blocks `rm`, then a script of `rm` and `echo`.
 
 `memory_enqueue` locks the queue, drops the front if the length is already 64, and pushes one formatted string. The queue is built before the bench. The string format is inside the sample. Nothing is written to disk.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38993207081](https://github.com/agnathan/rust-agent-harness/actions/runs/38993207081), section `12`.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `12`.
 
 ### Milestone demo
 
@@ -174,7 +174,7 @@ The queue cap drops the oldest job. A caller that treats `len()` as "every turn 
 - **After.** A hook may replace the result string.
 - **Borrow.** The API hook sees the message slice. It does not get its own copy.
 - **Queue.** One turn enqueues. The file write is chapter 19.
-- **Time.** The empty pair measured **10.91 ns**. The API hook measured **2.834 ns**. The enqueue measured **56.83 ns**.
+- **Time.** The empty pair measured **10.90 ns**. The API hook measured **2.182 ns**. The enqueue measured **61.70 ns**.
 
 [personal note: which hook you expected to be a block, and what it rewrote instead]
 

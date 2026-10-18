@@ -102,9 +102,9 @@ The binary spawns `sandbox-worker`, sends `ping`, and prints the line it read. N
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
-| `warm_accept` | 28.53 µs | under 50 ms | one `ping` to a worker that is already running |
-| `checkpoint_1000` | 50.71 µs | under 10 ms | copy a 1,000-path manifest |
-| `rewind_1000` | 78.96 µs | under 10 ms | copy that manifest back onto a live vec |
+| `warm_accept` | 30.49 µs | under 50 ms | one `ping` to a worker that is already running |
+| `checkpoint_1000` | 50.37 µs | under 10 ms | copy a 1,000-path manifest |
+| `rewind_1000` | 83.79 µs | under 10 ms | copy that manifest back onto a live vec |
 
 `warm_accept` spawns the worker before `b.iter`. Each sample writes `ping`, flushes, and reads `ok ping`. Process startup is excluded. There is no sleep in the job.
 
@@ -112,7 +112,7 @@ The binary spawns `sandbox-worker`, sends `ping`, and prints the line it read. N
 
 `rewind_1000` builds the snapshot before the bench. Each sample starts from an empty live vec and `clone_from`s the snapshot into it. That copy is the sample.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38993207081](https://github.com/agnathan/rust-agent-harness/actions/runs/38993207081), section `13`.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `13`.
 
 ### Milestone demo
 
@@ -154,7 +154,7 @@ The 10 MB skip drops the file from the manifest. Rewind will not put it back, be
 - **Child.** A warm worker answers `ok ping`. A timeout kills a sleep.
 - **Env.** `PATH` stays. `OPENAI_API_KEY` does not, even on the passthrough list.
 - **Checkpoint.** Off until enabled. Rewind copies the manifest back.
-- **Time.** A warm accept measured **28.53 µs**. Checkpoint of 1,000 paths measured **50.71 µs**. Rewind measured **78.96 µs**.
+- **Time.** A warm accept measured **30.49 µs**. Checkpoint of 1,000 paths measured **50.37 µs**. Rewind measured **83.79 µs**.
 
 [personal note: the first time the worker stayed up after the test, and which drop killed it]
 
