@@ -18,7 +18,7 @@ The step crate is `steps/ch08-session-toolsets`. It depends on `ch07-catalog`. T
 >
 > **Adapted.** The session is keyed. Hermes refuses that for the client's catalog because it would drift. This server is the source of the list, so the session stores names and the catalog stores cards. When the revealed names change, `list_changed` becomes true. The client in chapter 4 already drops its cache on that notification. This chapter only sets the flag. `set_task` scores servers by token overlap and reveals up to 8 names from the winning server. That starter set is the runtime version of an include list. I did not find it in Hermes, so the box does not cite a function for it.
 >
-> **Deferred.** Putting `list_changed` on the wire waits for chapter 38. Untrusted-output wrapping (F4, `agent/tool_dispatch_helpers.py`) waits for chapter 32. The load-test capstone that reports these three arms under real traffic is chapter 47.
+> **Deferred.** Putting `list_changed` on the wire waits for chapter 40. Untrusted-output wrapping (F4, `agent/tool_dispatch_helpers.py`) waits for chapter 34. The load-test capstone that reports these three arms under real traffic is chapter 49.
 
 [personal note: the first time the full schema was obviously the expensive part]
 
@@ -110,7 +110,7 @@ Layer L2's "do not show everything," applied to the tool list. [`docs/hermes-gua
 
 **A session cannot call a tool it was not shown.** `NotOffered` is the filter. It is not an approval. Approvals are chapter 11.
 
-**Paging.** A long result is split at 2,000 characters. Wrapping untrusted tool output (F4) is chapter 32. This page marker is not that wrapper.
+**Paging.** A long result is split at 2,000 characters. Wrapping untrusted tool output (F4) is chapter 34. This page marker is not that wrapper.
 
 Secret redaction (E1, E2) is still not in this process. Rate limits and the per-turn web-search cap of 50 are chapter 15. This chapter caps one search call's query list. It does not count web searches across a turn.
 

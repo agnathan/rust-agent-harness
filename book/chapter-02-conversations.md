@@ -828,7 +828,7 @@ Layer L4's transcript invariants, in the form this type can enforce. The catalog
 
 Hermes K4 (`agent/message_sanitization.py`) sanitizes the outbound payload, uniquifies tool-call ids, and closes an interrupted tool sequence. This chapter does none of that. Duplicate ids inside one batch are uniquified later, in chapter 9. Hermes K6 (`agent/transcript_repair.py`) repairs persisted rows. Load re-validation here is the local `push` rules.
 
-**Inbox backpressure.** `SessionInbox` defaults to `INBOX_BOUND` (64). `submit` returns `InboxError::Full` once the queue length has reached that bound, and it does not call the model. `new` allocates the `VecDeque` with `bound.min(64)`, which is only the initial capacity; the refusal uses `self.bound`. The catalog has no inbox row. Chapter 33 reuses this same queue for actors.
+**Inbox backpressure.** `SessionInbox` defaults to `INBOX_BOUND` (64). `submit` returns `InboxError::Full` once the queue length has reached that bound, and it does not call the model. `new` allocates the `VecDeque` with `bound.min(64)`, which is only the initial capacity; the refusal uses `self.bound`. The catalog has no inbox row. Chapter 35 reuses this same queue for actors.
 
 ## What we built
 
@@ -965,13 +965,13 @@ The library tests:
         PASS [   0.004s] (13/22) ch02-harness-core::provider mock_events_are_text_then_done
         PASS [   0.005s] (14/22) ch02-harness-core::provider mock_provider_answers_and_records
         PASS [   0.007s] (15/22) ch02-harness-core::provider local_fake_reports_cost_and_the_answered_model
-        PASS [   0.005s] (16/22) ch02-harness-core::provider openrouter_is_the_default_and_names_its_key
-        PASS [   0.004s] (17/22) ch02-harness-core::provider request_serializes_to_openai_shape
-        PASS [   0.004s] (18/22) ch02-harness-core::provider response_deserializes_from_openai_shape
-        PASS [   0.003s] (19/22) ch02-harness-core::session a_full_inbox_refuses_the_next_turn
-        PASS [   0.003s] (20/22) ch02-harness-core::provider scripted_cost_accumulates_without_a_network
-        PASS [   0.003s] (21/22) ch02-harness-core::session submit_then_pop_is_fifo
-        PASS [   0.046s] (22/22) ch02-harness-core::provider mock_latency_is_configurable
+        PASS [   0.005s] (18/22) ch02-harness-core::provider openrouter_is_the_default_and_names_its_key
+        PASS [   0.004s] (19/22) ch02-harness-core::provider request_serializes_to_openai_shape
+        PASS [   0.004s] (20/22) ch02-harness-core::provider response_deserializes_from_openai_shape
+        PASS [   0.003s] (21/22) ch02-harness-core::session a_full_inbox_refuses_the_next_turn
+        PASS [   0.003s] (22/22) ch02-harness-core::provider scripted_cost_accumulates_without_a_network
+        PASS [   0.003s] (23/22) ch02-harness-core::session submit_then_pop_is_fifo
+        PASS [   0.046s] (24/22) ch02-harness-core::provider mock_latency_is_configurable
 ────────────
      Summary [   0.059s] 22 tests run: 22 passed, 0 skipped
 ```

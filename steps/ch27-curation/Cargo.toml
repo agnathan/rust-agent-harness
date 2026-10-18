@@ -1,0 +1,26 @@
+[package]
+name = "ch27-curation"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+description = "Chapter 27: stale then archived, off the request path, with a snapshot."
+
+[lib]
+name = "curation"
+
+[[bin]]
+name = "ch27-curation"
+path = "src/main.rs"
+
+[dependencies]
+ch25-skill-writing = { path = "../ch25-skill-writing" }
+flate2 = "1"
+tar = "0.4"
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "curation"
+harness = false

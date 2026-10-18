@@ -20,7 +20,7 @@ The step crate is `steps/ch14-when-things-fail`. It is chapter 13's harness copi
 >
 > **Adapted.** The repetition check is the window count. I did not port the line fast path or the anchor scan. Fallback is the next `Model` in a slice, not Hermes's provider chain. The timeout uses `tokio::time::timeout` and drops an owned semaphore permit. Retries take that permit one at a time.
 >
-> **Deferred.** Preflight compression before the model call stays chapter 32. Think-block stripping is chapter 17. Rate-limit backoff on the server is chapter 15.
+> **Deferred.** Preflight compression before the model call stays chapter 34. Think-block stripping is chapter 19. Rate-limit backoff on the server is chapter 15.
 
 [personal note: an empty reply you would have retried, and what the cost did to the budget]
 
@@ -975,7 +975,7 @@ A length reply under 400 characters is continued even if it is `"ok ok ok"`. The
 
 **B5.** `self_repo_git_mutation` refuses a worktree-rewriting `git` aimed at this crate's manifest directory, including `reset --hard`. Alias lookup and heredocs are not parsed. Hermes enables this block on Windows only; this harness runs it on every platform.
 
-**Left for later.** Server-side 429 and 503 behavior is chapter 15. Think-block stripping is chapter 17 (K5). Outbound sanitization beyond this chapter's fake replies is chapter 16 (K4). Secret redaction (E1, E2) is chapter 18. The gateway lifecycle block (B4) is chapter 37.
+**Left for later.** Server-side 429 and 503 behavior is chapter 15. Think-block stripping is chapter 19 (K5). Outbound sanitization beyond this chapter's fake replies is chapter 18 (K4). Secret redaction (E1, E2) is chapter 20. The gateway lifecycle block (B4) is chapter 39.
 
 ## Chapter summary
 

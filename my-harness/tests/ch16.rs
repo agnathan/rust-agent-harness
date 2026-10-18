@@ -1,6 +1,6 @@
-use my_harness::chapter_16_fallback_model;
+use my_harness::chapter_16_blocks_metadata;
 
 #[test]
-fn an_invalid_sort_uses_the_fallback() {
-    assert_eq!(chapter_16_fallback_model(false), "fallback");
+fn a_metadata_address_is_not_a_safe_extract_url() {
+    assert!(chapter_16_blocks_metadata("http://169.254.169.254/latest"));
 }

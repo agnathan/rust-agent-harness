@@ -1,7 +1,8 @@
-use my_harness::chapter_20_discover_hides_subagent;
+use my_harness::chapter_20_stored_line;
 
 #[test]
-fn discover_hides_a_subagent() {
-    assert!(chapter_20_discover_hides_subagent("subagent"));
-    assert!(!chapter_20_discover_hides_subagent("user"));
+fn a_stored_turn_does_not_keep_the_key() {
+    let stored = chapter_20_stored_line("sk-abcdefghijklmnopqrstuvwxyz");
+    assert!(stored.contains("sk-***"), "{stored}");
+    assert!(!stored.contains("abcdefghijklmnopqrstuvwxyz"), "{stored}");
 }

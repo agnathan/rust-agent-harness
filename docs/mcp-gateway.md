@@ -54,38 +54,38 @@ These are the designs that sit in front of many MCP servers. The notes are from 
 
 ## Adopted, adapted, deferred
 
-**Adopted.** A gateway is its own crate, not a mode of the harness. `Gateway::new` starts from an empty `Catalog`. `session_tools` returns a `SessionView` that offers nothing until a chapter loads one. No listener. The harness remains the thing that builds the prompt. Chapter 15 vendors the chapter 7 catalog and the chapter 8 session gateway so that step builds alone, and it keeps the names chapter 21 calls (`Catalog`, `LimitedGateway`, `SessionView`).
+**Adopted.** A gateway is its own crate, not a mode of the harness. `Gateway::new` starts from an empty `Catalog`. `session_tools` returns a `SessionView` that offers nothing until a chapter loads one. No listener. The harness remains the thing that builds the prompt. Chapter 15 vendors the chapter 7 catalog and the chapter 8 session gateway so that step builds alone, and it keeps the names chapter 23 calls (`Catalog`, `LimitedGateway`, `SessionView`).
 
 **Adapted.**
 
 - Hermes searches on the client (`tool_search_catalog.py`) and rebuilds the catalog every assembly. The server will own the index so a 10,000-tool search does not ride along inside the agent process. The harness keeps the append-only, cache-safe reveal it already has in chapter 6. A session-keyed view is a deliberate difference from Hermes's stateless rebuild: the server sends `list_changed` when the view changes, which is the notification Hermes already honors.
 - Hermes `tools.include` / `tools.exclude` and `optional-mcps` are install-time filters. `set_task` and per-session toolsets are the runtime version of that filter.
 - Compact schemas, with the long text fetched on request, follow the same idea as `tool_describe` (Hermes caps describe at 10 names and search at 7 queries). The server can page a result instead of only truncating it in the harness.
-- ContextForge and ToolHive are the precedent for one process in front of many upstream servers, with Redis for shared session and rate-limit state. Docker's gateway is the precedent for a catalog plus dynamic discovery. Chapter 38 keeps the service in memory and does not depend on `rmcp` or axum yet. The steps stay on `rust-version` 1.85.
+- ContextForge and ToolHive are the precedent for one process in front of many upstream servers, with Redis for shared session and rate-limit state. Docker's gateway is the precedent for a catalog plus dynamic discovery. Chapter 40 keeps the service in memory and does not depend on `rmcp` or axum yet. The steps stay on `rust-version` 1.85.
 - Pooling uses least-outstanding-requests or power-of-two-choices per tool, with a concurrency limit and a queue. That is the same bound the harness already uses (8), applied on the server to each backend.
 - Retries are only for tools marked idempotent. Hermes's client reconnect cooldown (30 seconds, doubling to 10 minutes) is a client policy; the server's breaker and hedge are separate and not copied from that cooldown.
 - Drain is adapted from `gateway/drain_control.py`: stop accepting, finish in-flight calls. The marker-file mechanism and the 3600-second max age belong to the messaging gateway. The MCP server will drain on a signal and a readiness flip. A malformed-file fail-safe is not copied, because this server will not use that file.
 - Hosted-room replica promotion is not the MCP replica design. MCP replicas are mostly stateless, routed by session id, with shared state in Redis or something like it.
 - OAuth 2.1 on the server follows the MCP spec (the resource server). Hermes's `mcp_oauth.py` is the client that will talk to it. This server does not implement the client flow.
 
-**In chapters 5, 7, 8, and 15.** A 32/8 call gate, BM25 over native, plugin, and in-memory upstream tools, an `Arc` reload, `search_tools`, `set_task`, `describe`, a `list_changed` flag, paging, schema/call/result tokens, and per-tool permits, idempotent retries, a breaker, and 429/503 backpressure.
+**In chapters 5, 7, 8, and 15.** A 34/8 call gate, BM25 over native, plugin, and in-memory upstream tools, an `Arc` reload, `search_tools`, `set_task`, `describe`, a `list_changed` flag, paging, schema/call/result tokens, and per-tool permits, idempotent retries, a breaker, and 429/503 backpressure.
 
-**In chapter 21.** A usage score installed as the offered set, composite and macro names, and a line-script code mode capped at 50 calls on the sandbox allowlist. The score does not run inside `session_tools`.
+**In chapter 23.** A usage score installed as the offered set, composite and macro names, and a line-script code mode capped at 50 calls on the sandbox allowlist. The score does not run inside `session_tools`.
 
-**In chapter 35.** Least-outstanding and power-of-two picks over an in-memory per-tool pool, federation as a map from tool name to server names, and a discovery gate of 4. No socket.
+**In chapter 37.** Least-outstanding and power-of-two picks over an in-memory per-tool pool, federation as a map from tool name to server names, and a discovery gate of 4. No socket.
 
-**In chapter 38.** Session-id routing, failover when a replica is marked dead, an `Arc` config reload, per-tenant concurrent quotas, an audit vec, span names, health and readiness, a bearer check, and a drain. Sampling, form-mode elicitation, and the `MAL-*` check live in the same crate. No socket.
+**In chapter 40.** Session-id routing, failover when a replica is marked dead, an `Arc` config reload, per-tenant concurrent quotas, an audit vec, span names, health and readiness, a bearer check, and a drain. Sampling, form-mode elicitation, and the `MAL-*` check live in the same crate. No socket.
 
 **Deferred.** A real embedder, live upstream connections, a Python sandbox for code mode, a bound listener, Redis, OAuth token issuance, and a trace exporter. The server still does not bind a socket.
 
 ## Reading order
 
-Server-track chapters are marked *(server)*. Each one sits after the harness chapter it builds on. Step directories for the written harness chapters stay `steps/ch06-*` (book chapter 6) and `steps/ch09-*` (book chapter 9). `steps/ch05-minimal-server`, `steps/ch07-catalog`, `steps/ch08-session-toolsets`, `steps/ch15-limits`, `steps/ch21-learned-tools`, `steps/ch35-balancing`, `steps/ch38-service`, and `steps/ch47-capstone` exist. None of them bind a socket.
+Server-track chapters are marked *(server)*. Each one sits after the harness chapter it builds on. Step directories for the written harness chapters stay `steps/ch06-*` (book chapter 6) and `steps/ch09-*` (book chapter 9). `steps/ch05-minimal-server`, `steps/ch07-catalog`, `steps/ch08-session-toolsets`, `steps/ch15-limits`, `steps/ch23-learned-tools`, `steps/ch37-balancing`, `steps/ch40-service`, and `steps/ch49-capstone` exist. None of them bind a socket.
 
 | Ch | Track | After | What it adds |
 |---|---|---|---|
 | 4 | harness | — | MCP client. Written. |
-| 5 | *(server)* | chapter 4 | Minimal MCP server. Written. A fixed list, `echo`, and a 32/8 gate. No socket. |
+| 5 | *(server)* | chapter 4 | Minimal MCP server. Written. A fixed list, `echo`, and a 34/8 gate. No socket. |
 | 6 | harness | — | Thousands of Tools. Written. The client half of the catalog. |
 | 7 | *(server)* | chapter 6 | Dynamic catalog and server-side BM25 plus embeddings. |
 | 8 | *(server)* | chapter 7 | Per-session toolsets, `set_task`, `list_changed`, compact schemas, token telemetry. |
@@ -93,22 +93,22 @@ Server-track chapters are marked *(server)*. Each one sits after the harness cha
 | 14 | harness | — | When Things Fail. |
 | 15 | *(server)* | chapter 14 | Timeouts, idempotent-only retries, circuit breakers, queues, concurrency limits. |
 | 18–20 | harness | — | Sessions, memory, recall. |
-| 21 | *(server)* | chapter 20 | Learned tool prediction and composite tools. Written. Prediction stays off the request path except for the offered set. |
+| 21 | *(server)* | chapter 22 | Learned tool prediction and composite tools. Written. Prediction stays off the request path except for the offered set. |
 | 34 | harness | — | Supervision and restart. Cancellation is already in chapter 9. |
-| 35 | *(server)* | chapter 34 | Least-outstanding / power-of-two-choices, per-tool pools, federation of upstream MCP. Written. In memory. No socket. |
+| 35 | *(server)* | chapter 36 | Least-outstanding / power-of-two-choices, per-tool pools, federation of upstream MCP. Written. In memory. No socket. |
 | 37 | harness | — | The chat gateway: platform adapters into the session inbox. Not this server. |
-| 38 | *(server)* | chapter 37 | Session-id routing, an `Arc` reload, quotas, audit, drain, health. Written. In memory. No socket. |
+| 38 | *(server)* | chapter 39 | Session-id routing, an `Arc` reload, quotas, audit, drain, health. Written. In memory. No socket. |
 | 46 | harness | — | Seeing Inside. Spans across the harness and the gateway. |
-| 47 | *(server)* | chapter 46 | Load test and the token-efficiency capstone. Written. In memory. No socket. |
+| 47 | *(server)* | chapter 48 | Load test and the token-efficiency capstone. Written. In memory. No socket. |
 
 ## Benchmark targets
 
 Chapters 5, 7, and 8 quote the means from their own benches. The targets below that those chapters did not measure are still targets.
 
-- **Tokens per completed task**, three arms (every tool, a static set, a dynamic set), each with task success. Chapter 8 collects the telemetry. Chapter 47 is the capstone that reports it.
+- **Tokens per completed task**, three arms (every tool, a static set, a dynamic set), each with task success. Chapter 8 collects the telemetry. Chapter 49 is the capstone that reports it.
 - **Search latency over 10,000 tools** on the server, and the cost of a catalog reload that swaps an `Arc` without blocking an in-flight call. Chapter 7. The client BM25 search in chapter 6 already measured 146.8 µs. That number is the harness, not the server.
-- **Throughput and p99** under load, with oha or something like it. Chapters 38 and 47 do not bind a socket, so oha is not run. Chapter 47 measures 100 in-memory dispatches and a nearest-rank p99 inside that process.
-- **Replica-kill failover time**, and drain that finishes in-flight calls. Chapter 38.
+- **Throughput and p99** under load, with oha or something like it. Chapters 38 and 47 do not bind a socket, so oha is not run. Chapter 49 measures 100 in-memory dispatches and a nearest-rank p99 inside that process.
+- **Replica-kill failover time**, and drain that finishes in-flight calls. Chapter 40.
 - **Catalog reload cost.** Chapter 7.
 
 Chapter 5 accepts 32 calls and executes 8. A permit round trip measured 45.53 ns. Eight 1 ms sleeps measured 2.129 ms.

@@ -6,7 +6,7 @@
 
 Chapter 14 names a failure and decides retry or fallback inside the harness. The tool call still arrives at a backend with no limit of its own. This chapter is the gateway. Each tool accepts 32 calls and runs 8. A retry, and a hedge, run only when that tool is marked idempotent. Three failures open a breaker, and the next call does not reach the backend. `web_search` and `delegate_task` stop at 50 for the turn.
 
-The step crate is `steps/ch15-limits`. The package stays `ch15-limits` and the lib stays `gw_limits`. This directory vendors chapter 7 (`catalog`) and chapter 8 (`session`) so it builds alone. `Catalog`, `LimitedGateway` (`new`, `catalog`, `open_session`, `session_tools`), and `SessionView` are the names chapter 21 already calls. A new gateway still has an empty catalog. The harness lineage does not copy this crate: chapter 16 copies chapter 14.
+The step crate is `steps/ch15-limits`. The package stays `ch15-limits` and the lib stays `gw_limits`. This directory vendors chapter 7 (`catalog`) and chapter 8 (`session`) so it builds alone. `Catalog`, `LimitedGateway` (`new`, `catalog`, `open_session`, `session_tools`), and `SessionView` are the names chapter 23 already calls. A new gateway still has an empty catalog. The harness lineage does not copy this crate: chapter 16 copies chapter 14.
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -22,7 +22,7 @@ The step crate is `steps/ch15-limits`. The package stays `ch15-limits` and the l
 >
 > **Adopted.** Both caps at 50. The block happens before the backend call. A `tasks` array counts as its length. `list`, `steer`, and `stop` add nothing and still run. The two block sentences, with the count and the cap filled in.
 >
-> **Adapted.** The breaker, the 32/8 gate, the hedge, and 429/503 handling are this chapter's server policy. A transport error, or a status other than 429 or 503, retries once when the tool is idempotent. 429 and 503 do not retry. Three failed calls open the breaker. A success clears the failure count only while the breaker is still closed. A hedge starts a second call only for an idempotent tool and keeps the first success.
+> **Adapted.** The breaker, the 34/8 gate, the hedge, and 429/503 handling are this chapter's server policy. A transport error, or a status other than 429 or 503, retries once when the tool is idempotent. 429 and 503 do not retry. Three failed calls open the breaker. A success clears the failure count only while the breaker is still closed. A hedge starts a second call only for an idempotent tool and keeps the first success.
 >
 > **Deferred.** The 30-second cooldown that doubles to 10 minutes is not copied. A half-open breaker, shared rate-limit state, and the socket stay later (chapters 35 and 38). Chapter 9 still counts a tool named `delegate` against `max_subagent_iterations`. This chapter counts `delegate_task`.
 
@@ -46,7 +46,7 @@ Three `503` results open the breaker for that tool name. A different tool is not
 
 The demo marks `echo` idempotent. The script fails once with a transport error, then returns `ok`. Three `503`s on `search` open the breaker. The next `search` prints `breaker: open`.
 
-## 15.1 One flat package, and the names chapter 21 already calls
+## 15.1 One flat package, and the names chapter 23 already calls
 
 The file is `steps/ch15-limits/src/lib.rs`. The package name is `ch15-limits`. The library name is `gw_limits`. A test writes `gw_limits::LimitedGateway`. The harness layout puts code under `crates/harness-core`. This server step keeps a flat `src/` tree:
 
@@ -94,7 +94,7 @@ pub use crate::catalog::Gateway as Catalog;
 pub use crate::session::{SessionError, SessionView};
 ```
 
-`pub use crate::catalog::Gateway as Catalog` publishes the chapter 7 gateway as `Catalog`. `catalog::Gateway` and `Catalog` are the same type. Chapter 21 writes `gw_limits::Catalog`, `gw_limits::LimitedGateway`, and `gw_limits::SessionView`. Those three stay. `SessionError` is also at the crate root, because the session module's own methods return it. The methods chapter 21 calls are `new`, `catalog`, `open_session`, and `session_tools`.
+`pub use crate::catalog::Gateway as Catalog` publishes the chapter 7 gateway as `Catalog`. `catalog::Gateway` and `Catalog` are the same type. Chapter 23 writes `gw_limits::Catalog`, `gw_limits::LimitedGateway`, and `gw_limits::SessionView`. Those three stay. `SessionError` is also at the crate root, because the session module's own methods return it. The methods chapter 23 calls are `new`, `catalog`, `open_session`, and `session_tools`.
 
 `LimitedGateway` owns a `SessionGateway`. That struct owns a `catalog::Gateway`. The limits code calls through `inner`.
 
@@ -367,7 +367,7 @@ pub fn session_tools(&self, session_id: &str) -> Option<SessionView> {
 > **Rust sidebar: `Option`**
 > - `Option<SessionView>` is `Some(view)` or `None`. `get` is `None` when the id was never opened. `?` in a function that returns `Option` returns that `None`.
 > - `Some` clones the revealed names and copies `list_changed`. The view does not borrow the session. The lock ends when the function returns.
-> - The limits test opens `"session-1"` and expects `tools` to be empty. `revealed` is still empty. `SessionView`'s fields are `session_id`, `tools`, and `list_changed`. Chapter 21 reads `tools`. This layer returns the inner view unchanged.
+> - The limits test opens `"session-1"` and expects `tools` to be empty. `revealed` is still empty. `SessionView`'s fields are `session_id`, `tools`, and `list_changed`. Chapter 23 reads `tools`. This layer returns the inner view unchanged.
 
 ## 15.13 `set_idempotent`
 
@@ -883,7 +883,7 @@ The queue is the accept bound of 32. The 33rd call is refused. Nothing parks pas
 
 **Breaker.** Three failed calls open it. The next call does not reach the backend.
 
-**Left for later.** The client reconnect cooldown (30 seconds, doubling to 10 minutes) is not this breaker. Replica routing is chapter 35. The socket is chapter 38. Secret redaction (E1, E2) is still absent.
+**Left for later.** The client reconnect cooldown (30 seconds, doubling to 10 minutes) is not this breaker. Replica routing is chapter 37. The socket is chapter 40. Secret redaction (E1, E2) is still absent.
 
 ## Chapter summary
 
@@ -901,4 +901,4 @@ The queue is the accept bound of 32. The 33rd call is refused. Nothing parks pas
 
 ## What's next
 
-Chapter 16 is the provider. The same turn can build an Anthropic body, a Bedrock body, or an OpenRouter route, rotate a key without building a new client, and leave the side model alone unless the turn asked for a summary.
+Chapter 18 is the provider. The same turn can build an Anthropic body, a Bedrock body, or an OpenRouter route, rotate a key without building a new client, and leave the side model alone unless the turn asked for a summary.

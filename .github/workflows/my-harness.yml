@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       chapters:
-        description: "Chapters 1-48: 1, 1-48, 9,12,14, or all. Only chapters with tests run."
+        description: "Chapters 1-50: 1, 1-48, 9,12,14, or all. Only chapters with tests run."
         required: true
         default: all
         type: string

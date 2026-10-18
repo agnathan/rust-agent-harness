@@ -59,7 +59,7 @@ Rust's async runtime (tokio) can run thousands of lightweight tasks on a handful
 
 ## The plan
 
-The book is six parts and chapters 0 through 48. The outline is [`book/book-outline.md`](book-outline.md). Each chapter has a milestone test in `my-harness/tests/chNN.rs` that fails until the code for that chapter is in place, and a finished reference under `steps/`.
+The book is six parts and chapters 0 through 50. The outline is [`book/book-outline.md`](book-outline.md). Each chapter has a milestone test in `my-harness/tests/chNN.rs` that fails until the code for that chapter is in place, and a finished reference under `steps/`.
 
 1. **Part I, one agent.** Messages, a provider, tools, an MCP client, then the agent loop and the turn table that loop drives. Approvals, hooks, a sandbox, and failure handling sit on that same harness. A separate MCP gateway starts in chapter 5 and grows beside the harness (chapters 7, 8, and 15).
 2. **Part II, learning.** Sessions, memory, recall, skills, reflection, and curation. That work stays off the hot path.

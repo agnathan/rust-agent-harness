@@ -22,53 +22,55 @@ Written chapters link to `book/chapter-….md`. A chapter that has no page yet i
 - [Chapter 13: Sandboxed Execution](book/chapter-13-sandbox.md) — [`steps/ch13-sandbox`](steps/ch13-sandbox)
 - [Chapter 14: When Things Fail](book/chapter-14-when-things-fail.md) — [`steps/ch14-when-things-fail`](steps/ch14-when-things-fail)
 - [Chapter 15: Limits and Breakers](book/chapter-15-limits.md) *(server)* — [`steps/ch15-limits`](steps/ch15-limits)
-- [Chapter 16: Providers](book/chapter-16-providers.md) — [`steps/ch16-providers`](steps/ch16-providers)
-- [Chapter 17: Streaming](book/chapter-17-streaming.md) — [`steps/ch17-streaming`](steps/ch17-streaming)
-
-Planned, not yet written. No page and no step crate. Built-in Tools I (Web Search and Extract) and Built-in Tools II (Files, Terminal, Todo, and Clarify) will be inserted after chapter 15, in Part I, and today's chapters 16–48 move up by two. Browser Tools and Vision will be inserted later in Part V, between the gateway and Editor Integration. The spec is [docs/harness-architecture.md](docs/harness-architecture.md).
+- [Chapter 16: Built-in Tools I: Web Search and Extract](book/chapter-16-web-tools.md) — [`steps/ch16-web-tools`](steps/ch16-web-tools)
+- [Chapter 17: Built-in Tools II: Files, Terminal, Todo, and Clarify](book/chapter-17-local-tools.md) — [`steps/ch17-local-tools`](steps/ch17-local-tools)
+- [Chapter 18: Providers](book/chapter-18-providers.md) — [`steps/ch18-providers`](steps/ch18-providers)
+- [Chapter 19: Streaming](book/chapter-19-streaming.md) — [`steps/ch19-streaming`](steps/ch19-streaming)
 
 ## Part II: Learning
 
-- [Chapter 18: Sessions on Disk](book/chapter-18-sessions.md) — [`steps/ch18-sessions`](steps/ch18-sessions)
-- [Chapter 19: Memory Files](book/chapter-19-memory.md) — [`steps/ch19-memory`](steps/ch19-memory)
-- [Chapter 20: Recall](book/chapter-20-recall.md) — [`steps/ch20-recall`](steps/ch20-recall)
-- [Chapter 21: Learned Tools](book/chapter-21-learned-tools.md) *(server)* — [`steps/ch21-learned-tools`](steps/ch21-learned-tools)
-- [Chapter 22: Using Skills](book/chapter-22-using-skills.md) — [`steps/ch22-skills`](steps/ch22-skills)
-- [Chapter 23: Writing Skills](book/chapter-23-writing-skills.md) — [`steps/ch23-skill-writing`](steps/ch23-skill-writing)
-- [Chapter 24: The Reflection Loop](book/chapter-24-reflection.md) — [`steps/ch24-reflection`](steps/ch24-reflection)
-- [Chapter 25: Curation](book/chapter-25-curation.md) — [`steps/ch25-curation`](steps/ch25-curation)
+- [Chapter 20: Sessions on Disk](book/chapter-20-sessions.md) — [`steps/ch20-sessions`](steps/ch20-sessions)
+- [Chapter 21: Memory Files](book/chapter-21-memory.md) — [`steps/ch21-memory`](steps/ch21-memory)
+- [Chapter 22: Recall](book/chapter-22-recall.md) — [`steps/ch22-recall`](steps/ch22-recall)
+- [Chapter 23: Learned Tools](book/chapter-23-learned-tools.md) *(server)* — [`steps/ch23-learned-tools`](steps/ch23-learned-tools)
+- [Chapter 24: Using Skills](book/chapter-24-using-skills.md) — [`steps/ch24-skills`](steps/ch24-skills)
+- [Chapter 25: Writing Skills](book/chapter-25-writing-skills.md) — [`steps/ch25-skill-writing`](steps/ch25-skill-writing)
+- [Chapter 26: The Reflection Loop](book/chapter-26-reflection.md) — [`steps/ch26-reflection`](steps/ch26-reflection)
+- [Chapter 27: Curation](book/chapter-27-curation.md) — [`steps/ch27-curation`](steps/ch27-curation)
 
 ## Part III: The team patterns
 
-- [Chapter 26: The Sequential Pipeline](book/chapter-26-pipeline.md) — [`steps/ch26-pipeline`](steps/ch26-pipeline)
-- [Chapter 27: The Supervisor](book/chapter-27-supervisor.md) — [`steps/ch27-supervisor`](steps/ch27-supervisor)
-- [Chapter 28: Handoffs](book/chapter-28-handoffs.md) — [`steps/ch28-handoffs`](steps/ch28-handoffs)
-- [Chapter 29: Fan-out and Gather](book/chapter-29-fan-out.md) — [`steps/ch29-fan-out`](steps/ch29-fan-out)
-- [Chapter 30: The Critic](book/chapter-30-critic.md) — [`steps/ch30-critic`](steps/ch30-critic)
-- [Chapter 31: Composing Patterns](book/chapter-31-composition.md) — [`steps/ch31-composition`](steps/ch31-composition)
+- [Chapter 28: The Sequential Pipeline](book/chapter-28-pipeline.md) — [`steps/ch28-pipeline`](steps/ch28-pipeline)
+- [Chapter 29: The Supervisor](book/chapter-29-supervisor.md) — [`steps/ch29-supervisor`](steps/ch29-supervisor)
+- [Chapter 30: Handoffs](book/chapter-30-handoffs.md) — [`steps/ch30-handoffs`](steps/ch30-handoffs)
+- [Chapter 31: Fan-out and Gather](book/chapter-31-fan-out.md) — [`steps/ch31-fan-out`](steps/ch31-fan-out)
+- [Chapter 32: The Critic](book/chapter-32-critic.md) — [`steps/ch32-critic`](steps/ch32-critic)
+- [Chapter 33: Composing Patterns](book/chapter-33-composition.md) — [`steps/ch33-composition`](steps/ch33-composition)
 
 ## Part IV: Making it robust
 
-- [Chapter 32: Managing Context](book/chapter-32-context.md) — [`steps/ch32-context`](steps/ch32-context)
-- [Chapter 33: Agents as Actors](book/chapter-33-actors.md) — [`steps/ch33-actors`](steps/ch33-actors)
-- [Chapter 34: Supervision and Restart](book/chapter-34-supervision.md) — [`steps/ch34-supervision`](steps/ch34-supervision)
-- [Chapter 35: Balancing and Federation](book/chapter-35-balancing.md) *(server)* — [`steps/ch35-balancing`](steps/ch35-balancing)
+- [Chapter 34: Managing Context](book/chapter-34-context.md) — [`steps/ch34-context`](steps/ch34-context)
+- [Chapter 35: Agents as Actors](book/chapter-35-actors.md) — [`steps/ch35-actors`](steps/ch35-actors)
+- [Chapter 36: Supervision and Restart](book/chapter-36-supervision.md) — [`steps/ch36-supervision`](steps/ch36-supervision)
+- [Chapter 37: Balancing and Federation](book/chapter-37-balancing.md) *(server)* — [`steps/ch37-balancing`](steps/ch37-balancing)
 
 ## Part V: Running as a service
 
-- [Chapter 36: Profiles](book/chapter-36-profiles.md) — [`steps/ch36-profiles`](steps/ch36-profiles)
-- [Chapter 37: The Gateway](book/chapter-37-gateway.md) — [`steps/ch37-gateway`](steps/ch37-gateway)
-- [Chapter 38: MCP Gateway Service](book/chapter-38-service.md) *(server)* — [`steps/ch38-service`](steps/ch38-service)
-- [Chapter 39: Cron](book/chapter-39-cron.md) — [`steps/ch39-cron`](steps/ch39-cron)
-- [Chapter 40: Editor Integration](book/chapter-40-acp.md) — [`steps/ch40-acp`](steps/ch40-acp)
+- [Chapter 38: Profiles](book/chapter-38-profiles.md) — [`steps/ch38-profiles`](steps/ch38-profiles)
+- [Chapter 39: The Gateway](book/chapter-39-gateway.md) — [`steps/ch39-gateway`](steps/ch39-gateway)
+- [Chapter 40: MCP Gateway Service](book/chapter-40-service.md) *(server)* — [`steps/ch40-service`](steps/ch40-service)
+- [Chapter 41: Cron](book/chapter-41-cron.md) — [`steps/ch41-cron`](steps/ch41-cron)
+Planned, not yet written. No page and no step crate. Browser Tools, then Vision, will be inserted here in Part V, after the gateway and before Editor Integration. The spec is [docs/harness-architecture.md](docs/harness-architecture.md).
+
+- [Chapter 42: Editor Integration](book/chapter-42-acp.md) — [`steps/ch42-acp`](steps/ch42-acp)
 
 ## Part VI: Loosely coupled teams
 
-- [Chapter 41: The Blackboard](book/chapter-41-blackboard.md) — [`steps/ch41-blackboard`](steps/ch41-blackboard)
-- [Chapter 42: The Kanban Board](book/chapter-42-kanban.md) — [`steps/ch42-kanban`](steps/ch42-kanban)
-- [Chapter 43: The Message Bus](book/chapter-43-message-bus.md) — [`steps/ch43-message-bus`](steps/ch43-message-bus)
-- [Chapter 44: Shared Team Skills](book/chapter-44-team-skills.md) — [`steps/ch44-team-skills`](steps/ch44-team-skills)
-- [Chapter 45: A2A for External Agents](book/chapter-45-a2a.md) — [`steps/ch45-a2a`](steps/ch45-a2a)
-- [Chapter 46: Seeing Inside](book/chapter-46-tracing.md) — [`steps/ch46-tracing`](steps/ch46-tracing)
-- [Chapter 47: Load and Token Capstone](book/chapter-47-capstone.md) *(server)* — [`steps/ch47-capstone`](steps/ch47-capstone)
-- [Chapter 48: Evals](book/chapter-48-evals.md) — [`steps/ch48-evals`](steps/ch48-evals)
+- [Chapter 43: The Blackboard](book/chapter-43-blackboard.md) — [`steps/ch43-blackboard`](steps/ch43-blackboard)
+- [Chapter 44: The Kanban Board](book/chapter-44-kanban.md) — [`steps/ch44-kanban`](steps/ch44-kanban)
+- [Chapter 45: The Message Bus](book/chapter-45-message-bus.md) — [`steps/ch45-message-bus`](steps/ch45-message-bus)
+- [Chapter 46: Shared Team Skills](book/chapter-46-team-skills.md) — [`steps/ch46-team-skills`](steps/ch46-team-skills)
+- [Chapter 47: A2A for External Agents](book/chapter-47-a2a.md) — [`steps/ch47-a2a`](steps/ch47-a2a)
+- [Chapter 48: Seeing Inside](book/chapter-48-tracing.md) — [`steps/ch48-tracing`](steps/ch48-tracing)
+- [Chapter 49: Load and Token Capstone](book/chapter-49-capstone.md) *(server)* — [`steps/ch49-capstone`](steps/ch49-capstone)
+- [Chapter 50: Evals](book/chapter-50-evals.md) — [`steps/ch50-evals`](steps/ch50-evals)

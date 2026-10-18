@@ -4,7 +4,7 @@
 
 Chapter 5 can list the tools it was given at startup. A gateway that only does that cannot pick up a plugin, or a second server's tools, without restarting the process. Chapter 6 already measured what a 10,000-tool list costs when the client holds it. This chapter moves the catalog into the server: native tools, plugin tools, and an in-memory upstream list, one BM25 index, and a reload that swaps an `Arc`.
 
-The step crate is `steps/ch07-catalog`. The package is `ch07-catalog`. It still binds no socket. A live connection to an upstream MCP server is chapter 35.
+The step crate is `steps/ch07-catalog`. The package is `ch07-catalog`. It still binds no socket. A live connection to an upstream MCP server is chapter 37.
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -18,7 +18,7 @@ The step crate is `steps/ch07-catalog`. The package is `ch07-catalog`. It still 
 >
 > **Adapted.** Hermes rebuilds on every assembly. This server keeps a `Snapshot` behind `RwLock<Arc<Snapshot>>`. `reload` builds the new index, then replaces the `Arc`. A caller that already cloned the old `Arc` keeps it. `call` clones the `Arc` before it reads the card, so a reload during the body does not change that call's tool. The rarest-token admission in `search_catalog` (`_gate_token`, and `_required_term_coverage`) is not in this index. Chapter 6's client search does not have it either. I am not assigning it to a later chapter. `HashEmbedder` buckets bytes into eight floats. Search calls it when one is installed, and ranking stays BM25. That is the same seam as chapter 6.
 >
-> **Deferred.** A real embedder, a real upstream MCP connection, and hot reload across replicas wait. Federation of live servers is chapter 35. Per-session views are chapter 8. The 7-query and 10-describe caps are chapter 8.
+> **Deferred.** A real embedder, a real upstream MCP connection, and hot reload across replicas wait. Federation of live servers is chapter 37. Per-session views are chapter 8. The 7-query and 10-describe caps are chapter 8.
 
 [personal note: a reload that surprised a call still in flight]
 
@@ -110,9 +110,9 @@ The catalog boundary is still not a security boundary. [`docs/hermes-guardrails.
 
 **Reload does not edit a snapshot a call already holds.** That is the consistency rule. It is not authentication.
 
-Plugin tools are whatever the `Load` contains. Hermes scans plugins at install (`tools/plugin_guard.py`, H3: 400 files, 10 MB total, 1 MB per file). This chapter does not scan. No later chapter in the outline owns H3, so I am not pointing at one. Upstream tools are an in-memory list. The OSV check before an npx or uvx launch (H4, `tools/osv_check.py`) is noted on chapter 38. Live federation is chapter 35.
+Plugin tools are whatever the `Load` contains. Hermes scans plugins at install (`tools/plugin_guard.py`, H3: 400 files, 10 MB total, 1 MB per file). This chapter does not scan. No later chapter in the outline owns H3, so I am not pointing at one. Upstream tools are an in-memory list. The OSV check before an npx or uvx launch (H4, `tools/osv_check.py`) is noted on chapter 40. Live federation is chapter 37.
 
-Context-file injection scanning (F2) and the 20,000-character cap (F3) are chapter 32. They are not applied to tool descriptions here.
+Context-file injection scanning (F2) and the 20,000-character cap (F3) are chapter 34. They are not applied to tool descriptions here.
 
 ## Chapter summary
 

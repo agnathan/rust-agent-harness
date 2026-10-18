@@ -2,7 +2,7 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 11 can refuse a command. It cannot refuse an arbitrary tool because a plugin said so, and it cannot rewrite the arguments on the way in. This chapter adds that slot. A hook runs before the tool, and another runs after. A third sees the messages that are about to be sent, by borrow. A memory backend records the turn on a queue. The queue is the trait chapter 19 will fill with files.
+Chapter 11 can refuse a command. It cannot refuse an arbitrary tool because a plugin said so, and it cannot rewrite the arguments on the way in. This chapter adds that slot. A hook runs before the tool, and another runs after. A third sees the messages that are about to be sent, by borrow. A memory backend records the turn on a queue. The queue is the trait chapter 21 will fill with files.
 
 The step crate is `steps/ch12-hooks`. It is chapter 11's harness copied forward, plus `hooks`. The package name stays `ch12-hooks`. The library name is `harness_core`. There is no path dependency on chapter 11.
 
@@ -20,7 +20,7 @@ The step crate is `steps/ch12-hooks`. It is chapter 11's harness copied forward,
 >
 > **Adapted.** `post_tool_call` returns `Option<String>`, a replacement result. I did not port Hermes's post-hook payload. `pre_api_request` takes `&[Message]` so the hook cannot be the thing that clones the conversation. `MemoryBackend::enqueue_turn` is a `Mutex<VecDeque>` capped at 64, not Honcho or Hindsight. A hook may name a toolset to enable. `set_thread_tool_whitelist` in `hermes_cli/plugins.py` narrows tools; this enable is the other direction, and a failed availability check still hides the tool.
 >
-> **Deferred.** The reviewer that runs after a turn, and `on_pre_compress`, are chapter 24. The file backend is chapter 19. Untrusted-output wrapping is chapter 32 (F4).
+> **Deferred.** The reviewer that runs after a turn, and `on_pre_compress`, are chapter 26. The file backend is chapter 21. Untrusted-output wrapping is chapter 34 (F4).
 
 [personal note: a hook that fired on a tool you thought was still going to run]
 
@@ -407,7 +407,7 @@ The test stores `messages.as_ptr() as usize` and the length, then compares the p
 
 ## 12.12 `TurnRecord` and `MemoryQueue`
 
-The memory hook records one finished turn and returns. It does not open a file. Chapter 19 is the backend that does.
+The memory hook records one finished turn and returns. It does not open a file. Chapter 21 is the backend that does.
 
 ```rust
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -427,7 +427,7 @@ pub trait MemoryBackend: Send + Sync {
 > - A literal is `'static`. The test passes `"hello"` and `"ok"`. A local `String` also works if the record only lives for the `enqueue_turn` call. The type does not demand `'static`.
 > - `&TurnRecord<'_>` lets the compiler pick the lifetime. `format!` copies the characters into a `String` the queue owns. After the call returns, the queue does not hold the `&str`.
 
-`MemoryBackend` is the trait chapter 19 will implement with files. `enqueue_turn` returns `Result<(), HookError>`. `()` means success carries no payload. `Err` is there so a backend that can fail has a type. This queue always returns `Ok(())`.
+`MemoryBackend` is the trait chapter 21 will implement with files. `enqueue_turn` returns `Result<(), HookError>`. `()` means success carries no payload. `Err` is there so a backend that can fail has a type. This queue always returns `Ok(())`.
 
 ```rust
 #[derive(Debug, Default)]
@@ -472,7 +472,7 @@ impl MemoryBackend for MemoryQueue {
 
 `Default` is an unlocked mutex around an empty `VecDeque`. `new` is `Self::default()`. `push_back` adds at the tail. `pop_front` drops the head without sliding every later job. The cap is the literal `64`, the same number as `INBOX_BOUND`, which this function does not read. At length 64 it pops, then pushes, and the length stays 64. At 63 it only pushes. The comparison is `==`. This method is the only writer, and it holds the lock, so the length does not pass 64.
 
-The test's stored string is `hello ok`. It asserts `len() == 1` and `name() == "queue"`. There is no public pop. Chapter 19 is the copy a caller can read. `name` returns the literal `"queue"`.
+The test's stored string is `hello ok`. It asserts `len() == 1` and `name() == "queue"`. There is no public pop. Chapter 21 is the copy a caller can read. `name` returns the literal `"queue"`.
 
 ## 12.13 `Registry` in this file is not the chapter 3 tool registry
 
@@ -652,7 +652,7 @@ The doc comment says this touches the map so a denied escalation still type-chec
 
 ## 12.17 Three caps, and the verdict types
 
-A plugin install is the moment a hook enters the process. The structural half of Hermes `tools/plugin_guard.py` is these constants and the two functions under them. The pattern engine stays chapter 23.
+A plugin install is the moment a hook enters the process. The structural half of Hermes `tools/plugin_guard.py` is these constants and the two functions under them. The pattern engine stays chapter 25.
 
 ```rust
 pub const MAX_PLUGIN_FILE_COUNT: usize = 400;
@@ -684,7 +684,7 @@ pub struct PluginFile {
 }
 ```
 
-`PluginVerdict` is the scan. `InstallDecision` is the install. Both are `Copy`, so a call copies the discriminant. `Dangerous` exists so the install function can refuse it. `scan_plugin_shape` does not construct it. A pattern hit is chapter 23.
+`PluginVerdict` is the scan. `InstallDecision` is the install. Both are `Copy`, so a call copies the discriminant. `Dangerous` exists so the install function can refuse it. `scan_plugin_shape` does not construct it. A pattern hit is chapter 25.
 
 `PluginFile` is the caller's measurement. `bytes` is the size already counted. The struct is not `Copy`, because `path` is a `String`. The scanner reads `bytes` and does not open `path`.
 
@@ -752,7 +752,7 @@ The plain `Caution` arm returns `Confirm`. 401 files scan as `Caution` because 4
 
 `Dangerous` returns `Block` with no guard. `force` is not read. Force overrides caution only. Force does not override dangerous. The test expects `Block` for `Dangerous` with `true`. Force false is the same arm.
 
-`scan_plugin_shape` never produces `Dangerous`. Chapter 23 will. The test passes the variant directly. The step crate returns the enum. The milestone words are `"confirm"` and `"block"`. I am not pasting a solution into `my-harness/`.
+`scan_plugin_shape` never produces `Dangerous`. Chapter 25 will. The test passes the variant directly. The step crate returns the enum. The milestone words are `"confirm"` and `"block"`. I am not pasting a solution into `my-harness/`.
 
 ## 12.20 What the benches time
 
@@ -822,7 +822,7 @@ The `cargo run` above. The result is the block message. `stopped` is 1.
 
 An approve stored in `Dispatch.approve` is not a block. `run_script` ignores it and runs the tool. The escalation test calls `escalation_block` on purpose. Forgetting that call is how a plugin's "ask the human" becomes a silent allow.
 
-The queue cap drops the oldest job. A caller that treats `len()` as "every turn since the process started" will be wrong after 64 enqueues. Chapter 19 is the durable copy.
+The queue cap drops the oldest job. A caller that treats `len()` as "every turn since the process started" will be wrong after 64 enqueues. Chapter 21 is the durable copy.
 
 `available` requires both the check and the enabled set. A hook that enables a set the tool is not in does nothing for that tool.
 
@@ -838,16 +838,16 @@ The queue cap drops the oldest job. A caller that treats `len()` as "every turn 
 
 **Registry check.** `Registry::available` stays false when the check failed. The hook cannot enable a tool chapter 3 would have hidden.
 
-**H3, structural half.** `scan_plugin_shape` applies the caps from `tools/plugin_guard.py`: 400 files, 10 MB total, 1 MB for one file. Oversized is `Caution`. `should_allow_plugin_install` lets `force` override caution and does not let it override `Dangerous`. The pattern engine is chapter 23 (H1).
+**H3, structural half.** `scan_plugin_shape` applies the caps from `tools/plugin_guard.py`: 400 files, 10 MB total, 1 MB for one file. Oversized is `Caution`. `should_allow_plugin_install` lets `force` override caution and does not let it override `Dangerous`. The pattern engine is chapter 25 (H1).
 
-**Left for later.** The post-turn reviewer is chapter 24. Memory files and the threat scan are chapter 19 (F5, F6). Secret redaction (E1, E2) is chapter 18. The hook message is not scrubbed in this chapter.
+**Left for later.** The post-turn reviewer is chapter 26. Memory files and the threat scan are chapter 21 (F5, F6). Secret redaction (E1, E2) is chapter 20. The hook message is not scrubbed in this chapter.
 
 ## Chapter summary
 
 - **Before.** Modify, then block wins, then the first approve is kept. A failed hook is skipped.
 - **After.** A hook may replace the result string.
 - **Borrow.** The API hook sees the message slice. It does not get its own copy.
-- **Queue.** One turn enqueues. The file write is chapter 19.
+- **Queue.** One turn enqueues. The file write is chapter 21.
 - **Time.** The empty pair measured **10.90 ns**. The API hook measured **2.182 ns**. The enqueue measured **61.70 ns**.
 
 [personal note: which hook you expected to be a block, and what it rewrote instead]

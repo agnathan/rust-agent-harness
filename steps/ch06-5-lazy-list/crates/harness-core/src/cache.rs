@@ -8,7 +8,7 @@
 //!
 //! A tool group is this same filter. Code mode is one code tool plus the
 //! sandbox (chapter 11). A specialist is a sub-agent with its own servers
-//! (chapter 23, the supervisor). This chapter only filters.
+//! (chapter 25, the supervisor). This chapter only filters.
 
 use crate::catalog::{generate, ToolCard};
 use std::collections::BTreeSet;

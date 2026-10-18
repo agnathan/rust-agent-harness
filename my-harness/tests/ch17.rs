@@ -1,6 +1,6 @@
-use my_harness::chapter_17_fold_matches_buffer;
+use my_harness::chapter_17_stale_write_refused;
 
 #[test]
-fn folding_plain_chunks_matches_a_buffer() {
-    assert!(chapter_17_fold_matches_buffer(&["hel", "lo"]));
+fn a_write_without_a_read_is_refused() {
+    assert!(chapter_17_stale_write_refused(false));
 }

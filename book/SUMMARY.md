@@ -22,53 +22,55 @@ Server-track chapters are marked *(server)*. They are interleaved with the harne
 - [Chapter 13: Sandboxed Execution](chapter-13-sandbox.md)
 - [Chapter 14: When Things Fail](chapter-14-when-things-fail.md)
 - [Chapter 15: Limits and Breakers](chapter-15-limits.md) *(server)*
-- [Chapter 16: Providers](chapter-16-providers.md)
-- [Chapter 17: Streaming](chapter-17-streaming.md)
+- [Chapter 16: Built-in Tools I: Web Search and Extract](chapter-16-web-tools.md)
+- [Chapter 17: Built-in Tools II: Files, Terminal, Todo, and Clarify](chapter-17-local-tools.md)
+- [Chapter 18: Providers](chapter-18-providers.md)
+- [Chapter 19: Streaming](chapter-19-streaming.md)
 
-<!-- Planned, not yet written: Built-in Tools I (Web Search and Extract) and Built-in Tools II (Files, Terminal, Todo, and Clarify), inserted after chapter 15. Browser Tools and Vision, inserted later in Part V. Spec: docs/harness-architecture.md. -->
+<!-- Planned, not yet written, in Part V between the gateway and Editor Integration: Browser Tools and Vision. Spec: docs/harness-architecture.md. -->
 
 # Part II: Learning
 
-- [Chapter 18: Sessions on Disk](chapter-18-sessions.md)
-- [Chapter 19: Memory Files](chapter-19-memory.md)
-- [Chapter 20: Recall](chapter-20-recall.md)
-- [Chapter 21: Learned Tools](chapter-21-learned-tools.md) *(server)*
-- [Chapter 22: Using Skills](chapter-22-using-skills.md)
-- [Chapter 23: Writing Skills](chapter-23-writing-skills.md)
-- [Chapter 24: The Reflection Loop](chapter-24-reflection.md)
-- [Chapter 25: Curation](chapter-25-curation.md)
+- [Chapter 20: Sessions on Disk](chapter-20-sessions.md)
+- [Chapter 21: Memory Files](chapter-21-memory.md)
+- [Chapter 22: Recall](chapter-22-recall.md)
+- [Chapter 23: Learned Tools](chapter-23-learned-tools.md) *(server)*
+- [Chapter 24: Using Skills](chapter-24-using-skills.md)
+- [Chapter 25: Writing Skills](chapter-25-writing-skills.md)
+- [Chapter 26: The Reflection Loop](chapter-26-reflection.md)
+- [Chapter 27: Curation](chapter-27-curation.md)
 
 # Part III: The team patterns
 
-- [Chapter 26: The Sequential Pipeline](chapter-26-pipeline.md)
-- [Chapter 27: The Supervisor](chapter-27-supervisor.md)
-- [Chapter 28: Handoffs](chapter-28-handoffs.md)
-- [Chapter 29: Fan-out and Gather](chapter-29-fan-out.md)
-- [Chapter 30: The Critic](chapter-30-critic.md)
-- [Chapter 31: Composing Patterns](chapter-31-composition.md)
+- [Chapter 28: The Sequential Pipeline](chapter-28-pipeline.md)
+- [Chapter 29: The Supervisor](chapter-29-supervisor.md)
+- [Chapter 30: Handoffs](chapter-30-handoffs.md)
+- [Chapter 31: Fan-out and Gather](chapter-31-fan-out.md)
+- [Chapter 32: The Critic](chapter-32-critic.md)
+- [Chapter 33: Composing Patterns](chapter-33-composition.md)
 
 # Part IV: Making it robust
 
-- [Chapter 32: Managing Context](chapter-32-context.md)
-- [Chapter 33: Agents as Actors](chapter-33-actors.md)
-- [Chapter 34: Supervision and Restart](chapter-34-supervision.md)
-- [Chapter 35: Balancing and Federation](chapter-35-balancing.md) *(server)*
+- [Chapter 34: Managing Context](chapter-34-context.md)
+- [Chapter 35: Agents as Actors](chapter-35-actors.md)
+- [Chapter 36: Supervision and Restart](chapter-36-supervision.md)
+- [Chapter 37: Balancing and Federation](chapter-37-balancing.md) *(server)*
 
 # Part V: Running as a service
 
-- [Chapter 36: Profiles](chapter-36-profiles.md)
-- [Chapter 37: The Gateway](chapter-37-gateway.md)
-- [Chapter 38: MCP Gateway Service](chapter-38-service.md) *(server)*
-- [Chapter 39: Cron](chapter-39-cron.md)
-- [Chapter 40: Editor Integration](chapter-40-acp.md)
+- [Chapter 38: Profiles](chapter-38-profiles.md)
+- [Chapter 39: The Gateway](chapter-39-gateway.md)
+- [Chapter 40: MCP Gateway Service](chapter-40-service.md) *(server)*
+- [Chapter 41: Cron](chapter-41-cron.md)
+- [Chapter 42: Editor Integration](chapter-42-acp.md)
 
 # Part VI: Loosely coupled teams
 
-- [Chapter 41: The Blackboard](chapter-41-blackboard.md)
-- [Chapter 42: The Kanban Board](chapter-42-kanban.md)
-- [Chapter 43: The Message Bus](chapter-43-message-bus.md)
-- [Chapter 44: Shared Team Skills](chapter-44-team-skills.md)
-- [Chapter 45: A2A for External Agents](chapter-45-a2a.md)
-- [Chapter 46: Seeing Inside](chapter-46-tracing.md)
-- [Chapter 47: Load and Token Capstone](chapter-47-capstone.md) *(server)*
-- [Chapter 48: Evals](chapter-48-evals.md)
+- [Chapter 43: The Blackboard](chapter-43-blackboard.md)
+- [Chapter 44: The Kanban Board](chapter-44-kanban.md)
+- [Chapter 45: The Message Bus](chapter-45-message-bus.md)
+- [Chapter 46: Shared Team Skills](chapter-46-team-skills.md)
+- [Chapter 47: A2A for External Agents](chapter-47-a2a.md)
+- [Chapter 48: Seeing Inside](chapter-48-tracing.md)
+- [Chapter 49: Load and Token Capstone](chapter-49-capstone.md) *(server)*
+- [Chapter 50: Evals](chapter-50-evals.md)

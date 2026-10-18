@@ -1,8 +1,6 @@
-use my_harness::chapter_18_stored_line;
+use my_harness::chapter_18_fallback_model;
 
 #[test]
-fn a_stored_turn_does_not_keep_the_key() {
-    let stored = chapter_18_stored_line("sk-abcdefghijklmnopqrstuvwxyz");
-    assert!(stored.contains("sk-***"), "{stored}");
-    assert!(!stored.contains("abcdefghijklmnopqrstuvwxyz"), "{stored}");
+fn an_invalid_sort_uses_the_fallback() {
+    assert_eq!(chapter_18_fallback_model(false), "fallback");
 }

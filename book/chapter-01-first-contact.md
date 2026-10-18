@@ -644,7 +644,7 @@ cargo run -p ch01-4-harness-cli -- --mock ask "Say hello"
 cargo bench -p ch01-4-harness-core --bench edges
 ```
 
-The client now has a whole-request timeout, 60 seconds unless `--timeout-secs` says otherwise. reqwest's `timeout` covers connect and read. When `send` fails and `err.is_timeout()` is true, the error is `ProviderError::Timeout` and it carries the `Duration` we set. Anything else stays `ProviderError::Network`. This is one deadline, not a retry. Chapter 14 classifies failures, retries, and falls back. Chapter 17 is where a reply becomes a stream of the same events. The request body still has no `stream` field.
+The client now has a whole-request timeout, 60 seconds unless `--timeout-secs` says otherwise. reqwest's `timeout` covers connect and read. When `send` fails and `err.is_timeout()` is true, the error is `ProviderError::Timeout` and it carries the `Duration` we set. Anything else stays `ProviderError::Network`. This is one deadline, not a retry. Chapter 14 classifies failures, retries, and falls back. Chapter 19 is where a reply becomes a stream of the same events. The request body still has no `stream` field.
 
 ```rust
 #[error("request timed out after {timeout:?}")]

@@ -1,6 +1,6 @@
-use my_harness::chapter_19_snapshot_changes_on_write;
+use my_harness::chapter_19_fold_matches_buffer;
 
 #[test]
-fn a_write_does_not_replace_the_snapshot() {
-    assert!(!chapter_19_snapshot_changes_on_write());
+fn folding_plain_chunks_matches_a_buffer() {
+    assert!(chapter_19_fold_matches_buffer(&["hel", "lo"]));
 }

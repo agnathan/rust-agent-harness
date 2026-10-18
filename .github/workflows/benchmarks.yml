@@ -101,72 +101,76 @@ jobs:
         run: bash .github/scripts/run_bench_section.sh 14 "chapter 14 failures" ch14-when-things-fail failures
       - name: Chapter 15 limits
         run: bash .github/scripts/run_bench_section.sh 15 "chapter 15 limits" ch15-limits limits
-      - name: Chapter 16 providers
-        run: bash .github/scripts/run_bench_section.sh 16 "chapter 16 providers" ch16-providers providers
-      - name: Chapter 17 streaming
-        run: bash .github/scripts/run_bench_section.sh 17 "chapter 17 streaming" ch17-streaming streaming
-      - name: Chapter 18 sessions
-        run: bash .github/scripts/run_bench_section.sh 18 "chapter 18 sessions" ch18-sessions sessions
-      - name: Chapter 19 memory
-        run: bash .github/scripts/run_bench_section.sh 19 "chapter 19 memory" ch19-memory memory
-      - name: Chapter 20 recall
-        run: bash .github/scripts/run_bench_section.sh 20 "chapter 20 recall" ch20-recall recall
-      - name: Chapter 21 learned tools
-        run: bash .github/scripts/run_bench_section.sh 21 "chapter 21 learned" ch21-learned-tools learned
-      - name: Chapter 22 skills
-        run: bash .github/scripts/run_bench_section.sh 22 "chapter 22 skills" ch22-skills skills
-      - name: Chapter 23 writing
-        run: bash .github/scripts/run_bench_section.sh 23 "chapter 23 writing" ch23-skill-writing writing
-      - name: Chapter 24 reflection
-        run: bash .github/scripts/run_bench_section.sh 24 "chapter 24 reflection" ch24-reflection reflection
-      - name: Chapter 25 curation
-        run: bash .github/scripts/run_bench_section.sh 25 "chapter 25 curation" ch25-curation curation
-      - name: Chapter 26 pipeline
-        run: bash .github/scripts/run_bench_section.sh 26 "chapter 26 pipeline" ch26-pipeline pipeline
-      - name: Chapter 27 supervisor
-        run: bash .github/scripts/run_bench_section.sh 27 "chapter 27 supervisor" ch27-supervisor supervisor
-      - name: Chapter 28 handoffs
-        run: bash .github/scripts/run_bench_section.sh 28 "chapter 28 handoffs" ch28-handoffs handoffs
-      - name: Chapter 29 fan-out
-        run: bash .github/scripts/run_bench_section.sh 29 "chapter 29 fan-out" ch29-fan-out fan_out
-      - name: Chapter 30 critic
-        run: bash .github/scripts/run_bench_section.sh 30 "chapter 30 critic" ch30-critic critic
-      - name: Chapter 31 composition
-        run: bash .github/scripts/run_bench_section.sh 31 "chapter 31 composition" ch31-composition composition
-      - name: Chapter 32 context
-        run: bash .github/scripts/run_bench_section.sh 32 "chapter 32 context" ch32-context context
-      - name: Chapter 33 actors
-        run: bash .github/scripts/run_bench_section.sh 33 "chapter 33 actors" ch33-actors actors
-      - name: Chapter 34 supervision
-        run: bash .github/scripts/run_bench_section.sh 34 "chapter 34 supervision" ch34-supervision supervision
-      - name: Chapter 35 balancing
-        run: bash .github/scripts/run_bench_section.sh 35 "chapter 35 balancing" ch35-balancing balancing
-      - name: Chapter 36 profiles
-        run: bash .github/scripts/run_bench_section.sh 36 "chapter 36 profiles" ch36-profiles profiles
-      - name: Chapter 37 gateway
-        run: bash .github/scripts/run_bench_section.sh 37 "chapter 37 gateway" ch37-gateway gateway
-      - name: Chapter 38 service
-        run: bash .github/scripts/run_bench_section.sh 38 "chapter 38 service" ch38-service service
-      - name: Chapter 39 cron
-        run: bash .github/scripts/run_bench_section.sh 39 "chapter 39 cron" ch39-cron cron
-      - name: Chapter 40 acp
-        run: bash .github/scripts/run_bench_section.sh 40 "chapter 40 acp" ch40-acp acp
-      - name: Chapter 41 blackboard
-        run: bash .github/scripts/run_bench_section.sh 41 "chapter 41 blackboard" ch41-blackboard blackboard
-      - name: Chapter 42 kanban
-        run: bash .github/scripts/run_bench_section.sh 42 "chapter 42 kanban" ch42-kanban kanban
-      - name: Chapter 43 message bus
-        run: bash .github/scripts/run_bench_section.sh 43 "chapter 43 message bus" ch43-message-bus bus
-      - name: Chapter 44 team skills
-        run: bash .github/scripts/run_bench_section.sh 44 "chapter 44 team skills" ch44-team-skills skills
-      - name: Chapter 45 a2a
-        run: bash .github/scripts/run_bench_section.sh 45 "chapter 45 a2a" ch45-a2a a2a
-      - name: Chapter 46 tracing
-        run: bash .github/scripts/run_bench_section.sh 46 "chapter 46 tracing" ch46-tracing spans
-      - name: Chapter 47 capstone
-        run: bash .github/scripts/run_bench_section.sh 47 "chapter 47 capstone" ch47-capstone capstone
-      - name: Chapter 48 evals
-        run: bash .github/scripts/run_bench_section.sh 48 "chapter 48 evals" ch48-evals evals
+      - name: Chapter 16 web tools
+        run: bash .github/scripts/run_bench_section.sh 16 "chapter 16 web tools" ch16-web-tools web
+      - name: Chapter 17 local tools
+        run: bash .github/scripts/run_bench_section.sh 17 "chapter 17 local tools" ch17-local-tools local
+      - name: Chapter 18 providers
+        run: bash .github/scripts/run_bench_section.sh 18 "chapter 18 providers" ch18-providers providers
+      - name: Chapter 19 streaming
+        run: bash .github/scripts/run_bench_section.sh 19 "chapter 19 streaming" ch19-streaming streaming
+      - name: Chapter 20 sessions
+        run: bash .github/scripts/run_bench_section.sh 20 "chapter 20 sessions" ch20-sessions sessions
+      - name: Chapter 21 memory
+        run: bash .github/scripts/run_bench_section.sh 21 "chapter 21 memory" ch21-memory memory
+      - name: Chapter 22 recall
+        run: bash .github/scripts/run_bench_section.sh 22 "chapter 22 recall" ch22-recall recall
+      - name: Chapter 23 learned tools
+        run: bash .github/scripts/run_bench_section.sh 23 "chapter 23 learned" ch23-learned-tools learned
+      - name: Chapter 24 skills
+        run: bash .github/scripts/run_bench_section.sh 24 "chapter 24 skills" ch24-skills skills
+      - name: Chapter 25 writing
+        run: bash .github/scripts/run_bench_section.sh 25 "chapter 25 writing" ch25-skill-writing writing
+      - name: Chapter 26 reflection
+        run: bash .github/scripts/run_bench_section.sh 26 "chapter 26 reflection" ch26-reflection reflection
+      - name: Chapter 27 curation
+        run: bash .github/scripts/run_bench_section.sh 27 "chapter 27 curation" ch27-curation curation
+      - name: Chapter 28 pipeline
+        run: bash .github/scripts/run_bench_section.sh 28 "chapter 28 pipeline" ch28-pipeline pipeline
+      - name: Chapter 29 supervisor
+        run: bash .github/scripts/run_bench_section.sh 29 "chapter 29 supervisor" ch29-supervisor supervisor
+      - name: Chapter 30 handoffs
+        run: bash .github/scripts/run_bench_section.sh 30 "chapter 30 handoffs" ch30-handoffs handoffs
+      - name: Chapter 31 fan-out
+        run: bash .github/scripts/run_bench_section.sh 31 "chapter 31 fan-out" ch31-fan-out fan_out
+      - name: Chapter 32 critic
+        run: bash .github/scripts/run_bench_section.sh 32 "chapter 32 critic" ch32-critic critic
+      - name: Chapter 33 composition
+        run: bash .github/scripts/run_bench_section.sh 33 "chapter 33 composition" ch33-composition composition
+      - name: Chapter 34 context
+        run: bash .github/scripts/run_bench_section.sh 34 "chapter 34 context" ch34-context context
+      - name: Chapter 35 actors
+        run: bash .github/scripts/run_bench_section.sh 35 "chapter 35 actors" ch35-actors actors
+      - name: Chapter 36 supervision
+        run: bash .github/scripts/run_bench_section.sh 36 "chapter 36 supervision" ch36-supervision supervision
+      - name: Chapter 37 balancing
+        run: bash .github/scripts/run_bench_section.sh 37 "chapter 37 balancing" ch37-balancing balancing
+      - name: Chapter 38 profiles
+        run: bash .github/scripts/run_bench_section.sh 38 "chapter 38 profiles" ch38-profiles profiles
+      - name: Chapter 39 gateway
+        run: bash .github/scripts/run_bench_section.sh 39 "chapter 39 gateway" ch39-gateway gateway
+      - name: Chapter 40 service
+        run: bash .github/scripts/run_bench_section.sh 40 "chapter 40 service" ch40-service service
+      - name: Chapter 41 cron
+        run: bash .github/scripts/run_bench_section.sh 41 "chapter 41 cron" ch41-cron cron
+      - name: Chapter 42 acp
+        run: bash .github/scripts/run_bench_section.sh 42 "chapter 42 acp" ch42-acp acp
+      - name: Chapter 43 blackboard
+        run: bash .github/scripts/run_bench_section.sh 43 "chapter 43 blackboard" ch43-blackboard blackboard
+      - name: Chapter 44 kanban
+        run: bash .github/scripts/run_bench_section.sh 44 "chapter 44 kanban" ch44-kanban kanban
+      - name: Chapter 45 message bus
+        run: bash .github/scripts/run_bench_section.sh 45 "chapter 45 message bus" ch45-message-bus bus
+      - name: Chapter 46 team skills
+        run: bash .github/scripts/run_bench_section.sh 46 "chapter 46 team skills" ch46-team-skills skills
+      - name: Chapter 47 a2a
+        run: bash .github/scripts/run_bench_section.sh 47 "chapter 47 a2a" ch47-a2a a2a
+      - name: Chapter 48 tracing
+        run: bash .github/scripts/run_bench_section.sh 48 "chapter 48 tracing" ch48-tracing spans
+      - name: Chapter 49 capstone
+        run: bash .github/scripts/run_bench_section.sh 49 "chapter 49 capstone" ch49-capstone capstone
+      - name: Chapter 50 evals
+        run: bash .github/scripts/run_bench_section.sh 50 "chapter 50 evals" ch50-evals evals
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"

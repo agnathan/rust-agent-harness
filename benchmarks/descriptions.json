@@ -82,7 +82,8 @@
       "inputs": "One string, hello. Capacity 1, so a second submit would fail, but the bench submits once per sample on a new inbox.",
       "fake": "The inbox is an in-memory channel. No provider is constructed.",
       "source": "steps/ch02-conversations/crates/harness-core/benches/inbox.rs",
-      "reading": "Smaller is better. Tens of nanoseconds is a channel send. Microseconds would mean the submit path started allocating more than the line."
+      "reading": "Smaller is better. Tens of nanoseconds is a channel send. Microseconds would mean the submit path started allocating more than the line.",
+      "aliases": []
     },
     {
       "id": "2/chat_turn_overhead",
@@ -96,7 +97,8 @@
       "inputs": "System prompt Be brief. Token budget 8000. One user line hello. The mock reply is ok. The session is new for every sample, so history length is one user message plus the reply.",
       "fake": "MockProvider::new uses Duration::ZERO, so complete_events does not sleep. No file is saved or loaded. No network.",
       "source": "steps/ch02-conversations/crates/harness-core/benches/inbox.rs",
-      "reading": "Smaller is better. Hundreds of nanoseconds means the turn overhead is still noise next to a model call. A millisecond here, with a zero-latency mock, is a regression in the session path."
+      "reading": "Smaller is better. Hundreds of nanoseconds means the turn overhead is still noise next to a model call. A millisecond here, with a zero-latency mock, is a regression in the session path.",
+      "aliases": []
     },
     {
       "id": "3.1/registry_lookup",
@@ -2001,7 +2003,8 @@
       "inputs": "Phase::Idle and TurnEvent::Start. The result is Phase::CallingModel.",
       "fake": "No model, no messages, no chapter 9 loop.",
       "source": "steps/ch10-turn-state/crates/harness-core/benches/transition.rs",
-      "reading": "Smaller is better. About 1 ns is a match. Microseconds would mean the table started allocating."
+      "reading": "Smaller is better. About 1 ns is a match. Microseconds would mean the table started allocating.",
+      "aliases": []
     },
     {
       "id": "10/scripted_turn",
@@ -2015,7 +2018,8 @@
       "inputs": "Script steps Tools, Tools, Text. No usage and no tool registry.",
       "fake": "ScriptStep is an enum. Nothing is delayed and nothing is sent.",
       "source": "steps/ch10-turn-state/crates/harness-core/benches/transition.rs",
-      "reading": "Smaller is better. Single-digit nanoseconds is the whole script. It is not comparable to chapter 9's 608 ns loop, which runs the real checks."
+      "reading": "Smaller is better. Single-digit nanoseconds is the whole script. It is not comparable to chapter 9's 608 ns loop, which runs the real checks.",
+      "aliases": []
     },
     {
       "id": "11/skip_decision",
@@ -2029,7 +2033,8 @@
       "inputs": "The command echo hello. Policy::manual(): mode Manual, timeout 300 seconds, cron and unattended deny, empty deny list, empty allowlist, YOLO off, presence Interactive.",
       "fake": "No model and no human. fake_smart_review is not called. The command is not a shell.",
       "source": "steps/ch11-approvals/crates/harness-core/benches/decision.rs",
-      "reading": "Smaller is better. Tens or hundreds of nanoseconds means the keyword scan. A microsecond or more means the fast path started allocating the normalized string. This is not the cost of a human wait."
+      "reading": "Smaller is better. Tens or hundreds of nanoseconds means the keyword scan. A microsecond or more means the fast path started allocating the normalized string. This is not the cost of a human wait.",
+      "aliases": []
     },
     {
       "id": "12/empty_pre_post",
@@ -2043,7 +2048,8 @@
       "inputs": "Tool name echo, result string ok, arguments {}. One hook.",
       "fake": "NopHook is an empty trait impl. There is no plugin process.",
       "source": "steps/ch12-hooks/crates/harness-core/benches/hooks.rs",
-      "reading": "Smaller is better. Nanoseconds means two virtual calls. Hundreds of microseconds would mean the empty hook started cloning arguments."
+      "reading": "Smaller is better. Nanoseconds means two virtual calls. Hundreds of microseconds would mean the empty hook started cloning arguments.",
+      "aliases": []
     },
     {
       "id": "12/api_request_hook",
@@ -2057,7 +2063,8 @@
       "inputs": "1,000 messages. No tools and no system prompt.",
       "fake": "NopApi does not send HTTP. It does not store the messages.",
       "source": "steps/ch12-hooks/crates/harness-core/benches/hooks.rs",
-      "reading": "Smaller is better. A few nanoseconds means the hook saw a pointer and a length. A number that grows with the 1,000 messages means the slice was cloned into the hook."
+      "reading": "Smaller is better. A few nanoseconds means the hook saw a pointer and a length. A number that grows with the 1,000 messages means the slice was cloned into the hook.",
+      "aliases": []
     },
     {
       "id": "12/memory_enqueue",
@@ -2066,12 +2073,13 @@
       "function": "memory_enqueue",
       "summary": "Push one turn onto the in-memory memory queue.",
       "what": "MemoryQueue::enqueue_turn of user hello and assistant ok.",
-      "why": "Chapter 19 writes the file off this path. The request path only has to enqueue. The budget is under 1 ms.",
+      "why": "Chapter 21 writes the file off this path. The request path only has to enqueue. The budget is under 1 ms.",
       "timing": "MemoryQueue::new() runs before the bench. The timed closure is b.iter. Inside: enqueue_turn, which locks a Mutex, drops the oldest job if the queue already holds 64, formats one string, and pushes it. The format and the lock are inside the sample. No file is created.",
       "inputs": "TurnRecord user hello, assistant ok. Queue cap 64.",
       "fake": "The queue is a VecDeque. It is not MEMORY.md and it does not call a model.",
       "source": "steps/ch12-hooks/crates/harness-core/benches/hooks.rs",
-      "reading": "Smaller is better. Tens of nanoseconds is a lock and a short string. Milliseconds would mean the enqueue started writing disk."
+      "reading": "Smaller is better. Tens of nanoseconds is a lock and a short string. Milliseconds would mean the enqueue started writing disk.",
+      "aliases": []
     },
     {
       "id": "13/warm_accept",
@@ -2085,7 +2093,8 @@
       "inputs": "The job string ping. One long-lived child. Stderr is null.",
       "fake": "The worker is this crate's sandbox-worker binary. It is not Docker and it does not call a model.",
       "source": "steps/ch13-sandbox/crates/harness-core/benches/sandbox.rs",
-      "reading": "Smaller is better. Microseconds means a pipe round trip. Tens of milliseconds would mean the bench spawned a process per sample. Over 50 ms misses the chapter budget."
+      "reading": "Smaller is better. Microseconds means a pipe round trip. Tens of milliseconds would mean the bench spawned a process per sample. Over 50 ms misses the chapter budget.",
+      "aliases": []
     },
     {
       "id": "13/checkpoint_1000",
@@ -2099,7 +2108,8 @@
       "inputs": "1,000 entries. Path fN.txt, body body N. No directory is created.",
       "fake": "The manifest is memory. It is not a git commit and not a temp directory.",
       "source": "steps/ch13-sandbox/crates/harness-core/benches/sandbox.rs",
-      "reading": "Smaller is better. Tens of microseconds is a clone of 1,000 short strings. Over 10 ms means the snapshot started hashing files on disk."
+      "reading": "Smaller is better. Tens of microseconds is a clone of 1,000 short strings. Over 10 ms means the snapshot started hashing files on disk.",
+      "aliases": []
     },
     {
       "id": "13/rewind_1000",
@@ -2113,7 +2123,8 @@
       "inputs": "The same 1,000 short files as checkpoint_1000. The live vec starts empty on every sample.",
       "fake": "No files are written. Rewind replaces the vec.",
       "source": "steps/ch13-sandbox/crates/harness-core/benches/sandbox.rs",
-      "reading": "Smaller is better. It should sit near checkpoint_1000. A much larger number means rewind started walking a directory."
+      "reading": "Smaller is better. It should sit near checkpoint_1000. A much larger number means rewind started walking a directory.",
+      "aliases": []
     },
     {
       "id": "14/empty_budget",
@@ -2127,7 +2138,8 @@
       "inputs": "One Option<f64> of 0.30. No messages and no usage object.",
       "fake": "The cost is a number the bench passes in. There is no provider invoice and no HTTP response.",
       "source": "steps/ch14-when-things-fail/crates/harness-core/benches/failures.rs",
-      "reading": "Smaller is better. Sub-nanosecond to a few nanoseconds is a branch. Microseconds would mean the budget started walking an attempt list or formatting a dollar amount."
+      "reading": "Smaller is better. Sub-nanosecond to a few nanoseconds is a branch. Microseconds would mean the budget started walking an attempt list or formatting a dollar amount.",
+      "aliases": []
     },
     {
       "id": "14/repetition_guard",
@@ -2141,7 +2153,8 @@
       "inputs": "800 characters, one 10-character fragment repeated. MIN_FRAGMENT_LENGTH is 400, so the short-text fast path does not apply.",
       "fake": "The text is generated in the bench. No model streamed it.",
       "source": "steps/ch14-when-things-fail/crates/harness-core/benches/failures.rs",
-      "reading": "Smaller is better. A few microseconds is a HashMap of short windows. Over 1 ms means the scan stopped returning early or started copying the whole reply per window."
+      "reading": "Smaller is better. A few microseconds is a HashMap of short windows. Over 1 ms means the scan stopped returning early or started copying the whole reply per window.",
+      "aliases": []
     },
     {
       "id": "15/open_breaker",
@@ -2155,7 +2168,8 @@
       "inputs": "Tool name search. CallOpts with hedge false. The breaker is open. The idle script has no queued outcomes.",
       "fake": "The backend is an in-memory script. There is no socket and no upstream MCP server.",
       "source": "steps/ch15-limits/benches/limits.rs",
-      "reading": "Smaller is better. Tens of nanoseconds is a map lookup. A microsecond or more means the open path started allocating a block message or taking a permit."
+      "reading": "Smaller is better. Tens of nanoseconds is a map lookup. A microsecond or more means the open path started allocating a block message or taking a permit.",
+      "aliases": []
     },
     {
       "id": "15/permit_release",
@@ -2169,12 +2183,73 @@
       "inputs": "Tool name echo. Execute bound 8. One permit held for the body of the call, then dropped before the sample returns.",
       "fake": "No tool body runs. The permit is not waiting on a queue.",
       "source": "steps/ch15-limits/benches/limits.rs",
-      "reading": "Smaller is better. Tens of nanoseconds matches the chapter 5 permit round trip. Microseconds would mean the sample started waiting or allocating a new semaphore every time."
+      "reading": "Smaller is better. Tens of nanoseconds matches the chapter 5 permit round trip. Microseconds would mean the sample started waiting or allocating a new semaphore every time.",
+      "aliases": []
     },
     {
-      "id": "16/choose_route",
-      "section": "chapter 16 providers",
-      "chapter": "Chapter 16 Providers",
+      "id": "16/fake_search",
+      "aliases": [],
+      "section": "chapter 16 web tools",
+      "chapter": "Chapter 16 Built-in Tools I",
+      "function": "fake_search",
+      "summary": "One fake web search returning five metadata hits.",
+      "what": "search_result on FakeSearch with limit 5.",
+      "why": "The search path has to stay cheap and keyless. The cap of 50 lives in chapter 15, not in this timer.",
+      "timing": "FakeSearch::example is built outside. b.iter calls search_result and black_box of the JSON string.",
+      "inputs": "Query rust, limit 5, five canned hits.",
+      "fake": "FakeSearch. No socket, no API key.",
+      "source": "steps/ch16-web-tools/crates/harness-core/benches/web.rs",
+      "reading": "Smaller is better. This is JSON over an in-memory vec. Milliseconds would mean the fake started doing I/O."
+    },
+    {
+      "id": "16/ssrf_block",
+      "aliases": [],
+      "section": "chapter 16 web tools",
+      "chapter": "Chapter 16 Built-in Tools I",
+      "function": "ssrf_block",
+      "summary": "Refuse the cloud metadata address even when private URLs are allowed.",
+      "what": "is_safe_url on http://169.254.169.254/latest with allow_private true.",
+      "why": "The metadata floor is on the extract path. It has to stay a couple of comparisons.",
+      "timing": "StdResolver is built outside. The host is a literal IP, so lookup does not call DNS. b.iter calls is_safe_url and black_box of the error.",
+      "inputs": "One metadata URL. allow_private true.",
+      "fake": "No DNS and no HTTP. The block is the address check.",
+      "source": "steps/ch16-web-tools/crates/harness-core/benches/web.rs",
+      "reading": "Smaller is better. Nanoseconds to low microseconds. A DNS lookup would show up as milliseconds."
+    },
+    {
+      "id": "17/patch_apply",
+      "aliases": [],
+      "section": "chapter 17 local tools",
+      "chapter": "Chapter 17 Built-in Tools II",
+      "function": "patch_apply",
+      "summary": "Replace one old_string in a file that was read first.",
+      "what": "patch_file after read_file, on a two-word file in a temp directory.",
+      "why": "The edit path is the one the model should use instead of clobbering. The stale check is inside the sample.",
+      "timing": "The temp file is rewritten and re-read inside the sample, then patch_file runs. Both the read and the patch are timed.",
+      "inputs": "File contents alpha beta. old_string alpha. new_string gamma.",
+      "fake": "A real temp file. No model and no network.",
+      "source": "steps/ch17-local-tools/crates/harness-core/benches/local.rs",
+      "reading": "Smaller is better. Microseconds is a short write. Milliseconds means the bench started snapshotting a tree."
+    },
+    {
+      "id": "17/todo_merge",
+      "aliases": [],
+      "section": "chapter 17 local tools",
+      "chapter": "Chapter 17 Built-in Tools II",
+      "function": "todo_merge",
+      "summary": "Merge one todo item by id and bump the revision.",
+      "what": "TodoStore::apply twice: replace the list, then merge the same id.",
+      "why": "The list is agent-owned state. A merge has to find one id without rewriting a file.",
+      "timing": "The store is built inside the sample. Both apply calls are timed. black_box of the revision.",
+      "inputs": "One item id a. First content first, then second. merge true on the second call. expected revision 1.",
+      "fake": "In-memory Vec. No disk.",
+      "source": "steps/ch17-local-tools/crates/harness-core/benches/local.rs",
+      "reading": "Smaller is better. Nanoseconds to low microseconds. A file write would be the wrong shape."
+    },
+    {
+      "id": "18/choose_route",
+      "section": "chapter 18 providers",
+      "chapter": "Chapter 18 Providers",
       "function": "choose_route",
       "summary": "Pick the model after primary in a three-name route.",
       "what": "choose_next on [primary, fallback, last] with the failed name primary. The result is fallback.",
@@ -2182,13 +2257,16 @@
       "timing": "The three-name vec is built before the bench. The timed closure is b.iter. Inside: choose_next with the vec and Some(primary) both passed through black_box. No HTTP client is constructed. No body is serialized. The failed call is not inside the sample.",
       "inputs": "Three model names. The failed name is primary, so the function returns the next slot.",
       "fake": "The names are strings. Nothing is sent to OpenRouter, Anthropic, or Bedrock.",
-      "source": "steps/ch16-providers/crates/harness-core/benches/providers.rs",
-      "reading": "Smaller is better. A few nanoseconds is a scan of three names. Milliseconds would mean the choice started building a request or opening a client."
+      "source": "steps/ch18-providers/crates/harness-core/benches/providers.rs",
+      "reading": "Smaller is better. A few nanoseconds is a scan of three names. Milliseconds would mean the choice started building a request or opening a client.",
+      "aliases": [
+        "16/choose_route"
+      ]
     },
     {
-      "id": "16/rotate_key",
-      "section": "chapter 16 providers",
-      "chapter": "Chapter 16 Providers",
+      "id": "18/rotate_key",
+      "section": "chapter 18 providers",
+      "chapter": "Chapter 18 Providers",
       "function": "rotate_key",
       "summary": "Advance to the next key on one pool.",
       "what": "Pool::mark_exhausted_and_rotate on a pool of three keys. The client id stays 1.",
@@ -2196,13 +2274,16 @@
       "timing": "Pool::new of sk-one, sk-two, and sk-three runs before the bench. The timed closure is b.iter. Inside: mark_exhausted_and_rotate, then black_box of the returned key. The index wraps from the last key back to the first across samples. The client id field is not rewritten. No HTTP pool is created.",
       "inputs": "Three key strings. One Pool. Client id 1 for the whole bench.",
       "fake": "The keys are not sent. There is no reqwest client in this crate.",
-      "source": "steps/ch16-providers/crates/harness-core/benches/providers.rs",
-      "reading": "Smaller is better. A few nanoseconds is an index update. A number that allocates a new client, or copies the key list, would miss the under-1 ms budget only if it got much larger; the thing to watch is a jump from nanoseconds into allocations."
+      "source": "steps/ch18-providers/crates/harness-core/benches/providers.rs",
+      "reading": "Smaller is better. A few nanoseconds is an index update. A number that allocates a new client, or copies the key list, would miss the under-1 ms budget only if it got much larger; the thing to watch is a jump from nanoseconds into allocations.",
+      "aliases": [
+        "16/rotate_key"
+      ]
     },
     {
-      "id": "17/fold_deltas",
-      "section": "chapter 17 streaming",
-      "chapter": "Chapter 17 Streaming",
+      "id": "19/fold_deltas",
+      "section": "chapter 19 streaming",
+      "chapter": "Chapter 19 Streaming",
       "function": "fold_deltas",
       "summary": "Fold 100 plain text chunks through the think scrubber.",
       "what": "fold_text on 100 copies of hello space. Each chunk has no <, so the scrubber takes the fast path, then flush.",
@@ -2210,13 +2291,16 @@
       "timing": "The vec of 100 strings is built before the bench. The timed closure is b.iter. Inside: fold_text with the slice passed through black_box. That constructs a ThinkScrubber, calls feed 100 times, and flush. Building the vec is excluded. No model is called. Chunks that contain < would scan the tag list; these do not.",
       "inputs": "100 strings. Each is hello followed by a space. Six characters. No think tags.",
       "fake": "The chunks are built in the bench. They are not SSE frames and not a provider stream.",
-      "source": "steps/ch17-streaming/crates/harness-core/benches/streaming.rs",
-      "reading": "Smaller is better. It should sit within 1 ms of buffer_join. A gap of milliseconds means the plain-text fast path started scanning tags."
+      "source": "steps/ch19-streaming/crates/harness-core/benches/streaming.rs",
+      "reading": "Smaller is better. It should sit within 1 ms of buffer_join. A gap of milliseconds means the plain-text fast path started scanning tags.",
+      "aliases": [
+        "17/fold_deltas"
+      ]
     },
     {
-      "id": "17/buffer_join",
-      "section": "chapter 17 streaming",
-      "chapter": "Chapter 17 Streaming",
+      "id": "19/buffer_join",
+      "section": "chapter 19 streaming",
+      "chapter": "Chapter 19 Streaming",
       "function": "buffer_join",
       "summary": "Join the same 100 chunks with no scrubber.",
       "what": "buffer_join concatenates the 100 hello-space strings.",
@@ -2224,13 +2308,16 @@
       "timing": "The same vec is built before the bench. The timed closure is b.iter. Inside: buffer_join with the slice passed through black_box. No ThinkScrubber is constructed. Building the vec is excluded.",
       "inputs": "The same 100 strings as fold_deltas.",
       "fake": "No model and no socket.",
-      "source": "steps/ch17-streaming/crates/harness-core/benches/streaming.rs",
-      "reading": "Smaller is better. Fold_deltas should stay close to this number. A much smaller fold number would mean the two benches stopped sharing the input."
+      "source": "steps/ch19-streaming/crates/harness-core/benches/streaming.rs",
+      "reading": "Smaller is better. Fold_deltas should stay close to this number. A much smaller fold number would mean the two benches stopped sharing the input.",
+      "aliases": [
+        "17/buffer_join"
+      ]
     },
     {
-      "id": "18/wal_append",
-      "section": "chapter 18 sessions",
-      "chapter": "Chapter 18 Sessions on Disk",
+      "id": "20/wal_append",
+      "section": "chapter 20 sessions",
+      "chapter": "Chapter 20 Sessions on Disk",
       "function": "wal_append",
       "summary": "Append one turn: a user row and an assistant row, in one transaction.",
       "what": "append_turn of session bench, user hi, assistant pong, on a database that is already migrated.",
@@ -2238,13 +2325,16 @@
       "timing": "Store::open and migrate run before the bench, on a temp file named with the process id. The timed closure is b.iter. Inside: append_turn with the three strings passed through black_box, then black_box of the row count. The sample is the transaction and a push onto the FTS queue. Opening the file and creating the tables are excluded. No virtual table is written. The queue is capped at 64, so a long run drops the oldest id instead of growing without a bound.",
       "inputs": "One session id, two short strings. The sessions row already exists after the first sample. Later samples insert two message rows and ignore the existing session.",
       "fake": "The assistant text is the string pong. No model is called. The file is a temp database, deleted after the bench.",
-      "source": "steps/ch18-sessions/crates/harness-core/benches/sessions.rs",
-      "reading": "Smaller is better. Tens of microseconds is a small WAL commit. Over 1 ms means the append started building an FTS index or fsyncing more than the commit."
+      "source": "steps/ch20-sessions/crates/harness-core/benches/sessions.rs",
+      "reading": "Smaller is better. Tens of microseconds is a small WAL commit. Over 1 ms means the append started building an FTS index or fsyncing more than the commit.",
+      "aliases": [
+        "18/wal_append"
+      ]
     },
     {
-      "id": "19/memory_enqueue",
-      "section": "chapter 19 memory",
-      "chapter": "Chapter 19 Memory Files",
+      "id": "21/memory_enqueue",
+      "section": "chapter 21 memory",
+      "chapter": "Chapter 21 Memory Files",
       "function": "memory_enqueue",
       "summary": "Push one turn onto the memory-file queue.",
       "what": "MemoryFiles::enqueue_turn of user hi and assistant ok. The trait method from chapter 12, on the file backend.",
@@ -2252,13 +2342,16 @@
       "timing": "MemoryFiles::open of a temp directory runs before the bench and reads any existing files once into an Arc. The timed closure is b.iter. Inside: enqueue_turn with the TurnRecord passed through black_box. The sample locks a mutex, drops the oldest job if 64 are queued, formats one string, and pushes it. Opening the directory is excluded. No file is written. The Arc snapshot is not rebuilt.",
       "inputs": "TurnRecord user hi, assistant ok. Queue cap 64. Empty MEMORY.md and USER.md.",
       "fake": "Nothing calls a model. The queue is a VecDeque. It is not a second write to MEMORY.md.",
-      "source": "steps/ch19-memory/crates/harness-core/benches/memory.rs",
-      "reading": "Smaller is better. Tens of nanoseconds is a lock and a short string. Milliseconds would mean the enqueue started writing the file or copying the snapshot."
+      "source": "steps/ch21-memory/crates/harness-core/benches/memory.rs",
+      "reading": "Smaller is better. Tens of nanoseconds is a lock and a short string. Milliseconds would mean the enqueue started writing the file or copying the snapshot.",
+      "aliases": [
+        "19/memory_enqueue"
+      ]
     },
     {
-      "id": "20/discover_10k",
-      "section": "chapter 20 recall",
-      "chapter": "Chapter 20 Recall",
+      "id": "22/discover_10k",
+      "section": "chapter 22 recall",
+      "chapter": "Chapter 22 Recall",
       "function": "discover_10k",
       "summary": "One trigram discover query over 10,000 messages.",
       "what": "session_search in discover mode for zephyrtoken. Message 5000 of session desk contains that token. The other 9999 messages are note N.",
@@ -2266,13 +2359,16 @@
       "timing": "Before the bench: open a temp database, migrate, insert 10,000 messages in one transaction, and install_fts, which creates messages_fts_trigram and runs the FTS5 rebuild. The timed closure is b.iter. Inside: session_search with the store and the query passed through black_box. The inserts and the rebuild are excluded. No model is called. Subagent filtering is in the SQL, and this database has only the user session.",
       "inputs": "10,000 messages in one session. One of them contains zephyrtoken. The query string is zephyrtoken. No session_id and no around_message_id, so the mode is discover.",
       "fake": "The messages are generated in the bench. They are not a restored Hermes database. Nothing is sent to a model.",
-      "source": "steps/ch20-recall/crates/harness-core/benches/recall.rs",
-      "reading": "Smaller is better. Tens of microseconds means the index answered. Over 20 ms means the sample started rebuilding the index or scanning the message table."
+      "source": "steps/ch22-recall/crates/harness-core/benches/recall.rs",
+      "reading": "Smaller is better. Tens of microseconds means the index answered. Over 20 ms means the sample started rebuilding the index or scanning the message table.",
+      "aliases": [
+        "20/discover_10k"
+      ]
     },
     {
-      "id": "21/apply_offered",
-      "section": "chapter 21 learned",
-      "chapter": "Chapter 21 Learned Tools",
+      "id": "23/apply_offered",
+      "section": "chapter 23 learned",
+      "chapter": "Chapter 23 Learned Tools",
       "function": "apply_offered",
       "summary": "Copy a precomputed 32-name offer into one session view.",
       "what": "session_tools on session desk after refresh_prediction has already stored the names. The view's tool list is those names.",
@@ -2280,13 +2376,16 @@
       "timing": "LearnedGateway::new, open_session, a 32-name catalog, one usage row, and refresh_prediction all run before the bench. One session_tools call also runs before the bench so the list_changed flag is already clear. The timed closure is b.iter. Inside: session_tools with the session id passed through black_box, then black_box of the view. That clones the Arc and copies 32 names into the view. The score is not computed. No model is called.",
       "inputs": "32 tool names, tool_0 through tool_31. One usage row for tool_0. Memory text is the string tool_0. Session id desk.",
       "fake": "The catalog is generated in the bench. Nothing is loaded from a live MCP server. The scripted model is not constructed.",
-      "source": "steps/ch21-learned-tools/benches/learned.rs",
-      "reading": "Smaller is better. Tens of nanoseconds is a pointer clone plus a short name copy. Milliseconds would mean the sample started scoring the usage log."
+      "source": "steps/ch23-learned-tools/benches/learned.rs",
+      "reading": "Smaller is better. Tens of nanoseconds is a pointer clone plus a short name copy. Milliseconds would mean the sample started scoring the usage log.",
+      "aliases": [
+        "21/apply_offered"
+      ]
     },
     {
-      "id": "21/predict_offline",
-      "section": "chapter 21 learned",
-      "chapter": "Chapter 21 Learned Tools",
+      "id": "23/predict_offline",
+      "section": "chapter 23 learned",
+      "chapter": "Chapter 23 Learned Tools",
       "function": "predict_offline",
       "summary": "Score 64 tool names against 1,000 usage rows, off the request path.",
       "what": "predict on a task, a 1,000-row usage log, a memory sentence, a session note, and 64 catalog names. The function returns the names whose score is above zero.",
@@ -2294,13 +2393,16 @@
       "timing": "The catalog, the 1,000 usage rows, and the PredictInput are built before the bench. The timed closure is b.iter. Inside: predict with the input passed through black_box. No gateway is constructed. No session is opened. The result is not installed.",
       "inputs": "64 names, tool_0 through tool_63. 1,000 usage rows. Task text is task 3. Memory mentions tool_3. The session note mentions tool_9.",
       "fake": "The rows are generated in the bench. They are not a restored session database. No model is called.",
-      "source": "steps/ch21-learned-tools/benches/learned.rs",
-      "reading": "Smaller is better. This may be much larger than apply_offered. That gap is the point: the score is not the request. Over a millisecond is still fine here. It would not be fine inside session_tools."
+      "source": "steps/ch23-learned-tools/benches/learned.rs",
+      "reading": "Smaller is better. This may be much larger than apply_offered. That gap is the point: the score is not the request. Over a millisecond is still fine here. It would not be fine inside session_tools.",
+      "aliases": [
+        "21/predict_offline"
+      ]
     },
     {
-      "id": "22/load_render_500",
-      "section": "chapter 22 skills",
-      "chapter": "Chapter 22 Using Skills",
+      "id": "24/load_render_500",
+      "section": "chapter 24 skills",
+      "chapter": "Chapter 24 Using Skills",
       "function": "load_render_500",
       "summary": "Load 500 SKILL.md files and render the available-skills index.",
       "what": "load_tree of a directory with 500 skills, then render_index of that list with no connected MCP server.",
@@ -2308,13 +2410,16 @@
       "timing": "Before the bench, the harness writes 500 SKILL.md files under 10 category directories. The timed closure is b.iter. Inside: load_tree with the root passed through black_box, then render_index of those metas with an empty connected list, both passed through black_box. Writing the files is excluded. No model is called. The returned string is discarded after black_box.",
       "inputs": "500 skills. Names skill000 through skill499. Ten categories, cat0 through cat9. Each description is Skill N. Each body is one line, Body N.",
       "fake": "The files are generated in the bench. They are not a Hermes skills directory. The scripted model is not constructed.",
-      "source": "steps/ch22-skills/benches/skills.rs",
-      "reading": "Smaller is better. It should stay under 10 ms. A number in the tens of milliseconds means the sample started rewriting the index on every turn, or the files got much larger."
+      "source": "steps/ch24-skills/benches/skills.rs",
+      "reading": "Smaller is better. It should stay under 10 ms. A number in the tens of milliseconds means the sample started rewriting the index on every turn, or the files got much larger.",
+      "aliases": [
+        "22/load_render_500"
+      ]
     },
     {
-      "id": "23/scan_one_skill",
-      "section": "chapter 23 writing",
-      "chapter": "Chapter 23 Writing Skills",
+      "id": "25/scan_one_skill",
+      "section": "chapter 25 writing",
+      "chapter": "Chapter 25 Writing Skills",
       "function": "scan_one_skill",
       "summary": "Scan one in-memory skill of about 1 KB.",
       "what": "scan_text on a SKILL.md string. The verdict is Safe. The five rules are already compiled.",
@@ -2322,13 +2427,16 @@
       "timing": "Before the bench, the harness builds a skill string of at least 1,024 bytes and calls scan_text once so OnceLock compiles the Regex values. The timed closure is b.iter. Inside: scan_text with the text passed through black_box, then black_box of the ScanResult. No file is written. No Writer is constructed. No model is called.",
       "inputs": "One skill. Name rename. Description Rename a file by its path. Body repeats Keep the old name in the note. until the string is at least 1,024 bytes.",
       "fake": "The string is generated in the bench. It is not a directory of SKILL.md files. The five patterns are a subset of THREAT_PATTERNS. The scripted model is not constructed.",
-      "source": "steps/ch23-skill-writing/benches/writing.rs",
-      "reading": "Smaller is better. It should stay under 5 ms. A number in the milliseconds means the sample started compiling the regexes, or the skill got much larger than 1 KB."
+      "source": "steps/ch25-skill-writing/benches/writing.rs",
+      "reading": "Smaller is better. It should stay under 5 ms. A number in the milliseconds means the sample started compiling the regexes, or the skill got much larger than 1 KB.",
+      "aliases": [
+        "23/scan_one_skill"
+      ]
     },
     {
-      "id": "23/enqueue_unsolicited",
-      "section": "chapter 23 writing",
-      "chapter": "Chapter 23 Writing Skills",
+      "id": "25/enqueue_unsolicited",
+      "section": "chapter 25 writing",
+      "chapter": "Chapter 25 Writing Skills",
       "function": "enqueue_unsolicited",
       "summary": "Enqueue a write the model did not ask for.",
       "what": "enqueue_background of the job create notes. The skill root stays empty. The queue holds at most 64 jobs.",
@@ -2336,13 +2444,16 @@
       "timing": "Before the bench, Writer::open creates an empty temp directory. The timed closure is b.iter. Inside: enqueue_background with the job string passed through black_box. No scan runs. No SKILL.md is written. When the queue is already at 64, the oldest job is dropped inside the timed call.",
       "inputs": "One job string, create notes. Queue cap 64. Empty skill root.",
       "fake": "The job is a string. No model asked for it. No skill directory is created by the call.",
-      "source": "steps/ch23-skill-writing/benches/writing.rs",
-      "reading": "Smaller is better. Tens of nanoseconds is a mutex and a short string. Milliseconds would mean the sample started scanning or writing a file."
+      "source": "steps/ch25-skill-writing/benches/writing.rs",
+      "reading": "Smaller is better. Tens of nanoseconds is a mutex and a short string. Milliseconds would mean the sample started scanning or writing a file.",
+      "aliases": [
+        "23/enqueue_unsolicited"
+      ]
     },
     {
-      "id": "24/spawn_reviewer",
-      "section": "chapter 24 reflection",
-      "chapter": "Chapter 24 The Reflection Loop",
+      "id": "26/spawn_reviewer",
+      "section": "chapter 26 reflection",
+      "chapter": "Chapter 26 The Reflection Loop",
       "function": "spawn_reviewer",
       "summary": "Build one reviewer fork on the turn-finalize path.",
       "what": "spawn_reviewer(true). The fork lists memory and skill tools. Both nudge intervals are 0.",
@@ -2350,13 +2461,16 @@
       "timing": "The timed region is iter_custom. The timer starts, then the harness calls spawn_reviewer once per iteration with true passed through black_box, and pushes each fork into a Vec. The timer stops. The Vec is dropped after that. No thread is started. No model is called. No skill file is opened.",
       "inputs": "One boolean, true, meaning the memory nudge fired. The tool list is the static memory list.",
       "fake": "The fork is a struct. It is not an AIAgent and it does not share a session id. The scripted model is not constructed.",
-      "source": "steps/ch24-reflection/benches/reflection.rs",
-      "reading": "Smaller is better. It should stay under 1 ms. A number in the milliseconds means the sample started a thread or called the model."
+      "source": "steps/ch26-reflection/benches/reflection.rs",
+      "reading": "Smaller is better. It should stay under 1 ms. A number in the milliseconds means the sample started a thread or called the model.",
+      "aliases": [
+        "24/spawn_reviewer"
+      ]
     },
     {
-      "id": "24/cancel_review",
-      "section": "chapter 24 reflection",
-      "chapter": "Chapter 24 The Reflection Loop",
+      "id": "26/cancel_review",
+      "section": "chapter 26 reflection",
+      "chapter": "Chapter 26 The Reflection Loop",
       "function": "cancel_review",
       "summary": "Set the cancel flag and join a spinner that checks it.",
       "what": "cancel_and_join on a ReviewRun whose worker sleeps 1 ms until the flag is set.",
@@ -2364,13 +2478,16 @@
       "timing": "iter_batched. The setup closure calls ReviewRun::spawn_spinner and is not timed. The timed closure is cancel_and_join: one AtomicBool store and a join. The worker is already running. No model is called.",
       "inputs": "One spinner thread. Sleep between flag checks is 1 ms. No review lines.",
       "fake": "The worker does not call tools. It only watches the flag. The 2 second Hermes timeout is not slept.",
-      "source": "steps/ch24-reflection/benches/reflection.rs",
-      "reading": "Smaller is better. It should stay under 50 ms. The 1 ms sleep is inside the join, so a number well under that sleep means the flag was already visible. Tens of milliseconds is still inside the budget. A number near 2 seconds would mean the sample started using the Hermes wait."
+      "source": "steps/ch26-reflection/benches/reflection.rs",
+      "reading": "Smaller is better. It should stay under 50 ms. The 1 ms sleep is inside the join, so a number well under that sleep means the flag was already visible. Tens of milliseconds is still inside the budget. A number near 2 seconds would mean the sample started using the Hermes wait.",
+      "aliases": [
+        "24/cancel_review"
+      ]
     },
     {
-      "id": "25/enqueue_curation",
-      "section": "chapter 25 curation",
-      "chapter": "Chapter 25 Curation",
+      "id": "27/enqueue_curation",
+      "section": "chapter 27 curation",
+      "chapter": "Chapter 27 Curation",
       "function": "enqueue_curation",
       "summary": "Record that a curator pass should run.",
       "what": "Curator::enqueue. The queue gains one job string, curate. No skill moves.",
@@ -2378,13 +2495,16 @@
       "timing": "Before the bench, Curator::open creates an empty temp directory. The timed closure is b.iter. Inside: enqueue, then queue_len passed through black_box. No snapshot is built. scan_text is not called. No directory is renamed. When the queue is already at 64, the oldest job is dropped inside the timed call.",
       "inputs": "One job string, curate. Queue cap 64. Empty skill root.",
       "fake": "The job is a string. No clock is read. Age is not computed. The scripted model is not constructed.",
-      "source": "steps/ch25-curation/benches/curation.rs",
-      "reading": "Smaller is better. Tens of nanoseconds is a mutex and a short string. Milliseconds would mean the sample started the snapshot or the archive move."
+      "source": "steps/ch27-curation/benches/curation.rs",
+      "reading": "Smaller is better. Tens of nanoseconds is a mutex and a short string. Milliseconds would mean the sample started the snapshot or the archive move.",
+      "aliases": [
+        "25/enqueue_curation"
+      ]
     },
     {
-      "id": "26/arc_pass",
-      "section": "chapter 26 pipeline",
-      "chapter": "Chapter 26 The Sequential Pipeline",
+      "id": "28/arc_pass",
+      "section": "chapter 28 pipeline",
+      "chapter": "Chapter 28 The Sequential Pipeline",
       "function": "arc_pass",
       "summary": "Hand the next stage the same context pointer.",
       "what": "hand_off of an Arc clone. Arc::ptr_eq is true. The 100 messages stay in one allocation.",
@@ -2392,13 +2512,16 @@
       "timing": "Before the bench, the harness builds a Context with 100 messages. The timed closure is b.iter. Inside: Arc::clone passed through black_box into hand_off, then Arc::ptr_eq passed through black_box. No stage note is formatted. No model is called. The messages vec is not cloned.",
       "inputs": "100 messages. Role user. Text is message N about the rename procedure, N from 0 to 99.",
       "fake": "The messages are generated in the bench. No model wrote them. hand_off returns the same Arc.",
-      "source": "steps/ch26-pipeline/benches/pipeline.rs",
-      "reading": "Smaller is better. Tens of nanoseconds is a pointer clone. Microseconds would mean the sample started cloning the message vec."
+      "source": "steps/ch28-pipeline/benches/pipeline.rs",
+      "reading": "Smaller is better. Tens of nanoseconds is a pointer clone. Microseconds would mean the sample started cloning the message vec.",
+      "aliases": [
+        "26/arc_pass"
+      ]
     },
     {
-      "id": "26/copy_transcript",
-      "section": "chapter 26 pipeline",
-      "chapter": "Chapter 26 The Sequential Pipeline",
+      "id": "28/copy_transcript",
+      "section": "chapter 28 pipeline",
+      "chapter": "Chapter 28 The Sequential Pipeline",
       "function": "copy_transcript",
       "summary": "Clone 100 messages, the copy the pipeline does not do.",
       "what": "Vec::clone of the message vec. The pipeline's hand_off does not call this.",
@@ -2406,13 +2529,16 @@
       "timing": "The same 100 messages are built before the bench. The timed closure is b.iter. Inside: clone of messages passed through black_box, then black_box of the cloned vec. No Arc is cloned. No model is called.",
       "inputs": "100 messages. Role user. Text is message N about the rename procedure.",
       "fake": "The messages are generated in the bench. The function is not on the pipeline path.",
-      "source": "steps/ch26-pipeline/benches/pipeline.rs",
-      "reading": "Smaller is better for a copy, and this copy should stay off the hand-off. A hand-off number near this one means the sample started cloning messages."
+      "source": "steps/ch28-pipeline/benches/pipeline.rs",
+      "reading": "Smaller is better for a copy, and this copy should stay off the hand-off. A hand-off number near this one means the sample started cloning messages.",
+      "aliases": [
+        "26/copy_transcript"
+      ]
     },
     {
-      "id": "27/schedule_eight",
-      "section": "chapter 27 supervisor",
-      "chapter": "Chapter 27 The Supervisor",
+      "id": "29/schedule_eight",
+      "section": "chapter 29 supervisor",
+      "chapter": "Chapter 29 The Supervisor",
       "function": "schedule_eight",
       "summary": "Run eight specialists that do not sleep, on one shared context.",
       "what": "run_specialists of eight jobs. Each takes one permit, clones the context Arc, and returns its reply. The join waits for all eight.",
@@ -2420,27 +2546,33 @@
       "timing": "Before the bench, Pool::new(8) and eight Job values are built. hold is None. The timed closure is b.iter. Inside: run_specialists with the pool and the jobs passed through black_box, then black_box of the replies. Thread start and join are inside the sample. No model is called. No sleep runs.",
       "inputs": "Eight jobs. Names are specialist. Replies are reply 0 through reply 7. Pool limit 8.",
       "fake": "The replies are strings on the jobs. No model is constructed. The worktree function is not called.",
-      "source": "steps/ch27-supervisor/benches/supervisor.rs",
-      "reading": "Smaller is better. Tens of microseconds is thread start for eight jobs. Milliseconds still fits a fan-out that starts threads. A number near eight times one specialist's sleep would mean the sample started sleeping."
+      "source": "steps/ch29-supervisor/benches/supervisor.rs",
+      "reading": "Smaller is better. Tens of microseconds is thread start for eight jobs. Milliseconds still fits a fan-out that starts threads. A number near eight times one specialist's sleep would mean the sample started sleeping.",
+      "aliases": [
+        "27/schedule_eight"
+      ]
     },
     {
-      "id": "27/enqueue_reflection",
-      "section": "chapter 27 supervisor",
-      "chapter": "Chapter 27 The Supervisor",
+      "id": "29/enqueue_reflection",
+      "section": "chapter 29 supervisor",
+      "chapter": "Chapter 29 The Supervisor",
       "function": "enqueue_reflection",
       "summary": "Record a reflection note from a team run.",
       "what": "enqueue_reflection of the string team run finished. No reviewer starts. No permit is taken.",
       "why": "Learning from a team run stays off the hot path. The turn only records the note.",
       "timing": "Pool::new(8) runs before the bench. The timed closure is b.iter. Inside: enqueue_reflection with the note passed through black_box. No thread is started. When the queue is already at 64, the oldest note is dropped inside the timed call.",
       "inputs": "One note string, team run finished. Queue cap 64. Pool limit 8, unused.",
-      "fake": "The note is a string. Chapter 24's reviewer is not constructed.",
-      "source": "steps/ch27-supervisor/benches/supervisor.rs",
-      "reading": "Smaller is better. Tens of nanoseconds is a mutex and a short string. Starting the reviewer would show up as thread time."
+      "fake": "The note is a string. Chapter 26's reviewer is not constructed.",
+      "source": "steps/ch29-supervisor/benches/supervisor.rs",
+      "reading": "Smaller is better. Tens of nanoseconds is a mutex and a short string. Starting the reviewer would show up as thread time.",
+      "aliases": [
+        "27/enqueue_reflection"
+      ]
     },
     {
-      "id": "28/filter_100",
-      "section": "chapter 28 handoffs",
-      "chapter": "Chapter 28 Handoffs",
+      "id": "30/filter_100",
+      "section": "chapter 30 handoffs",
+      "chapter": "Chapter 30 Handoffs",
       "function": "filter_100",
       "summary": "Drop scratch messages from a 100-message transcript.",
       "what": "filter_transcript. Every fifth message has role scratch and is removed. The other 80 are kept, in order.",
@@ -2448,27 +2580,33 @@
       "timing": "The 100 messages are built before the bench. The timed closure is b.iter. Inside: filter_transcript with the slice passed through black_box, then black_box of the new vec. The board is not updated. The owner does not change. No model is called.",
       "inputs": "100 messages. Index divisible by 5 has role scratch. The rest have role user. Text is message N about the rename procedure.",
       "fake": "The messages are generated in the bench. They are not a restored session. Hermes handoff.request does not perform this filter.",
-      "source": "steps/ch28-handoffs/benches/handoffs.rs",
-      "reading": "Smaller is better. It should stay under 1 ms. A number in the milliseconds means the sample started copying more than these short strings, or the transcript got much larger."
+      "source": "steps/ch30-handoffs/benches/handoffs.rs",
+      "reading": "Smaller is better. It should stay under 1 ms. A number in the milliseconds means the sample started copying more than these short strings, or the transcript got much larger.",
+      "aliases": [
+        "28/filter_100"
+      ]
     },
     {
-      "id": "29/schedule_100",
-      "section": "chapter 29 fan-out",
-      "chapter": "Chapter 29 Fan-out and Gather",
+      "id": "31/schedule_100",
+      "section": "chapter 31 fan-out",
+      "chapter": "Chapter 31 Fan-out and Gather",
       "function": "schedule_100",
       "summary": "Schedule 100 tasks onto a fresh board.",
       "what": "Board::schedule of 100 tasks. The board length ends at 100. The 101st call is not in this sample.",
       "why": "One hundred mock subagents have to be schedulable, and the queue has to stop. This is the schedule, not the gather.",
       "timing": "iter_batched. The setup closure calls Board::new and is not timed. The timed closure schedules 100 tasks and passes len through black_box. No Pool is constructed. No thread is started. gather is not called. No model is called.",
-      "inputs": "100 tasks. task_index 0 through 99. Reply is reply N. tool_trace is secret-tool. Queue cap 100.",
+      "inputs": "100 tasks. task_index 0 through 101. Reply is reply N. tool_trace is secret-tool. Queue cap 100.",
       "fake": "The replies are strings. No specialist runs. The tool trace is stored and not executed.",
-      "source": "steps/ch29-fan-out/benches/fan_out.rs",
-      "reading": "Smaller is better. A few microseconds is 100 short string pushes. Milliseconds would mean the sample started threads or the gather."
+      "source": "steps/ch31-fan-out/benches/fan_out.rs",
+      "reading": "Smaller is better. A few microseconds is 100 short string pushes. Milliseconds would mean the sample started threads or the gather.",
+      "aliases": [
+        "29/schedule_100"
+      ]
     },
     {
-      "id": "30/judge_one_permit",
-      "section": "chapter 30 critic",
-      "chapter": "Chapter 30 The Critic",
+      "id": "32/judge_one_permit",
+      "section": "chapter 32 critic",
+      "chapter": "Chapter 32 The Critic",
       "function": "judge_one_permit",
       "summary": "Judge one done reply, taking one permit.",
       "what": "as_tool on verdict: done. The outcome is accepted. The notes vec is not appended. The permit is dropped before the next iteration.",
@@ -2476,13 +2614,16 @@
       "timing": "Before the bench, Pool::new(8) builds the pool and its context Arc. The timed closure is b.iter. Inside: as_tool with the pool and the reply passed through black_box, then black_box of the Outcome. The call acquires one permit, locks the notes, parses the verdict, copies the snippet, and drops the permit. No model is called. The 30 second judge timeout is not slept. No thread is started.",
       "inputs": "One reply, verdict: done followed by The note is short enough. Pool limit 8. Snippet cap 4,000 characters, unused by this short reply.",
       "fake": "The reply is a string constant. No model is constructed. limits() is not called inside the sample.",
-      "source": "steps/ch30-critic/benches/critic.rs",
-      "reading": "Smaller is better. Hundreds of nanoseconds is a mutex permit and a short parse. Milliseconds would mean the sample started a model call or slept for the judge timeout."
+      "source": "steps/ch32-critic/benches/critic.rs",
+      "reading": "Smaller is better. Hundreds of nanoseconds is a mutex permit and a short parse. Milliseconds would mean the sample started a model call or slept for the judge timeout.",
+      "aliases": [
+        "30/judge_one_permit"
+      ]
     },
     {
-      "id": "31/nested_eight",
-      "section": "chapter 31 composition",
-      "chapter": "Chapter 31 Composing Patterns",
+      "id": "33/nested_eight",
+      "section": "chapter 33 composition",
+      "chapter": "Chapter 33 Composing Patterns",
       "function": "nested_eight",
       "summary": "Schedule and gather eight nested children on one supervisor pool.",
       "what": "nested_fanout with held 0 and width 8. The bound check passes. Eight tasks are gathered. Each takes one permit and returns a short reply.",
@@ -2490,13 +2631,16 @@
       "timing": "Before the bench, Pool::new(8) builds the pool. The timed closure is b.iter. Inside: nested_fanout with the pool, held 0, and width 8 passed through black_box, then black_box of the summary string. Scheduling, thread start, the permit, the reply clone, and the join are inside the sample. The hold is Duration::ZERO. No model is called. The judge timeout and the gate timeout are not slept.",
       "inputs": "Eight tasks. Replies are n0 through n7, joined by newlines in task_index order. Pool limit 8. held is 0. tool_trace is an empty string.",
       "fake": "The replies are formatted in nested_fanout. FakeModel is not constructed. No shell is spawned. Width 9 is not called.",
-      "source": "steps/ch31-composition/benches/composition.rs",
-      "reading": "Smaller is better. Around 100 microseconds is thread start for eight short jobs. A number near eight times a sleep would mean the sample started holding. Milliseconds still fit a fan-out that starts threads. A multi-millisecond jump means the sample started a model call."
+      "source": "steps/ch33-composition/benches/composition.rs",
+      "reading": "Smaller is better. Around 100 microseconds is thread start for eight short jobs. A number near eight times a sleep would mean the sample started holding. Milliseconds still fit a fan-out that starts threads. A multi-millisecond jump means the sample started a model call.",
+      "aliases": [
+        "31/nested_eight"
+      ]
     },
     {
-      "id": "32/share_snapshot",
-      "section": "chapter 32 context",
-      "chapter": "Chapter 32 Managing Context",
+      "id": "34/share_snapshot",
+      "section": "chapter 34 context",
+      "chapter": "Chapter 34 Managing Context",
       "function": "share_snapshot",
       "summary": "Clone the Arc that holds one frozen context snapshot.",
       "what": "share of an Arc whose string is 20,000 characters. The clone is another pointer to the same allocation.",
@@ -2504,13 +2648,16 @@
       "timing": "Before the bench, the string is built by repeating rule-space 4,000 times and wrapping it in Arc::new. The timed closure is b.iter. Inside: share with that Arc passed through black_box, then black_box of the cloned Arc. The string allocation is excluded. scan_context, truncate_content, wrap_untrusted, and preflight are not called.",
       "inputs": "One string, 20,000 characters, the word rule followed by a space, repeated. One Arc.",
       "fake": "Nothing is mocked. This is Arc::clone. FakeModel is not constructed. No file is read and no regex runs.",
-      "source": "steps/ch32-context/benches/context.rs",
-      "reading": "Smaller is better. Tens of nanoseconds is a pointer clone. Microseconds would mean the sample started copying the 20,000 characters. The scan and the compression are not in this number."
+      "source": "steps/ch34-context/benches/context.rs",
+      "reading": "Smaller is better. Tens of nanoseconds is a pointer clone. Microseconds would mean the sample started copying the 20,000 characters. The scan and the compression are not in this number.",
+      "aliases": [
+        "32/share_snapshot"
+      ]
     },
     {
-      "id": "33/inbox_submit",
-      "section": "chapter 33 actors",
-      "chapter": "Chapter 33 Agents as Actors",
+      "id": "35/inbox_submit",
+      "section": "chapter 35 actors",
+      "chapter": "Chapter 35 Agents as Actors",
       "function": "inbox_submit",
       "summary": "try_send one turn into an empty inbox of 64.",
       "what": "submit of Mail::Turn with the text hello. The channel has room, so the send succeeds. The receiver is kept so the channel is not closed.",
@@ -2518,13 +2665,16 @@
       "timing": "iter_batched. The setup closure builds tokio::sync::mpsc::channel with capacity 64 and is not timed. The timed routine calls submit with that sender and Mail::Turn of hello, both passed through black_box, then black_box of the receiver. Allocating the string hello is inside the sample. No task is spawned. FakeModel is not constructed. The Full path is not taken.",
       "inputs": "One message, text hello. Channel capacity 64. The channel is empty at the start of each sample.",
       "fake": "The message is a string. No model runs. The 100-agent fan is not this sample.",
-      "source": "steps/ch33-actors/benches/actors.rs",
-      "reading": "Smaller is better. A few hundred nanoseconds is one bounded send. Milliseconds would mean the sample started waiting or spawned the agent task. A number that includes 64 sends would be the fill test, not this one."
+      "source": "steps/ch35-actors/benches/actors.rs",
+      "reading": "Smaller is better. A few hundred nanoseconds is one bounded send. Milliseconds would mean the sample started waiting or spawned the agent task. A number that includes 64 sends would be the fill test, not this one.",
+      "aliases": [
+        "33/inbox_submit"
+      ]
     },
     {
-      "id": "34/restart_bookkeeping",
-      "section": "chapter 34 supervision",
-      "chapter": "Chapter 34 Supervision and Restart",
+      "id": "36/restart_bookkeeping",
+      "section": "chapter 36 supervision",
+      "chapter": "Chapter 36 Supervision and Restart",
       "function": "restart_bookkeeping",
       "summary": "Record one restart on an empty supervisor.",
       "what": "Supervisor::record at timestamp 0. The chain length becomes 1. The breaker does not trip. The child is not called.",
@@ -2532,13 +2682,16 @@
       "timing": "iter_batched. The setup closure calls Supervisor::new and is not timed. The timed routine calls record with timestamp 0 passed through black_box, then black_box of the bool. The mutex is taken inside the sample. The boot vec starts empty. FakeModel is not constructed. restart_child is not called. No sleep runs. The 300 second gap is a comparison, not a wait.",
       "inputs": "One timestamp, 0 seconds. An empty boot log. MAX_RESTARTS is 3. The gap limit is 300 seconds.",
       "fake": "There is no child and no model. The I/O-failure flag is left false. Nothing is written to disk.",
-      "source": "steps/ch34-supervision/benches/supervision.rs",
-      "reading": "Smaller is better. Tens of nanoseconds is a mutex and a one-element vec. A millisecond would still meet the budget and would mean the sample started doing the child's work or sleeping."
+      "source": "steps/ch36-supervision/benches/supervision.rs",
+      "reading": "Smaller is better. Tens of nanoseconds is a mutex and a one-element vec. A millisecond would still meet the budget and would mean the sample started doing the child's work or sleeping.",
+      "aliases": [
+        "34/restart_bookkeeping"
+      ]
     },
     {
-      "id": "35/pick_least",
-      "section": "chapter 35 balancing",
-      "chapter": "Chapter 35 Balancing and Federation",
+      "id": "37/pick_least",
+      "section": "chapter 37 balancing",
+      "chapter": "Chapter 37 Balancing and Federation",
       "function": "pick_least",
       "summary": "Pick the least-outstanding backend among four counters.",
       "what": "pick of Policy::LeastOutstanding on a pool of four backends. Outstanding counters are 3, 1, 4, and 2. The quieter index is 1. The function returns Some(1).",
@@ -2546,13 +2699,16 @@
       "timing": "Before the bench, four backends are built with outstanding 3, 1, 4, and 2. The timed closure is b.iter. Inside: pick with LeastOutstanding passed through black_box, then black_box of the Option. The four AtomicUsize loads and the comparison are inside the sample. Backend construction is excluded. call, discover, and FakeModel are not called. No sleep runs. No socket is opened.",
       "inputs": "Four backends. Names a, b, c, d. Replies unused. Outstanding 3, 1, 4, 2. One policy, LeastOutstanding.",
       "fake": "The backends are structs in this process. No upstream MCP server is contacted. FakeModel is not constructed. PowerOfTwo is not this sample.",
-      "source": "steps/ch35-balancing/benches/balancing.rs",
-      "reading": "Smaller is better. A few nanoseconds is four atomic loads and a compare. Microseconds would mean the sample started a thread or a connect. Milliseconds would mean a sleep or a socket."
+      "source": "steps/ch37-balancing/benches/balancing.rs",
+      "reading": "Smaller is better. A few nanoseconds is four atomic loads and a compare. Microseconds would mean the sample started a thread or a connect. Milliseconds would mean a sleep or a socket.",
+      "aliases": [
+        "35/pick_least"
+      ]
     },
     {
-      "id": "36/resolve_profile",
-      "section": "chapter 36 profiles",
-      "chapter": "Chapter 36 Profiles",
+      "id": "38/resolve_profile",
+      "section": "chapter 38 profiles",
+      "chapter": "Chapter 38 Profiles",
       "function": "resolve_profile",
       "summary": "Resolve one scoped profile and whether its secret is present.",
       "what": "resolve of profile writer and secret API_KEY. Multiplex is on and the scope is writer. The persona Arc is cloned. has_secret is true. The secret string is not stored on the result.",
@@ -2560,13 +2716,16 @@
       "timing": "Before the bench, Profiles::new(true) adds the writer profile (persona you write, secret API_KEY sk-writer) and set_scope(Some(writer)). The timed closure is b.iter. Inside: resolve with writer and API_KEY passed through black_box, then black_box of Resolved. The HashMap lookup, the secret clone inside get_secret, and the Arc clone of the persona are inside the sample. Profile construction is excluded. FakeModel is not constructed. The UnscopedSecretError path is not taken.",
       "inputs": "One profile, name writer. Persona you write, 9 characters. One secret, name API_KEY, value sk-writer. Multiplex true. Scope writer.",
       "fake": "The secret is a string in the profile map. No environment variable is read. FakeModel is not constructed. No file is loaded.",
-      "source": "steps/ch36-profiles/benches/profiles.rs",
-      "reading": "Smaller is better. Tens of nanoseconds is two map lookups and an Arc clone. A millisecond would still meet the budget and would mean the sample started copying a large prompt or reading a file."
+      "source": "steps/ch38-profiles/benches/profiles.rs",
+      "reading": "Smaller is better. Tens of nanoseconds is two map lookups and an Arc clone. A millisecond would still meet the budget and would mean the sample started copying a large prompt or reading a file.",
+      "aliases": [
+        "36/resolve_profile"
+      ]
     },
     {
-      "id": "37/enqueue_platform",
-      "section": "chapter 37 gateway",
-      "chapter": "Chapter 37 The Gateway",
+      "id": "39/enqueue_platform",
+      "section": "chapter 39 gateway",
+      "chapter": "Chapter 39 The Gateway",
       "function": "enqueue_platform",
       "summary": "Push one platform turn onto an empty inbox of 64.",
       "what": "submit of Message::Turn with the text hello. The inbox has room, so the result is Accepted. The receiver side is the same VecDeque.",
@@ -2574,13 +2733,16 @@
       "timing": "iter_batched. The setup closure calls Inbox::new(64) and is not timed. The timed routine builds the string hello, calls submit with Message::Turn of that string passed through black_box, then black_box of Submit. The length check and push_back are inside the sample. Pairing, authorize, fold, handoff_request, and FakeModel are not called. The Full path is not taken.",
       "inputs": "One message, text hello. Inbox capacity 64. The inbox is empty at the start of each sample.",
       "fake": "The message is a string. No platform socket is opened. FakeModel is not constructed. The allowlist is not consulted.",
-      "source": "steps/ch37-gateway/benches/gateway.rs",
-      "reading": "Smaller is better. Tens of nanoseconds is one bounded push of a short string. Milliseconds would mean the sample started a pairing check, a file stat, or a network send."
+      "source": "steps/ch39-gateway/benches/gateway.rs",
+      "reading": "Smaller is better. Tens of nanoseconds is one bounded push of a short string. Milliseconds would mean the sample started a pairing check, a file stat, or a network send.",
+      "aliases": [
+        "37/enqueue_platform"
+      ]
     },
     {
-      "id": "38/route_session",
-      "section": "chapter 38 service",
-      "chapter": "Chapter 38 MCP Gateway Service",
+      "id": "40/route_session",
+      "section": "chapter 40 service",
+      "chapter": "Chapter 40 MCP Gateway Service",
       "function": "route_session",
       "summary": "Look up the replica for session s0.",
       "what": "route of session s0. The map has 64 sessions, s0 through s63, all placed on replica a before the sample. The result is Some(a).",
@@ -2588,13 +2750,16 @@
       "timing": "Before the bench, Service::new builds replicas a, b, c, and d with quota 8, then place runs for s0 through s63. The timed closure is b.iter. Inside: route with s0 passed through black_box, then black_box of the Option. The HashMap get is inside the sample. place, kill, accept, Sampler, OsvCache, and FakeModel are not called. No socket is opened.",
       "inputs": "64 sessions. Four replica names. Every session is on a, because a is the first live replica. The lookup key is s0.",
       "fake": "Replicas are strings. No process is killed. The bearer token, the quota, and the malware list are not consulted. oha is not run.",
-      "source": "steps/ch38-service/benches/service.rs",
-      "reading": "Smaller is better. Around 10 nanoseconds is one HashMap get. Microseconds would mean the sample started placing sessions again. Milliseconds would mean a socket or a drain walk."
+      "source": "steps/ch40-service/benches/service.rs",
+      "reading": "Smaller is better. Around 10 nanoseconds is one HashMap get. Microseconds would mean the sample started placing sessions again. Milliseconds would mean a socket or a drain walk.",
+      "aliases": [
+        "38/route_session"
+      ]
     },
     {
-      "id": "39/scan_thousand",
-      "section": "chapter 39 cron",
-      "chapter": "Chapter 39 Cron",
+      "id": "41/scan_thousand",
+      "section": "chapter 41 cron",
+      "chapter": "Chapter 41 Cron",
       "function": "scan_thousand",
       "summary": "Index 1,000 due, unclaimed jobs.",
       "what": "scan_due at timestamp 0. Every job is due at 0, unclaimed, and not blocked. The result is 1,000 indexes.",
@@ -2602,13 +2767,16 @@
       "timing": "Before the bench, Store::new and 1,000 Job::new calls build ids j0 through j999, each due at 0 with the prompt summarize. The timed closure is b.iter. Inside: scan_due with timestamp 0 passed through black_box, then black_box of the Vec of indexes. The walk and the result allocation are inside the sample. Building the jobs is excluded. scan_prompt, check_lifecycle, watchdog, chain, and FakeModel are not called. No sleep runs.",
       "inputs": "1,000 jobs. Prompt summarize, 9 characters. due is 0. now is 0. None are claimed.",
       "fake": "The jobs are structs. No clock and no jobs file. The threat regex is not compiled by this function. FakeModel is not constructed.",
-      "source": "steps/ch39-cron/benches/cron.rs",
-      "reading": "Smaller is better. Around a microsecond is a walk of 1,000 short jobs plus the index vec. Ten milliseconds would still meet the budget. A number that includes the prompt regex would be the threat scan, not this one."
+      "source": "steps/ch41-cron/benches/cron.rs",
+      "reading": "Smaller is better. Around a microsecond is a walk of 1,000 short jobs plus the index vec. Ten milliseconds would still meet the budget. A number that includes the prompt regex would be the threat scan, not this one.",
+      "aliases": [
+        "39/scan_thousand"
+      ]
     },
     {
-      "id": "40/translate_update",
-      "section": "chapter 40 acp",
-      "chapter": "Chapter 40 Editor Integration",
+      "id": "42/translate_update",
+      "section": "chapter 42 acp",
+      "chapter": "Chapter 42 Editor Integration",
       "function": "translate_update",
       "summary": "Copy one ACP update onto an empty inbox of 64.",
       "what": "translate of an update whose text is hello and whose cancelled flag is false, then submit of that mail. The inbox has room, so the result is Accepted.",
@@ -2616,13 +2784,16 @@
       "timing": "Before the bench, the Update is built with text hello and cancelled false. iter_batched. The setup closure calls Inbox::new(64) and is not timed. The timed routine calls translate with that update passed through black_box, then submit of the mail, then black_box of Submit. The string clone and the push are inside the sample. write_result, log_line, map_permission, and FakeModel are not called. The Full path is not taken.",
       "inputs": "One update. Text hello, 5 characters. cancelled is false. Inbox capacity 64. The inbox is empty at the start of each sample.",
       "fake": "The update is a struct. No editor process and no stdio handle. FakeModel is not constructed. The permission map is not consulted.",
-      "source": "steps/ch40-acp/benches/acp.rs",
-      "reading": "Smaller is better. Tens of nanoseconds is a short string clone and one push. A millisecond would still meet the budget and would mean the sample started encoding JSON or writing a pipe."
+      "source": "steps/ch42-acp/benches/acp.rs",
+      "reading": "Smaller is better. Tens of nanoseconds is a short string clone and one push. A millisecond would still meet the budget and would mean the sample started encoding JSON or writing a pipe.",
+      "aliases": [
+        "40/translate_update"
+      ]
     },
     {
-      "id": "41/claim_with_waiters",
-      "section": "chapter 41 blackboard",
-      "chapter": "Chapter 41 The Blackboard",
+      "id": "43/claim_with_waiters",
+      "section": "chapter 43 blackboard",
+      "chapter": "Chapter 43 The Blackboard",
       "function": "claim_with_waiters",
       "summary": "Claim one waiter from a board of 100, matching key last.",
       "what": "tick on a Mutex of a Board that already holds the fact notes under the key ready. The last waiter is named chosen and watches ready. The result is Claim::Woke.",
@@ -2630,13 +2801,16 @@
       "timing": "iter_batched. The setup closure builds waiters w0 through w98 on keys k0 through k98, then chosen on ready, posts notes, wraps the board in a Mutex, and is not timed. The timed routine calls tick with that mutex passed through black_box, then black_box of the Claim. The lock, the scan of 100 waiters, the wake increment, the name and key clones, and the removal of the fact are inside the sample. Building the waiters is excluded. FakeModel, answer, pause, and the Condvar are not called.",
       "inputs": "100 waiters. The matching key ready is last. The fact value is notes, 5 characters. MAX_WAKES is 8. The board is not paused.",
       "fake": "The waiters are records, not threads. FakeModel is not constructed. No condvar wait and no sleep.",
-      "source": "steps/ch41-blackboard/benches/blackboard.rs",
-      "reading": "Smaller is better. A few microseconds is a mutex and a scan of 100 short strings. One millisecond would still meet the budget. A number that includes a model call would mean the lock was held across complete."
+      "source": "steps/ch43-blackboard/benches/blackboard.rs",
+      "reading": "Smaller is better. A few microseconds is a mutex and a scan of 100 short strings. One millisecond would still meet the budget. A number that includes a model call would mean the lock was held across complete.",
+      "aliases": [
+        "41/claim_with_waiters"
+      ]
     },
     {
-      "id": "42/claim_transaction",
-      "section": "chapter 42 kanban",
-      "chapter": "Chapter 42 The Kanban Board",
+      "id": "44/claim_transaction",
+      "section": "chapter 44 kanban",
+      "chapter": "Chapter 44 The Kanban Board",
       "function": "claim_transaction",
       "summary": "Claim task t1 through the lock file and rewrite board.json.",
       "what": "transact of Op::Claim with owner worker on a board that has one ready task t1. The status comes back running. The temp directory is deleted after the claim.",
@@ -2644,13 +2818,16 @@
       "timing": "iter_batched. The setup closure creates a fresh temp directory, writes one ready task t1, and is not timed. The timed routine calls transact, then remove_dir_all, then black_box of the status. create_new of board.lock, the JSON read, the status swap, and the JSON write are inside the sample. Directory creation is excluded. The second process is not spawned. FakeModel is not called. Complete, review, and block are not this sample. The 100 microsecond retry loop runs only when the lock file already exists.",
       "inputs": "One task, id t1, status ready, no owner, no parents. Owner string worker. One lock file in a private temp directory.",
       "fake": "The board is a JSON file in the temp directory. No SQLite and no worker process. FakeModel is not constructed.",
-      "source": "steps/ch42-kanban/benches/kanban.rs",
-      "reading": "Smaller is better. Tens of microseconds is a lock file plus two JSON writes. Five milliseconds would still meet the budget. A number that includes two processes and the retry sleep is the race test, not this one."
+      "source": "steps/ch44-kanban/benches/kanban.rs",
+      "reading": "Smaller is better. Tens of microseconds is a lock file plus two JSON writes. Five milliseconds would still meet the budget. A number that includes two processes and the retry sleep is the race test, not this one.",
+      "aliases": [
+        "42/claim_transaction"
+      ]
     },
     {
-      "id": "43/publish_to_agents",
-      "section": "chapter 43 message bus",
-      "chapter": "Chapter 43 The Message Bus",
+      "id": "45/publish_to_agents",
+      "section": "chapter 45 message bus",
+      "chapter": "Chapter 45 The Message Bus",
       "function": "publish_to_agents",
       "summary": "Publish ping to 100 subscribers on topic work.",
       "what": "publish of an envelope with topic work and body ping. One hundred subscribers, a0 through a99, are already on that topic. Each channel is empty, so the result is Delivered(100).",
@@ -2658,13 +2835,16 @@
       "timing": "iter_batched. The setup closure builds a Bus, subscribes a0 through a99 on work, keeps the 100 receivers, and is not timed. The timed routine calls publish with the envelope passed through black_box, then black_box of the result and the receivers. The 100 clones of the envelope and the 100 try_send calls are inside the sample. redact_for_egress, publish_bot, and FakeModel are not called. The Slow path is not taken.",
       "inputs": "100 subscribers. Topic work. Body ping, 4 characters. Channel capacity 64. Every channel is empty. The bot-event counter stays 0.",
       "fake": "The subscribers are sync_channel endpoints in this process. No socket. FakeModel is not constructed. The 300 second window is not a clock.",
-      "source": "steps/ch43-message-bus/benches/bus.rs",
-      "reading": "Smaller is better. Tens of microseconds is 100 short clones and 100 try_send calls. One millisecond would still meet the budget. A number that fills 64 first would be the slow-subscriber test."
+      "source": "steps/ch45-message-bus/benches/bus.rs",
+      "reading": "Smaller is better. Tens of microseconds is 100 short clones and 100 try_send calls. One millisecond would still meet the budget. A number that fills 64 first would be the slow-subscriber test.",
+      "aliases": [
+        "43/publish_to_agents"
+      ]
     },
     {
-      "id": "44/skill_propose",
-      "section": "chapter 44 team skills",
-      "chapter": "Chapter 44 Shared Team Skills",
+      "id": "46/skill_propose",
+      "section": "chapter 46 team skills",
+      "chapter": "Chapter 46 Shared Team Skills",
       "function": "skill_propose",
       "summary": "Enqueue one community proposal on an empty deque.",
       "what": "skill_propose of a Proposal named cite, body Name the file., force false, trust Community. The deque starts empty. The result is Queued.",
@@ -2672,13 +2852,16 @@
       "timing": "The Proposal is built before the bench. iter_batched. Setup is VecDeque::new and is not timed. The timed routine clones the proposal, calls skill_propose with the queue and that clone passed through black_box, then black_box of the result and the queue. The length check and push_back are inside the sample. librarian_accept, allow_install, swap_index, and FakeModel are not called. The Full path is not taken.",
       "inputs": "One proposal. Name cite. Body Name the file., 14 characters. force false. Trust Community. Queue capacity 64. The queue is empty at the start of each sample.",
       "fake": "The proposal is a struct. No skill file is written. FakeModel is not constructed. The dangerous-body scan is not this function.",
-      "source": "steps/ch44-team-skills/benches/skills.rs",
-      "reading": "Smaller is better. Tens of nanoseconds is one push of a short struct. A millisecond would still meet the budget and would mean the sample started the librarian or the model."
+      "source": "steps/ch46-team-skills/benches/skills.rs",
+      "reading": "Smaller is better. Tens of nanoseconds is one push of a short struct. A millisecond would still meet the budget and would mean the sample started the librarian or the model.",
+      "aliases": [
+        "44/skill_propose"
+      ]
     },
     {
-      "id": "44/index_swap",
-      "section": "chapter 44 team skills",
-      "chapter": "Chapter 44 Shared Team Skills",
+      "id": "46/index_swap",
+      "section": "chapter 46 team skills",
+      "chapter": "Chapter 46 Shared Team Skills",
       "function": "index_swap",
       "summary": "Replace the library index pointer with a prebuilt Arc.",
       "what": "swap_index from a version-1 index that holds the bundled skill echo to a version-2 Arc that holds the team skill cite and a three-line TEAM.md. The previous Arc is returned.",
@@ -2686,13 +2869,16 @@
       "timing": "iter_batched. The setup closure builds Library::new of the bundled echo skill and an Arc of the version-2 index, and is not timed. The timed routine calls swap_index with that library and Arc passed through black_box, then black_box of the previous Arc. The mutex and mem::replace are inside the sample. Cloning the skill vec, rendering TEAM.md, and FakeModel are not called.",
       "inputs": "One old skill, name echo, body Say it back. One new skill, name cite, body Name the file., layer Team, version 2. TEAM.md is the string # TEAM\\n- cite (team)\\n.",
       "fake": "Both indexes are in memory. No manifest hash and no file copy. FakeModel is not constructed.",
-      "source": "steps/ch44-team-skills/benches/skills.rs",
-      "reading": "Smaller is better. Around 200 nanoseconds is a mutex and an Arc replace. A millisecond would mean the sample rebuilt the skill list or called the model under the lock."
+      "source": "steps/ch46-team-skills/benches/skills.rs",
+      "reading": "Smaller is better. Around 200 nanoseconds is a mutex and an Arc replace. A millisecond would mean the sample rebuilt the skill list or called the model under the lock.",
+      "aliases": [
+        "44/index_swap"
+      ]
     },
     {
-      "id": "45/cancel_inflight",
-      "section": "chapter 45 a2a",
-      "chapter": "Chapter 45 A2A for External Agents",
+      "id": "47/cancel_inflight",
+      "section": "chapter 47 a2a",
+      "chapter": "Chapter 47 A2A for External Agents",
       "function": "cancel_inflight",
       "summary": "Set the cancel flag and join the thread that is waiting on it.",
       "what": "cancel stores true on an AtomicBool. A thread already inside wait_cancel sees the flag and returns. join finishes inside the sample.",
@@ -2700,13 +2886,16 @@
       "timing": "iter_batched. The setup closure spawns a thread running wait_cancel, spins until started is true, and is not timed. The timed routine calls cancel with the flag passed through black_box, joins the thread, then black_box of the unit. The atomic store and the waiter's exit are inside the sample. HttpPool, FakeModel, redact_for_egress, call, and the permit pool are not used. There is no sleep and no socket.",
       "inputs": "One flag, starting false. One helper thread. No URL.",
       "fake": "The in-flight call is a yield loop, not a peer. No HTTP client is built. FakeModel is not constructed.",
-      "source": "steps/ch45-a2a/benches/a2a.rs",
-      "reading": "Smaller is better. Tens of microseconds is a flag store plus a thread join. Fifty milliseconds would still meet the budget. A number that includes a connect would be a client this crate does not open."
+      "source": "steps/ch47-a2a/benches/a2a.rs",
+      "reading": "Smaller is better. Tens of microseconds is a flag store plus a thread join. Fifty milliseconds would still meet the budget. A number that includes a connect would be a client this crate does not open.",
+      "aliases": [
+        "45/cancel_inflight"
+      ]
     },
     {
-      "id": "46/event_without_span",
-      "section": "chapter 46 tracing",
-      "chapter": "Chapter 46 Seeing Inside",
+      "id": "48/event_without_span",
+      "section": "chapter 48 tracing",
+      "chapter": "Chapter 48 Seeing Inside",
       "function": "event_without_span",
       "summary": "One FakeModel complete of hello, with the subscriber installed and no span entered.",
       "what": "complete of the prompt hello. The reply is ok. CountingSubscriber is the default subscriber, and this function does not enter a span.",
@@ -2714,13 +2903,16 @@
       "timing": "CountingSubscriber::new and with_default run before either bench function and are not timed. FakeModel { reply: ok } is built outside. The timed closure is b.iter. Inside: complete of hello passed through black_box, then black_box of the reply. mock_turn, research_team, and the sink allocation are not called.",
       "inputs": "One prompt, hello, 5 characters. Reply ok. The subscriber's next id starts at 1.",
       "fake": "FakeModel returns its reply and ignores the prompt. No provider and no exporter. The prompt is not written to a sink.",
-      "source": "steps/ch46-tracing/benches/spans.rs",
-      "reading": "Smaller is better. Around 10 nanoseconds is the mock return. This number is the floor under span_per_event. Milliseconds would mean the subscriber started waiting on a collector."
+      "source": "steps/ch48-tracing/benches/spans.rs",
+      "reading": "Smaller is better. Around 10 nanoseconds is the mock return. This number is the floor under span_per_event. Milliseconds would mean the subscriber started waiting on a collector.",
+      "aliases": [
+        "46/event_without_span"
+      ]
     },
     {
-      "id": "46/span_per_event",
-      "section": "chapter 46 tracing",
-      "chapter": "Chapter 46 Seeing Inside",
+      "id": "48/span_per_event",
+      "section": "chapter 48 tracing",
+      "chapter": "Chapter 48 Seeing Inside",
       "function": "span_per_event",
       "summary": "One mock turn that enters the turn, three event spans, and a gateway child.",
       "what": "mock_turn of prompt hello into a new sink. The sink receives request, response, and gateway. The reply is ok. The span field is the word request, not the prompt.",
@@ -2728,13 +2920,16 @@
       "timing": "The same with_default that wraps event_without_span wraps this function, so subscriber install is outside both samples. The timed closure is b.iter. Inside: a Vec with capacity 3, mock_turn of the model and hello passed through black_box, then black_box of the reply and the sink. The turn span, the three emit spans, the gateway span, and one complete are inside the sample. research_team is not called. No file is written.",
       "inputs": "One prompt, hello. Reply ok. Sink capacity 3. Five spans per sample: turn, request event, response event, gateway, gateway event.",
       "fake": "CountingSubscriber increments an atomic and returns. No OTLP client and no socket. The prompt is discarded by safe_field.",
-      "source": "steps/ch46-tracing/benches/spans.rs",
-      "reading": "Smaller is better. Around 100 nanoseconds above event_without_span is the span tax and stays under 0.1 milliseconds. One millisecond would still meet the chapter 1 budget and would mean the sample started a collector or the 100-agent team."
+      "source": "steps/ch48-tracing/benches/spans.rs",
+      "reading": "Smaller is better. Around 100 nanoseconds above event_without_span is the span tax and stays under 0.1 milliseconds. One millisecond would still meet the chapter 1 budget and would mean the sample started a collector or the 100-agent team.",
+      "aliases": [
+        "46/span_per_event"
+      ]
     },
     {
-      "id": "47/dynamic_tokens",
-      "section": "chapter 47 capstone",
-      "chapter": "Chapter 47 Load and Token Capstone",
+      "id": "49/dynamic_tokens",
+      "section": "chapter 49 capstone",
+      "chapter": "Chapter 49 Load and Token Capstone",
       "function": "dynamic_tokens",
       "summary": "Score the dynamic arm for tool_07 and read its token count.",
       "what": "compare of the 32-card catalog, needed name tool_07, no deadline. The timed value is arms[2].tokens, which is 4.",
@@ -2742,13 +2937,16 @@
       "timing": "sample_catalog runs before the bench and is not timed. The timed closure is b.iter. Inside: compare with the catalog and tool_07 passed through black_box and deadline None, then black_box of arms[2].tokens. Building the three card slices and summing schema lengths are inside the sample. load is not called. No socket is opened.",
       "inputs": "32 cards, tool_00 through tool_31. Each schema is {\"name\":\"tool_NN\"}, 18 bytes, 4 tokens by integer division. The dynamic arm keeps the one card named tool_07. STATIC_LEN is 8. No deadline.",
       "fake": "The cards are strings. No catalog server and no oha. FakeModel is not called by compare.",
-      "source": "steps/ch47-capstone/benches/capstone.rs",
-      "reading": "Smaller is better. Around 100 nanoseconds is three filters over 32 short schemas. Milliseconds would mean the sample started a socket or rebuilt the catalog from disk. The token count itself is 4, which is a result, not a time."
+      "source": "steps/ch49-capstone/benches/capstone.rs",
+      "reading": "Smaller is better. Around 100 nanoseconds is three filters over 32 short schemas. Milliseconds would mean the sample started a socket or rebuilt the catalog from disk. The token count itself is 4, which is a result, not a time.",
+      "aliases": [
+        "47/dynamic_tokens"
+      ]
     },
     {
-      "id": "47/load_100",
-      "section": "chapter 47 capstone",
-      "chapter": "Chapter 47 Load and Token Capstone",
+      "id": "49/load_100",
+      "section": "chapter 49 capstone",
+      "chapter": "Chapter 49 Load and Token Capstone",
       "function": "load_100",
       "summary": "Run 100 in-memory dispatches and compute a nearest-rank p99.",
       "what": "load of 100 requests against the 32-card catalog. Each request compares tool_07 and calls FakeModel. All 100 succeed. Waves reset at 8, so the report has 13 waves.",
@@ -2756,13 +2954,16 @@
       "timing": "sample_catalog runs before the bench and is not timed. The timed closure is b.iter. Inside: load of the catalog and 100, then black_box of the LoadReport. The 100 compares, the 100 FakeModel completes, the wave counter, the sample vec, the sort, and the p99 index are inside the sample. No sleep and no socket. The deadline path is not taken.",
       "inputs": "100 requests. Catalog of 32 cards. Needed name tool_07. CALL_BOUND is 8. Reply string tool_07. Nearest-rank index for 100 samples is 98.",
       "fake": "Every dispatch is a function call in this process. FakeModel returns tool_07. No listener and no oha. The demo's p99_ns is a debug-build sample and is not this Criterion mean.",
-      "source": "steps/ch47-capstone/benches/capstone.rs",
-      "reading": "Smaller is better. Tens of microseconds is 100 in-memory compares plus a sort of 100 timestamps. That rate is not a server throughput number. Milliseconds would still be an in-memory loop. A number taken from a listening socket would be a different program."
+      "source": "steps/ch49-capstone/benches/capstone.rs",
+      "reading": "Smaller is better. Tens of microseconds is 100 in-memory compares plus a sort of 100 timestamps. That rate is not a server throughput number. Milliseconds would still be an in-memory loop. A number taken from a listening socket would be a different program.",
+      "aliases": [
+        "47/load_100"
+      ]
     },
     {
-      "id": "48/append_event",
-      "section": "chapter 48 evals",
-      "chapter": "Chapter 48 Evals",
+      "id": "50/append_event",
+      "section": "chapter 50 evals",
+      "chapter": "Chapter 50 Evals",
       "function": "append_event",
       "summary": "Push one trajectory JSON object onto an empty vec.",
       "what": "append_event for the name echo-hello and passed true. The vec gains one string, {\"name\":\"echo-hello\",\"passed\":true}.",
@@ -2770,13 +2971,16 @@
       "timing": "iter_batched. Setup is Vec::new and is not timed. The timed routine calls append_event with the vec, echo-hello, and true passed through black_box, then black_box of the vec. The format and the push are inside the sample. run_saved, run_red_team, run_trajectories, and FakeModel are not called.",
       "inputs": "One name, echo-hello. passed true. The vec is empty at the start of each sample.",
       "fake": "The log is a Vec of strings. No JSONL file is opened. FAIL_THRESHOLD is not read.",
-      "source": "steps/ch48-evals/benches/evals.rs",
-      "reading": "Smaller is better. Tens of nanoseconds is one format and one push. One millisecond would still meet the budget and would mean the sample started a file lock or the 100-thread run."
+      "source": "steps/ch50-evals/benches/evals.rs",
+      "reading": "Smaller is better. Tens of nanoseconds is one format and one push. One millisecond would still meet the budget and would mean the sample started a file lock or the 100-thread run.",
+      "aliases": [
+        "48/append_event"
+      ]
     },
     {
-      "id": "48/saved_set",
-      "section": "chapter 48 evals",
-      "chapter": "Chapter 48 Evals",
+      "id": "50/saved_set",
+      "section": "chapter 50 evals",
+      "chapter": "Chapter 50 Evals",
       "function": "saved_set",
       "summary": "Score the three saved task names on FakeModel.",
       "what": "run_saved returns three Score values: echo-hello, direct, and eight-reads. Each passed flag is true. The eight reads stay inside the worker bound of 8.",
@@ -2784,8 +2988,11 @@
       "timing": "The timed closure is b.iter. Inside: run_saved, then black_box of the score vec. Three FakeModel completes and the 8-step read count are inside the sample. No sleep. run_stress, run_red_team, and run_trajectories are not called. FAIL_THRESHOLD is not read.",
       "inputs": "Three names. Replies hello, ok, and done. Eight counted reads. WORKER_BOUND is 8. No deadline and no threshold.",
       "fake": "FakeModel returns a fixed string and ignores the prompt. No chapter 9 crate is linked. No file of saved tasks is loaded.",
-      "source": "steps/ch48-evals/benches/evals.rs",
-      "reading": "Smaller is better. Tens of nanoseconds is three mock replies and a short count. There is no fail threshold, so a slower number does not fail CI. A number that includes 100 threads would be the trajectory run, not this one."
+      "source": "steps/ch50-evals/benches/evals.rs",
+      "reading": "Smaller is better. Tens of nanoseconds is three mock replies and a short count. There is no fail threshold, so a slower number does not fail CI. A number that includes 100 threads would be the trajectory run, not this one.",
+      "aliases": [
+        "48/saved_set"
+      ]
     }
   ]
 }

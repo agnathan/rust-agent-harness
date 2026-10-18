@@ -1,6 +1,6 @@
 # Filter names match steps/ directory names.
 # `shared` means "retest every step that exists".
-# The chapter plan itself is .github/chapters.json (chapters 0–48, parts I–VI).
+# The chapter plan itself is .github/chapters.json (chapters 0–50, parts I–VI).
 # Every step directory is named steps/chNN-<slug>, including the server track.
 # There is no steps/ch04-mcp-client directory. Chapter 4 is ch04-1 through ch04-4.
 shared:
@@ -92,17 +92,17 @@ ch08-session-toolsets:
 ch15-limits:
   - "steps/ch15-limits/**"
   - "mcp-gateway/**"
-ch21-learned-tools:
-  - "steps/ch21-learned-tools/**"
+ch23-learned-tools:
+  - "steps/ch23-learned-tools/**"
   - "mcp-gateway/**"
-ch35-balancing:
-  - "steps/ch35-balancing/**"
+ch37-balancing:
+  - "steps/ch37-balancing/**"
   - "mcp-gateway/**"
-ch38-service:
-  - "steps/ch38-service/**"
+ch40-service:
+  - "steps/ch40-service/**"
   - "mcp-gateway/**"
-ch47-capstone:
-  - "steps/ch47-capstone/**"
+ch49-capstone:
+  - "steps/ch49-capstone/**"
   - "mcp-gateway/**"
 ch10-turn-state:
   - "steps/ch10-turn-state/**"
@@ -114,61 +114,65 @@ ch13-sandbox:
   - "steps/ch13-sandbox/**"
 ch14-when-things-fail:
   - "steps/ch14-when-things-fail/**"
-ch16-providers:
-  - "steps/ch16-providers/**"
-ch17-streaming:
-  - "steps/ch17-streaming/**"
-ch18-sessions:
-  - "steps/ch18-sessions/**"
-ch19-memory:
-  - "steps/ch19-memory/**"
-ch20-recall:
-  - "steps/ch20-recall/**"
-ch22-skills:
-  - "steps/ch22-skills/**"
-ch23-skill-writing:
-  - "steps/ch23-skill-writing/**"
-ch24-reflection:
-  - "steps/ch24-reflection/**"
-ch25-curation:
-  - "steps/ch25-curation/**"
-ch26-pipeline:
-  - "steps/ch26-pipeline/**"
-ch27-supervisor:
-  - "steps/ch27-supervisor/**"
-ch28-handoffs:
-  - "steps/ch28-handoffs/**"
-ch29-fan-out:
-  - "steps/ch29-fan-out/**"
-ch30-critic:
-  - "steps/ch30-critic/**"
-ch31-composition:
-  - "steps/ch31-composition/**"
-ch32-context:
-  - "steps/ch32-context/**"
-ch33-actors:
-  - "steps/ch33-actors/**"
-ch34-supervision:
-  - "steps/ch34-supervision/**"
-ch36-profiles:
-  - "steps/ch36-profiles/**"
-ch37-gateway:
-  - "steps/ch37-gateway/**"
-ch39-cron:
-  - "steps/ch39-cron/**"
-ch40-acp:
-  - "steps/ch40-acp/**"
-ch41-blackboard:
-  - "steps/ch41-blackboard/**"
-ch42-kanban:
-  - "steps/ch42-kanban/**"
-ch43-message-bus:
-  - "steps/ch43-message-bus/**"
-ch44-team-skills:
-  - "steps/ch44-team-skills/**"
-ch45-a2a:
-  - "steps/ch45-a2a/**"
-ch46-tracing:
-  - "steps/ch46-tracing/**"
-ch48-evals:
-  - "steps/ch48-evals/**"
+ch16-web-tools:
+  - "steps/ch16-web-tools/**"
+ch17-local-tools:
+  - "steps/ch17-local-tools/**"
+ch18-providers:
+  - "steps/ch18-providers/**"
+ch19-streaming:
+  - "steps/ch19-streaming/**"
+ch20-sessions:
+  - "steps/ch20-sessions/**"
+ch21-memory:
+  - "steps/ch21-memory/**"
+ch22-recall:
+  - "steps/ch22-recall/**"
+ch24-skills:
+  - "steps/ch24-skills/**"
+ch25-skill-writing:
+  - "steps/ch25-skill-writing/**"
+ch26-reflection:
+  - "steps/ch26-reflection/**"
+ch27-curation:
+  - "steps/ch27-curation/**"
+ch28-pipeline:
+  - "steps/ch28-pipeline/**"
+ch29-supervisor:
+  - "steps/ch29-supervisor/**"
+ch30-handoffs:
+  - "steps/ch30-handoffs/**"
+ch31-fan-out:
+  - "steps/ch31-fan-out/**"
+ch32-critic:
+  - "steps/ch32-critic/**"
+ch33-composition:
+  - "steps/ch33-composition/**"
+ch34-context:
+  - "steps/ch34-context/**"
+ch35-actors:
+  - "steps/ch35-actors/**"
+ch36-supervision:
+  - "steps/ch36-supervision/**"
+ch38-profiles:
+  - "steps/ch38-profiles/**"
+ch39-gateway:
+  - "steps/ch39-gateway/**"
+ch41-cron:
+  - "steps/ch41-cron/**"
+ch42-acp:
+  - "steps/ch42-acp/**"
+ch43-blackboard:
+  - "steps/ch43-blackboard/**"
+ch44-kanban:
+  - "steps/ch44-kanban/**"
+ch45-message-bus:
+  - "steps/ch45-message-bus/**"
+ch46-team-skills:
+  - "steps/ch46-team-skills/**"
+ch47-a2a:
+  - "steps/ch47-a2a/**"
+ch48-tracing:
+  - "steps/ch48-tracing/**"
+ch50-evals:
+  - "steps/ch50-evals/**"

@@ -20,7 +20,7 @@ The step crate is `steps/ch13-sandbox`. It is chapter 12's harness copied forwar
 >
 > **Adapted.** Nothing calls Docker. `docker_run_args` returns the argv a test can read. The worker is one process this crate compiles, not a container. `run_until` kills that direct child. Hermes's `kill_process_tree` also walks descendants (`taskkill /F /T` on Windows, a process-group kill on POSIX). This chapter does not. The checkpoint is a manifest of path and content, not a shadow git repo. Rewind copies the manifest back.
 >
-> **Deferred.** Credential-file mounts (D5) and per-child git worktrees (D6, chapter 27). This chapter does not parse Python. A2 is the script gate above, not a source scan.
+> **Deferred.** Credential-file mounts (D5) and per-child git worktrees (D6, chapter 29). This chapter does not parse Python. A2 is the script gate above, not a source scan.
 
 [personal note: a job you thought was sandboxed, and which backend it actually used]
 
@@ -894,7 +894,7 @@ The 10 MB skip drops the file from the manifest. Rewind will not put it back, be
 
 **A2 is this chapter.** `check_execute_code` is the script gate. Cron, single-query, and unattended deny a local script. An isolated env approves. `whole_script` asks once. An interactive CLI approves here; `terminal` inside the script still hits chapter 11.
 
-**Left for later.** File-path checks from chapter 3 stay in force. They are defense in depth, which is what `agent/file_safety.py` says. D5 and D6 are not this chapter. Secret redaction of the job line (E1, E2) is chapter 18.
+**Left for later.** File-path checks from chapter 3 stay in force. They are defense in depth, which is what `agent/file_safety.py` says. D5 and D6 are not this chapter. Secret redaction of the job line (E1, E2) is chapter 20.
 
 ## Chapter summary
 

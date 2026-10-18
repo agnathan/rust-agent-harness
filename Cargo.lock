@@ -1017,14 +1017,14 @@ dependencies = [
 name = "ch16-harness-cli"
 version = "0.1.0"
 dependencies = [
- "ch16-providers",
+ "ch16-web-tools",
  "clap",
  "serde_json",
  "tokio",
 ]
 
 [[package]]
-name = "ch16-providers"
+name = "ch16-web-tools"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -1045,14 +1045,14 @@ dependencies = [
 name = "ch17-harness-cli"
 version = "0.1.0"
 dependencies = [
- "ch17-streaming",
+ "ch17-local-tools",
  "clap",
  "serde_json",
  "tokio",
 ]
 
 [[package]]
-name = "ch17-streaming"
+name = "ch17-local-tools"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -1073,24 +1073,22 @@ dependencies = [
 name = "ch18-harness-cli"
 version = "0.1.0"
 dependencies = [
- "ch18-sessions",
+ "ch18-providers",
  "clap",
  "serde_json",
  "tokio",
 ]
 
 [[package]]
-name = "ch18-sessions"
+name = "ch18-providers"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
  "axum",
  "criterion",
- "regex",
  "reqwest 0.12.28",
  "rmcp",
- "rusqlite",
  "serde",
  "serde_json",
  "thiserror",
@@ -1103,24 +1101,22 @@ dependencies = [
 name = "ch19-harness-cli"
 version = "0.1.0"
 dependencies = [
- "ch19-memory",
+ "ch19-streaming",
  "clap",
  "serde_json",
  "tokio",
 ]
 
 [[package]]
-name = "ch19-memory"
+name = "ch19-streaming"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
  "axum",
  "criterion",
- "regex",
  "reqwest 0.12.28",
  "rmcp",
- "rusqlite",
  "serde",
  "serde_json",
  "thiserror",
@@ -1133,14 +1129,14 @@ dependencies = [
 name = "ch20-harness-cli"
 version = "0.1.0"
 dependencies = [
- "ch20-recall",
+ "ch20-sessions",
  "clap",
  "serde_json",
  "tokio",
 ]
 
 [[package]]
-name = "ch20-recall"
+name = "ch20-sessions"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -1160,7 +1156,67 @@ dependencies = [
 ]
 
 [[package]]
-name = "ch21-learned-tools"
+name = "ch21-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch21-memory",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "ch21-memory"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "criterion",
+ "regex",
+ "reqwest 0.12.28",
+ "rmcp",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch22-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch22-recall",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "ch22-recall"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "criterion",
+ "regex",
+ "reqwest 0.12.28",
+ "rmcp",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch23-learned-tools"
 version = "0.1.0"
 dependencies = [
  "ch15-limits",
@@ -1169,89 +1225,89 @@ dependencies = [
 ]
 
 [[package]]
-name = "ch22-skills"
+name = "ch24-skills"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch23-skill-writing"
+name = "ch25-skill-writing"
 version = "0.1.0"
 dependencies = [
- "ch22-skills",
+ "ch24-skills",
  "criterion",
  "regex",
 ]
 
 [[package]]
-name = "ch24-reflection"
+name = "ch26-reflection"
 version = "0.1.0"
 dependencies = [
- "ch22-skills",
+ "ch24-skills",
  "criterion",
 ]
 
 [[package]]
-name = "ch25-curation"
+name = "ch27-curation"
 version = "0.1.0"
 dependencies = [
- "ch23-skill-writing",
+ "ch25-skill-writing",
  "criterion",
  "flate2",
  "tar",
 ]
 
 [[package]]
-name = "ch26-pipeline"
+name = "ch28-pipeline"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch27-supervisor"
+name = "ch29-supervisor"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch28-handoffs"
+name = "ch30-handoffs"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch29-fan-out"
+name = "ch31-fan-out"
 version = "0.1.0"
 dependencies = [
- "ch27-supervisor",
+ "ch29-supervisor",
  "criterion",
 ]
 
 [[package]]
-name = "ch30-critic"
+name = "ch32-critic"
 version = "0.1.0"
 dependencies = [
- "ch27-supervisor",
+ "ch29-supervisor",
  "criterion",
 ]
 
 [[package]]
-name = "ch31-composition"
+name = "ch33-composition"
 version = "0.1.0"
 dependencies = [
- "ch27-supervisor",
- "ch28-handoffs",
- "ch29-fan-out",
- "ch30-critic",
+ "ch29-supervisor",
+ "ch30-handoffs",
+ "ch31-fan-out",
+ "ch32-critic",
  "criterion",
 ]
 
 [[package]]
-name = "ch32-context"
+name = "ch34-context"
 version = "0.1.0"
 dependencies = [
  "criterion",
@@ -1259,7 +1315,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ch33-actors"
+name = "ch35-actors"
 version = "0.1.0"
 dependencies = [
  "criterion",
@@ -1267,42 +1323,42 @@ dependencies = [
 ]
 
 [[package]]
-name = "ch34-supervision"
+name = "ch36-supervision"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch35-balancing"
+name = "ch37-balancing"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch36-profiles"
+name = "ch38-profiles"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch37-gateway"
+name = "ch39-gateway"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch38-service"
+name = "ch40-service"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch39-cron"
+name = "ch41-cron"
 version = "0.1.0"
 dependencies = [
  "criterion",
@@ -1310,21 +1366,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "ch40-acp"
+name = "ch42-acp"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch41-blackboard"
+name = "ch43-blackboard"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch42-kanban"
+name = "ch44-kanban"
 version = "0.1.0"
 dependencies = [
  "criterion",
@@ -1333,28 +1389,28 @@ dependencies = [
 ]
 
 [[package]]
-name = "ch43-message-bus"
+name = "ch45-message-bus"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch44-team-skills"
+name = "ch46-team-skills"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch45-a2a"
+name = "ch47-a2a"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch46-tracing"
+name = "ch48-tracing"
 version = "0.1.0"
 dependencies = [
  "criterion",
@@ -1362,14 +1418,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "ch47-capstone"
+name = "ch49-capstone"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch48-evals"
+name = "ch50-evals"
 version = "0.1.0"
 dependencies = [
  "criterion",
@@ -2290,7 +2346,7 @@ version = "0.1.0"
 dependencies = [
  "ch08-session-toolsets",
  "ch15-limits",
- "ch21-learned-tools",
+ "ch23-learned-tools",
 ]
 
 [[package]]

@@ -20,7 +20,7 @@ The step crate is `steps/ch11-approvals`. The package name stays `ch11-approvals
 >
 > **Adapted.** The pattern table is a short set of the commands I read in `HARDLINE_PATTERNS` (root `rm -rf`, `mkfs`, `dd` onto a raw disk, a fork bomb, `kill -1`, shutdown). Hermes's `DANGEROUS_PATTERNS` list is much longer; this chapter treats recursive `rm`, a write under `/etc` or `.ssh` or `.env`, a `curl` upload, and an interpreter `-c`/`-e` as the dangerous class. Quote masking is a character scan, not Hermes's quote-and-heredoc rewriter. A safe command with an empty deny list returns before that scan allocates. The smart step is `fake_smart_review`, not an auxiliary model. The human wait is one `tokio::sync::Mutex`.
 >
-> **Deferred.** Deleting the running binary (`agent/runtime_self_protection.py`, B6) and the self-repo git guard (B5, `tools/self_repo_guard.py`) are chapter 14, on this same floor, before YOLO. The gateway lifecycle block (B4, `tools/terminal_tool_guards.py` `gateway_lifecycle_block`) is chapter 37, because the chat gateway does not exist yet. Persisting "always" to a file is A7 and is not this chapter. A plugin that escalates to the human gate is chapter 12 (A8). The whole-script `execute_code` gate is chapter 13 (A2); until then `deny_tool` returns `None` for `execute_code` and the script is not blocked here.
+> **Deferred.** Deleting the running binary (`agent/runtime_self_protection.py`, B6) and the self-repo git guard (B5, `tools/self_repo_guard.py`) are chapter 14, on this same floor, before YOLO. The gateway lifecycle block (B4, `tools/terminal_tool_guards.py` `gateway_lifecycle_block`) is chapter 39, because the chat gateway does not exist yet. Persisting "always" to a file is A7 and is not this chapter. A plugin that escalates to the human gate is chapter 12 (A8). The whole-script `execute_code` gate is chapter 13 (A2); until then `deny_tool` returns `None` for `execute_code` and the script is not blocked here.
 
 [personal note: a command you expected the allowlist to pass, and which floor still refused it]
 
@@ -922,7 +922,7 @@ The breaker reads the tally after this denial has been counted. Threshold 3 mean
 
 **A6.** The denial text is `_STOP_COMMAND`: the user has not consented, and the model must not retry or rephrase. `run_script` drops the rest of the calls. The breaker sentence is appended at `DENIAL_BREAKER_THRESHOLD`, which is 3.
 
-**Left for later.** A8, a plugin escalating into this prompt, is chapter 12. A2, the `execute_code` script gate, is chapter 13. A9, memory and skill writes, is chapter 23. Secret redaction (E1, E2) is still absent. This chapter does not log the command.
+**Left for later.** A8, a plugin escalating into this prompt, is chapter 12. A2, the `execute_code` script gate, is chapter 13. A9, memory and skill writes, is chapter 25. Secret redaction (E1, E2) is still absent. This chapter does not log the command.
 
 ## Chapter summary
 
