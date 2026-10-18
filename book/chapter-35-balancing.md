@@ -6,11 +6,11 @@
 
 Chapter 34 can restart a child in the harness. The gateway still has one backend per tool. This chapter gives a tool a pool. The pick is local: the backend with the fewest outstanding requests, or the quieter of two indexes. Upstream servers that offer the same tool share that pool. Discovery connects at most four of them at once. Nothing here opens a socket.
 
-The step crate is `steps/gw-balancing`. The book number is 35. The package is `gw-balancing`.
+The step crate is `steps/ch35-balancing`. The book number is 35. The package is `ch35-balancing`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 35 | `steps/gw-balancing` | least outstanding, power of two choices, federation, a discovery cap of 4 |
+| 35 | `steps/ch35-balancing` | least outstanding, power of two choices, federation, a discovery cap of 4 |
 
 > **How Hermes does it**
 >
@@ -51,7 +51,7 @@ Five tests. Outstanding counts 3, 1, 4, 2 pick index 1, and the reply is `echo v
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p gw-balancing
+cargo nextest run --locked -p ch35-balancing
 ```
 
 ```text
@@ -60,7 +60,7 @@ Starting 5 tests across 3 binaries
 ```
 
 ```bash
-cargo run -p gw-balancing
+cargo run -p ch35-balancing
 ```
 
 ```text

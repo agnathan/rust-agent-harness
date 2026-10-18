@@ -4,11 +4,11 @@
 
 Chapter 9 saved three tasks and four stress names, and it said a later chapter would re-run them. This is that chapter. The scores come back as data. Nothing in the runner turns a miss into a process failure. One extra case per guardrail layer sits beside that set. A trajectory line is one JSON object appended to a vec.
 
-The step crate is `steps/ch41-evals`. The book number is 48. The package is `ch41-evals`.
+The step crate is `steps/ch48-evals`. The book number is 48. The package is `ch48-evals`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 48 | `steps/ch41-evals` | the saved names, ten red-team cases, a trajectory append, no threshold |
+| 48 | `steps/ch48-evals` | the saved names, ten red-team cases, a trajectory append, no threshold |
 
 > **How Hermes does it**
 >
@@ -62,7 +62,7 @@ Five tests. The saved names and the stress names match chapter 9, and every scor
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch41-evals
+cargo nextest run --locked -p ch48-evals
 ```
 
 ```text
@@ -70,7 +70,7 @@ cargo nextest run --locked -p ch41-evals
 ```
 
 ```bash
-cargo run -p ch41-evals
+cargo run -p ch48-evals
 ```
 
 ```text

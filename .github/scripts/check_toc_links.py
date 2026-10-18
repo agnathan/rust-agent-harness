@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """Fail if TABLE_OF_CONTENTS.md links to a path that is not in the repo.
 
-Written chapters must use the same files as book/SUMMARY.md. Two of those
-names do not match the chapter number: chapter 6 is
-book/chapter-05-thousands-of-tools.md, and chapter 9 is
-book/chapter-06-agent-loop.md.
+Written chapters must use the same files as book/SUMMARY.md. A summary
+entry titled "Chapter N" must link to a file named chapter-NN-*.md.
 """
 
 from __future__ import annotations
@@ -14,12 +12,7 @@ import sys
 from pathlib import Path
 
 LINK = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
-
-# Titles in SUMMARY.md whose filename is not chapter-NN-*.
-OLD_FILENAMES = {
-    "Chapter 6: Thousands of Tools": "chapter-05-thousands-of-tools.md",
-    "Chapter 9: The Agent Loop": "chapter-06-agent-loop.md",
-}
+CHAPTER_TITLE = re.compile(r"^Chapter (\d+):")
 
 
 def markdown_targets(text: str) -> list[str]:
@@ -64,11 +57,13 @@ def check(root: Path) -> list[str]:
         href = href.split("#", 1)[0].strip()
         if not href:
             continue
-        expected = OLD_FILENAMES.get(title)
-        if expected is not None and href != expected:
-            errors.append(
-                f"SUMMARY.md links {title} to {href}; the file is {expected}"
-            )
+        numbered = CHAPTER_TITLE.match(title)
+        if numbered:
+            prefix = f"chapter-{int(numbered.group(1)):02d}-"
+            if not Path(href).name.startswith(prefix):
+                errors.append(
+                    f"SUMMARY.md links {title} to {href}; expected {prefix}….md"
+                )
         book_path = f"book/{href}"
         if book_path not in toc:
             errors.append(f"TABLE_OF_CONTENTS.md does not link {book_path} ({title})")

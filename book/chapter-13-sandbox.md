@@ -4,11 +4,11 @@
 
 Chapter 12 can refuse a tool. The tool still runs in this process. A script that can spawn a process, or a command that can delete a file, needs a boundary that is not another `if` in the harness. This chapter adds a child process, the argv Docker would be given, and a checkpoint you can rewind. The default backend is local. Local is not a sandbox. That is the same default Hermes ships.
 
-The step crate is `steps/ch11-sandbox`. The book number is 13. The package is `ch11-sandbox`. The worker is a second binary, `sandbox-worker`.
+The step crate is `steps/ch13-sandbox`. The book number is 13. The package is `ch13-sandbox`. The worker is a second binary, `sandbox-worker`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 13 | `steps/ch11-sandbox` | a child worker, Docker argv, env scrub, checkpoints |
+| 13 | `steps/ch13-sandbox` | a child worker, Docker argv, env scrub, checkpoints |
 
 > **How Hermes does it**
 >
@@ -51,7 +51,7 @@ Seven tests. Local is the default and the Docker argv contains the three flags. 
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch11-sandbox
+cargo nextest run --locked -p ch13-sandbox
 ```
 
 ```text
@@ -60,7 +60,7 @@ Starting 7 tests across 4 binaries
 ```
 
 ```bash
-cargo run -p ch11-sandbox
+cargo run -p ch13-sandbox
 ```
 
 ```text

@@ -374,7 +374,7 @@ Sampling and elicitation limits (M7, `tools/mcp_tool_sampling.py`) are not in th
 - **HTTP.** The same three tools over streamable HTTP on `127.0.0.1`, JSON responses, port chosen by the OS. One round trip measured 215.7 µs.
 - **Registry.** Remote tools are `Arc<dyn Tool>`. A duplicate `echo` is rejected. `note` is a write because it has no read-only hint. Eight delayed reads overlapped. Fifty zero-delay calls measured 1.908 ms concurrent and 3.603 ms sequential.
 - **Cache.** Two reads of `tools/list` increment `list_calls` once. `grow` sends `list_changed`, and the next read sees `extra`. The cold list measured 82.87 µs. The hit measured 168.0 ns.
-- **Chapter 6.** `cards_from_listed`, `ListCache::from_cards`, and `replace_cards` take a real list without linking `rmcp`. The 10,000-tool benches still use the generator. The section crates for that chapter stay `steps/ch05-*`.
+- **Chapter 6.** `cards_from_listed`, `ListCache::from_cards`, and `replace_cards` take a real list without linking `rmcp`. The 10,000-tool benches still use the generator. The section crates for that chapter stay `steps/ch06-*`.
 
 [personal note: which part of MCP was harder than the protocol, the process lifetime or the list cache]
 

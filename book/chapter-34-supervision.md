@@ -4,11 +4,11 @@
 
 Chapter 33 can run a hundred agents. It does not start a failed one again, and it does not notice when the restarts themselves are the loop. This chapter restarts a failed child once. The decision is bookkeeping. The child's work is a separate call. Three chained restarts trip a breaker and skip auto-resume. A cancellation, or a budget of zero, does not start the child.
 
-The step crate is `steps/ch30-supervision`. The book number is 34. The package is `ch30-supervision`.
+The step crate is `steps/ch34-supervision`. The book number is 34. The package is `ch34-supervision`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 34 | `steps/ch30-supervision` | one restart, a chain of three, cancel and budget |
+| 34 | `steps/ch34-supervision` | one restart, a chain of three, cancel and budget |
 
 > **How Hermes does it**
 >
@@ -43,7 +43,7 @@ Six tests. A scripted failure then `ok` calls the child twice and records one re
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch30-supervision
+cargo nextest run --locked -p ch34-supervision
 ```
 
 ```text
@@ -52,7 +52,7 @@ Starting 6 tests across 3 binaries
 ```
 
 ```bash
-cargo run -p ch30-supervision
+cargo run -p ch34-supervision
 ```
 
 ```text

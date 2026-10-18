@@ -4,11 +4,11 @@
 
 Chapter 41 shares a fact inside one process. A crash takes the board with it, and a second process cannot see it. Hermes keeps a kanban card in SQLite so a worker in another process can claim it. This chapter is that card: one JSON file, one lock file, and a compare-and-swap on the status.
 
-The step crate is `steps/ch36-kanban`. The book number is 42. The package is `ch36-kanban`.
+The step crate is `steps/ch42-kanban`. The book number is 42. The package is `ch42-kanban`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 42 | `steps/ch36-kanban` | claim, complete, review, or block as one transaction |
+| 42 | `steps/ch42-kanban` | claim, complete, review, or block as one transaction |
 
 > **How Hermes does it**
 >
@@ -49,7 +49,7 @@ Seven tests. Claim then review, claim then block, and claim then complete each l
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch36-kanban
+cargo nextest run --locked -p ch42-kanban
 ```
 
 ```text
@@ -57,7 +57,7 @@ cargo nextest run --locked -p ch36-kanban
 ```
 
 ```bash
-cargo run -p ch36-kanban
+cargo run -p ch42-kanban
 ```
 
 ```text

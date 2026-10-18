@@ -10,6 +10,6 @@ description = "Standalone MCP gateway. Chapter 21's learned tools wrap the chapt
 name = "mcp_gateway"
 
 [dependencies]
-gw-learned-tools = { path = "../steps/gw-learned-tools" }
-gw-limits = { path = "../steps/gw-limits" }
-gw-session-toolsets = { path = "../steps/gw-session-toolsets" }
+ch21-learned-tools = { path = "../steps/ch21-learned-tools" }
+ch15-limits = { path = "../steps/ch15-limits" }
+ch08-session-toolsets = { path = "../steps/ch08-session-toolsets" }

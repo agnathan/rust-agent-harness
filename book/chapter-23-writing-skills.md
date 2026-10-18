@@ -4,11 +4,11 @@
 
 Chapter 22 can load a skill. It cannot create one. This chapter writes `SKILL.md`, patches one unique span, writes a supporting file, and deletes. Every write is scanned first. The approval gate is off until you turn it on. A reviewer that has not viewed the current file cannot patch it. A write the model did not ask for is a queue entry, not a file.
 
-The step crate is `steps/ch19-skill-writing`. The book number is 23. The package is `ch19-skill-writing`. It depends on `ch18-skills` for `skill_view`.
+The step crate is `steps/ch23-skill-writing`. The book number is 23. The package is `ch23-skill-writing`. It depends on `ch22-skills` for `skill_view`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 23 | `steps/ch19-skill-writing` | create, patch, delete, a scanner, the approval gate, read-before-write |
+| 23 | `steps/ch23-skill-writing` | create, patch, delete, a scanner, the approval gate, read-before-write |
 
 > **How Hermes does it**
 >
@@ -53,7 +53,7 @@ Six tests. The gate is off, so `rename` is written. Turning the gate on stages `
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch19-skill-writing
+cargo nextest run --locked -p ch23-skill-writing
 ```
 
 ```text
@@ -62,7 +62,7 @@ Starting 6 tests across 3 binaries
 ```
 
 ```bash
-cargo run -p ch19-skill-writing
+cargo run -p ch23-skill-writing
 ```
 
 ```text

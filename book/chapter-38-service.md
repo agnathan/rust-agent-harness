@@ -6,11 +6,11 @@
 
 Chapter 37 admits a person to the chat gateway. This chapter is the other process: the MCP gateway. A session id sticks to a replica. Killing that replica moves the session. A reload swaps an `Arc` and leaves the old config in the caller's hand. A tenant has a concurrent quota. A drain finishes the calls already accepted and refuses new ones. A bearer token is required. Sampling stops at ten requests a minute. URL-mode elicitation is declined. An `npx` or `uvx` launch checks for `MAL-*` advisories and fails open when the network does not answer. Nothing here binds a socket.
 
-The step crate is `steps/gw-service`. The book number is 38. The package is `gw-service`.
+The step crate is `steps/ch38-service`. The book number is 38. The package is `ch38-service`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 38 | `steps/gw-service` | session routing, an `Arc` reload, quotas, a drain, sampling, elicitation, an OSV check |
+| 38 | `steps/ch38-service` | session routing, an `Arc` reload, quotas, a drain, sampling, elicitation, an OSV check |
 
 > **How Hermes does it**
 >
@@ -53,7 +53,7 @@ Seven tests. Killing `a` moves `s1` to `b`, and a held `Arc` stays at generation
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p gw-service
+cargo nextest run --locked -p ch38-service
 ```
 
 ```text
@@ -61,7 +61,7 @@ cargo nextest run --locked -p gw-service
 ```
 
 ```bash
-cargo run -p gw-service
+cargo run -p ch38-service
 ```
 
 ```text

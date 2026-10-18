@@ -4,11 +4,11 @@
 
 Chapter 25 maintains one agent's skills. It does not hand a piece of work from one agent to the next. This chapter runs four stages in order: outline, draft, critique, revise. Each stage is a scripted reply. The next stage receives the same `Arc<Context>`. The message vec is not cloned on the way.
 
-The step crate is `steps/ch22-pipeline`. The book number is 26. The package is `ch22-pipeline`.
+The step crate is `steps/ch26-pipeline`. The book number is 26. The package is `ch26-pipeline`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 26 | `steps/ch22-pipeline` | outline, draft, critique, revise, one shared `Arc` |
+| 26 | `steps/ch26-pipeline` | outline, draft, critique, revise, one shared `Arc` |
 
 > **How Hermes does it**
 >
@@ -47,7 +47,7 @@ Three tests. Four stages append four notes in order, the message vec stays lengt
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch22-pipeline
+cargo nextest run --locked -p ch26-pipeline
 ```
 
 ```text
@@ -56,7 +56,7 @@ Starting 3 tests across 3 binaries
 ```
 
 ```bash
-cargo run -p ch22-pipeline
+cargo run -p ch26-pipeline
 ```
 
 ```text

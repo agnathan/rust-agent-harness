@@ -4,11 +4,11 @@
 
 Chapter 43 moves an envelope. It does not change what the team knows how to do. A shared skill library has one writer, or two workers will each think they installed the file. This chapter is that library: a proposal queue, a librarian, and an `Arc` the workers already hold.
 
-The step crate is `steps/ch38-team-skills`. The book number is 44. The package is `ch38-team-skills`.
+The step crate is `steps/ch44-team-skills`. The book number is 44. The package is `ch44-team-skills`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 44 | `steps/ch38-team-skills` | `skill_propose`, one librarian, an `Arc` swap, `TEAM.md` |
+| 44 | `steps/ch44-team-skills` | `skill_propose`, one librarian, an `Arc` swap, `TEAM.md` |
 
 > **How Hermes does it**
 >
@@ -47,7 +47,7 @@ Five tests. The queue holds 64 and the 65th is `Full`. After accept, the worker'
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch38-team-skills
+cargo nextest run --locked -p ch44-team-skills
 ```
 
 ```text
@@ -55,7 +55,7 @@ cargo nextest run --locked -p ch38-team-skills
 ```
 
 ```bash
-cargo run -p ch38-team-skills
+cargo run -p ch44-team-skills
 ```
 
 ```text

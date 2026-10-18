@@ -6,11 +6,11 @@
 
 Chapter 8 can reveal a tool after `search_tools` or `set_task`. It does not remember which tools a task used last time. This chapter installs that memory as the offered set before the request. `session_tools` reads the set. It does not score anything. A composite or a macro is a name that expands to steps. Code mode runs a short script of tool calls, and only against tools the session was offered.
 
-The step crate is `steps/gw-learned-tools`. The book number is 21. The package is `gw-learned-tools`. `mcp-gateway` re-exports `LearnedGateway` as `Gateway`. The wrapper still opens an empty catalog. It still binds no socket.
+The step crate is `steps/ch21-learned-tools`. The book number is 21. The package is `ch21-learned-tools`. `mcp-gateway` re-exports `LearnedGateway` as `Gateway`. The wrapper still opens an empty catalog. It still binds no socket.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 21 | `steps/gw-learned-tools` | a predicted offer, composite and macro names, a code-mode script |
+| 21 | `steps/ch21-learned-tools` | a predicted offer, composite and macro names, a code-mode script |
 
 > **How Hermes does it**
 >
@@ -55,7 +55,7 @@ Six tests. A refresh puts `web_search` ahead of `read_file` when the session not
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p gw-learned-tools
+cargo nextest run --locked -p ch21-learned-tools
 ```
 
 ```text
@@ -64,7 +64,7 @@ Starting 6 tests across 3 binaries
 ```
 
 ```bash
-cargo run -p gw-learned-tools
+cargo run -p ch21-learned-tools
 ```
 
 ```text

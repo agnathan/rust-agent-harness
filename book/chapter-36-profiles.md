@@ -4,11 +4,11 @@
 
 Chapter 35 can pick a backend. It still has one persona and one pile of secrets. This chapter puts several personas in one config. Each profile has its own secret map. The prompt is the persona. In multiplex mode, a secret read with no scope installed fails closed.
 
-The step crate is `steps/ch31-profiles`. The book number is 36. The package is `ch31-profiles`.
+The step crate is `steps/ch36-profiles`. The book number is 36. The package is `ch36-profiles`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 36 | `steps/ch31-profiles` | personas, a secret map per profile, fail closed with no scope |
+| 36 | `steps/ch36-profiles` | personas, a secret map per profile, fail closed with no scope |
 
 > **How Hermes does it**
 >
@@ -45,7 +45,7 @@ Six tests. Multiplex with no scope errors, including `resolve`. Writer and reade
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch31-profiles
+cargo nextest run --locked -p ch36-profiles
 ```
 
 ```text
@@ -53,7 +53,7 @@ cargo nextest run --locked -p ch31-profiles
 ```
 
 ```bash
-cargo run -p ch31-profiles
+cargo run -p ch36-profiles
 ```
 
 ```text

@@ -4,11 +4,11 @@
 
 Chapter 26 runs stages one after another. It does not run them at the same time, and it does not stop a child from calling the tools the parent uses. This chapter is the supervisor. Specialists are jobs. At most eight hold a permit at once. They share one `Arc` context. A child at depth 1 cannot call `delegate_task`, `clarify`, `memory`, `send_message`, or `cronjob_manage`. A worktree is a marker you opt into. This crate does not create one. A reflection note from the team run is a queue entry.
 
-The step crate is `steps/ch23-supervisor`. The book number is 27. The package is `ch23-supervisor`.
+The step crate is `steps/ch27-supervisor`. The book number is 27. The package is `ch27-supervisor`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 27 | `steps/ch23-supervisor` | eight specialists, one `Arc`, blocked child tools, depth 1 |
+| 27 | `steps/ch27-supervisor` | eight specialists, one `Arc`, blocked child tools, depth 1 |
 
 > **How Hermes does it**
 >
@@ -51,7 +51,7 @@ Five tests. Eight jobs that each sleep 40 ms share one context pointer. `max_see
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch23-supervisor
+cargo nextest run --locked -p ch27-supervisor
 ```
 
 ```text
@@ -62,7 +62,7 @@ Starting 5 tests across 3 binaries
 The eight-specialist test is the line that slept. Nextest recorded it at 0.044s. Each specialist slept 40 ms. Eight of those in series would be 320 ms.
 
 ```bash
-cargo run -p ch23-supervisor
+cargo run -p ch27-supervisor
 ```
 
 ```text

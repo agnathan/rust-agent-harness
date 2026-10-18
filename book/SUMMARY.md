@@ -12,10 +12,10 @@ Server-track chapters are marked *(server)*. They are interleaved with the harne
 - [Chapter 3: Tools](chapter-03-tools.md)
 - [Chapter 4: MCP Client](chapter-04-mcp-client.md)
 - [Chapter 5: A Minimal MCP Server](chapter-05-minimal-mcp-server.md) *(server)*
-- [Chapter 6: Thousands of Tools](chapter-05-thousands-of-tools.md)
+- [Chapter 6: Thousands of Tools](chapter-06-thousands-of-tools.md)
 - [Chapter 7: Dynamic Catalog](chapter-07-dynamic-catalog.md) *(server)*
 - [Chapter 8: Session Toolsets](chapter-08-session-toolsets.md) *(server)*
-- [Chapter 9: The Agent Loop](chapter-06-agent-loop.md)
+- [Chapter 9: The Agent Loop](chapter-09-agent-loop.md)
 - [Chapter 10: The Turn State Machine](chapter-10-turn-state.md)
 - [Chapter 11: Approvals and Guardrails](chapter-11-approvals.md)
 - [Chapter 12: Hooks and Plugins](chapter-12-hooks.md)

@@ -4,11 +4,11 @@
 
 Chapter 23 can write a skill when something asks it to. It does not look back at a finished turn. This chapter counts user turns and tool calls. Every tenth user turn, and every tenth tool iteration, turn finalize builds a reviewer fork. The fork may call skill tools. It may call memory only when the memory nudge is what fired. Cancel sets a flag. The turn does not sit out a two-second wait.
 
-The step crate is `steps/ch20-reflection`. The book number is 24. The package is `ch20-reflection`.
+The step crate is `steps/ch24-reflection`. The book number is 24. The package is `ch24-reflection`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 24 | `steps/ch20-reflection` | nudge counters, a forked reviewer, cancel on return |
+| 24 | `steps/ch24-reflection` | nudge counters, a forked reviewer, cancel on return |
 
 > **How Hermes does it**
 >
@@ -49,7 +49,7 @@ Six tests. Nine user turns do not fork. The tenth does, the tools include `memor
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch20-reflection
+cargo nextest run --locked -p ch24-reflection
 ```
 
 ```text
@@ -58,7 +58,7 @@ Starting 6 tests across 3 binaries
 ```
 
 ```bash
-cargo run -p ch20-reflection
+cargo run -p ch24-reflection
 ```
 
 ```text

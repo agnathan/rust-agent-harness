@@ -4,11 +4,11 @@
 
 Chapter 16 builds a request and waits for a whole reply. A stream arrives as deltas. This chapter folds those deltas into the same reply string, strips think blocks as the chunks arrive, and lets a read-only tool start before the stream finishes. A write waits until `finish`. Nothing here opens a socket.
 
-The step crate is `steps/ch14-streaming`. The book number is 17. The package is `ch14-streaming`.
+The step crate is `steps/ch17-streaming`. The book number is 17. The package is `ch17-streaming`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 17 | `steps/ch14-streaming` | think-block scrubbing, folded deltas, read-only overlap |
+| 17 | `steps/ch17-streaming` | think-block scrubbing, folded deltas, read-only overlap |
 
 > **How Hermes does it**
 >
@@ -53,7 +53,7 @@ Five tests. A closed block is removed, and a tag split across two feeds does not
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch14-streaming
+cargo nextest run --locked -p ch17-streaming
 ```
 
 ```text
@@ -62,7 +62,7 @@ Starting 5 tests across 3 binaries
 ```
 
 ```bash
-cargo run -p ch14-streaming
+cargo run -p ch17-streaming
 ```
 
 ```text

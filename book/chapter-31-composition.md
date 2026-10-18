@@ -4,11 +4,11 @@
 
 Chapter 30 can accept or reject one reply. It does not run the next turn, and it does not decide whether the work was a tool call or a change of owner. This chapter nests the patterns. The outer loop is a supervisor. An inner fan-out uses that same pool. A handoff runs only when ownership should move. The critic loops, a wait names a target, and a quality gate can pause the loop before the judge is asked.
 
-The step crate is `steps/ch27-composition`. The book number is 31. The package is `ch27-composition`. It depends on `ch23-supervisor`, `ch24-handoffs`, `ch25-fan-out`, and `ch26-critic`.
+The step crate is `steps/ch31-composition`. The book number is 31. The package is `ch31-composition`. It depends on `ch27-supervisor`, `ch28-handoffs`, `ch29-fan-out`, and `ch30-critic`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 31 | `steps/ch27-composition` | nested fan-out under one pool, a handoff only when ownership moves, the critic loop |
+| 31 | `steps/ch31-composition` | nested fan-out under one pool, a handoff only when ownership moves, the critic loop |
 
 > **How Hermes does it**
 >
@@ -49,7 +49,7 @@ Eight tests. Width 9 on a pool of 8 is `ExceedsBound`, and so is holding 1 and a
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch27-composition
+cargo nextest run --locked -p ch31-composition
 ```
 
 ```text
@@ -58,7 +58,7 @@ Starting 8 tests across 3 binaries
 ```
 
 ```bash
-cargo run -p ch27-composition
+cargo run -p ch31-composition
 ```
 
 ```text

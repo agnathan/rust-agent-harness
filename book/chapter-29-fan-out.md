@@ -4,11 +4,11 @@
 
 Chapter 27 runs a handful of specialists. It does not show what happens when a hundred of them are waiting, and it does not sort their replies. This chapter's board accepts 100 tasks and refuses the 101st. Gather runs them on the chapter 27 pool, so eight permits still hold. The summary is the replies in `task_index` order. The tool trace on each task is not in that string.
 
-The step crate is `steps/ch25-fan-out`. The book number is 29. The package is `ch25-fan-out`. It depends on `ch23-supervisor`.
+The step crate is `steps/ch29-fan-out`. The book number is 29. The package is `ch29-fan-out`. It depends on `ch27-supervisor`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 29 | `steps/ch25-fan-out` | a queue of 100, the same bound of eight, an aggregator |
+| 29 | `steps/ch29-fan-out` | a queue of 100, the same bound of eight, an aggregator |
 
 > **How Hermes does it**
 >
@@ -47,7 +47,7 @@ Four tests. 100 schedules succeed. The 101st is `Full`. Gather of indexes 2, 0, 
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch25-fan-out
+cargo nextest run --locked -p ch29-fan-out
 ```
 
 ```text
@@ -56,7 +56,7 @@ Starting 4 tests across 3 binaries
 ```
 
 ```bash
-cargo run -p ch25-fan-out
+cargo run -p ch29-fan-out
 ```
 
 ```text

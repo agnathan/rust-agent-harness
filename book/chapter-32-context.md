@@ -4,11 +4,11 @@
 
 Chapter 31 can run a team. It will still paste a poisoned `AGENTS.md` into the prompt, and it will still send every old tool result when the transcript gets long. This chapter decides what is allowed into that prompt. A context file is scanned. A huge file keeps a head and a tail. High-risk tool output is wrapped, and a forged closer is neutralized. The frozen snapshot is an `Arc`. Compression and the memory flush run only when the transcript is over the cap, and they do not rebuild that snapshot.
 
-The step crate is `steps/ch28-context`. The book number is 32. The package is `ch28-context`.
+The step crate is `steps/ch32-context`. The book number is 32. The package is `ch32-context`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 32 | `steps/ch28-context` | a scan, a 20,000-character cap, an untrusted wrap, preflight compression |
+| 32 | `steps/ch32-context` | a scan, a 20,000-character cap, an untrusted wrap, preflight compression |
 
 > **How Hermes does it**
 >
@@ -49,7 +49,7 @@ Five tests. A BOM plus `ignore previous instructions` in `AGENTS.md` is the bloc
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch28-context
+cargo nextest run --locked -p ch32-context
 ```
 
 ```text
@@ -58,7 +58,7 @@ Starting 5 tests across 3 binaries
 ```
 
 ```bash
-cargo run -p ch28-context
+cargo run -p ch32-context
 ```
 
 ```text

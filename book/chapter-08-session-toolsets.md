@@ -4,11 +4,11 @@
 
 Chapter 7's gateway has one catalog. Every caller who can search it can see every name. A session should see a smaller set: the tools a task starter picked, plus the names a search revealed. The full schema stays off that list until something asks for it. This chapter adds that view, and it counts schema tokens, call tokens, and result tokens for three ways of doing the same fake task.
 
-The step crate is `steps/gw-session-toolsets`. It depends on `gw-catalog`. The process crate `mcp-gateway` re-exports this session gateway. Still no socket.
+The step crate is `steps/ch08-session-toolsets`. It depends on `ch07-catalog`. The process crate `mcp-gateway` re-exports this session gateway. Still no socket.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 8 | `steps/gw-session-toolsets` | `set_task`, `search_tools`, `describe`, paging, telemetry |
+| 8 | `steps/ch08-session-toolsets` | `set_task`, `search_tools`, `describe`, paging, telemetry |
 
 > **How Hermes does it**
 >
@@ -65,7 +65,7 @@ All three succeed. Dynamic sends fewer schema tokens than the static set, and th
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p gw-session-toolsets
+cargo nextest run --locked -p ch08-session-toolsets
 ```
 
 ```text
@@ -74,7 +74,7 @@ Starting 4 tests across 3 binaries
 ```
 
 ```bash
-cargo run -p gw-session-toolsets
+cargo run -p ch08-session-toolsets
 ```
 
 The output is the three lines in the fake-task section. No API key.
@@ -86,7 +86,7 @@ The output is the three lines in the fake-task section. No API key.
 
 Both benches call `run_rename_task` inside the sample, including catalog build. The 2,000-tool `synthetic` vec is built inside the timed closure. There is no model and no sleep. The dynamic arm measured 5.687 ms and the every-tool arm measured 8.355 ms. The demo, not the bench, records 135 schema tokens against 45,104 for every tool, on the same 2,000-tool catalog. The bench is the time. The demo is the token count.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38863938100](https://github.com/agnathan/rust-agent-harness/actions/runs/38863938100), section `gw8`.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38863938100](https://github.com/agnathan/rust-agent-harness/actions/runs/38863938100), section `8` (recorded as `gw8`).
 
 ### Milestone demo
 

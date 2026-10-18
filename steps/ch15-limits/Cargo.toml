@@ -1,0 +1,29 @@
+[package]
+name = "ch15-limits"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+description = "Chapter 15: per-tool permits, idempotent retries, and a breaker."
+
+[lib]
+name = "gw_limits"
+
+[[bin]]
+name = "ch15-limits"
+path = "src/main.rs"
+
+[dependencies]
+ch07-catalog = { path = "../ch07-catalog" }
+ch08-session-toolsets = { path = "../ch08-session-toolsets" }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync", "time"] }
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["async_tokio"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync", "time"] }
+
+[[bench]]
+name = "limits"
+harness = false

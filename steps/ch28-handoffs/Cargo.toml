@@ -1,0 +1,21 @@
+[package]
+name = "ch28-handoffs"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+description = "Chapter 28: a handoff limit and a filtered transcript."
+
+[lib]
+name = "handoffs"
+
+[[bin]]
+name = "ch28-handoffs"
+path = "src/main.rs"
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "handoffs"
+harness = false

@@ -4,11 +4,11 @@
 
 Chapter 40 ends a turn. It does not share a fact with a second agent. A supervisor still decides who runs. A blackboard is the other shape: the fact is the coordination, and a thin scheduler notices which waiter was waiting for it.
 
-The step crate is `steps/ch35-blackboard`. The book number is 41. The package is `ch35-blackboard`.
+The step crate is `steps/ch41-blackboard`. The book number is 41. The package is `ch41-blackboard`.
 
 | Section | Step | What it adds |
 |---|---|---|
-| 41 | `steps/ch35-blackboard` | one board, a condition, a claim that drops the lock before the model |
+| 41 | `steps/ch41-blackboard` | one board, a condition, a claim that drops the lock before the model |
 
 > **How Hermes does it**
 >
@@ -47,7 +47,7 @@ Seven tests. One claim wakes `researcher` and the second claim is `Idle`. `answe
 ## Build, run, and benchmark
 
 ```bash
-cargo nextest run --locked -p ch35-blackboard
+cargo nextest run --locked -p ch41-blackboard
 ```
 
 ```text
@@ -55,7 +55,7 @@ cargo nextest run --locked -p ch35-blackboard
 ```
 
 ```bash
-cargo run -p ch35-blackboard
+cargo run -p ch41-blackboard
 ```
 
 ```text
