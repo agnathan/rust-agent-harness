@@ -47,39 +47,39 @@ cargo run -p ch02-harness-cli -- --mock chat
 | ch12-hooks | 12 | Tool hooks, a borrowing API hook, a memory queue |
 | ch13-sandbox | 13 | Child worker, Docker argv, env scrub, checkpoints |
 | ch14-when-things-fail | 14 | Empty retries, repetition guard, timeout drops the permit |
-| ch18-providers | 16 | Anthropic and Bedrock bodies, a route, key rotation |
-| ch19-streaming | 17 | Think-block scrubber, folded deltas, read-only overlap |
-| ch20-sessions | 18 | WAL sessions, one append, FTS ids queued |
-| ch21-memory | 19 | MEMORY.md and USER.md, frozen snapshot, strict scan |
-| ch22-recall | 20 | FTS5 trigram session_search: discover, scroll, read, browse |
-| ch23-learned-tools | 21 *(server)* | Predicted offer, composite and macro tools, code-mode lines |
-| ch24-skills | 22 | `SKILL.md`, a cache-stable index, `skills_list` / `skill_view` |
-| ch25-skill-writing | 23 | create, patch, delete, a scanner, the approval gate, read-before-write |
-| ch26-reflection | 24 | nudge counters, a forked reviewer, cancel on return |
-| ch27-curation | 25 | stale, then archived, a snapshot, off the request path |
-| ch28-pipeline | 26 | outline, draft, critique, revise, one shared `Arc` |
-| ch29-supervisor | 27 | eight specialists, one `Arc`, blocked child tools, depth 1 |
-| ch30-handoffs | 28 | a filtered transcript and a cap of four handoffs |
-| ch31-fan-out | 29 | a queue of 100, the supervisor bound, summaries in index order |
-| ch32-critic | 30 | a verdict, one permit, accept only on done |
-| ch33-composition | 31 | nested fan-out under one pool, a handoff only when ownership moves, the critic loop |
-| ch34-context | 32 | a scan, a 20,000-character cap, an untrusted wrap, preflight compression |
-| ch35-actors | 33 | one task per agent, an inbox of 64, steer and interrupt |
-| ch36-supervision | 34 | one restart, a chain of three, cancel and budget |
-| ch37-balancing | 35 *(server)* | least outstanding, power of two, federation, discovery cap of 4 |
-| ch38-profiles | 36 | personas, a secret map per profile, fail closed with no scope |
-| ch39-gateway | 37 | allowlist, pairing, bot-loop guard, emergency stop, the session inbox |
-| ch40-service | 38 *(server)* | session routing, an `Arc` reload, quotas, a drain, sampling and OSV |
-| ch41-cron | 39 | one claim, one crash retry, a prompt scan, the lifecycle guard |
-| ch42-acp | 40 | one inbox message per ACP update, `end_turn` or `cancelled` |
-| ch43-blackboard | 41 | facts and waiters, a claim that drops the lock, pause and an injection check |
-| ch44-kanban | 42 | one JSON board, a `create_new` lock, claim, complete, review, or block |
-| ch45-message-bus | 43 | a bus of 64, `try_send`, a bot cooldown of 20, egress redaction |
-| ch46-team-skills | 44 | a proposal queue, a librarian as the only writer, an `Arc` index swap |
-| ch47-a2a | 45 | A2A for a URL outside this process, a pool of 8, a cancel flag |
-| ch48-tracing | 46 | a counting subscriber, content-free span names, 100 mock researchers |
-| ch49-capstone | 47 *(server)* | three token arms and a load of 100. No socket |
-| ch50-evals | 48 | the chapter 9 task names, one red-team case per layer, no fail threshold |
+| ch18-providers | 18 | Anthropic and Bedrock bodies, a route, key rotation |
+| ch19-streaming | 19 | Think-block scrubber, folded deltas, read-only overlap |
+| ch20-sessions | 20 | WAL sessions, one append, FTS ids queued |
+| ch21-memory | 21 | MEMORY.md and USER.md, frozen snapshot, strict scan |
+| ch22-recall | 22 | FTS5 trigram session_search: discover, scroll, read, browse |
+| ch23-learned-tools | 23 *(server)* | Predicted offer, composite and macro tools, code-mode lines |
+| ch24-skills | 24 | `SKILL.md`, a cache-stable index, `skills_list` / `skill_view` |
+| ch25-skill-writing | 25 | create, patch, delete, a scanner, the approval gate, read-before-write |
+| ch26-reflection | 26 | nudge counters, a forked reviewer, cancel on return |
+| ch27-curation | 27 | stale, then archived, a snapshot, off the request path |
+| ch28-pipeline | 28 | outline, draft, critique, revise, one shared `Arc` |
+| ch29-supervisor | 29 | eight specialists, one `Arc`, blocked child tools, depth 1 |
+| ch30-handoffs | 30 | a filtered transcript and a cap of four handoffs |
+| ch31-fan-out | 31 | a queue of 100, the supervisor bound, summaries in index order |
+| ch32-critic | 32 | a verdict, one permit, accept only on done |
+| ch33-composition | 33 | nested fan-out under one pool, a handoff only when ownership moves, the critic loop |
+| ch34-context | 34 | a scan, a 20,000-character cap, an untrusted wrap, preflight compression |
+| ch35-actors | 35 | one task per agent, an inbox of 64, steer and interrupt |
+| ch36-supervision | 36 | one restart, a chain of three, cancel and budget |
+| ch37-balancing | 37 *(server)* | least outstanding, power of two, federation, discovery cap of 4 |
+| ch38-profiles | 38 | personas, a secret map per profile, fail closed with no scope |
+| ch39-gateway | 39 | allowlist, pairing, bot-loop guard, emergency stop, the session inbox |
+| ch40-service | 40 *(server)* | session routing, an `Arc` reload, quotas, a drain, sampling and OSV |
+| ch41-cron | 41 | one claim, one crash retry, a prompt scan, the lifecycle guard |
+| ch42-acp | 42 | one inbox message per ACP update, `end_turn` or `cancelled` |
+| ch43-blackboard | 43 | facts and waiters, a claim that drops the lock, pause and an injection check |
+| ch44-kanban | 44 | one JSON board, a `create_new` lock, claim, complete, review, or block |
+| ch45-message-bus | 45 | a bus of 64, `try_send`, a bot cooldown of 20, egress redaction |
+| ch46-team-skills | 46 | a proposal queue, a librarian as the only writer, an `Arc` index swap |
+| ch47-a2a | 47 | A2A for a URL outside this process, a pool of 8, a cancel flag |
+| ch48-tracing | 48 | a counting subscriber, content-free span names, 100 mock researchers |
+| ch49-capstone | 49 *(server)* | three token arms and a load of 100. No socket |
+| ch50-evals | 50 | the chapter 9 task names, one red-team case per layer, no fail threshold |
 | ch15-limits | 15 *(server)* | Chapters 7 and 8 vendored, plus per-tool permits, idempotent retry, a breaker, caps of 50 |
 | ch05-minimal-server | 5 *(server)* | Fixed tool list, `echo`, a 34/8 gate. No socket |
 

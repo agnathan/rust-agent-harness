@@ -4,8 +4,8 @@ use composition::{
     dispatch, limits, nested_fanout, nested_fanout_holding, run_continuation, wait_target,
     FakeModel, Gate, LoopStop, Route, WaitTarget, DEFAULT_GATE_MAX_RETRIES,
 };
-use handoffs::{Board as HandoffBoard, Message};
-use supervisor::{Pool, WORKER_BOUND};
+use harness_core::handoffs::{Board as HandoffBoard, Message};
+use harness_core::supervisor::{Pool, WORKER_BOUND};
 
 #[test]
 fn a_nested_fan_out_past_the_bound_is_refused() {

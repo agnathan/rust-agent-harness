@@ -15,7 +15,11 @@ pub use milestones::{
     chapter_14_yolo_allows, chapter_15_web_search_allowed, chapter_16_blocks_metadata,
     chapter_17_stale_write_refused, chapter_18_fallback_model, chapter_19_fold_matches_buffer,
     chapter_20_stored_line, chapter_21_snapshot_changes_on_write,
-    chapter_22_discover_hides_subagent,
+    chapter_22_discover_hides_subagent, chapter_23_read_invokes_scorer,
+    chapter_24_index_changes_when_viewed, chapter_25_force_installs_dangerous,
+    chapter_26_review_runs_on_user_turn, chapter_27_enqueue_writes_skill, chapter_28_same_context,
+    chapter_29_pool_limit, chapter_29_reflection_starts_reviewer, chapter_30_keeps_scratch,
+    chapter_31_refuses_overflow, chapter_32_critic_does_the_work,
 };
 
 pub use chat::{ChatCommand, ChatSession, Outcome};

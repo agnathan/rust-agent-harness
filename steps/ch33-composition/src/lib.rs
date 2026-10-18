@@ -6,10 +6,10 @@
 use std::collections::VecDeque;
 use std::time::Duration;
 
-use critic::{as_tool, Verdict};
-use fanout::{Board as FanBoard, Task};
-use handoffs::{Board as HandoffBoard, HandoffError, Message};
-use supervisor::{Pool, WORKER_BOUND};
+use harness_core::critic::{as_tool, Verdict};
+use harness_core::fanout::{Board as FanBoard, Task};
+use harness_core::handoffs::{Board as HandoffBoard, HandoffError, Message};
+use harness_core::supervisor::{Pool, WORKER_BOUND};
 
 /// Hermes `DEFAULT_MAX_TURNS` in `hermes_cli/goals.py`.
 pub const DEFAULT_MAX_TURNS: u32 = 20;

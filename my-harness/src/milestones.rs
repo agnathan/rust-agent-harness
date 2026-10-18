@@ -1,4 +1,4 @@
-//! Stubs for chapters 11–22. Each one panics until you fill it in.
+//! Stubs for chapters 11–32. Each one panics until you fill it in.
 //! The finished behavior is the step crate for that chapter.
 
 pub fn chapter_11_terminal_verdict(command: &str) -> String {
@@ -58,4 +58,51 @@ pub fn chapter_21_snapshot_changes_on_write() -> bool {
 pub fn chapter_22_discover_hides_subagent(source: &str) -> bool {
     let _ = source;
     todo!("chapter 22")
+}
+
+pub fn chapter_23_read_invokes_scorer() -> bool {
+    todo!("chapter 23")
+}
+
+pub fn chapter_24_index_changes_when_viewed(before: &str, after: &str) -> bool {
+    let _ = (before, after);
+    todo!("chapter 24")
+}
+
+pub fn chapter_25_force_installs_dangerous() -> bool {
+    todo!("chapter 25")
+}
+
+pub fn chapter_26_review_runs_on_user_turn() -> bool {
+    todo!("chapter 26")
+}
+
+pub fn chapter_27_enqueue_writes_skill() -> bool {
+    todo!("chapter 27")
+}
+
+pub fn chapter_28_same_context(left: usize, right: usize) -> bool {
+    let _ = (left, right);
+    todo!("chapter 28")
+}
+
+pub fn chapter_29_pool_limit() -> usize {
+    todo!("chapter 29")
+}
+
+pub fn chapter_29_reflection_starts_reviewer() -> bool {
+    todo!("chapter 29")
+}
+
+pub fn chapter_30_keeps_scratch() -> bool {
+    todo!("chapter 30")
+}
+
+pub fn chapter_31_refuses_overflow(already: usize) -> bool {
+    let _ = already;
+    todo!("chapter 31")
+}
+
+pub fn chapter_32_critic_does_the_work() -> bool {
+    todo!("chapter 32")
 }

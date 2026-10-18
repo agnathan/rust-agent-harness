@@ -2,7 +2,7 @@ use std::hint::black_box;
 
 use composition::nested_fanout;
 use criterion::{criterion_group, criterion_main, Criterion};
-use supervisor::{Pool, WORKER_BOUND};
+use harness_core::supervisor::{Pool, WORKER_BOUND};
 
 fn nested_eight(c: &mut Criterion) {
     let pool = Pool::new(WORKER_BOUND);

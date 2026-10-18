@@ -1219,89 +1219,298 @@ dependencies = [
 name = "ch23-learned-tools"
 version = "0.1.0"
 dependencies = [
- "ch15-limits",
  "criterion",
  "serde_json",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "ch24-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch24-skills",
+ "clap",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]
 name = "ch24-skills"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
  "criterion",
+ "regex",
+ "reqwest 0.12.28",
+ "rmcp",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch25-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch25-skill-writing",
+ "clap",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]
 name = "ch25-skill-writing"
 version = "0.1.0"
 dependencies = [
- "ch24-skills",
+ "anyhow",
+ "async-trait",
+ "axum",
  "criterion",
  "regex",
+ "reqwest 0.12.28",
+ "rmcp",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch26-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch26-reflection",
+ "clap",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]
 name = "ch26-reflection"
 version = "0.1.0"
 dependencies = [
- "ch24-skills",
+ "anyhow",
+ "async-trait",
+ "axum",
  "criterion",
+ "regex",
+ "reqwest 0.12.28",
+ "rmcp",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
 ]
 
 [[package]]
 name = "ch27-curation"
 version = "0.1.0"
 dependencies = [
- "ch25-skill-writing",
+ "anyhow",
+ "async-trait",
+ "axum",
  "criterion",
  "flate2",
+ "regex",
+ "reqwest 0.12.28",
+ "rmcp",
+ "rusqlite",
+ "serde",
+ "serde_json",
  "tar",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch27-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch27-curation",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "ch28-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch28-pipeline",
+ "clap",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]
 name = "ch28-pipeline"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
  "criterion",
+ "flate2",
+ "regex",
+ "reqwest 0.12.28",
+ "rmcp",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tar",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch29-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch29-supervisor",
+ "clap",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]
 name = "ch29-supervisor"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
  "criterion",
+ "flate2",
+ "regex",
+ "reqwest 0.12.28",
+ "rmcp",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tar",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
 ]
 
 [[package]]
 name = "ch30-handoffs"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
  "criterion",
+ "flate2",
+ "regex",
+ "reqwest 0.12.28",
+ "rmcp",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tar",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch30-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch30-handoffs",
+ "clap",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]
 name = "ch31-fan-out"
 version = "0.1.0"
 dependencies = [
- "ch29-supervisor",
+ "anyhow",
+ "async-trait",
+ "axum",
  "criterion",
+ "flate2",
+ "regex",
+ "reqwest 0.12.28",
+ "rmcp",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tar",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch31-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch31-fan-out",
+ "clap",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]
 name = "ch32-critic"
 version = "0.1.0"
 dependencies = [
- "ch29-supervisor",
+ "anyhow",
+ "async-trait",
+ "axum",
  "criterion",
+ "flate2",
+ "regex",
+ "reqwest 0.12.28",
+ "rmcp",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tar",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch32-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch32-critic",
+ "clap",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]
 name = "ch33-composition"
 version = "0.1.0"
 dependencies = [
- "ch29-supervisor",
- "ch30-handoffs",
- "ch31-fan-out",
  "ch32-critic",
  "criterion",
 ]

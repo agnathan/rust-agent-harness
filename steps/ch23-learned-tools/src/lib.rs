@@ -6,7 +6,11 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 
-pub use gw_limits::{Catalog, LimitedGateway, SessionView};
+pub mod catalog;
+pub mod limits;
+pub mod session;
+
+pub use limits::{Catalog, LimitedGateway, SessionError, SessionView};
 
 /// Tools a code-mode script may call. Same names as Hermes
 /// `SANDBOX_ALLOWED_TOOLS`.
