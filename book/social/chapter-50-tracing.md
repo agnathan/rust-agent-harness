@@ -4,21 +4,21 @@
 1/
 Chapter 50 is up: Seeing Inside.
 
-A turn span, then request, response, and a gateway child. The sink stores those names. The prompt is not a field. 🧵
+A span per event. The field is the event name. The sink holds request, response, and gateway. The prompt is not a span field. 🧵
 
 2/
-Hermes Agent emits monitoring events without blocking and without raising. GatewayHealthEvent is content-free. The OTLP exporter is optional and has no default endpoint. Redaction happens before egress.
+I read agent/monitoring/otlp_exporter.py at 9e01b44. It maps gateway events to OTel spans. The OTel SDK is optional (hermes-agent[otlp]). headers_env values are read at export time and never logged or stored. No default destination ships. I checked that module doc.
 
 3/
-This crate installs a counting subscriber. One hundred mock researchers append notes into one memory. Fake replies. No key. No exporter.
+redact_bounded redacts str(raw or "") and length-bounds it. moa_trace.py is opt-in via moa.save_traces, off by default. _traces_enabled_and_dir returns None when the flag is off. The side channel is a file under the trace dir.
 
 4/
-A bare complete measured 17.29 ns. One spanned turn measured 115.7 ns. The demo prints "trace: ok events=3 spans=5 team=101".
+The demo prints "trace: ok events=3 spans=5 team=101". The bench ids are 50/event_without_span and 50/span_per_event. Aliases: 48/event_without_span, 46/event_without_span, 48/span_per_event, and 46/span_per_event. The means are MEAN_PENDING_50_BARE and MEAN_PENDING_50_SPAN.
 
 [personal note]
 
 5/
-Next is the load and token capstone: every tool, a static set, and a dynamic set, still with no socket.
+Next is chapter 51, the server capstone: load and tokens. Chapter 52 copies this harness, not chapter 51.
 
 Read Chapter 50: [link]
 
@@ -27,14 +27,14 @@ Read Chapter 50: [link]
 ## LinkedIn
 Chapter 50 is out: Seeing Inside.
 
-A trace that copies the prompt into a span is a leak, and a trace that waits on a collector stalls the turn. Hermes Agent emits into a bounded queue, drops when that queue is full, and keeps gateway health events free of content. This chapter counts spans in process. `mock_turn` enters a turn, records the names `request`, `response`, and `gateway`, and calls `FakeModel`. The span field is the word `request`, not the prompt. A secret in the prompt does not appear in the sink.
+The harness is the chapter 49 tree copied forward, plus spans. tracing = "0.1" on this crate. safe_field discards the prompt and returns "request". emit pushes the name onto a sink and enters a span named event. mock_turn enters a turn, emits request, completes FakeModel, emits response, enters a gateway span, and emits gateway. The sink holds those three names. CountingSubscriber counts span ids from 1 and does not export. Five spans open on the demo turn: turn, request event, response event, gateway, gateway event. research_team(100) then research_team(1) leaves 101 notes in one Memory. The notes are the mock replies. FakeModel ignores the prompt. In the demo those replies are ok and kept.
 
-The same subscriber wraps a research team. One hundred mock agents each append one note, and a second call sees the earlier notes. No socket and no exporter.
+I read Hermes at 9e01b44. The OTLP exporter maps gateway events to spans, the SDK is optional, and headers_env is read at export time and never logged or stored. redact_bounded redacts and length-bounds. moa.save_traces is off by default. The side channel is a file under the trace dir, not a row in the messages table.
 
-A bare complete measured 17.29 ns. The spanned turn measured 115.7 ns. The demo does not need an API key.
+The demo prints "trace: ok events=3 spans=5 team=101". The bench ids are 50/event_without_span and 50/span_per_event. The means are MEAN_PENDING_50_BARE and MEAN_PENDING_50_SPAN. Subscriber install sits outside both samples.
 
-[personal note: one takeaway from writing this chapter]
+[personal note]
 
-Next: the load and token capstone. Read Chapter 50: [link]
+Next: chapter 51, the server capstone, load and tokens. Chapter 52 copies this harness, not chapter 51. Read Chapter 50: [link]
 
 #Rust #AIAgents #LearningInPublic #SoftwareEngineering
