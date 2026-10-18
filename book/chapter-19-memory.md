@@ -4,7 +4,7 @@
 
 Chapter 12 can enqueue a turn. It does not have a file. This chapter is that file backend. `MEMORY.md` is the agent's notes. `USER.md` is the user profile. Entries are separated by a section mark. A snapshot taken when the store opens is what the prompt sees. A write during the session changes the file and does not change that snapshot.
 
-The step crate is `steps/ch19-memory`. The book number is 19. The package is `ch19-memory`. It implements the `MemoryBackend` trait from chapter 12.
+The step crate is `steps/ch19-memory`. It is chapter 18's harness copied forward, plus `memory_files`. The package name stays `ch19-memory`. `memory_files` implements the `MemoryBackend` trait that already lives in this crate's `hooks` module, from chapter 12.
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -48,6 +48,18 @@ The demo adds `likes tea`, enqueues a turn, and prints the file and the word `fr
 
 `enqueue_turn` locks a different mutex, the queue, capped at 64. It formats one string and pushes it. The files are not opened.
 
+## Walking the snapshot and the scan
+
+`memory_files` implements `hooks::MemoryBackend`. `sync_turn` from chapter 12 enqueues. This chapter is what drains that idea onto `MEMORY.md` and `USER.md`. Entries are separated by a delimiter. Add, replace, and remove round-trip that delimiter. A duplicate is refused. A write over the character budget names how many characters to free and does not leave a partial entry. A broken delimiter is drift: the file is not trusted as a structured store if the separator was edited by hand.
+
+The snapshot is taken when the store opens and wrapped so the prompt can share it. A later write changes the file. It does not replace the snapshot the prompt is holding. That is F6: `MEMORY.md` and `USER.md` enter the prompt once per session and stay frozen. A mid-session write must not rewrite the cached prefix. The test holds the snapshot pointer and asserts it is unchanged after a write. Enqueue does not touch the file at all, which is the bench `memory_enqueue`: record the turn, do not write.
+
+The threat scan runs before a write reaches the file (F5). Four poisoned strings are blocked. `authorized_keys` does not land on disk. The scan is the gate, not a filter that stores a cleaned copy of a hostile entry.
+
+> **Rust sidebar: `Arc` is the snapshot**
+>
+> `Arc<T>` is a shared pointer with a reference count. Cloning it clones the pointer, not the text. The prompt and the store can both hold the snapshot. Replacing the `Arc` in the store would be a new allocation the prompt does not see, which is what you want. Mutating the text inside the `Arc` would change the prompt's bytes. This chapter does not do that. The file is the mutable side. The `Arc` is the frozen side.
+
 ## Tests
 
 Five tests. Add, replace, and remove round-trip the delimiter, and a duplicate is refused. A write over the budget names the overflow and leaves the file empty. Four poisoned strings are blocked, and `authorized_keys` does not reach the file. The snapshot pointer is unchanged after a write, and enqueue does not touch the file. A broken delimiter is drift.
@@ -59,8 +71,8 @@ cargo nextest run --locked -p ch19-memory
 ```
 
 ```text
-Starting 5 tests across 3 binaries
-     Summary [   0.054s] 5 tests run: 5 passed, 0 skipped
+Starting 114 tests across 29 binaries
+     Summary [   0.221s] 114 tests run: 114 passed, 0 skipped
 ```
 
 ```bash

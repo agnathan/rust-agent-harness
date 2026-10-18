@@ -2,7 +2,7 @@
 
 The book builds two processes. The harness decides what enters a prompt. The MCP gateway is a standalone server: a large catalog, a filtered tool list per session, and later a highly available HTTP front. Chapters 5, 7, and 8 are written. They bind no socket. `mcp-gateway/` re-exports the chapter 8 session gateway. `Gateway::new` still starts from an empty catalog.
 
-Priority 1 is token efficiency through dynamic toolsets. Priority 2 is high availability. The benchmark targets are at the bottom. None of the server numbers have been measured.
+Priority 1 is token efficiency through dynamic toolsets. Priority 2 is high availability. The benchmark targets are at the bottom. Chapters 5, 7, 8, 15, 21, 35, 38, and 47 quote means from their benches. Nothing here binds a socket, so throughput with oha is still unmeasured.
 
 ## Who decides what
 
@@ -54,14 +54,14 @@ These are the designs that sit in front of many MCP servers. The notes are from 
 
 ## Adopted, adapted, deferred
 
-**Adopted for the skeleton.** A gateway is its own crate, not a mode of the harness. `Gateway::new` starts from an empty `Catalog`. `session_tools` returns a `SessionView` that offers nothing. No listener. The harness remains the thing that builds the prompt.
+**Adopted.** A gateway is its own crate, not a mode of the harness. `Gateway::new` starts from an empty `Catalog`. `session_tools` returns a `SessionView` that offers nothing until a chapter loads one. No listener. The harness remains the thing that builds the prompt. Chapter 15 vendors the chapter 7 catalog and the chapter 8 session gateway so that step builds alone, and it keeps the names chapter 21 calls (`Catalog`, `LimitedGateway`, `SessionView`).
 
-**Adapted, when those chapters are written.**
+**Adapted.**
 
 - Hermes searches on the client (`tool_search_catalog.py`) and rebuilds the catalog every assembly. The server will own the index so a 10,000-tool search does not ride along inside the agent process. The harness keeps the append-only, cache-safe reveal it already has in chapter 6. A session-keyed view is a deliberate difference from Hermes's stateless rebuild: the server sends `list_changed` when the view changes, which is the notification Hermes already honors.
 - Hermes `tools.include` / `tools.exclude` and `optional-mcps` are install-time filters. `set_task` and per-session toolsets are the runtime version of that filter.
 - Compact schemas, with the long text fetched on request, follow the same idea as `tool_describe` (Hermes caps describe at 10 names and search at 7 queries). The server can page a result instead of only truncating it in the harness.
-- ContextForge and ToolHive are the precedent for one process in front of many upstream servers, with Redis for shared session and rate-limit state. Docker's gateway is the precedent for a catalog plus dynamic discovery. The Rust server uses `rmcp` and axum when the service chapter is written. The skeleton does not depend on them, and it stays on `rust-version` 1.85.
+- ContextForge and ToolHive are the precedent for one process in front of many upstream servers, with Redis for shared session and rate-limit state. Docker's gateway is the precedent for a catalog plus dynamic discovery. Chapter 38 keeps the service in memory and does not depend on `rmcp` or axum yet. The steps stay on `rust-version` 1.85.
 - Pooling uses least-outstanding-requests or power-of-two-choices per tool, with a concurrency limit and a queue. That is the same bound the harness already uses (8), applied on the server to each backend.
 - Retries are only for tools marked idempotent. Hermes's client reconnect cooldown (30 seconds, doubling to 10 minutes) is a client policy; the server's breaker and hedge are separate and not copied from that cooldown.
 - Drain is adapted from `gateway/drain_control.py`: stop accepting, finish in-flight calls. The marker-file mechanism and the 3600-second max age belong to the messaging gateway. The MCP server will drain on a signal and a readiness flip. A malformed-file fail-safe is not copied, because this server will not use that file.
@@ -76,7 +76,7 @@ These are the designs that sit in front of many MCP servers. The notes are from 
 
 **In chapter 38.** Session-id routing, failover when a replica is marked dead, an `Arc` config reload, per-tenant concurrent quotas, an audit vec, span names, health and readiness, a bearer check, and a drain. Sampling, form-mode elicitation, and the `MAL-*` check live in the same crate. No socket.
 
-**Deferred with the unwritten chapters.** A real embedder, live upstream connections, a Python sandbox for code mode, a bound listener, Redis, OAuth token issuance, and a trace exporter. The server still does not bind a socket.
+**Deferred.** A real embedder, live upstream connections, a Python sandbox for code mode, a bound listener, Redis, OAuth token issuance, and a trace exporter. The server still does not bind a socket.
 
 ## Reading order
 
@@ -85,7 +85,7 @@ Server-track chapters are marked *(server)*. Each one sits after the harness cha
 | Ch | Track | After | What it adds |
 |---|---|---|---|
 | 4 | harness | — | MCP client. Written. |
-| 5 | *(server)* | chapter 4 | Minimal MCP server. Skeleton only. Replaces the old "MCP Server" row. |
+| 5 | *(server)* | chapter 4 | Minimal MCP server. Written. A fixed list, `echo`, and a 32/8 gate. No socket. |
 | 6 | harness | — | Thousands of Tools. Written. The client half of the catalog. |
 | 7 | *(server)* | chapter 6 | Dynamic catalog and server-side BM25 plus embeddings. |
 | 8 | *(server)* | chapter 7 | Per-session toolsets, `set_task`, `list_changed`, compact schemas, token telemetry. |

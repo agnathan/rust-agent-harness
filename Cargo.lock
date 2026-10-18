@@ -500,6 +500,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "ch05-minimal-server"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+ "serde_json",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
 name = "ch06-1-harness-core"
 version = "0.2.0"
 dependencies = [
@@ -550,6 +560,26 @@ dependencies = [
  "criterion",
  "reqwest 0.12.28",
  "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "ch07-catalog"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+ "serde_json",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "ch08-session-toolsets"
+version = "0.1.0"
+dependencies = [
+ "ch07-catalog",
+ "criterion",
  "serde_json",
  "thiserror",
 ]
@@ -834,17 +864,68 @@ dependencies = [
 ]
 
 [[package]]
+name = "ch10-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch10-turn-state",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "ch10-turn-state"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
  "criterion",
+ "reqwest 0.12.28",
+ "rmcp",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
 ]
 
 [[package]]
 name = "ch11-approvals"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
  "criterion",
+ "reqwest 0.12.28",
+ "rmcp",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch11-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch11-approvals",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "ch12-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch12-hooks",
+ "clap",
+ "serde_json",
  "tokio",
 ]
 
@@ -852,8 +933,26 @@ dependencies = [
 name = "ch12-hooks"
 version = "0.1.0"
 dependencies = [
- "ch11-approvals",
+ "anyhow",
+ "async-trait",
+ "axum",
  "criterion",
+ "reqwest 0.12.28",
+ "rmcp",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch13-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch13-sandbox",
+ "clap",
  "serde_json",
  "tokio",
 ]
@@ -862,14 +961,65 @@ dependencies = [
 name = "ch13-sandbox"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
  "criterion",
+ "reqwest 0.12.28",
+ "rmcp",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch14-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch14-when-things-fail",
+ "clap",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]
 name = "ch14-when-things-fail"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
  "criterion",
+ "reqwest 0.12.28",
+ "rmcp",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch15-limits"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+ "serde_json",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "ch16-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch16-providers",
+ "clap",
+ "serde_json",
  "tokio",
 ]
 
@@ -877,25 +1027,85 @@ dependencies = [
 name = "ch16-providers"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
  "criterion",
+ "reqwest 0.12.28",
+ "rmcp",
+ "serde",
  "serde_json",
  "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch17-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch17-streaming",
+ "clap",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]
 name = "ch17-streaming"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
  "criterion",
+ "reqwest 0.12.28",
+ "rmcp",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch18-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch18-sessions",
+ "clap",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]
 name = "ch18-sessions"
 version = "0.1.0"
 dependencies = [
- "ch09-10-harness-core",
+ "anyhow",
+ "async-trait",
+ "axum",
  "criterion",
+ "regex",
+ "reqwest 0.12.28",
+ "rmcp",
  "rusqlite",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch19-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch19-memory",
+ "clap",
+ "serde_json",
  "tokio",
 ]
 
@@ -903,18 +1113,59 @@ dependencies = [
 name = "ch19-memory"
 version = "0.1.0"
 dependencies = [
- "ch12-hooks",
+ "anyhow",
+ "async-trait",
+ "axum",
  "criterion",
  "regex",
+ "reqwest 0.12.28",
+ "rmcp",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch20-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch20-recall",
+ "clap",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]
 name = "ch20-recall"
 version = "0.1.0"
 dependencies = [
- "ch18-sessions",
+ "anyhow",
+ "async-trait",
+ "axum",
  "criterion",
+ "regex",
+ "reqwest 0.12.28",
+ "rmcp",
  "rusqlite",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch21-learned-tools"
+version = "0.1.0"
+dependencies = [
+ "ch15-limits",
+ "criterion",
+ "serde_json",
 ]
 
 [[package]]
@@ -1023,6 +1274,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "ch35-balancing"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+]
+
+[[package]]
 name = "ch36-profiles"
 version = "0.1.0"
 dependencies = [
@@ -1031,6 +1289,13 @@ dependencies = [
 
 [[package]]
 name = "ch37-gateway"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+]
+
+[[package]]
+name = "ch38-service"
 version = "0.1.0"
 dependencies = [
  "criterion",
@@ -1094,6 +1359,13 @@ version = "0.1.0"
 dependencies = [
  "criterion",
  "tracing",
+]
+
+[[package]]
+name = "ch47-capstone"
+version = "0.1.0"
+dependencies = [
+ "criterion",
 ]
 
 [[package]]
@@ -1585,78 +1857,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ch35-balancing"
-version = "0.1.0"
-dependencies = [
- "criterion",
-]
-
-[[package]]
-name = "ch47-capstone"
-version = "0.1.0"
-dependencies = [
- "criterion",
-]
-
-[[package]]
-name = "ch07-catalog"
-version = "0.1.0"
-dependencies = [
- "criterion",
- "serde_json",
- "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "ch21-learned-tools"
-version = "0.1.0"
-dependencies = [
- "criterion",
- "ch15-limits",
- "serde_json",
-]
-
-[[package]]
-name = "ch15-limits"
-version = "0.1.0"
-dependencies = [
- "criterion",
- "ch07-catalog",
- "ch08-session-toolsets",
- "serde_json",
- "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "ch05-minimal-server"
-version = "0.1.0"
-dependencies = [
- "criterion",
- "serde_json",
- "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "ch38-service"
-version = "0.1.0"
-dependencies = [
- "criterion",
-]
-
-[[package]]
-name = "ch08-session-toolsets"
-version = "0.1.0"
-dependencies = [
- "criterion",
- "ch07-catalog",
- "serde_json",
- "thiserror",
-]
-
-[[package]]
 name = "h2"
 version = "0.4.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2088,9 +2288,9 @@ checksum = "47e1ffaa40ddd1f3ed91f717a33c8c0ee23fff369e3aa8772b9605cc1d22f4c3"
 name = "mcp-gateway"
 version = "0.1.0"
 dependencies = [
- "ch21-learned-tools",
- "ch15-limits",
  "ch08-session-toolsets",
+ "ch15-limits",
+ "ch21-learned-tools",
 ]
 
 [[package]]

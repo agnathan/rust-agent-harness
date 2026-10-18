@@ -84,7 +84,7 @@ A limit is part of the pattern, not an afterthought. An unbounded team is a bug.
 
 Tools start out MCP-shaped (Chapter 3): a name, a description, an input schema, and content results. Chapter 4 is the client, built with `rmcp`. It connects over stdio and streamable HTTP, lists tools, and calls them. Native tools and MCP tools share one registry, so the agent loop (Chapter 9) does not care which side a tool came from.
 
-Chapter 5 is the minimal MCP server, a separate process. The skeleton offers an empty catalog. Later server chapters hold the catalog, search it, and run it as a service (chapter 38). That server exposes this harness's tools, and later a whole agent or the skill library (`skills_list`, `skill_view`, and each `SKILL.md` as a resource or prompt), so another client (Claude Desktop, Cursor) can call them. Chapter 14 treats an MCP server crash, timeout, or dropped connection as a classified failure: retry, reconnect, or fall back. The design is [mcp-gateway.md](mcp-gateway.md).
+Chapter 5 is the minimal MCP server, a separate process: a fixed tool list and a 32/8 gate, no socket. Chapters 7 and 8 hold the catalog and the session view. Chapter 15 adds limits. Later server chapters search that catalog and run it as a service (chapter 38). That server exposes this harness's tools, and later a whole agent or the skill library (`skills_list`, `skill_view`, and each `SKILL.md` as a resource or prompt), so another client (Claude Desktop, Cursor) can call them. Chapter 14 treats an MCP server crash, timeout, or dropped connection as a classified failure: retry, reconnect, or fall back. The design is [mcp-gateway.md](mcp-gateway.md).
 
 A skill can name the MCP servers it needs (Chapter 22). The shared team library does the same (Chapter 44).
 

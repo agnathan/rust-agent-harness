@@ -6,7 +6,7 @@
 
 Chapter 14 names a failure and decides retry or fallback inside the harness. The tool call still arrives at a backend with no limit of its own. This chapter is the gateway. Each tool accepts 32 calls and runs 8. A retry, and a hedge, run only when that tool is marked idempotent. Three failures open a breaker, and the next call does not reach the backend. `web_search` and `delegate_task` stop at 50 for the turn.
 
-The step crate is `steps/ch15-limits`. The book number is 15. The package is `ch15-limits`. Chapter 21's process crate wraps `LimitedGateway`. A new gateway still has an empty catalog.
+The step crate is `steps/ch15-limits`. The package stays `ch15-limits` and the lib stays `gw_limits`. This directory vendors chapter 7 (`catalog`) and chapter 8 (`session`) so it builds alone. `Catalog`, `LimitedGateway` (`new`, `catalog`, `open_session`, `session_tools`), and `SessionView` are the names chapter 21 already calls. A new gateway still has an empty catalog. The harness lineage does not copy this crate: chapter 16 copies chapter 14.
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -52,6 +52,27 @@ Each tool has two `tokio::sync::Semaphore`s. Accept is 32. Execute is 8. `try_ac
 
 The caps are `AtomicU32`. The breaker map is a `Mutex`. The demo does not wait on the semaphore. `dispatch` is the policy. The timeout test is the only place the permits are held across a wait.
 
+## Walking `LimitedGateway::dispatch` and the cap
+
+`LimitedGateway` owns a `session::SessionGateway`, which owns a `catalog::Gateway`. Those two modules are the chapter 7 and chapter 8 sources, copied into this crate. `pub use crate::catalog::Gateway as Catalog` keeps the name chapter 21 imports. `session_tools` still returns `SessionView`. The catalog is empty until something calls `reload`. The limits tests do not need a loaded catalog. The copied catalog and session tests do, and they compile against `gw_limits::catalog` and `gw_limits::session`.
+
+`dispatch` is the call path:
+
+1. `breaker_open` returns `CallError::OpenBreaker` and does not call the backend. The bench `open_breaker` times that refusal.
+2. `block_cap` refuses `web_search` once `web_searches` is already 50, and `delegate_task` once `subagents` is already 50 and the arguments are a spawn rather than `list`, `steer`, or `stop`. The message names the cap. `MAX_WEB_SEARCHES` and `MAX_SUBAGENTS` are both 50. This is the cap the outline used to say was missing.
+3. `note_cap` increments after the check, so the 50th call runs and the 51st does not.
+4. The first `backend.call` always happens if the breaker is closed and the cap allowed it. A retry happens only when the tool is marked idempotent, the outcome is retriable, and the call is not a hedge. `FailureKind::Transport` is retriable. Status 429 and 503 are not: those are backpressure, and a retry would add load. Any other status is retriable.
+5. A hedge on an idempotent tool calls the backend a second time and keeps the first `Ok`. A hedge on a write calls once.
+6. `Ok` clears the breaker count through `note_success`, unless the breaker is already open. `Fail` increments through `note_failure`. At `BREAKER_THRESHOLD` (3) the breaker opens and stays open. A later success does not close it.
+
+`run_with_timeout` takes an accept permit (`try_acquire_owned`, 32 slots, `CallError::Saturated` when they are gone) and then awaits an execute permit (8 slots). The body runs under `tokio::time::timeout`. Both permits are dropped on the way out, including when the timer wins. The bench `permit_release` is `roundtrip_execute`: take one execute permit and drop it.
+
+> **Rust sidebar: `try_acquire_owned` versus `acquire_owned().await`**
+>
+> Accept is `try_acquire_owned`. If the 32 slots are full, the call returns immediately with `Saturated`. It does not queue. Execute, inside `run_with_timeout`, is `acquire_owned().await`, so a call that was accepted can wait for one of the 8 runners. The permit types are `OwnedSemaphorePermit`. Dropping them is what returns the slot. An early `return Err` after a successful acquire would leak the slot if the permit were not owned by a local that drops on every path. Here the locals live until the function ends, so the timeout path drops them too.
+
+The eight limit tests are the ones the chapter already described: idempotent retry, no retry for a write or for 429/503, the breaker, the caps, the hedge, the 32 accept slots, and the timeout returning both permits. The other tests are the vendored catalog and session suites.
+
 ## Tests
 
 Eight tests. An idempotent transport error retries once. A write does not retry, and neither do 429 or 503. Three failures open the breaker, and the fourth call does not touch the script. A success clears the count. Fifty web searches run, and the next one is the block sentence. A batch of three plus the rest of the cap blocks `delegate_task`, and `{"action":"list"}` still runs. A hedge on `echo` calls twice and keeps the first body. A hedge on a write calls once. Thirty-two accept permits fill the gate. A timeout returns both permits.
@@ -63,8 +84,8 @@ cargo nextest run --locked -p ch15-limits
 ```
 
 ```text
-Starting 8 tests across 3 binaries
-     Summary [   0.038s] 8 tests run: 8 passed, 0 skipped
+Starting 17 tests across 5 binaries
+     Summary [   0.145s] 17 tests run: 17 passed, 0 skipped
 ```
 
 ```bash

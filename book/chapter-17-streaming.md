@@ -4,7 +4,7 @@
 
 Chapter 16 builds a request and waits for a whole reply. A stream arrives as deltas. This chapter folds those deltas into the same reply string, strips think blocks as the chunks arrive, and lets a read-only tool start before the stream finishes. A write waits until `finish`. Nothing here opens a socket.
 
-The step crate is `steps/ch17-streaming`. The book number is 17. The package is `ch17-streaming`.
+The step crate is `steps/ch17-streaming`. It is chapter 16's harness copied forward, plus `stream`. The package name stays `ch17-streaming`.
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -46,6 +46,18 @@ The fast path is the common delta. If the scrubber is not inside a block, the ho
 
 `flush` takes the hold buffer only when the scrubber is not inside a block. Inside a block, the buffer is cleared and the function returns an empty string.
 
+## Walking the folder and the scrubber
+
+`stream` folds deltas into one string. `fold_deltas` walks chunks and appends the visible text. The bench compares that with `buffer_join` on the same 100 plain chunks. They must match. The folder is not a second parser for the final answer: chapter 9 still sees one reply. The stream is how that reply was assembled.
+
+Think-block stripping happens as chunks arrive, which is K5 (`agent/think_scrubber.py` `StreamingThinkScrubber`). A closed block is removed. A tag split across two feeds does not leak the inside, because the folder holds the unmatched tail until the next chunk can finish it or a newline flushes it. CJK tags are stripped. An inline mention that has not closed stays. The demo drops the split think block and the visible reply is `hello`.
+
+A read-only tool may start while the stream is still open. A write waits until `finish`. That is the same read/write split as chapter 3, applied to a reply that is not done yet. Starting a write on a partial argument string would run a tool whose JSON was not closed.
+
+> **Rust sidebar: the hold is the tail**
+>
+> The folder keeps a `String` of bytes that might be the start of a tag. Appending into a `String` amortizes. Taking the tail by slicing and copying the unfinished suffix into a new buffer is what stops a split `<think>` from being emitted. If you clear the whole buffer on every chunk, the second half of the tag arrives with no memory of the first half, and the leak test fails.
+
 ## Tests
 
 Five tests. A closed block is removed, and a tag split across two feeds does not leak. CJK tags are stripped, an inline mention is kept, and an unterminated block at a newline flushes empty. A read starts during the stream and a write waits for `finish`. The demo reply is `hello`. Folding the 100 plain chunks matches the buffer.
@@ -57,8 +69,8 @@ cargo nextest run --locked -p ch17-streaming
 ```
 
 ```text
-Starting 5 tests across 3 binaries
-     Summary [   0.007s] 5 tests run: 5 passed, 0 skipped
+Starting 105 tests across 26 binaries
+     Summary [   0.186s] 105 tests run: 105 passed, 0 skipped
 ```
 
 ```bash

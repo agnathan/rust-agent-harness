@@ -145,4 +145,4 @@ A child inherits a read-only snapshot of the parent's index and may load skills.
 
 The team library is versioned (a git-backed directory or a SQLite history) so a bad write can roll back. Each skill records who created it, which role, and which sessions contributed. `USER.md` stays per human. `MEMORY.md` stays per agent role. Facts about the team live in `TEAM.md`, writable only by the supervisor.
 
-The same library is what the MCP gateway serves once skills exist (the server starts in chapter 5; the service chapter is 38), and what the capstone team (Chapter 46) accumulates across runs.
+The same library is what the MCP gateway serves once skills exist (the server starts in chapter 5; the service chapter is 38), and what the research team in Chapter 46 accumulates across runs. Chapter 47 is the load and token capstone, a different chapter.

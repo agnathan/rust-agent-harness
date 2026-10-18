@@ -13,7 +13,7 @@ Hermes Agent retries an empty completion 3 times, or once if that attempt costs 
 The timeout drops the tool permit. Three retries hold one permit at a time. A fake session that crashes once reconnects and then answers.
 
 4/
-The empty-budget check measured 0.9040 ns. The repetition scan on 800 characters measured 2.551 µs. The demo is two fake models. No key.
+The empty-budget check last published at 0.9040 ns. The repetition scan on 800 characters last published at 2.551 µs. The demo is two fake models. No key.
 
 [personal note]
 
@@ -29,7 +29,7 @@ Chapter 14 is out: When Things Fail.
 
 The agent loop already stops for a budget or a bad tool name. What it deferred was an empty reply and a model that repeats itself. Hermes Agent retries an empty completion up to three times, drops that to one when a single attempt costs more than $0.25, and treats two consecutive zero-output empties as deterministic. A repetition that covers at least half of a long reply is not continued.
 
-I wrote those rules against a fake model. A timeout cancels the in-flight call and gives the concurrency permit back. The empty-budget check measured 0.9040 ns.
+I wrote those rules against a fake model. A timeout cancels the in-flight call and gives the concurrency permit back. The empty-budget check last published at 0.9040 ns.
 
 [personal note: one takeaway from writing this chapter]
 

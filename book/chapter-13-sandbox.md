@@ -4,7 +4,7 @@
 
 Chapter 12 can refuse a tool. The tool still runs in this process. A script that can spawn a process, or a command that can delete a file, needs a boundary that is not another `if` in the harness. This chapter adds a child process, the argv Docker would be given, and a checkpoint you can rewind. The default backend is local. Local is not a sandbox. That is the same default Hermes ships.
 
-The step crate is `steps/ch13-sandbox`. The book number is 13. The package is `ch13-sandbox`. The worker is a second binary, `sandbox-worker`.
+The step crate is `steps/ch13-sandbox`. It is chapter 12's harness copied forward, plus `sandbox`. The package name stays `ch13-sandbox`. The worker is a second binary, `sandbox-worker`, because the sandbox tests and the bench compile `env!("CARGO_BIN_EXE_sandbox-worker")`. Later copies keep that binary.
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -20,7 +20,7 @@ The step crate is `steps/ch13-sandbox`. The book number is 13. The package is `c
 >
 > **Adapted.** Nothing calls Docker. `docker_run_args` returns the argv a test can read. The worker is one process this crate compiles, not a container. `run_until` kills that direct child. Hermes's `kill_process_tree` also walks descendants (`taskkill /F /T` on Windows, a process-group kill on POSIX). This chapter does not. The checkpoint is a manifest of path and content, not a shadow git repo. Rewind copies the manifest back.
 >
-> **Deferred.** Credential-file mounts (D5) and per-child git worktrees (D6, chapter 27). The execute_code whole-script approval (A2) still goes through chapter 11 when a command string is checked; this chapter does not parse Python.
+> **Deferred.** Credential-file mounts (D5) and per-child git worktrees (D6, chapter 27). This chapter does not parse Python. A2 is the script gate above, not a source scan.
 
 [personal note: a job you thought was sandboxed, and which backend it actually used]
 
@@ -44,6 +44,37 @@ The step crate is `steps/ch13-sandbox`. The book number is 13. The package is `c
 
 The demo finds the worker next to its own executable. `cargo run` puts both binaries in the same directory. The tests and the bench use `CARGO_BIN_EXE_sandbox-worker`, which Cargo sets when it builds those targets.
 
+## Walking `check_execute_code` and the worker
+
+Chapter 11's `deny_tool` returned `None` for `execute_code`. A script could spawn a process without ever passing the shell floor. This chapter replaces that branch. The loop still calls `deny_tool` before it builds a `ToolCall`. For `execute_code` it now calls `sandbox::check_execute_code` with the `code` argument, `env_type` `"local"`, `Presence::Interactive`, and the three flags false.
+
+```rust
+pub fn check_execute_code(
+    code: &str,
+    env_type: &str,
+    presence: crate::approval::Presence,
+    mode_off: bool,
+    yolo: bool,
+    whole_script: bool,
+) -> CodeDecision
+```
+
+The body ignores `code`. Hermes's gate is about where the script runs, not about scanning the source. The order is the order in `tools/approval.py` `check_execute_code_guard`:
+
+1. `env_type != "local"` returns `Approved`. A container or a remote sandbox is already the boundary. Cron inside that env is still approved. The test uses `"container"`.
+2. `yolo` or `mode_off` returns `Approved`.
+3. `Presence::Cron`, `SingleQuery`, or `Unattended` returns `Denied`. The message starts with `BLOCKED: execute_code runs arbitrary local Python (including subprocess calls that bypass shell-string approval checks).` That sentence is Hermes's. The test matches the prefix.
+4. `whole_script` returns `Ask` with `EXECUTE_CODE_DESCRIPTION`, the one-shot description of a script that can spawn processes. Gateway and ask mode take this path. The loop's default call passes `whole_script: false`, so an interactive CLI does not ask here.
+5. Otherwise `Approved`. The script's own `terminal` calls still go through chapter 11.
+
+`tests/execute_code.rs` calls the function directly for the cron denial, the container approval, mode-off approval, and the whole-script ask. The default loop path does not deny an interactive local script, on purpose.
+
+The worker is a long-lived child. One line in, one `ok` line out. `sleep-ms N` waits, then writes `ok slept`. `quit` ends the loop. The sandbox bench and `tests/sandbox.rs` spawn it with `env!("CARGO_BIN_EXE_sandbox-worker")`. That environment variable exists only when the package declares a bin of that name. The bin is `src/bin/worker.rs`, name `sandbox-worker`. A warm accept is the bench `warm_accept`. Checkpoint and rewind of 1,000 paths are the other two ids. The Docker argv test still requires `--cap-drop ALL`, `--security-opt no-new-privileges`, and a pids limit, and the default backend is still local.
+
+> **Rust sidebar: `env!` runs at compile time**
+>
+> `env!("CARGO_BIN_EXE_sandbox-worker")` is not a runtime lookup. The compiler pastes the path into the binary. If the `[[bin]]` is missing, the test crate does not compile. That is why every later copy of this harness keeps the worker binary even when the chapter is about providers or memory. `option_env!` would compile and return `None`; the tests want the failure to be loud.
+
 ## Tests
 
 Seven tests. Local is the default and the Docker argv contains the three flags. Scrub keeps `PATH`, `HOME`, and `TENOR_API_KEY`, and drops `OPENAI_API_KEY` and `RANDOM_SECRET`. A warm worker answers `ok ping`. A five-second sleep is killed in under two seconds. Checkpoints do nothing while disabled, rewind restores `one`, and the store stays at 20. A 1,000-path manifest round-trips. A temp-dir file goes from `after` back to `before`.
@@ -55,8 +86,8 @@ cargo nextest run --locked -p ch13-sandbox
 ```
 
 ```text
-Starting 7 tests across 4 binaries
-     Summary [   0.086s] 7 tests run: 7 passed, 0 skipped
+Starting 84 tests across 22 binaries
+     Summary [   0.161s] 84 tests run: 84 passed, 0 skipped
 ```
 
 ```bash
@@ -113,7 +144,9 @@ The 10 MB skip drops the file from the manifest. Rewind will not put it back, be
 
 **N1.** `Checkpoints` starts disabled. The caps are 20 snapshots, 10 MB per file, and 50,000 files. The 500 MB total cap is Hermes's; this manifest is in memory and does not track a store size yet.
 
-**Left for later.** File-path checks from chapter 3 stay in force. They are defense in depth, which is what `agent/file_safety.py` says. D5 and D6 are not this chapter. Secret redaction of the job line (E1, E2) is still absent.
+**A2 is this chapter.** `check_execute_code` is the script gate. Cron, single-query, and unattended deny a local script. An isolated env approves. `whole_script` asks once. An interactive CLI approves here; `terminal` inside the script still hits chapter 11.
+
+**Left for later.** File-path checks from chapter 3 stay in force. They are defense in depth, which is what `agent/file_safety.py` says. D5 and D6 are not this chapter. Secret redaction of the job line (E1, E2) is chapter 18.
 
 ## Chapter summary
 

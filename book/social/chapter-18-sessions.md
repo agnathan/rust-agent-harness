@@ -13,7 +13,7 @@ Hermes Agent keeps sessions and messages in SQLite and sets WAL on the writer co
 This crate writes the two tables and queues the new ids, capped at 64. It does not create the virtual table. The chapter 9 eval set still passes on the mock.
 
 4/
-One WAL append measured 142.9 µs. The demo reply is pong. Two rows. Journal mode wal. No key.
+One WAL append last published at 142.9 µs. The demo reply is pong. Two rows. Journal mode wal. No key.
 
 [personal note]
 
@@ -29,7 +29,7 @@ Chapter 18 is out: Sessions on Disk.
 
 The conversation finally survives the process. One turn is a single SQLite transaction: a user row and an assistant row, in WAL mode. The session row is inserted once. Search does not run on that path. The new row ids sit on a queue until the recall chapter builds the index.
 
-I re-ran the chapter 9 eval set on the mock. It still passes. One WAL append measured 142.9 µs.
+I re-ran the chapter 9 eval set on the mock. It still passes. One WAL append last published at 142.9 µs.
 
 [personal note: one takeaway from writing this chapter]
 

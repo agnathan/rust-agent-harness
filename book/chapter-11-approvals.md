@@ -2,9 +2,9 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 10 will not start a tool. It will not refuse one either. A turn can sit in `Dispatching` and the loop from chapter 9 will run whatever name it repaired. This chapter is the check that runs first: a command is either allowed, denied, or handed to one human prompt. The prompt is the only place concurrent calls wait, and that wait does not hold a tool-concurrency permit.
+Chapter 10 will not refuse a tool. A turn can sit in `Dispatching` and the loop will run whatever name it repaired. This chapter is chapter 10's harness copied forward, plus `approval`. The check runs before the dispatcher takes a permit: a command is either allowed, denied, or handed to one human prompt. The prompt is the only place concurrent calls wait, and that wait does not hold a tool-concurrency permit.
 
-The step crate is `steps/ch11-approvals`. The directory name stays `ch11-approvals` so it matches the CI filter. The book number is 11. The package is `ch11-approvals`.
+The step crate is `steps/ch11-approvals`. The package name stays `ch11-approvals` so `cargo bench -p ch11-approvals --bench decision` still matches the dashboard. The library name is `harness_core`. The module is `approval`, not a glob re-export, because `run_script` already exists on the turn table.
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -20,7 +20,7 @@ The step crate is `steps/ch11-approvals`. The directory name stays `ch11-approva
 >
 > **Adapted.** The pattern table is a short set of the commands I read in `HARDLINE_PATTERNS` (root `rm -rf`, `mkfs`, `dd` onto a raw disk, a fork bomb, `kill -1`, shutdown). Hermes's `DANGEROUS_PATTERNS` list is much longer; this chapter treats recursive `rm`, a write under `/etc` or `.ssh` or `.env`, a `curl` upload, and an interpreter `-c`/`-e` as the dangerous class. Quote masking is a character scan, not Hermes's quote-and-heredoc rewriter. A safe command with an empty deny list returns before that scan allocates. The smart step is `fake_smart_review`, not an auxiliary model. The human wait is one `tokio::sync::Mutex`.
 >
-> **Deferred.** Deleting the running interpreter (`agent/runtime_self_protection.py`, B6), the gateway lifecycle block (B4), and the self-repo git guard (B5) stay out. Persisting "always" to a file is A7 and is not this chapter. A plugin that escalates to the human gate is chapter 12 (A8). The whole-script `execute_code` gate is chapter 13 (A2).
+> **Deferred.** Deleting the running binary (`agent/runtime_self_protection.py`, B6) and the self-repo git guard (B5, `tools/self_repo_guard.py`) are chapter 14, on this same floor, before YOLO. The gateway lifecycle block (B4, `tools/terminal_tool_guards.py` `gateway_lifecycle_block`) is chapter 37, because the chat gateway does not exist yet. Persisting "always" to a file is A7 and is not this chapter. A plugin that escalates to the human gate is chapter 12 (A8). The whole-script `execute_code` gate is chapter 13 (A2); until then `deny_tool` returns `None` for `execute_code` and the script is not blocked here.
 
 [personal note: a command you expected the allowlist to pass, and which floor still refused it]
 
@@ -55,9 +55,48 @@ The human path is `run_call`. It acquires a permit from a semaphore of 8, which 
 
 `Risk` is an enum so a match in `check` has to name every level. A string `"high"` would let a typo through until a command hit it.
 
+## Walking `check`, `deny_tool`, and the dispatch site
+
+`check` is the pipeline. The first branch is a fast path: an empty deny list and a command `fast_safe` accepts returns `Allow` and clears the denial tally. `fast_safe` rejects the command if any byte is a quote, `$`, a backtick, a pipe, a semicolon, a redirect, or a parenthesis, or if a word is one of `rm`, `sudo`, `mkfs`, `dd`, `curl`, `kill`, `shutdown`, `reboot`, `halt`, `poweroff`, an interpreter, `bash`, `sh`, `eval`, or `nohup`. `echo hello` takes this path. The bench `skip_decision` times it. The normalized string is not allocated.
+
+Everything else walks the floor, then the policy:
+
+1. `hardline` masks quoted spans with spaces, so `echo "rm -rf /"` is not a hit and `bash -c 'rm -rf /'` is. A hit returns `Deny` with `hardline: true` and the message that names `--yolo` and `approvals.mode=off`. YOLO is checked later, so it cannot save this command.
+2. `pipes_password_to_sudo` denies `sudo -S`. That is also under the floor.
+3. A user deny-list substring matches the masked command and denies, still before YOLO.
+4. `policy.yolo` or `Mode::Off` allows and resets the tally.
+5. An allowlist hit on the normalized command allows.
+6. A command `risk_of` calls safe allows.
+7. Cron, single-query, or unattended, when that mode is deny, denies.
+8. `fake_smart_review` denies a `curl` upload and escalates anything else that reached it. Escalate falls through to ask.
+9. Manual mode returns `Ask`.
+
+A denial always contains `STOP_COMMAND`. `breaker_addendum` appends the circuit-breaker sentence when `session.denials` reaches 3. An allow resets the tally. Hardline denials count.
+
+`deny_tool` is what the loop calls. It ignores every tool name except `terminal` and `execute_code`. For `terminal` it reads `arguments["command"]` and calls `check` with `Policy::manual()`. `Allow` returns `None`, which means "run the tool". `Deny` returns the message. `Ask` returns a denial that says no prompt is installed on this turn. The loop has no human waiting inside `drive_loop`. `run_call` is the other entry point: it acquires a permit from a semaphore of 8, and if the verdict is `Ask` it `drop`s that permit before locking the prompt. A silent prompt waits `Policy.timeout` (300 seconds; the test uses 30 milliseconds) and then denies.
+
+In `drive_loop`, after the batch is classified and before `dispatcher.run_raced`:
+
+```rust
+if let Some(message) =
+    crate::approval::deny_tool(&mut approval_session, &call.name, &call.arguments)
+{
+    denied.push((call.id.clone(), message));
+    continue;
+}
+```
+
+The denied id never becomes a `ToolCall`. When the result loop sees that id, it pushes the denial as the tool message and `continue`s. `StaticTool` named `terminal` would have returned the string `"terminal"` if it had run. `tests/approval_loop.rs` asserts the tool message contains `BLOCKED` and is not `"terminal"`. The turn still finishes, because the next scripted reply is text.
+
+> **Rust sidebar: the permit is an owned guard**
+>
+> `tokio::sync::Semaphore::acquire_owned` returns `OwnedSemaphorePermit`. Dropping the permit returns the slot. `drop(permit)` before the prompt lock is what makes the wait not count against the tool bound. `std::sync::Mutex` cannot be held across `.await`: its guard is not `Send`, and the runtime may move the task to another thread while it waits. `tokio::sync::Mutex` is the lock that is allowed to stay held. This chapter uses that one for the prompt.
+>
+> `Risk` is an enum (`Safe`, `Sensitive`, `Destructive`) so a match has to name every level. It is a label. The verdict is a different enum: `Allow`, `Deny { message, hardline }`, `Ask { description, risk }`.
+
 ## Tests
 
-Fourteen tests. Hardline still denies under YOLO and mode off. `echo "rm -rf /"` is allowed. `bash -c 'rm -rf /'` is not. `sudo -S` is a floor under YOLO. A user deny rule matches before YOLO. An allowlist entry skips the human. Cron denies `rm -rf ./build` and still allows `echo hello`. The default timeout is 300 seconds and the unattended modes are deny. Smart mode denies a `curl` upload and escalates `rm`. The third denial adds the breaker. The script stops. Two asks share one prompt and both saw a free permit. A silent prompt denies in well under two seconds and the permit is back.
+The approval tests are the original fourteen, plus the loop test that a hardline `terminal` command never reaches the tool. Hardline still denies under YOLO and mode off. `echo "rm -rf /"` is allowed. `bash -c 'rm -rf /'` is not. `sudo -S` is a floor under YOLO. A user deny rule matches before YOLO. An allowlist entry skips the human. Cron denies `rm -rf ./build` and still allows `echo hello`. The default timeout is 300 seconds and the unattended modes are deny. Smart mode denies a `curl` upload and escalates `rm`. The third denial adds the breaker. The script stops. Two asks share one prompt and both saw a free permit. A silent prompt denies in well under two seconds and the permit is back.
 
 ## Build, run, and benchmark
 
@@ -66,8 +105,8 @@ cargo nextest run --locked -p ch11-approvals
 ```
 
 ```text
-Starting 14 tests across 3 binaries
-     Summary [   0.036s] 14 tests run: 14 passed, 0 skipped
+Starting 67 tests across 17 binaries
+     Summary [   0.133s] 67 tests run: 67 passed, 0 skipped
 ```
 
 ```bash

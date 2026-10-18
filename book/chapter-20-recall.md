@@ -4,7 +4,7 @@
 
 Chapter 18 stores the messages and queues their ids. It cannot search them. This chapter builds an FTS5 trigram index on that file and adds `session_search`. The tool returns rows from the database. It does not call a model. A subagent session stays out of the results. A cron session sorts after the user's own sessions.
 
-The step crate is `steps/ch20-recall`. The book number is 20. The package is `ch20-recall`. It uses the store from `steps/ch18-sessions`.
+The step crate is `steps/ch20-recall`. It is chapter 19's harness copied forward, plus `recall`. The package name stays `ch20-recall`. `recall` calls `crate::wal::Store`. There is no path dependency on chapter 18.
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -42,6 +42,18 @@ The demo builds a temp database, indexes it, and prints `hit: desk`. No key. No 
 
 The hidden check is a `NOT IN` on `sessions.source`. Scroll and read use the same list, so naming a subagent id returns no rows.
 
+## Walking discover
+
+`recall` searches the store from `wal`. It does not open a second database and it does not depend on the `ch18-sessions` package. `session_search` has four shapes: discover, scroll, read, and browse. Discover is the one the bench times, over 10,000 messages (`discover_10k`). The tool returns rows. It does not call a model.
+
+Discover hides a subagent session. A cron session sorts after the user's own sessions. The test `discover_hides_a_subagent_and_demotes_cron` locks both. Scroll, read, and browse are the other three shapes, and a read of a hidden session is empty. The demo hit is the user session `desk`.
+
+Chapter 18 queued FTS ids and did not build the virtual table. This chapter builds the trigram index those ids were waiting for. A search that ran in chapter 18 would have had nothing to read. That split is why the session tests in this same crate still assert the table is absent until recall creates it: the inherited session test runs against `wal` before recall's setup. Read that test before "fixing" it by creating the table inside `append_turn`.
+
+> **Rust sidebar: the index is a virtual table**
+>
+> FTS5 is a SQLite virtual table. Inserts into the messages table do not update it by themselves. The triggers chapter 18 deferred are what keep the index in step with the rows. A trigram tokenizer indexes overlapping three-character slices, which is why a search for a fragment finds a row without a stemming dictionary. The bench's 10,000 messages are inserted in the process. There is no network.
+
 ## Tests
 
 Three tests. Discover hides the subagent and lists the user session before cron. Scroll, read, and browse are the other three shapes, and a hidden session reads as empty. The demo hit is `desk`.
@@ -53,8 +65,8 @@ cargo nextest run --locked -p ch20-recall
 ```
 
 ```text
-Starting 3 tests across 3 binaries
-     Summary [   0.010s] 3 tests run: 3 passed, 0 skipped
+Starting 117 tests across 30 binaries
+     Summary [   0.228s] 117 tests run: 117 passed, 0 skipped
 ```
 
 ```bash

@@ -42,8 +42,8 @@ cargo run -p ch02-harness-cli -- --mock chat
 | ch09-8-canonical | 9 (section 9.8) | Sorted, compact tool-call arguments on the send path |
 | ch09-9-outcome | 9 (section 9.9) | `TurnOutcome` enum and a budget wrap-up call |
 | ch09-10-evals | 9 (section 9.10) | Stress evals, optionally live, still keyless in CI |
-| ch10-turn-state | 10 | `Phase` and a tested `step` table |
-| ch11-approvals | 11 | Approval pipeline, one human prompt, permit dropped before the wait |
+| ch10-turn-state | 10 | Chapter 9's harness, plus `Phase` / `Driver`. `run_loop` drives the table |
+| ch11-approvals | 11 | Chapter 10's harness, plus the approval pipeline. `deny_tool` runs before dispatch |
 | ch12-hooks | 12 | Tool hooks, a borrowing API hook, a memory queue |
 | ch13-sandbox | 13 | Child worker, Docker argv, env scrub, checkpoints |
 | ch14-when-things-fail | 14 | Empty retries, repetition guard, timeout drops the permit |
@@ -80,7 +80,7 @@ cargo run -p ch02-harness-cli -- --mock chat
 | ch46-tracing | 46 | a counting subscriber, content-free span names, 100 mock researchers |
 | ch47-capstone | 47 *(server)* | three token arms and a load of 100. No socket |
 | ch48-evals | 48 | the chapter 9 task names, one red-team case per layer, no fail threshold |
-| ch15-limits | 15 *(server)* | Per-tool permits, idempotent retry, a breaker, caps of 50 |
-| ch05-minimal-server | 5 *(server)* | Empty `mcp-gateway` catalog. No socket |
+| ch15-limits | 15 *(server)* | Chapters 7 and 8 vendored, plus per-tool permits, idempotent retry, a breaker, caps of 50 |
+| ch05-minimal-server | 5 *(server)* | Fixed tool list, `echo`, a 32/8 gate. No socket |
 
-Your own copy is `my-harness/` at the repo root. Milestone tests there start failing until you implement each chapter. The course plan is chapters 0–48 in six parts, listed in `book/book-outline.md` and `.github/chapters.json`. Performance budgets for every chapter are `docs/performance.md`. MCP is a first-class tool boundary from chapter 3 (client in chapter 4, gateway server in chapter 5). The gateway design is `docs/mcp-gateway.md`. Part II is how one agent learns; the design is `docs/self-improvement.md`. How the team patterns fit together is `docs/team-patterns.md`. The steps in the table above are the written chapters, including `ch47-capstone`. None of the server steps bind a socket. Section numbers inside chapters 6 and 9 stay aligned with the `ch06-*` and `ch09-*` crate names.
+From chapter 10 on, each harness directory is a copy of the previous one plus that chapter's modules. The layout and the plan for chapters 21–48 are `docs/harness-architecture.md`. Your own copy is `my-harness/` at the repo root. Milestone tests there compile and panic with `todo!` until you implement each chapter. The course plan is chapters 0–48 in six parts, listed in `book/book-outline.md` and `.github/chapters.json`. Performance budgets for every chapter are `docs/performance.md`. MCP is a first-class tool boundary from chapter 3 (client in chapter 4, gateway server in chapter 5). The gateway design is `docs/mcp-gateway.md`. Part II is how one agent learns; the design is `docs/self-improvement.md`. How the team patterns fit together is `docs/team-patterns.md`. The steps in the table above are the written chapters, including `ch47-capstone`. None of the server steps bind a socket. Section numbers inside chapters 6 and 9 stay aligned with the `ch06-*` and `ch09-*` crate names.

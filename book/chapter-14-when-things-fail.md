@@ -4,7 +4,7 @@
 
 Chapter 13 can kill a child that does not finish. It does not decide what the turn should do next. An empty reply, a reply cut off for length, a reply that repeats one span, a timeout, and a crashed session are different failures. This chapter names them and picks retry, fallback, or stop. The empty-reply retries and the repetition guard were deferred from chapter 9. They land here.
 
-The step crate is `steps/ch14-when-things-fail`. The book number is 14. The package is `ch14-when-things-fail`.
+The step crate is `steps/ch14-when-things-fail`. It is chapter 13's harness copied forward, plus `failure`. The package name stays `ch14-when-things-fail`. Chapter 15 is the server track and is not in this copy. Chapter 16 copies this directory.
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -48,6 +48,28 @@ Two zero-output empties skip the rest of that model, including a later text repl
 
 `Reply::Empty` stores the cost as `OrderedF64`, an integer number of micros. `f64` is not `Eq`, and the tests match on replies.
 
+## Walking the floor: `command_deletes_runtime` and `self_repo_git_mutation`
+
+The failure kinds, the empty-reply budget, and the repetition guard are the body of this chapter and they are unchanged: `Kind`, three retries or one past $0.25, five contiguous repeats covering half the output, a timeout that drops its permit. Two guards that had been deferred onto this chapter with nowhere to land are now on the approval floor, before the fast path and before YOLO.
+
+`approval::check` starts with `floor_runtime_and_repo`. If that returns a message, the verdict is `Deny` with `hardline: true` and the denial tally increments. YOLO never sees the command.
+
+`command_deletes_runtime(command, runtime_path)` is the adapted form of `agent/runtime_self_protection.py`. Hermes reads `sys.executable`. This harness has no interpreter object, so the caller passes the path. The floor passes `std::env::current_exe()`. The function splits the command on `;`, newlines, `&&`, and `||`, strips wrappers (`sudo`, `command`, `time`, `nohup`, `env` and its `KEY=value` prefixes), and looks at the first real word:
+
+- `rm`, `rmdir`, `rd`, `del`, `erase`, `remove-item`, or `ri`: any later word that is not a flag and that overlaps the runtime path is a hit. Overlap is equality, the word being a parent of the runtime (`rm /opt` hits `/opt/uv/...`), or the word being inside the runtime directory.
+- `find` with `-delete` or `-exec rm`: the same overlap check on the non-flag words.
+- `uv python uninstall`: `--all` hits. A spec hits when the runtime path contains `cpython-<spec>` or ends with the spec. `uv python uninstall 3.12` hits a path that contains `cpython-3.12`. `3.11` does not.
+
+`self_repo_git_mutation(command, source_root)` is the adapted form of `tools/self_repo_guard.py` `detect_self_repo_git_mutation`. The floor passes `env!("CARGO_MANIFEST_DIR")`, the directory of this crate. The function splits on `;` and newlines, strips the same wrappers, and finds `git`, including a path ending in `git`. A `-C <path>` before `git` is recorded. The command is a hit only when `-C` is the source root or some word overlaps that root, and the subcommand is one of `checkout`, `switch`, `rebase`, `merge`, `pull`, `restore`, `clean`, `cherry-pick`, `revert`, `bisect`, or `reset` with `--hard`, `--merge`, or `--keep`. `git -C /tmp/other checkout main` is not a hit. Alias lookup and heredocs are not parsed. Hermes documents those as a deeper parser; this port does not claim them.
+
+Hermes turns the git block on only for Windows (`guard_active` in that file: NTFS locks loaded modules). This harness runs the detector on every platform. A rewrite of the checkout this binary was built from is the hazard either way. The denial text says to run the command on a copy.
+
+`tests/command_guards.rs` does not shell out. It calls both functions, then calls `check` with `Policy.yolo = true` on `rm <current_exe>` and on `git -C <manifest> reset --hard`, and expects `Deny`. `echo hello` under the same policy is still `Allow`, so the fast path survived the new floor.
+
+> **Rust sidebar: `env!` versus `std::env::current_exe`**
+>
+> `env!("CARGO_MANIFEST_DIR")` is the crate directory at compile time. It does not change when you `cd`. `current_exe` is the path of the running test binary, which is under `target/`. The two guards protect different things: the source tree the book was compiled from, and the binary that is running. A test that used the manifest dir as the runtime path would not be testing B6.
+
 ## Tests
 
 Eight tests. The budgets are 3 and 1. Two matching zero-output empties are deterministic, and a pair that disagrees on zero output is not. Those two empties skip a later `late` and the fallback says `hello`. Three empties without usage still reach `ok`. A short repeat is kept, a long one stops continuation, and the turn text is the interrupted-loop sentence. The timeout drops the permit. Three retries peak at one permit. A crashed session reconnects once.
@@ -59,8 +81,8 @@ cargo nextest run --locked -p ch14-when-things-fail
 ```
 
 ```text
-Starting 8 tests across 3 binaries
-     Summary [   0.035s] 8 tests run: 8 passed, 0 skipped
+Starting 94 tests across 24 binaries
+     Summary [   0.170s] 94 tests run: 94 passed, 0 skipped
 ```
 
 ```bash
@@ -115,7 +137,11 @@ A length reply under 400 characters is continued even if it is `"ok ok ok"`. The
 
 **Timeout.** `Kind::Timeout` drops the tool permit. Retries in `retry_in_bound` never hold two permits. The bound stays 8.
 
-**Left for later.** Server-side 429 and 503 behavior is chapter 15. Think-block stripping is chapter 17 (K5). Outbound sanitization beyond this chapter's fake replies is chapter 16 (K4). Secret redaction (E1, E2) is still absent.
+**B6.** `command_deletes_runtime` refuses a delete of the running binary, a parent of that binary, `find … -delete`, and `uv python uninstall` of the matching version. It sits on the approval floor before YOLO.
+
+**B5.** `self_repo_git_mutation` refuses a worktree-rewriting `git` aimed at this crate's manifest directory, including `reset --hard`. Alias lookup and heredocs are not parsed. Hermes enables this block on Windows only; this harness runs it on every platform.
+
+**Left for later.** Server-side 429 and 503 behavior is chapter 15. Think-block stripping is chapter 17 (K5). Outbound sanitization beyond this chapter's fake replies is chapter 16 (K4). Secret redaction (E1, E2) is chapter 18. The gateway lifecycle block (B4) is chapter 37.
 
 ## Chapter summary
 

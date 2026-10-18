@@ -7,7 +7,15 @@ pub mod chat;
 pub mod conversation;
 pub mod event;
 pub mod message;
+pub mod milestones;
 pub mod provider;
+
+pub use milestones::{
+    chapter_11_terminal_verdict, chapter_12_plugin_decision, chapter_13_execute_code,
+    chapter_14_yolo_allows, chapter_15_web_search_allowed, chapter_16_fallback_model,
+    chapter_17_fold_matches_buffer, chapter_18_stored_line, chapter_19_snapshot_changes_on_write,
+    chapter_20_discover_hides_subagent,
+};
 
 pub use chat::{ChatCommand, ChatSession, Outcome};
 pub use conversation::{Conversation, ConversationError};

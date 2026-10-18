@@ -4,7 +4,7 @@
 
 Chapter 1 talks to OpenRouter. A turn that needs Anthropic or Bedrock has a different JSON body, and a failed key should not build a new client. This chapter builds those bodies, an OpenRouter route, and a rotation that keeps one client id. The cheaper side model stays off unless the turn asked for a summary. Nothing here opens a socket.
 
-The step crate is `steps/ch16-providers`. The book number is 16. The package is `ch16-providers`.
+The step crate is `steps/ch16-providers`. It is chapter 14's harness copied forward, plus `adapters`. The package name stays `ch16-providers`. The module is not named `providers` because `provider.rs` is already the chapter 9 client.
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -50,6 +50,18 @@ The demo fails the first fake model and takes the fallback. The reply is `pong`.
 
 `Pool` owns the key strings. `mark_exhausted_and_rotate` returns a borrow of the current key. The client id is a `u64` that the method does not change. One pool is one client.
 
+## Walking the route and the rotation
+
+The module is `adapters`. `choose_route` reads a list of model names and a sort preference. An invalid sort is dropped. The next name is the fallback, which is what the test locks: the fake turn answers from that fallback and does not call the name that failed the sort. `rotate_key` returns the same client id. Building a new `reqwest` client on every 401 would throw away the pool chapter 1 opened. The bench `rotate_key` times that reuse. The bench `choose_route` times the pick. Both stay the function names in `benchmarks/descriptions.json`.
+
+Anthropic and Bedrock bodies are `serde_json::Value`s built for those APIs, not the OpenAI chat body. A zero `max_tokens` fails before a request exists. Duplicate tool-call ids in one batch are made unique, and a dangling tool row is repaired. That is the rest of K4 this chapter takes. TLS stays on the operating-system trust store unless the dev flag is set. `ssl_verify: false` is the Hermes development switch; the test shows the flag has to be set on purpose.
+
+Nothing in this module is called from `drive_loop` yet. The chapter 9 provider is still the one the loop uses. The adapters are the types a later turn can select. Wiring them into the loop without changing the saved evals is safe because the tests construct the bodies directly. Do not delete `provider.rs` to "make room": that file is the OpenRouter client the inherited tests call.
+
+> **Rust sidebar: a `Value` is not a struct**
+>
+> `serde_json::Value` is an enum: null, bool, number, string, array, object. Building a body as a `Value` lets one function return whichever shape the API wants without a trait per field. The cost is that a typo in a key is a runtime miss, not a compiler error. The tests assert the keys the APIs require (`max_tokens` among them) so a typo fails here.
+
 ## Tests
 
 Six tests. Both bodies have the fields above, and a zero `max_tokens` fails. An invalid sort is dropped and the fallback model is the next name. Rotation keeps client id 1, and the side model stays off. Duplicate ids and a dangling tool row are repaired. TLS stays on the OS decision unless the dev flag is set. The fake turn answers `pong` from the fallback.
@@ -61,8 +73,8 @@ cargo nextest run --locked -p ch16-providers
 ```
 
 ```text
-Starting 6 tests across 3 binaries
-     Summary [   0.006s] 6 tests run: 6 passed, 0 skipped
+Starting 100 tests across 25 binaries
+     Summary [   0.183s] 100 tests run: 100 passed, 0 skipped
 ```
 
 ```bash

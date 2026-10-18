@@ -28,7 +28,7 @@ Reading it with "how would I run many agents at once?" in mind, I noticed:
 Rust + tokio flips those around: thousands of cheap tasks, cancellation by simply dropping a future, and a compiler that won't let two tasks race on the same data.
 
 6/
-So I built a 16-lesson course for myself. Each lesson has failing tests I make pass: Message enums → Tool traits → agent loop → streaming → TurnState state machine → actors → supervisors → message bus.
+So I built the course as six parts, chapters 0 through 48. Each chapter has failing tests I make pass, and the same harness grows from messages to a team.
 
 7/
 I'll post each chapter as I go, including the parts where the borrow checker wins.
@@ -44,7 +44,7 @@ My reference is Hermes Agent, Nous Research's open-source agent. It runs one age
 
 Studying its architecture, I kept asking: what would it take to run *many* agents at once, cooperating? That question leads straight to Rust's strengths: lightweight async tasks, cancellation that actually stops work, and compile-time guarantees against data races.
 
-So I put together a 16-lesson, test-driven path. It starts with Rust fundamentals expressed as agent types (messages, tools, errors), then builds a real model client, streaming, an explicit turn state machine, parallel tool execution, actors with backpressure, supervisors with cancellation trees, and a message bus for orchestrator–worker and blackboard-style teams.
+So I put together a test-driven path in six parts, chapters 0 through 48. It starts with Rust fundamentals expressed as agent types (messages, tools, errors), then builds a real model client, the agent loop, an explicit turn state machine, and keeps growing that same harness through streaming, actors, supervisors, and a message bus.
 
 I'll share each chapter as I write it. Chapter 0 explains the why and gives a tour of Hermes's architecture: [link]
 
@@ -55,4 +55,4 @@ I'll share each chapter as I write it. Chapter 0 explains the why and gives a to
 ## Blog teaser
 **Learning Rust by building a multi-agent harness: Chapter 0**
 
-An AI agent is a ten-line loop. Making it reliable (budgets, retries, streaming, parallel tools, cancellation, memory) is the real work, and running *teams* of agents makes all of it harder. In this first chapter I explain why I'm learning Rust by building exactly that, take a tour of Nous Research's open-source Hermes Agent as my reference architecture, and lay out the 16-lesson, test-driven plan. [Read Chapter 0 →]
+An AI agent is a ten-line loop. Making it reliable (budgets, retries, streaming, parallel tools, cancellation, memory) is the real work, and running *teams* of agents makes all of it harder. In this first chapter I explain why I'm learning Rust by building exactly that, take a tour of Nous Research's open-source Hermes Agent as my reference architecture, and lay out the six-part plan, chapters 0 through 48. [Read Chapter 0 →]

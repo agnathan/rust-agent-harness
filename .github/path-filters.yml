@@ -1,8 +1,8 @@
-# Filter names for real steps match steps/ directory names.
-# `shared` means "retest every step that exists". Planned steps are listed so a
-# new steps/chNN-* directory is picked up without editing the workflow.
+# Filter names match steps/ directory names.
+# `shared` means "retest every step that exists".
 # The chapter plan itself is .github/chapters.json (chapters 0–48, parts I–VI).
 # Every step directory is named steps/chNN-<slug>, including the server track.
+# There is no steps/ch04-mcp-client directory. Chapter 4 is ch04-1 through ch04-4.
 shared:
   - "Cargo.toml"
   - "Cargo.lock"
@@ -26,8 +26,6 @@ ch03-2-toolsets:
   - "steps/ch03-2-toolsets/**"
 ch03-3-dispatch:
   - "steps/ch03-3-dispatch/**"
-ch04-mcp-client:
-  - "steps/ch04-mcp-client/**"
 ch04-fixture:
   - "steps/ch04-fixture/**"
 ch04-1-stdio:

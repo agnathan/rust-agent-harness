@@ -1,6 +1,12 @@
 //! Book chapter 15. A tool has its own accept and execute permits.
 //! A retry runs only when the tool is idempotent. An open breaker
 //! does not call the backend. Web search and delegate_task stop at 50.
+//!
+//! The chapter 7 catalog and the chapter 8 session gateway are vendored
+//! in this crate (`catalog`, `session`) so the step builds alone.
+
+pub mod catalog;
+pub mod session;
 
 use std::collections::{HashMap, VecDeque};
 use std::future::Future;
@@ -8,13 +14,13 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use gw_session::SessionGateway;
+use crate::session::SessionGateway;
 use serde_json::Value;
 use thiserror::Error;
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 
-pub use gw_catalog::Gateway as Catalog;
-pub use gw_session::{SessionError, SessionView};
+pub use crate::catalog::Gateway as Catalog;
+pub use crate::session::{SessionError, SessionView};
 
 /// Calls waiting or running for one tool. The 33rd is refused.
 pub const ACCEPT_BOUND: usize = 32;

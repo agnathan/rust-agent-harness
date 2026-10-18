@@ -4,7 +4,7 @@
 
 The turns so far live in memory. A new process starts from nothing. This chapter appends a turn to SQLite in WAL mode and can read it back. The search index is a queue of row ids. The virtual table is chapter 20. The chapter 9 eval set runs again, on the mock, and it still passes.
 
-The step crate is `steps/ch18-sessions`. The book number is 18. The package is `ch18-sessions`.
+The step crate is `steps/ch18-sessions`. It is chapter 17's harness copied forward, plus `wal` and `redact`. The package name stays `ch18-sessions`. The module is `wal` because `session.rs` is already the MCP session.
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -46,6 +46,24 @@ The third test calls `run_saved_evals` and `run_stress_evals` from chapter 9. Bo
 
 `messages` prepares a `SELECT` and collects rows. The order is `id`, which is the append order.
 
+## Walking `append_turn` and `redact_sensitive_text`
+
+`wal::Store::append_turn` inserts the user text and the assistant text and queues the row ids for FTS. It does not create the virtual table. Chapter 20 does. Before the insert, both strings pass through `crate::redact::redact_sensitive_text`. A session row is a place a key would live forever, so the scrub happens at the write, not at the search.
+
+`redact_sensitive_text` builds three `Regex` values behind `OnceLock`. The first call compiles them. Later calls borrow the same compiled pattern. The prefix alternation is the families actually read from Hermes `_PREFIX_PATTERNS`: `sk-`, `ghp_`, `github_pat_`, `gho_`, `ghu_`, `ghs_`, `ghr_`, `xox[baprs]-`, `AIza`, `AKIA`, `sk_live_`, `sk_test_`, `hf_`, `npm_`, `glpat-`, and a PEM block. A match is replaced by the prefix through the first `-` or `_`, then `***`. `sk-abcdefghijklmnopqrstuvwxyz` becomes `sk-***`.
+
+The env-assignment pattern is case-insensitive and matches a name containing `API_KEY`, `TOKEN`, `SECRET`, `PASSWORD`, `PASSWD`, or `CREDENTIAL`, then `=`, then a non-space value. The replacement keeps the name and writes `=***`. `OPENAI_API_KEY=super-secret-value` loses the value. The `Authorization` header pattern keeps the header word and masks the credential. `redacting_formatter` is `redact_sensitive_text` under a function name, because this crate does not take a logging facade. Call it on the line you are about to log. Hermes's `RedactingFormatter.format` does the same scrub inside the logging stack.
+
+`redact_for_egress` runs `redact_sensitive_text` and then a Bearer sweep. A leftover `Bearer` plus a long token, or a `Bearer [already-masked]` residue, becomes `Bearer [redacted]`. The test uses a bare `Bearer abcdefghijklmnopqrstuvwxyz012345` with no `Authorization:` prefix, so the header rule does not eat it first, and asserts the egress form.
+
+`tests/redact.rs` is the new test. The three session tests still expect the words `hi` and `pong`, which do not match any pattern, so redaction is a no-op on them. The journal mode is still `wal`. The trigram table still does not exist.
+
+> **Rust sidebar: `OnceLock` and a raw string**
+>
+> `OnceLock<Regex>` is a cell that starts empty and is filled once. `get_or_init` runs the closure only on the first call, even if two threads race: one wins, the other waits and then sees the value. The patterns live for the process.
+>
+> A Rust raw string `r"..."` does not treat `\"` as an escaped quote. The auth-header pattern is written `r#"(?i)...([^\s"']+)"#` so the quote can sit inside the pattern. The `#` delimiters are how you put a `"` in a raw string.
+
 ## Tests
 
 Three tests. A turn appends two rows, the journal is `wal`, and the trigram table does not exist. A second turn resumes the same session. The chapter 9 saved evals and the four stress evals pass.
@@ -57,8 +75,8 @@ cargo nextest run --locked -p ch18-sessions
 ```
 
 ```text
-Starting 3 tests across 3 binaries
-     Summary [   0.027s] 3 tests run: 3 passed, 0 skipped
+Starting 109 tests across 28 binaries
+     Summary [   0.192s] 109 tests run: 109 passed, 0 skipped
 ```
 
 ```bash
@@ -97,6 +115,8 @@ The eval test does not touch this store. A green eval run means the chapter 9 lo
 ## Guardrails in this chapter
 
 [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Layer L8 is persistence. The memory and skill gates are not this chapter.
+
+**E1 and E2 are this chapter.** `redact_sensitive_text` and `redacting_formatter` scrub stored and logged text. `redact_for_egress` does that scrub and then replaces a leftover `Bearer <token>` with `Bearer [redacted]`. `append_turn` stores the E1 scrub of both strings. The patterns are the prefix families read from `agent/redact.py` `_PREFIX_PATTERNS` (OpenAI-style `sk-`, GitHub `ghp_` / `github_pat_` / `gho_` / `ghu_` / `ghs_` / `ghr_`, Slack `xox[baprs]-`, Google `AIza`, AWS `AKIA`, Stripe `sk_live_` / `sk_test_`, Hugging Face `hf_`, npm `npm_`, GitLab `glpat-`), plus an env assignment whose name contains `API_KEY`, `TOKEN`, `SECRET`, `PASSWORD`, `PASSWD`, or `CREDENTIAL`, an `Authorization` header, and a PEM block. Plugin-registered patterns and the vault are not copied. The mask keeps the prefix through the first `-` or `_` and then writes `***`, so a second pass does not see a new key. Chapters 37, 43, and 45 call `redact_for_egress` instead of writing a narrower scrub.
 
 **What landed.** The session file is append-only for messages. A turn is one transaction. Search is not on the request path. The ids wait on a queue.
 

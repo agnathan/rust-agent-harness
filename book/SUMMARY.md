@@ -2,7 +2,7 @@
 
 [Book outline](book-outline.md)
 
-Server-track chapters are marked *(server)*. They are interleaved with the harness. Chapters 5, 7, and 8 are written. Later server chapters are not. The process crate is `mcp-gateway/`.
+Server-track chapters are marked *(server)*. They are interleaved with the harness. Chapters 5, 7, 8, 15, 21, 35, 38, and 47 are written. The process crate is `mcp-gateway/`. The harness from chapter 10 on is one growing crate; the plan is [`docs/harness-architecture.md`](../docs/harness-architecture.md).
 
 # Part I: One agent
 

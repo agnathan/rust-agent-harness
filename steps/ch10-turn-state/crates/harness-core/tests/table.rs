@@ -1,4 +1,4 @@
-use turn_state::{finish_wrap, run_script, step, Phase, ScriptStep, TurnEvent, WrapKind};
+use harness_core::{finish_wrap, run_script, step, Phase, ScriptStep, TurnEvent, WrapKind};
 
 #[test]
 fn every_pair_is_in_the_table() {

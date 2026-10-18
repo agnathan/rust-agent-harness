@@ -1,7 +1,7 @@
 use std::hint::black_box;
 
 use criterion::{criterion_group, criterion_main, Criterion};
-use turn_state::{run_script, step, Phase, ScriptStep, TurnEvent};
+use harness_core::{run_script, step, Phase, ScriptStep, TurnEvent};
 
 fn one_transition(c: &mut Criterion) {
     c.bench_function("turn_transition", |b| {

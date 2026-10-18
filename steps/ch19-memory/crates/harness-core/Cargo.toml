@@ -1,0 +1,49 @@
+[package]
+name = "ch19-memory"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.88"
+publish = false
+description = "Chapter 11: the previous harness plus this chapter."
+
+[lib]
+name = "harness_core"
+
+[[bin]]
+name = "ch19-memory"
+path = "src/bin/chapter_demo.rs"
+
+[[bin]]
+name = "ch19_mcp_fixture"
+path = "src/bin/mcp_fixture.rs"
+
+[[bin]]
+name = "sandbox-worker"
+path = "src/bin/worker.rs"
+
+[dependencies]
+anyhow = "1"
+async-trait = "0.1"
+axum = "0.8"
+rmcp = { version = "3.5.1", features = ["client", "server", "macros", "transport-io", "transport-child-process", "transport-streamable-http-server", "transport-streamable-http-client-reqwest"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "http2"] }
+thiserror = "2"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "io-std", "io-util", "net", "process", "sync", "time"] }
+tokio-util = { version = "0.7", features = ["rt"] }
+
+regex = "1"
+rusqlite = { version = "0.32", features = ["bundled"] }
+[dev-dependencies]
+criterion = { version = "0.5", features = ["async_tokio"] }
+wiremock = "0.6"
+
+
+[[example]]
+name = "demo"
+path = "examples/demo.rs"
+
+[[bench]]
+name = "memory"
+harness = false
