@@ -110,7 +110,7 @@ The catalog boundary is still not a security boundary. [`docs/hermes-guardrails.
 
 **Reload does not edit a snapshot a call already holds.** That is the consistency rule. It is not authentication.
 
-Plugin tools are whatever the `Load` contains. Hermes scans plugins at install (`tools/plugin_guard.py`, H3: 400 files, 10 MB total, 1 MB per file). This chapter does not scan. No later chapter in the outline owns H3, so I am not pointing at one. Upstream tools are an in-memory list. The OSV check before an npx or uvx launch (H4, `tools/osv_check.py`) is noted on chapter 40. Live federation is chapter 37.
+Plugin tools are whatever the `Load` contains. Hermes scans plugins at install (`tools/plugin_guard.py`, H3: 400 files, 10 MB total, 1 MB per file). This chapter does not scan. No later chapter in the outline owns H3, so I am not pointing at one. Upstream tools are an in-memory list. The OSV check before an npx or uvx launch (H4, `tools/osv_check.py`) is noted on chapter 42. Live federation is chapter 37.
 
 Context-file injection scanning (F2) and the 20,000-character cap (F3) are chapter 34. They are not applied to tool descriptions here.
 

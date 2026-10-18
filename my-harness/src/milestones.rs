@@ -1,4 +1,4 @@
-//! Stubs for chapters 11–32. Each one panics until you fill it in.
+//! Stubs for chapters 11–44. Each one panics until you fill it in.
 //! The finished behavior is the step crate for that chapter.
 
 pub fn chapter_11_terminal_verdict(command: &str) -> String {
@@ -105,4 +105,70 @@ pub fn chapter_31_refuses_overflow(already: usize) -> bool {
 
 pub fn chapter_32_critic_does_the_work() -> bool {
     todo!("chapter 32")
+}
+
+pub fn chapter_33_nested_width_fits(held: usize, width: usize, limit: usize) -> bool {
+    let _ = (held, width, limit);
+    todo!("chapter 33")
+}
+
+pub fn chapter_34_shares_snapshot() -> bool {
+    todo!("chapter 34")
+}
+
+pub fn chapter_35_full_inbox_grows(queued: usize, cap: usize) -> bool {
+    let _ = (queued, cap);
+    todo!("chapter 35")
+}
+
+pub fn chapter_36_idle_is_stale(cycles: u64, in_tool: bool) -> bool {
+    let _ = (cycles, in_tool);
+    todo!("chapter 36")
+}
+
+pub fn chapter_37_pick_opens_connection() -> bool {
+    todo!("chapter 37")
+}
+
+pub fn chapter_38_unscoped_secret_in_prompt() -> bool {
+    todo!("chapter 38")
+}
+
+pub fn chapter_39_gateway_restart_allowed(supervised: bool) -> bool {
+    let _ = supervised;
+    todo!("chapter 39")
+}
+
+pub fn chapter_39_enqueue_calls_model() -> bool {
+    todo!("chapter 39")
+}
+
+pub fn chapter_40_navigates_metadata(url: &str) -> bool {
+    let _ = url;
+    todo!("chapter 40")
+}
+
+pub fn chapter_41_accepts_image(bytes: usize, mime: &str) -> bool {
+    let _ = (bytes, mime);
+    todo!("chapter 41")
+}
+
+pub fn chapter_42_route_after_kill(killed: &str, other: &str) -> Option<String> {
+    let _ = (killed, other);
+    todo!("chapter 42")
+}
+
+pub fn chapter_43_retries_claimed(already: u32) -> bool {
+    let _ = already;
+    todo!("chapter 43")
+}
+
+pub fn chapter_43_lifecycle_allowed(command: &str) -> bool {
+    let _ = command;
+    todo!("chapter 43")
+}
+
+pub fn chapter_44_update_submits_once(updates: usize) -> usize {
+    let _ = updates;
+    todo!("chapter 44")
 }

@@ -1,53 +1,409 @@
 [
-  {"n": 0, "title": "Introduction", "step": null, "part": "I", "track": "harness"},
-  {"n": 1, "title": "First Contact", "step": "ch01-4-errors", "sections": ["ch01-1-messages", "ch01-2-provider", "ch01-3-cli", "ch01-4-errors"], "part": "I", "track": "harness"},
-  {"n": 2, "title": "Conversations", "step": "ch02-conversations", "part": "I", "track": "harness"},
-  {"n": 3, "title": "Tools", "step": "ch03-3-dispatch", "sections": ["ch03-1-registry", "ch03-2-toolsets", "ch03-3-dispatch"], "part": "I", "track": "harness"},
-  {"n": 4, "title": "MCP Client", "step": "ch04-4-cache", "sections": ["ch04-1-stdio", "ch04-2-http", "ch04-3-registry", "ch04-4-cache"], "part": "I", "track": "harness"},
-  {"n": 5, "title": "A Minimal MCP Server", "step": "ch05-minimal-server", "part": "I", "track": "server"},
-  {"n": 6, "title": "Thousands of Tools", "step": "ch06-5-lazy-list", "sections": ["ch06-1-schema-cost", "ch06-2-tool-index", "ch06-3-search-tool", "ch06-4-routing", "ch06-5-lazy-list"], "part": "I", "track": "harness"},
-  {"n": 7, "title": "Dynamic Catalog", "step": "ch07-catalog", "part": "I", "track": "server"},
-  {"n": 8, "title": "Session Toolsets", "step": "ch08-session-toolsets", "part": "I", "track": "server"},
-  {"n": 9, "title": "The Agent Loop", "step": "ch09-10-evals", "sections": ["ch09-1-live", "ch09-2-cancel", "ch09-3-validate", "ch09-4-stall", "ch09-5-budget", "ch09-6-truncate", "ch09-7-steer", "ch09-8-canonical", "ch09-9-outcome", "ch09-10-evals"], "part": "I", "track": "harness"},
-  {"n": 10, "title": "The Turn State Machine", "step": "ch10-turn-state", "part": "I", "track": "harness"},
-  {"n": 11, "title": "Approvals and Guardrails", "step": "ch11-approvals", "part": "I", "track": "harness"},
-  {"n": 12, "title": "Hooks and Plugins", "step": "ch12-hooks", "part": "I", "track": "harness"},
-  {"n": 13, "title": "Sandboxed Execution", "step": "ch13-sandbox", "part": "I", "track": "harness"},
-  {"n": 14, "title": "When Things Fail", "step": "ch14-when-things-fail", "part": "I", "track": "harness"},
-  {"n": 15, "title": "Limits and Breakers", "step": "ch15-limits", "part": "I", "track": "server"},
-  {"n": 16, "title": "Built-in Tools I: Web Search and Extract", "step": "ch16-web-tools", "part": "I", "track": "harness"},
-  {"n": 17, "title": "Built-in Tools II: Files, Terminal, Todo, and Clarify", "step": "ch17-local-tools", "part": "I", "track": "harness"},
-  {"n": 18, "title": "Providers", "step": "ch18-providers", "part": "I", "track": "harness"},
-  {"n": 19, "title": "Streaming", "step": "ch19-streaming", "part": "I", "track": "harness"},
-  {"n": 20, "title": "Sessions on Disk", "step": "ch20-sessions", "part": "II", "track": "harness"},
-  {"n": 21, "title": "Memory Files", "step": "ch21-memory", "part": "II", "track": "harness"},
-  {"n": 22, "title": "Recall", "step": "ch22-recall", "part": "II", "track": "harness"},
-  {"n": 23, "title": "Learned Tools", "step": "ch23-learned-tools", "part": "II", "track": "server"},
-  {"n": 24, "title": "Using Skills", "step": "ch24-skills", "part": "II", "track": "harness"},
-  {"n": 25, "title": "Writing Skills", "step": "ch25-skill-writing", "part": "II", "track": "harness"},
-  {"n": 26, "title": "The Reflection Loop", "step": "ch26-reflection", "part": "II", "track": "harness"},
-  {"n": 27, "title": "Curation", "step": "ch27-curation", "part": "II", "track": "harness"},
-  {"n": 28, "title": "The Sequential Pipeline", "step": "ch28-pipeline", "part": "III", "track": "harness"},
-  {"n": 29, "title": "The Supervisor", "step": "ch29-supervisor", "part": "III", "track": "harness"},
-  {"n": 30, "title": "Handoffs", "step": "ch30-handoffs", "part": "III", "track": "harness"},
-  {"n": 31, "title": "Fan-out and Gather", "step": "ch31-fan-out", "part": "III", "track": "harness"},
-  {"n": 32, "title": "The Critic", "step": "ch32-critic", "part": "III", "track": "harness"},
-  {"n": 33, "title": "Composing Patterns", "step": "ch33-composition", "part": "III", "track": "harness"},
-  {"n": 34, "title": "Managing Context", "step": "ch34-context", "part": "IV", "track": "harness"},
-  {"n": 35, "title": "Agents as Actors", "step": "ch35-actors", "part": "IV", "track": "harness"},
-  {"n": 36, "title": "Supervision and Restart", "step": "ch36-supervision", "part": "IV", "track": "harness"},
-  {"n": 37, "title": "Balancing and Federation", "step": "ch37-balancing", "part": "IV", "track": "server"},
-  {"n": 38, "title": "Profiles", "step": "ch38-profiles", "part": "V", "track": "harness"},
-  {"n": 39, "title": "The Gateway", "step": "ch39-gateway", "part": "V", "track": "harness"},
-  {"n": 40, "title": "MCP Gateway Service", "step": "ch40-service", "part": "V", "track": "server"},
-  {"n": 41, "title": "Cron", "step": "ch41-cron", "part": "V", "track": "harness"},
-  {"n": 42, "title": "Editor Integration", "step": "ch42-acp", "part": "V", "track": "harness"},
-  {"n": 43, "title": "The Blackboard", "step": "ch43-blackboard", "part": "VI", "track": "harness"},
-  {"n": 44, "title": "The Kanban Board", "step": "ch44-kanban", "part": "VI", "track": "harness"},
-  {"n": 45, "title": "The Message Bus", "step": "ch45-message-bus", "part": "VI", "track": "harness"},
-  {"n": 46, "title": "Shared Team Skills", "step": "ch46-team-skills", "part": "VI", "track": "harness"},
-  {"n": 47, "title": "A2A for External Agents", "step": "ch47-a2a", "part": "VI", "track": "harness"},
-  {"n": 48, "title": "Seeing Inside", "step": "ch48-tracing", "part": "VI", "track": "harness"},
-  {"n": 49, "title": "Load and Token Capstone", "step": "ch49-capstone", "part": "VI", "track": "server"},
-  {"n": 50, "title": "Evals", "step": "ch50-evals", "part": "VI", "track": "harness"}
+  {
+    "n": 0,
+    "title": "Introduction",
+    "step": null,
+    "part": "I",
+    "track": "harness"
+  },
+  {
+    "n": 1,
+    "title": "First Contact",
+    "step": "ch01-4-errors",
+    "sections": [
+      "ch01-1-messages",
+      "ch01-2-provider",
+      "ch01-3-cli",
+      "ch01-4-errors"
+    ],
+    "part": "I",
+    "track": "harness"
+  },
+  {
+    "n": 2,
+    "title": "Conversations",
+    "step": "ch02-conversations",
+    "part": "I",
+    "track": "harness"
+  },
+  {
+    "n": 3,
+    "title": "Tools",
+    "step": "ch03-3-dispatch",
+    "sections": [
+      "ch03-1-registry",
+      "ch03-2-toolsets",
+      "ch03-3-dispatch"
+    ],
+    "part": "I",
+    "track": "harness"
+  },
+  {
+    "n": 4,
+    "title": "MCP Client",
+    "step": "ch04-4-cache",
+    "sections": [
+      "ch04-1-stdio",
+      "ch04-2-http",
+      "ch04-3-registry",
+      "ch04-4-cache"
+    ],
+    "part": "I",
+    "track": "harness"
+  },
+  {
+    "n": 5,
+    "title": "A Minimal MCP Server",
+    "step": "ch05-minimal-server",
+    "part": "I",
+    "track": "server"
+  },
+  {
+    "n": 6,
+    "title": "Thousands of Tools",
+    "step": "ch06-5-lazy-list",
+    "sections": [
+      "ch06-1-schema-cost",
+      "ch06-2-tool-index",
+      "ch06-3-search-tool",
+      "ch06-4-routing",
+      "ch06-5-lazy-list"
+    ],
+    "part": "I",
+    "track": "harness"
+  },
+  {
+    "n": 7,
+    "title": "Dynamic Catalog",
+    "step": "ch07-catalog",
+    "part": "I",
+    "track": "server"
+  },
+  {
+    "n": 8,
+    "title": "Session Toolsets",
+    "step": "ch08-session-toolsets",
+    "part": "I",
+    "track": "server"
+  },
+  {
+    "n": 9,
+    "title": "The Agent Loop",
+    "step": "ch09-10-evals",
+    "sections": [
+      "ch09-1-live",
+      "ch09-2-cancel",
+      "ch09-3-validate",
+      "ch09-4-stall",
+      "ch09-5-budget",
+      "ch09-6-truncate",
+      "ch09-7-steer",
+      "ch09-8-canonical",
+      "ch09-9-outcome",
+      "ch09-10-evals"
+    ],
+    "part": "I",
+    "track": "harness"
+  },
+  {
+    "n": 10,
+    "title": "The Turn State Machine",
+    "step": "ch10-turn-state",
+    "part": "I",
+    "track": "harness"
+  },
+  {
+    "n": 11,
+    "title": "Approvals and Guardrails",
+    "step": "ch11-approvals",
+    "part": "I",
+    "track": "harness"
+  },
+  {
+    "n": 12,
+    "title": "Hooks and Plugins",
+    "step": "ch12-hooks",
+    "part": "I",
+    "track": "harness"
+  },
+  {
+    "n": 13,
+    "title": "Sandboxed Execution",
+    "step": "ch13-sandbox",
+    "part": "I",
+    "track": "harness"
+  },
+  {
+    "n": 14,
+    "title": "When Things Fail",
+    "step": "ch14-when-things-fail",
+    "part": "I",
+    "track": "harness"
+  },
+  {
+    "n": 15,
+    "title": "Limits and Breakers",
+    "step": "ch15-limits",
+    "part": "I",
+    "track": "server"
+  },
+  {
+    "n": 16,
+    "title": "Built-in Tools I: Web Search and Extract",
+    "step": "ch16-web-tools",
+    "part": "I",
+    "track": "harness"
+  },
+  {
+    "n": 17,
+    "title": "Built-in Tools II: Files, Terminal, Todo, and Clarify",
+    "step": "ch17-local-tools",
+    "part": "I",
+    "track": "harness"
+  },
+  {
+    "n": 18,
+    "title": "Providers",
+    "step": "ch18-providers",
+    "part": "I",
+    "track": "harness"
+  },
+  {
+    "n": 19,
+    "title": "Streaming",
+    "step": "ch19-streaming",
+    "part": "I",
+    "track": "harness"
+  },
+  {
+    "n": 20,
+    "title": "Sessions on Disk",
+    "step": "ch20-sessions",
+    "part": "II",
+    "track": "harness"
+  },
+  {
+    "n": 21,
+    "title": "Memory Files",
+    "step": "ch21-memory",
+    "part": "II",
+    "track": "harness"
+  },
+  {
+    "n": 22,
+    "title": "Recall",
+    "step": "ch22-recall",
+    "part": "II",
+    "track": "harness"
+  },
+  {
+    "n": 23,
+    "title": "Learned Tools",
+    "step": "ch23-learned-tools",
+    "part": "II",
+    "track": "server"
+  },
+  {
+    "n": 24,
+    "title": "Using Skills",
+    "step": "ch24-skills",
+    "part": "II",
+    "track": "harness"
+  },
+  {
+    "n": 25,
+    "title": "Writing Skills",
+    "step": "ch25-skill-writing",
+    "part": "II",
+    "track": "harness"
+  },
+  {
+    "n": 26,
+    "title": "The Reflection Loop",
+    "step": "ch26-reflection",
+    "part": "II",
+    "track": "harness"
+  },
+  {
+    "n": 27,
+    "title": "Curation",
+    "step": "ch27-curation",
+    "part": "II",
+    "track": "harness"
+  },
+  {
+    "n": 28,
+    "title": "The Sequential Pipeline",
+    "step": "ch28-pipeline",
+    "part": "III",
+    "track": "harness"
+  },
+  {
+    "n": 29,
+    "title": "The Supervisor",
+    "step": "ch29-supervisor",
+    "part": "III",
+    "track": "harness"
+  },
+  {
+    "n": 30,
+    "title": "Handoffs",
+    "step": "ch30-handoffs",
+    "part": "III",
+    "track": "harness"
+  },
+  {
+    "n": 31,
+    "title": "Fan-out and Gather",
+    "step": "ch31-fan-out",
+    "part": "III",
+    "track": "harness"
+  },
+  {
+    "n": 32,
+    "title": "The Critic",
+    "step": "ch32-critic",
+    "part": "III",
+    "track": "harness"
+  },
+  {
+    "n": 33,
+    "title": "Composing Patterns",
+    "step": "ch33-composition",
+    "part": "III",
+    "track": "harness"
+  },
+  {
+    "n": 34,
+    "title": "Managing Context",
+    "step": "ch34-context",
+    "part": "IV",
+    "track": "harness"
+  },
+  {
+    "n": 35,
+    "title": "Agents as Actors",
+    "step": "ch35-actors",
+    "part": "IV",
+    "track": "harness"
+  },
+  {
+    "n": 36,
+    "title": "Supervision and Restart",
+    "step": "ch36-supervision",
+    "part": "IV",
+    "track": "harness"
+  },
+  {
+    "n": 37,
+    "title": "Balancing and Federation",
+    "step": "ch37-balancing",
+    "part": "IV",
+    "track": "server"
+  },
+  {
+    "n": 38,
+    "title": "Profiles",
+    "step": "ch38-profiles",
+    "part": "V",
+    "track": "harness"
+  },
+  {
+    "n": 39,
+    "title": "The Gateway",
+    "step": "ch39-gateway",
+    "part": "V",
+    "track": "harness"
+  },
+  {
+    "n": 40,
+    "title": "Browser Tools",
+    "step": "ch40-browser",
+    "part": "V",
+    "track": "harness"
+  },
+  {
+    "n": 41,
+    "title": "Vision",
+    "step": "ch41-vision",
+    "part": "V",
+    "track": "harness"
+  },
+  {
+    "n": 42,
+    "title": "MCP Gateway Service",
+    "step": "ch42-service",
+    "part": "V",
+    "track": "server"
+  },
+  {
+    "n": 43,
+    "title": "Cron",
+    "step": "ch43-cron",
+    "part": "V",
+    "track": "harness"
+  },
+  {
+    "n": 44,
+    "title": "Editor Integration",
+    "step": "ch44-acp",
+    "part": "V",
+    "track": "harness"
+  },
+  {
+    "n": 45,
+    "title": "The Blackboard",
+    "step": "ch45-blackboard",
+    "part": "VI",
+    "track": "harness"
+  },
+  {
+    "n": 46,
+    "title": "The Kanban Board",
+    "step": "ch46-kanban",
+    "part": "VI",
+    "track": "harness"
+  },
+  {
+    "n": 47,
+    "title": "The Message Bus",
+    "step": "ch47-message-bus",
+    "part": "VI",
+    "track": "harness"
+  },
+  {
+    "n": 48,
+    "title": "Shared Team Skills",
+    "step": "ch48-team-skills",
+    "part": "VI",
+    "track": "harness"
+  },
+  {
+    "n": 49,
+    "title": "A2A for External Agents",
+    "step": "ch49-a2a",
+    "part": "VI",
+    "track": "harness"
+  },
+  {
+    "n": 50,
+    "title": "Seeing Inside",
+    "step": "ch50-tracing",
+    "part": "VI",
+    "track": "harness"
+  },
+  {
+    "n": 51,
+    "title": "Load and Token Capstone",
+    "step": "ch51-capstone",
+    "part": "VI",
+    "track": "server"
+  },
+  {
+    "n": 52,
+    "title": "Evals",
+    "step": "ch52-evals",
+    "part": "VI",
+    "track": "harness"
+  }
 ]

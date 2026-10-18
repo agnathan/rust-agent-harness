@@ -1,6 +1,6 @@
-# Growing harness, chapters 10–50
+# Growing harness, chapters 10–52
 
-Chapters 1–10 grow one harness by copying the previous step and adding the new behavior. From chapter 11 onward the book had drifted into standalone demo crates. This document is the plan that puts it back. Batch 1 (chapters 11–22, plus the chapter 10 driver) is done in the same change as this file. Later batches do 23–32, 33–42, and 43–50 from the rules below. Browser Tools and Vision are a separate insert between chapters 39 and 42. They are not part of those ranges.
+Chapters 1–10 grow one harness by copying the previous step and adding the new behavior. From chapter 11 onward the book had drifted into standalone demo crates. This document is the plan that puts it back. Batch 1 (chapters 11–22, plus the chapter 10 driver) is done. Batch 2 (chapters 23–32) is done. Batch 3 (chapters 33–44, including the Browser Tools and Vision insert) is done in the same change as the updates below. Later work is chapters 45–52, which are renamed and not yet rebuilt as growing-harness copies.
 
 A later step is a new copy, not a path dependency and not a patch of the previous directory. `steps/README.md` already says that. Unique Cargo package names stay. The library name inside a harness step stays `harness_core`.
 
@@ -24,8 +24,22 @@ ch09-10-evals
   → ch20-sessions
   → ch21-memory
   → ch22-recall
-  → ch24-skills … ch36, ch38, ch39, ch41–ch48, ch50
+  → ch24-skills
+  → … ch32-critic
+  → ch33-composition
+  → ch34-context
+  → ch35-actors
+  → ch36-supervision
+  → ch38-profiles        (chapter 37 is the server; the harness does not copy it)
+  → ch39-gateway
+  → ch40-browser
+  → ch41-vision
+  → ch43-cron            (chapter 42 is the server)
+  → ch44-acp
+  → ch45-blackboard … ch50-tracing, ch52-evals
 ```
+
+Chapter 33 copies chapter 32. Chapter 38 copies chapter 36. Chapter 40 copies chapter 39. Chapter 43 copies chapter 41. Chapter 45 still has the pre-batch standalone tree under its new directory name; its batch copies chapter 44.
 
 Chapter 16 copies chapter 14, not chapter 15. Chapter 17 copies chapter 16. Chapter 18 copies chapter 17. Team chapters copy the previous harness chapter. Chapter 24 copies chapter 22. Chapter 28 copies chapter 27, and so on. Do not restart from a standalone demo.
 
@@ -38,15 +52,15 @@ ch05-minimal-server
   → ch15-limits             (chapter 7 and chapter 8 sources are vendored inside this crate)
   → ch23-learned-tools
   → ch37-balancing
-  → ch40-service
-  → ch49-capstone
+  → ch42-service
+  → ch51-capstone
 ```
 
 Chapter 15 no longer path-depends on `ch07-catalog` or `ch08-session-toolsets`. Their sources live in `steps/ch15-limits/src/catalog/` and `src/session.rs`. The public names chapter 23 already calls are unchanged: `Catalog` (the chapter 7 `Gateway`), `LimitedGateway` (`new`, `catalog`, `open_session`, `session_tools`), `SessionView`. The lib name stays `gw_limits`. The package stays `ch15-limits`. The bench stays `limits`.
 
-Chapter 23 vendors chapter 15's sources into `ch23-learned-tools` the same way chapter 15 vendored chapters 7 and 8. The lib name stays `gw_learned`. `mcp-gateway` still imports `LearnedGateway`. There is no path dependency on `ch15-limits`. Chapters 35, 38, and 47 are standalone today. Their batches copy the previous server crate in as modules and add the new behavior on top, so a reader who opens only that step still has the catalog, the session view, the limits, and the learned offer. Keep each chapter's existing package name, lib name, and `[[bench]]` name. Those are what `.github/workflows/benchmarks.yml` passes to `cargo bench -p`.
+Chapter 23 vendors chapter 15's sources into `ch23-learned-tools` the same way chapter 15 vendored chapters 7 and 8. The lib name stays `gw_learned`. `mcp-gateway` still imports `LearnedGateway`. There is no path dependency on `ch15-limits`. Chapter 37 vendors that learned gateway and adds `federation`. Its lib name is `balancing`. Chapter 42 vendors chapter 37 and adds `service`. Its lib name is `gwservice`. Chapter 51 is the renamed capstone and still the pre-batch tree; its batch copies chapter 42. Keep each chapter's package name, lib name, and `[[bench]]` name. Those are what `.github/workflows/benchmarks.yml` passes to `cargo bench -p`.
 
-`mcp-gateway/` stays the process crate. It re-exports the latest server step. After chapter 23 it re-exports `LearnedGateway`. After chapter 49 it re-exports the capstone. Do not bind a socket in any of these steps.
+`mcp-gateway/` stays the process crate. It re-exports the latest server step. After chapter 23 it re-exports `LearnedGateway`. After chapter 51 it re-exports the capstone. Do not bind a socket in any of these steps.
 
 ## Harness crate layout
 
@@ -144,7 +158,7 @@ Chapters 1–4 run about 3,500–7,000 words. Every chapter from 10 through 50 m
 
 The word-count band is the result of walking the code. A paragraph that does not teach a type, a branch, or a design reason does not belong. Do not repeat the summary to inflate the count.
 
-## Per-chapter plan, 11–48
+## Per-chapter plan, 11–52
 
 "Milestone" is the file `my-harness/tests/chNN.rs`. The stub panics with `todo!("chapter NN")` until the reader fills it in. The my-harness workflow records the failure and exits 0 unless someone dispatches it with "fail the workflow" set. The tests must compile: `cargo clippy --workspace --all-targets` builds them.
 
@@ -180,30 +194,32 @@ Bench IDs are `section/function` from `benchmarks/descriptions.json`. Keep both 
 | 36 | restart a failed child | **Heartbeats**, deferred by both 29 and 31. Hermes `tools/delegate_tool.py`: `_start_heartbeat`, `_HEARTBEAT_INTERVAL = 30` seconds, `_HEARTBEAT_STALE_CYCLES_IDLE = 15` (450s), `_HEARTBEAT_STALE_CYCLES_IN_TOOL = 40` (1200s). Re-read those constants on current `main` before quoting them; they have moved before. Progress is an iteration, a tool change, or `last_activity_ts`. An in-flight model wait refreshes that timestamp, so a slow model is not idle | `ch36.rs`: a child with no progress for the idle threshold is stale; one that is inside a tool uses the longer threshold | `36/restart_bookkeeping` |
 | 37 | server copy of chapter 23, plus a per-tool backend pool and federation | discovery connects at most 4. No socket. `0` as unlimited stays unimplemented | `ch37.rs`: least-outstanding pick does not open a connection | `37/pick_least` |
 | 38 | profiles and a secret map | E4 `get_secret` fails closed when no scope is installed | `ch38.rs`: an unscoped secret read is the error, and the secret is not in the prompt | `38/resolve_profile` |
-| 39 | chat gateway into the chapter 2 inbox | L1a, L2a, J5, N2 as the outline already says. **B4** `tools/terminal_tool_guards.py` `gateway_lifecycle_block`: a shell command that would restart or stop this gateway is denied. This is the chat gateway, not the MCP server. Chapter 41's M2 is the cron-prompt form of the same idea and stays there. Outbound text calls `redact_for_egress` | `ch39.rs`: a gateway restart command is blocked; a platform enqueue is not a model call | `39/enqueue_platform` |
-| 40 | server copy of chapter 37, plus routes, drain, quotas, bearer check | M7 sampling limit, H4 OSV check before npx/uvx. No socket. OAuth issuance stays deferred | `ch40.rs`: killing the route record fails the next lookup over to the other replica id | `40/route_session` |
-| 41 | durable cron claim | M1 prompt scan, M2 `check_gateway_lifecycle` (already the chapter's job; do not move it to 37). Unattended dangerous-command denial stays chapter 11's A4 | `ch41.rs`: a claimed job retries at most once; a lifecycle command in the job is blocked | `41/scan_thousand` |
-| 42 | ACP adapter on the session inbox | none new | `ch42.rs`: one ACP update becomes one inbox submit | `42/translate_update` |
-| 43 | blackboard | the lock is not held across a model call | `ch43.rs`: 100 waiters, one claim | `43/claim_with_waiters` |
-| 44 | durable kanban | compare-and-swap claim | `ch44.rs`: two claims of one task, one wins | `44/claim_transaction` |
-| 45 | message bus | replace the narrow scrub this chapter has today with `redact_for_egress` from chapter 20. Do not keep a second redactor | `ch45.rs`: a published envelope that contains a key is scrubbed; a slow subscriber hits the bound | `45/publish_to_agents` |
-| 46 | team skill library and librarian | the index swap is an `Arc` swap | `ch46.rs`: `skill_propose` enqueues and workers do not wait | `46/skill_propose`, `46/index_swap` |
-| 47 | A2A for agents outside this process | outbound text calls `redact_for_egress`. MCP stays the path for tools we own | `ch47.rs`: cancel reaches an in-flight remote call | `47/cancel_inflight` |
-| 48 | tracing on chapter 1 events, and the research team | the capstone research team lives here. Chapter 49 is the load and token comparison, not this team | `ch48.rs`: a span per event still finishes the mock turn | `48/event_without_span`, `48/span_per_event` |
-| 49 | server copy of chapter 40, plus the three token arms and an in-memory load | no socket. oha is not measured | `ch49.rs`: dynamic, static, and every-tool arms each report tokens and task success | `49/dynamic_tokens`, `49/load_100` |
-| 50 | re-run chapter 9's saved evals, plus one red-team case per layer L1–L9 and the cross-cutting layer | the checklist is section 4 of `docs/hermes-guardrails.md`. No fail threshold | `ch50.rs`: the saved set still passes on the mock; one appended trajectory event is ordered | `50/append_event`, `50/saved_set` |
+| 39 | chat gateway into the chapter 2 inbox | L1a, L2a, J5, N2 as the outline already says. **B4** `tools/terminal_tool_guards.py` `gateway_lifecycle_block`: a shell command that would restart or stop this gateway is denied. This is the chat gateway, not the MCP server. Chapter 43's M2 is the cron-prompt form of the same idea and stays there. Outbound text calls `redact_for_egress` | `ch39.rs`: a gateway restart command is blocked; a platform enqueue is not a model call | `39/enqueue_platform` |
+| 40 | browser tools on the chapter 39 harness, behind `PageBackend` | secret URL, then SSRF (`allow_private` false), then open, then a recheck of `final_url`. Snapshot caps 15,000 and 2,000,000. Page text is `wrap_untrusted`. Vendors in `plugins/browser/` stay deferred | `ch40.rs`: a metadata URL is not navigated | `40/fake_navigate` |
+| 41 | vision on the chapter 40 harness, behind `ImageSource` | download cap 50 MB, inline cap 20 MB, mime jpeg/png/gif/webp, PNG pixel cap 100,000,000. Caption is untrusted. Remote URLs use the chapter 16 SSRF floor | `ch41.rs`: an oversized image or a bad type is rejected | `41/sniff_png` |
+| 42 | server copy of chapter 37, plus routes, drain, quotas, bearer check | M7 sampling limit, H4 OSV check before npx/uvx. No socket. OAuth issuance stays deferred | `ch42.rs`: killing the route record fails the next lookup over to the other replica id | `42/route_session` |
+| 43 | durable cron claim on the chapter 41 harness | M1 prompt scan, M2 `check_lifecycle` (stays here; do not move it to 39). Unattended dangerous-command denial stays chapter 11's A4 | `ch43.rs`: a claimed job retries at most once; a lifecycle command in the job is blocked | `43/scan_thousand` |
+| 44 | ACP adapter on the session inbox | none new | `ch44.rs`: one ACP update becomes one inbox submit | `44/translate_update` |
+| 45 | blackboard | the lock is not held across a model call | `ch45.rs`: 100 waiters, one claim | `45/claim_with_waiters` |
+| 46 | durable kanban | compare-and-swap claim | `ch46.rs`: two claims of one task, one wins | `46/claim_transaction` |
+| 47 | message bus | replace the narrow scrub this chapter has today with `redact_for_egress` from chapter 20. Do not keep a second redactor | `ch47.rs`: a published envelope that contains a key is scrubbed; a slow subscriber hits the bound | `47/publish_to_agents` |
+| 48 | team skill library and librarian | the index swap is an `Arc` swap | `ch48.rs`: `skill_propose` enqueues and workers do not wait | `48/skill_propose`, `48/index_swap` |
+| 49 | A2A for agents outside this process | outbound text calls `redact_for_egress`. MCP stays the path for tools we own | `ch49.rs`: cancel reaches an in-flight remote call | `49/cancel_inflight` |
+| 50 | tracing on chapter 1 events, and the research team | the capstone research team lives here. Chapter 51 is the load and token comparison, not this team | `ch50.rs`: a span per event still finishes the mock turn | `50/event_without_span`, `50/span_per_event` |
+| 51 | server copy of chapter 42, plus the three token arms and an in-memory load | no socket. oha is not measured | `ch51.rs`: dynamic, static, and every-tool arms each report tokens and task success | `51/dynamic_tokens`, `51/load_100` |
+| 52 | re-run chapter 9's saved evals, plus one red-team case per layer L1–L9 and the cross-cutting layer | the checklist is section 4 of `docs/hermes-guardrails.md`. No fail threshold | `ch52.rs`: the saved set still passes on the mock; one appended trajectory event is ordered | `52/append_event`, `52/saved_set` |
 
 ## Where the orphaned deferrals live
 
 | Id | Hermes | Home | State after batch 1 |
 |---|---|---|---|
 | A2 | `tools/approval.py` `check_execute_code_guard` | **13** | Implemented. Cron/unattended deny a local script. Isolated env approves. Whole-script ask is one prompt. Interactive CLI approves the script and still gates `terminal`. |
-| B4 | `tools/terminal_tool_guards.py` `gateway_lifecycle_block` | **39** | Not this batch. Chapter 41 keeps M2 for cron prompts. |
+| B4 | `tools/terminal_tool_guards.py` `gateway_lifecycle_block` | **39** | Implemented. A supervised shell that would restart, stop, or uninstall the gateway is denied. Unsupervised returns none. Chapter 43 keeps M2 for cron prompts. |
 | B5 | `tools/self_repo_guard.py` `detect_self_repo_git_mutation` | **14** | Implemented, adapted. Global `git -C`, wrappers `sudo` / `command` / `time` / `nohup` / `env`, the worktree-mutation subcommands, and `reset --hard/--merge/--keep`. Alias lookup and heredocs are not parsed. Hermes only activates the block on Windows (`guard_active`); this harness runs the detector on every platform. |
 | B6 | `agent/runtime_self_protection.py` `command_deletes_runtime`, `is_protected_path` | **14** | Implemented, adapted. The caller names the runtime path (`current_exe` in the floor) because there is no `sys.executable`. Covers `rm` / `rmdir` / `rd` / `del` / `erase` / `remove-item` / `ri`, `find … -delete` / `-exec rm`, and `uv python uninstall` when the spec is `--all` or appears as `cpython-<spec>` on the path. Overlap is both directions, so deleting a parent of the binary is a hit. `xargs` and code-level `rmtree` stay out. |
 | E1 | `agent/redact.py` `redact_sensitive_text`, `RedactingFormatter` | **20** | Implemented as `redact_sensitive_text` and `redacting_formatter`. Mask is the prefix through the first `-` or `_`, then `***`. |
-| E2 | `redact_for_egress` | **20** | Implemented beside E1. Chapters 39, 45, and 47 call it. Chapter 45's narrower scrub is replaced, not kept. |
-| heartbeats | `tools/delegate_tool.py` `_start_heartbeat` | **36** | Plan only. Chapters 29 and 31 both deferred it; it does not belong in either. |
+| E2 | `redact_for_egress` | **20** | Implemented beside E1. Chapters 39, 47, and 49 call it. Chapter 49's narrower scrub is replaced, not kept. |
+| heartbeats | `tools/delegate_tool.py` `_start_heartbeat` | **36** | Implemented as `is_stale`. Interval 30s. Idle stale at 15 cycles (450s). In a tool, 40 cycles (1200s). Progress is a new iteration, a different tool, or a newer `last_activity_ts`. The function does not sleep and does not start a thread. |
 | H3 | `tools/plugin_guard.py` `scan_plugin`, `should_allow_plugin_install` | **12** for the structural caps and the force rule; **25** for the skills-guard pattern engine (H1) | Structural half implemented. Caps: `MAX_PLUGIN_FILE_COUNT = 400`, total 10 MB, one file 1 MB. Verdicts safe/caution/dangerous map to Allow / Confirm (force overrides caution) / Block (force does not override dangerous). Oversized is caution, not a hard block. `scan_plugin_shape` never returns Dangerous by itself. |
 
 ## my-harness
@@ -218,13 +234,13 @@ Do not move existing `step-NN` tags. After this batch merges, tags `step-10` thr
 
 ## Planned chapters: built-in tools, browser, and vision
 
-Chapters 16 and 17 are built. The +2 rename of the old chapters 16–48 is applied; the book is chapters 0–50. Browser Tools and Vision stay unwritten. Means for the shifted chapters 10–15 and 18–22 stay the `mean.point_estimate` values from [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918). Means for `16/fake_search`, `16/ssrf_block`, `17/patch_apply`, and `17/todo_merge` are `mean.point_estimate` from [run 39114427940](https://github.com/agnathan/rust-agent-harness/actions/runs/39114427940).
+Chapters 16 and 17 are built. Browser Tools is chapter 40 and Vision is chapter 41. Both are written. The book is chapters 0–52. Means for the shifted chapters 10–15 and 18–22 stay the `mean.point_estimate` values from [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918). Means for `16/fake_search`, `16/ssrf_block`, `17/patch_apply`, and `17/todo_merge` are `mean.point_estimate` from [run 39114427940](https://github.com/agnathan/rust-agent-harness/actions/runs/39114427940). Means for chapters 23–32 stay the values from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589). Means for chapters 33–44 are the `mean.point_estimate` values from this batch's Benchmarks run.
 
 ### Where the two tool chapters go
 
 They are adjacent, in Part I, after chapter 15 (Limits and Breakers) and before Providers. That is the first place the loop, the approval floor, the sandbox, and the cap of 50 all exist. Putting them immediately after chapter 9 would teach the tools before the guardrails they call. Part I currently ends at Streaming, so both chapters stay in Part I.
 
-The insert is applied. The book is chapters 0–50.
+The insert is applied. The book is chapters 0–52.
 
 | After the insert | Was | Title | This batch |
 |---|---|---|---|
@@ -289,9 +305,17 @@ Same chapter shape as Tools I. Milestone ideas: a path outside the workspace is 
 
 ### Browser Tools and Vision
 
-Not built. They belong in Part V, next to the platform adapters and the editor client, not in Part I. The Gateway (platform adapters submitting to the session inbox) is chapter 39 and Editor Integration (ACP) is chapter 42. Insert Browser Tools and then Vision between those two when they are written. That is a second insert, not part of the +2 rename. Do not reserve numbers inside the +2 table or the shift will be done twice.
+Written. They sit in Part V, after the gateway (chapter 39) and before the MCP gateway service (chapter 42). Editor Integration is chapter 44. The insert shifted every former chapter 40 and later up by two. Bench ids `40/fake_navigate` and `41/sniff_png` are new. Former ids from 40 upward are the new id plus two, with the old id kept as an alias.
 
-Hermes, for the batch that writes them, starts at `tools/browser_tool.py`, `tools/browser_tool_session.py`, and `tools/url_safety.py` (the same SSRF floor as web extract), and at `tools/vision_tools.py` plus `tools/vision_tools_image_prep.py`. Cite whatever those files still export on the day they are opened. Both chapters are unwritten in the outline and in `TABLE_OF_CONTENTS.md`. They have no step crate and no bench id yet.
+Hermes, read on current `main` when the chapters were written:
+
+- `tools/browser_tool.py` `evaluate_url_safety`, `_secret_url_error`, `_url_policy_error`, `browser_navigate`. `DEFAULT_SNAPSHOT_THRESHOLD` is 15000. `MAX_STORED_SNAPSHOT_CHARS` is 2_000_000.
+- `agent/tool_dispatch_helpers.py` `_UNTRUSTED_TOOL_PREFIXES` includes `browser_`.
+- `plugins/browser/` (browserbase, browser_use, firecrawl) stays deferred.
+- `tools/vision_tools.py` `_VISION_MAX_DOWNLOAD_BYTES` is 50 MiB. `_MAX_BASE64_BYTES` is 20 MiB.
+- `tools/vision_tools_image_prep.py` `_ANTHROPIC_SUPPORTED_MEDIA_TYPES` is jpeg, png, gif, and webp. `_VISION_MAX_VALIDATED_AGGREGATE_PIXELS` is 100_000_000.
+
+The harness modules are `browser` (`PageBackend`, `FakeBrowser`) and `vision` (`ImageSource`, `FakeImages`). Tests and benches do not launch a browser and do not call a vision API.
 
 ## What batch 1 changed that later batches must not undo
 
@@ -307,3 +331,11 @@ Hermes, for the batch that writes them, starts at `tools/browser_tool.py`, `tool
 - Chapter 33 still compiles by depending on chapter 32's harness and calling `harness_core::supervisor`, `handoffs`, `fanout`, and `critic`. Its batch copies chapter 32 instead of path-depending on four crates.
 - H1, the skills-guard install policy and the pattern scan, and A9, the write-approval gate that stays off unless set, live in chapter 25. Chapter 27 calls those functions. It does not grow a second scanner.
 - Heartbeats stay chapter 36. Chapter 31 does not start them. Hermes `_get_max_async_children` now ignores `delegation.max_async_children` and returns the concurrent-children cap. The harness queue of 100 is this book's cap, not that key.
+
+## What batch 3 changed that later batches must not undo
+
+- Chapters 33–36, 38–41, and 43–44 are copies of the previous harness. Chapter 33 copies chapter 32. Chapter 38 copies chapter 36. Chapter 40 copies chapter 39. Chapter 43 copies chapter 41. Do not replace them with standalone crates. The new modules are `composition`, `context`, `actors`, `supervision` (heartbeats live in that module), `profiles`, `gateway` (B4 and `send_out` live there), `browser`, `vision`, `cron`, and `acp`. `lib.rs` does not glob-reexport them.
+- Chapter 37 vendors chapter 23. Lib name `balancing`, module `federation`. Chapter 42 vendors chapter 37. Lib name `gwservice`, module `service`. `mcp-gateway` still re-exports chapter 23's `LearnedGateway`.
+- Browser Tools is chapter 40. Vision is chapter 41. Former chapters 40–50 are 42–52. Bench ids moved with them and kept the old id as an alias. `40/fake_navigate` and `41/sniff_png` are new ids.
+- Heartbeats are `is_stale` in chapter 36. B4 is `gateway_lifecycle_block` in chapter 39. Cron M2 stays in chapter 43.
+- Chapters 45–52 are the renamed trees. Their batch still has to copy the previous harness. Do not treat the rename as that copy.

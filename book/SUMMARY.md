@@ -2,7 +2,7 @@
 
 [Book outline](book-outline.md)
 
-Server-track chapters are marked *(server)*. They are interleaved with the harness. Chapters 5, 7, 8, 15, 21, 35, 38, and 47 are written. The process crate is `mcp-gateway/`. The harness from chapter 10 on is one growing crate; the plan is [`docs/harness-architecture.md`](../docs/harness-architecture.md).
+Server-track chapters are marked *(server)*. They are interleaved with the harness. Chapters 5, 7, 8, 15, 23, 37, 42, and 51 are the server track. The process crate is `mcp-gateway/`. The harness from chapter 10 on is one growing crate; the plan is [`docs/harness-architecture.md`](../docs/harness-architecture.md).
 
 # Part I: One agent
 
@@ -26,8 +26,6 @@ Server-track chapters are marked *(server)*. They are interleaved with the harne
 - [Chapter 17: Built-in Tools II: Files, Terminal, Todo, and Clarify](chapter-17-local-tools.md)
 - [Chapter 18: Providers](chapter-18-providers.md)
 - [Chapter 19: Streaming](chapter-19-streaming.md)
-
-<!-- Planned, not yet written, in Part V between the gateway and Editor Integration: Browser Tools and Vision. Spec: docs/harness-architecture.md. -->
 
 # Part II: Learning
 
@@ -60,17 +58,19 @@ Server-track chapters are marked *(server)*. They are interleaved with the harne
 
 - [Chapter 38: Profiles](chapter-38-profiles.md)
 - [Chapter 39: The Gateway](chapter-39-gateway.md)
-- [Chapter 40: MCP Gateway Service](chapter-40-service.md) *(server)*
-- [Chapter 41: Cron](chapter-41-cron.md)
-- [Chapter 42: Editor Integration](chapter-42-acp.md)
+- [Chapter 40: Browser Tools](chapter-40-browser.md)
+- [Chapter 41: Vision](chapter-41-vision.md)
+- [Chapter 42: MCP Gateway Service](chapter-42-service.md) *(server)*
+- [Chapter 43: Cron](chapter-43-cron.md)
+- [Chapter 44: Editor Integration](chapter-44-acp.md)
 
 # Part VI: Loosely coupled teams
 
-- [Chapter 43: The Blackboard](chapter-43-blackboard.md)
-- [Chapter 44: The Kanban Board](chapter-44-kanban.md)
-- [Chapter 45: The Message Bus](chapter-45-message-bus.md)
-- [Chapter 46: Shared Team Skills](chapter-46-team-skills.md)
-- [Chapter 47: A2A for External Agents](chapter-47-a2a.md)
-- [Chapter 48: Seeing Inside](chapter-48-tracing.md)
-- [Chapter 49: Load and Token Capstone](chapter-49-capstone.md) *(server)*
-- [Chapter 50: Evals](chapter-50-evals.md)
+- [Chapter 45: The Blackboard](chapter-45-blackboard.md)
+- [Chapter 46: The Kanban Board](chapter-46-kanban.md)
+- [Chapter 47: The Message Bus](chapter-47-message-bus.md)
+- [Chapter 48: Shared Team Skills](chapter-48-team-skills.md)
+- [Chapter 49: A2A for External Agents](chapter-49-a2a.md)
+- [Chapter 50: Seeing Inside](chapter-50-tracing.md)
+- [Chapter 51: Load and Token Capstone](chapter-51-capstone.md) *(server)*
+- [Chapter 52: Evals](chapter-52-evals.md)

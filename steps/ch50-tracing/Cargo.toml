@@ -1,0 +1,24 @@
+[package]
+name = "ch50-tracing"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+description = "Chapter 50: spans on a turn, and a research team that remembers."
+
+[lib]
+name = "spans"
+
+[[bin]]
+name = "ch50-tracing"
+path = "src/main.rs"
+
+[dependencies]
+tracing = "0.1"
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "spans"
+harness = false

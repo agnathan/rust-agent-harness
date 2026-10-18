@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 rust-version = "1.85"
 publish = false
-description = "Chapter 37: least-outstanding and power-of-two picks across a per-tool pool."
+description = "Chapter 37: chapter 23 vendored, plus a per-tool backend pool."
 
 [lib]
 name = "balancing"
@@ -12,6 +12,11 @@ name = "balancing"
 [[bin]]
 name = "ch37-balancing"
 path = "src/main.rs"
+
+[dependencies]
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync", "time"] }
 
 [dev-dependencies]
 criterion = "0.5"

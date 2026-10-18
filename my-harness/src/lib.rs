@@ -19,7 +19,12 @@ pub use milestones::{
     chapter_24_index_changes_when_viewed, chapter_25_force_installs_dangerous,
     chapter_26_review_runs_on_user_turn, chapter_27_enqueue_writes_skill, chapter_28_same_context,
     chapter_29_pool_limit, chapter_29_reflection_starts_reviewer, chapter_30_keeps_scratch,
-    chapter_31_refuses_overflow, chapter_32_critic_does_the_work,
+    chapter_31_refuses_overflow, chapter_32_critic_does_the_work, chapter_33_nested_width_fits,
+    chapter_34_shares_snapshot, chapter_35_full_inbox_grows, chapter_36_idle_is_stale,
+    chapter_37_pick_opens_connection, chapter_38_unscoped_secret_in_prompt,
+    chapter_39_enqueue_calls_model, chapter_39_gateway_restart_allowed,
+    chapter_40_navigates_metadata, chapter_41_accepts_image, chapter_42_route_after_kill,
+    chapter_43_lifecycle_allowed, chapter_43_retries_claimed, chapter_44_update_submits_once,
 };
 
 pub use chat::{ChatCommand, ChatSession, Outcome};

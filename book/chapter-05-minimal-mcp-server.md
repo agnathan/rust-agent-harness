@@ -4,7 +4,7 @@
 
 Chapter 4 can talk to an MCP server. It cannot be one. The harness decides what enters a prompt. Something else has to hold the tool list and run the call. This chapter is that process, in the smallest form that is still a server: a fixed list, a session view of that list, and a gate on how many calls may be inside.
 
-The step crate is `steps/ch05-minimal-server`. The package is `ch05-minimal-server`. It binds no socket. Streamable HTTP, replicas, and OAuth are chapter 40. The catalog search is chapter 7.
+The step crate is `steps/ch05-minimal-server`. The package is `ch05-minimal-server`. It binds no socket. Streamable HTTP, replicas, and OAuth are chapter 42. The catalog search is chapter 7.
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -18,7 +18,7 @@ The step crate is `steps/ch05-minimal-server`. The package is `ch05-minimal-serv
 >
 > **Adapted.** Hermes `register()` in `tools/registry.py` lets a same-name, same-toolset duplicate overwrite. This server returns `GatewayError::Duplicate` and keeps the first tool, which is the rule chapter 3 already uses. Hermes serves stdio. This chapter stays in-process. The book's budget for this row is 32 accepted calls and 8 executing. Those two numbers are not in `mcp_serve.py`. Eight is the same bound as `_MAX_TOOL_WORKERS` in `agent/tool_executor.py`. Thirty-two is the number of accept permits.
 >
-> **Deferred.** A socket, streamable HTTP, and OAuth 2.1 as a resource server wait for chapter 40. Server-side search waits for chapter 7. Per-session filtering waits for chapter 8.
+> **Deferred.** A socket, streamable HTTP, and OAuth 2.1 as a resource server wait for chapter 42. Server-side search waits for chapter 7. Per-session filtering waits for chapter 8.
 
 [personal note: the moment a client and a server stopped being the same process in your head]
 
@@ -106,7 +106,7 @@ Layer L7, only the concurrency cap, plus the duplicate-name refusal from chapter
 
 **Duplicate names.** `register` returns `Duplicate` and leaves the first tool in place.
 
-This process does not authenticate a caller. Default-deny and pairing are chapter 39 for the chat gateway, and OAuth for this MCP process is chapter 40. It does not scrub secrets (E1 and E2, `agent/redact.py`). It does not sandbox the tool body. Chapter 13 is that boundary, and Hermes leaves the sandbox off by default (`terminal.backend: "local"`, D1). The gate is a concurrency limit. It is not a security boundary.
+This process does not authenticate a caller. Default-deny and pairing are chapter 39 for the chat gateway, and OAuth for this MCP process is chapter 42. It does not scrub secrets (E1 and E2, `agent/redact.py`). It does not sandbox the tool body. Chapter 13 is that boundary, and Hermes leaves the sandbox off by default (`terminal.backend: "local"`, D1). The gate is a concurrency limit. It is not a security boundary.
 
 ## Chapter summary
 

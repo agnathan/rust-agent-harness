@@ -4,21 +4,21 @@
 1/
 Chapter 34 is up: Managing Context.
 
-A context file is scanned before it enters the prompt. A project file that matches is replaced with a blocked sentence. The frozen snapshot is an Arc. Compression runs only when the transcript is over the cap. 🧵
+A project file with an injection is replaced by the BLOCKED line. A user-authored SOUL.md keeps its text and the finding. Over 20,000 characters, the file keeps a head of 14,000 and a tail of 4,000. share is Arc::clone. 🧵
 
 2/
-Hermes Agent does this in agent/prompt_builder.py. The cap is 20,000 characters, head 70 percent, tail 20 percent. A user-authored SOUL.md still loads. High-risk tool output is wrapped in agent/tool_dispatch_helpers.py, and an embedded closer is neutralized. The skill marker is [SKILL_PRUNED: …].
+Hermes Agent at 9e01b44. agent/prompt_builder.py: _scan_context_content, CONTEXT_FILE_MAX_CHARS 20_000, head ratio 0.7, tail ratio 0.2. tools/threat_patterns.py: MAX_SCAN_CHARS is 65_536. The filler is {0,8}.
 
 3/
-I kept four of the threat patterns, not the whole library. The side model is a queue of strings. Under the cap it is not called. The hot path clones the Arc.
+agent/tool_dispatch_helpers.py wraps web_extract, web_search, browser_, and mcp_ once the text is at least 32 characters, and rewrites an embedded untrusted_tool_result token with hyphens. preflight calls the side model only over the cap. ptr_eq holds on both paths. agent/context_compressor.py builds the SKILL_PRUNED marker.
 
 4/
-Sharing that snapshot measured 5.281 ns. The demo prints "shared: clean". No key.
+The bench id is 34/share_snapshot. The mean is @@MEAN:34/share_snapshot@@ (`mean.point_estimate`). The demo prints "shared: clean". No key.
 
 [personal note]
 
 5/
-Next, each agent gets a task and a mailbox. The inbox holds 64, and a full one pushes back.
+Next is actors: one tokio task per agent, an inbox of 64, a steer that waits for the turn, an interrupt that skips the model.
 
 Read Chapter 34: [link]
 
@@ -27,12 +27,12 @@ Read Chapter 34: [link]
 ## LinkedIn
 Chapter 34 is out: Managing Context.
 
-The prompt is a choice. Hermes Agent scans files such as AGENTS.md before they enter it, replaces a match with a blocked sentence, and caps a huge file at 20,000 characters while keeping a head and a tail. Tool output from the web, the browser, or an MCP server is wrapped, and a forged closer is rewritten so it cannot end the block early. I kept those rules. The frozen snapshot is an Arc the hot path only clones. Compression, and the memory flush in front of it, run when the transcript is over the cap, and they do not rebuild that snapshot.
+A rules file is not the same thing as a prompt you meant to send. Hermes Agent scans context files in agent/prompt_builder.py, replaces a project hit with a BLOCKED line, and still loads the user's own file. The cap is 20,000 characters, with a 70% head and a 20% tail. tools/threat_patterns.py stops the scan at 65,536. agent/tool_dispatch_helpers.py wraps high-risk tool output and neutralizes an embedded closer. I kept those checks, compiled four of the patterns, and shared the snapshot with Arc::clone. Compression runs only when the transcript is over the cap. The hot path does not rebuild that Arc.
 
-Sharing the snapshot measured 5.281 ns. The demo does not need an API key.
+The bench id is 34/share_snapshot. The mean is @@MEAN:34/share_snapshot@@ (`mean.point_estimate`).
 
-[personal note: one takeaway from writing this chapter]
+[personal note]
 
-Next: one task per agent, and a mailbox that can say it is full. Read Chapter 34: [link]
+Next: one mailbox per agent, capacity 64, steer and interrupt. Read Chapter 34: [link]
 
 #Rust #AIAgents #LearningInPublic #SoftwareEngineering

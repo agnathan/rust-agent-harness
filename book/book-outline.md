@@ -19,7 +19,7 @@
 5. a milestone demo: the mock by default, and an optional real OpenRouter call
 6. what was learned, including `[personal note]` placeholders for the author's own experience
 
-The book is six parts and chapters 0 through 50. Eight of those chapters are the MCP gateway, marked *(server)* below, and they sit immediately after the harness chapter they build on. The architecture and the notes from Hermes and from ContextForge, ToolHive, and the Docker MCP gateway are in [`docs/mcp-gateway.md`](../docs/mcp-gateway.md). Performance is a budget on every chapter, not a late part: async tokio from chapter 1, concurrent tools from chapter 3, and learning work off the hot path. The numbers are in [`docs/performance.md`](../docs/performance.md). MCP is first-class from Part I: tools are shaped like MCP tools (chapter 3), the harness is an MCP client (chapter 4, via `rmcp`), and a separate gateway process is the MCP server (chapter 5, then the rest of the server track). Later chapters call those servers and can publish skills through them. Part II is learning: one agent gets better with use before the book builds a team. The design for skills, memory, recall, reflection, curation, and the team librarian is [`docs/self-improvement.md`](../docs/self-improvement.md). Part III is the team patterns. The default team is a supervisor that calls other agents as tools, fans them out under a bound, and shares one context object by `Arc`. The rules for choosing a pattern are in [`docs/team-patterns.md`](../docs/team-patterns.md). Part IV is making that system robust. Part V runs it as a service: profiles, a chat gateway, the MCP gateway as a highly available service, cron, and an editor. Part VI is loosely coupled teams, including a durable kanban board next to the blackboard. Speed is already in force by then.
+The book is six parts and chapters 0 through 52. Eight of those chapters are the MCP gateway, marked *(server)* below: chapters 5, 7, 8, 15, 23, 37, 42, and 51. They sit immediately after the harness chapter they build on. The architecture and the notes from Hermes and from ContextForge, ToolHive, and the Docker MCP gateway are in [`docs/mcp-gateway.md`](../docs/mcp-gateway.md). Performance is a budget on every chapter, not a late part: async tokio from chapter 1, concurrent tools from chapter 3, and learning work off the hot path. The numbers are in [`docs/performance.md`](../docs/performance.md). MCP is first-class from Part I: tools are shaped like MCP tools (chapter 3), the harness is an MCP client (chapter 4, via `rmcp`), and a separate gateway process is the MCP server (chapter 5, then the rest of the server track). Later chapters call those servers and can publish skills through them. Part II is learning: one agent gets better with use before the book builds a team. The design for skills, memory, recall, reflection, curation, and the team librarian is [`docs/self-improvement.md`](../docs/self-improvement.md). Part III is the team patterns. The default team is a supervisor that calls other agents as tools, fans them out under a bound, and shares one context object by `Arc`. The rules for choosing a pattern are in [`docs/team-patterns.md`](../docs/team-patterns.md). Part IV is making that system robust. Part V runs it as a service: profiles, a chat gateway, browser tools, vision, the MCP gateway as a highly available service, cron, and an editor. Part VI is loosely coupled teams, including a durable kanban board next to the blackboard. Speed is already in force by then.
 
 The verified Hermes catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md): 88 guardrails, layers L1–L9 plus a cross-cutting layer. Written chapters name the layer their code already covers. Chapters that are not written yet carry the Guardrail notes below.
 
@@ -86,14 +86,7 @@ The harness decides what enters the prompt. The server holds the catalog, search
 - **Chapter 18.** Choosing the next native adapter, or the next OpenRouter route, adds < 1 ms, excluding the failed call (measured 5.990 ns). Rotation reuses the pooled client from chapter 1 (measured 3.465 ns). A side-model summary does not run on the user turn unless that turn asked for it.
 - **Chapter 19.** Assembling a streamed reply from chapter 1 events adds < 1 ms versus a buffered reply, excluding model time. Folding 100 plain chunks measured 2.67 µs. Joining the same chunks measured 689.3 ns.
 
-### Planned, not yet written
-
-Browser Tools and Vision are not in this tree. They are a later insert in Part V, between the gateway (chapter 39) and Editor Integration (chapter 42). They do not take numbers inside the 16–50 shift. Hermes starting points, to be re-read on the day they are opened: `tools/browser_tool.py`, `tools/browser_tool_session.py`, `tools/url_safety.py`, `tools/vision_tools.py`, `tools/vision_tools_image_prep.py`. The spec is in [`docs/harness-architecture.md`](../docs/harness-architecture.md).
-
-| When | Title | Notes |
-|---|---|---|
-| Part V, after the gateway | Browser Tools | Not yet written |
-| Part V, after Browser Tools | Vision | Not yet written |
+Browser Tools is chapter 40 and Vision is chapter 41. Both are written, in Part V, after the gateway and before the MCP gateway service. The spec is in [`docs/harness-architecture.md`](../docs/harness-architecture.md).
 
 ### Part II: Learning
 
@@ -110,7 +103,7 @@ Browser Tools and Vision are not in this tree. They are a later insert in Part V
 
 **Guardrail notes**
 
-- **Chapter 20.** E1 and E2 (`agent/redact.py`). `append_turn` stores `redact_sensitive_text`. `redact_for_egress` is the stricter scrub for text that leaves the process. Chapters 37, 43, and 45 call that function.
+- **Chapter 20.** E1 and E2 (`agent/redact.py`). `append_turn` stores `redact_sensitive_text`. `redact_for_egress` is the stricter scrub for text that leaves the process. Chapters 39, 47, and 49 call that function.
 - **Chapter 21.** A memory threat scan on writes and on loaded entries (F5, `tools/memory_tool_store.py`). `MEMORY.md` and `USER.md` enter the prompt once per session and stay frozen (F6, `tools/memory_tool.py`). A mid-session write does not rewrite that snapshot.
 - **Chapter 25.** Skill and memory writes go through the approval gate (A9, `tools/write_approval.py` `evaluate_gate`, `stage_write`). The gate is off unless `memory.write_approval` or `skills.write_approval` is set. Skills Guard scans a community skill before install (H1, `tools/skills_guard.py` `scan_skill`, `should_allow_install`). `force` cannot override a dangerous verdict on a community skill.
 - **Chapter 27.** Curation that writes a skill or a memory file uses the same A9 gate, and an install uses H1. The scan stays off the request path, with the rest of this chapter's work.
@@ -162,7 +155,7 @@ Browser Tools and Vision are not in this tree. They are a later insert in Part V
 **Guardrail notes**
 
 - **Chapter 34.** Context files such as `AGENTS.md`, `SOUL.md`, and `.cursorrules` are scanned, and a match is replaced with `[BLOCKED: … Content not loaded.]` (F2, `agent/prompt_builder.py` `_scan_context_content`, `agent/context_file_sources.py`). The size cap is 20,000 characters, keeping the head and a tail (F3, `CONTEXT_FILE_MAX_CHARS`). High-risk tool output is wrapped as an untrusted result, and an embedded closer is neutralized (F4, `agent/tool_dispatch_helpers.py` `_maybe_wrap_untrusted`, `_neutralize_delimiters`).
-- **Chapter 36.** Heartbeats, deferred by chapters 27 and 29. `tools/delegate_tool.py` `_start_heartbeat`, `_HEARTBEAT_INTERVAL` 30 seconds, 15 idle cycles, 40 in-tool cycles. Re-read those constants on current Hermes `main` before quoting them.
+- **Chapter 36.** Heartbeats are implemented as `is_stale`. `tools/delegate_tool.py` `_HEARTBEAT_INTERVAL` is 30 seconds, idle stale is 15 cycles, and in-tool stale is 40 cycles. Progress is an iteration, a tool change, or `last_activity_ts`. The check does not sleep.
 
 **Performance budget**
 
@@ -177,55 +170,57 @@ Browser Tools and Vision are not in this tree. They are a later insert in Part V
 |---|---|---|---|---|
 | 38 | Profiles | `steps/ch38-profiles` | config, a secret map | several personas in one config, each with its own secrets, kept out of the system prompt |
 | 39 | The Gateway | `steps/ch39-gateway` | the session inbox | platform adapters submit to the chapter 2 inbox; a mid-turn message becomes an interrupt or a steer; streaming folds chapter 1 events into one message. This is the chat gateway, not the MCP server. Chapter 30 defers the platform re-bind from `handoff.request` to here |
-| 40 | MCP Gateway Service *(server)* | `steps/ch40-service` | an `Arc` reload, a session map | mostly stateless replicas routed by session id, hot reload by swapping an `Arc`, shared session routes and quotas in memory, health and readiness, a bearer check standing in for the OAuth 2.1 resource server, per-tenant quotas, an audit vec, span names, and a drain that finishes in-flight calls. No socket |
-| 41 | Cron | `steps/ch41-cron` | a durable claim | at-most-once runs across crashes, catch-up, a watchdog, and chaining the next job by submitting to the same inbox |
-| 42 | Editor Integration | `steps/ch42-acp` | a protocol adapter | ACP (Agent Client Protocol) as another client of the chapter 2 session inbox |
+| 40 | Browser Tools | `steps/ch40-browser` | a trait over a fake page | navigate, snapshot, click, type, and scroll behind `PageBackend`. Secret URL and SSRF run before the backend. Page text is untrusted |
+| 41 | Vision | `steps/ch41-vision` | magic bytes | sniff, size caps, and a pixel cap behind `ImageSource`. The caption is untrusted. No vision API in tests |
+| 42 | MCP Gateway Service *(server)* | `steps/ch42-service` | an `Arc` reload, a session map | mostly stateless replicas routed by session id, hot reload by swapping an `Arc`, shared session routes and quotas in memory, health and readiness, a bearer check standing in for the OAuth 2.1 resource server, per-tenant quotas, an audit vec, span names, and a drain that finishes in-flight calls. No socket |
+| 43 | Cron | `steps/ch43-cron` | a durable claim | at-most-once runs across crashes, catch-up, a watchdog, and chaining the next job by submitting to the same inbox |
+| 44 | Editor Integration | `steps/ch44-acp` | a protocol adapter | ACP (Agent Client Protocol) as another client of the chapter 2 session inbox |
 
 **Guardrail notes**
 
 - **Chapter 38.** Secrets are scoped per profile. In multiplex mode, `get_secret` fails closed with `UnscopedSecretError` when no scope is installed (E4, `agent/secret_scope.py`).
-- **Chapter 39.** The chat gateway, not the MCP server. B4 (`tools/terminal_tool_guards.py` `gateway_lifecycle_block`) lives here: a shell command that restarts or stops this gateway is denied. Chapter 41's M2 stays the cron-prompt form. Outbound text calls chapter 20's `redact_for_egress`. Authorization is default-deny after the allowlist and pairing checks (L1a, `gateway/authz_mixin.py` `_is_user_authorized`). A pairing code is 8 characters, lives 1 hour, and five failures lock the caller out for 1 hour (L2a, `gateway/pairing.py` `PairingStore`; max 3 pending). Two bots answering each other hit the bot-loop guard: 20 bot messages in 300 seconds, then a 600 second cooldown (J5, `gateway/bot_loop_guard.py`). Emergency stop is a sentinel from `hermes pause` that fails safe on a stat error (N2, `agent/estop.py`).
-- **Chapter 40.** Auth for this process is the OAuth 2.1 resource-server plan already in the row. The catalog has no gateway-OAuth row; Hermes is the MCP client. The related client checks are a per-server sampling limit and form-mode elicitation routed through approval (M7, `tools/mcp_tool_sampling.py`), and an OSV malware check before an npx or uvx launch (H4, `tools/osv_check.py`, 10 second timeout).
-- **Chapter 41.** A cron prompt is scanned before it runs (M1, `tools/cronjob_prompt_scan.py`). A job that would restart or stop the gateway, or kill its interpreter, is blocked (M2, `cron/lifecycle_guard.py` `check_gateway_lifecycle`). Unattended cron denial of dangerous commands is A4, written with chapter 11.
+- **Chapter 39.** The chat gateway, not the MCP server. B4 (`tools/terminal_tool_guards.py` `gateway_lifecycle_block`) lives here: a shell command that restarts or stops this gateway is denied. Chapter 43's M2 stays the cron-prompt form. Outbound text calls chapter 20's `redact_for_egress`. Authorization is default-deny after the allowlist and pairing checks (L1a, `gateway/authz_mixin.py` `_is_user_authorized`). A pairing code is 8 characters, lives 1 hour, and five failures lock the caller out for 1 hour (L2a, `gateway/pairing.py` `PairingStore`; max 3 pending). Two bots answering each other hit the bot-loop guard: 20 bot messages in 300 seconds, then a 600 second cooldown (J5, `gateway/bot_loop_guard.py`). Emergency stop is a sentinel from `hermes pause` that fails safe on a stat error (N2, `agent/estop.py`).
+- **Chapter 42.** Auth for this process is the OAuth 2.1 resource-server plan already in the row. The catalog has no gateway-OAuth row; Hermes is the MCP client. The related client checks are a per-server sampling limit and form-mode elicitation routed through approval (M7, `tools/mcp_tool_sampling.py`), and an OSV malware check before an npx or uvx launch (H4, `tools/osv_check.py`, 10 second timeout).
+- **Chapter 43.** A cron prompt is scanned before it runs (M1, `tools/cronjob_prompt_scan.py`). A job that would restart or stop the gateway, or kill its interpreter, is blocked (M2, `cron/lifecycle_guard.py` `check_gateway_lifecycle`). Unattended cron denial of dangerous commands is A4, written with chapter 11.
 
 **Performance budget**
 
 - **Chapter 38.** Resolving a profile and its secrets is < 1 ms (one resolve measured 95.95 ns). Secrets are not copied into the prompt.
 - **Chapter 39.** Enqueue of a platform message is < 1 ms (one enqueue measured 174.5 ns). A steer is a push onto a bounded queue. Streaming updates one message.
-- **Chapter 40.** *(server)* Killing one replica fails over by session id. Drain finishes the calls already accepted. One route lookup measured 19.43 ns. oha throughput is not measured: this step does not bind a socket.
-- **Chapter 41.** A crash retries a claimed job at most once. Scanning 1,000 due jobs is < 10 ms (measured 1.607 µs). The watchdog and a chained job stay off the request path.
-- **Chapter 42.** Translating an ACP update onto the session queue is < 1 ms (one translate measured 119.9 ns).
+- **Chapter 42.** *(server)* Killing one replica fails over by session id. Drain finishes the calls already accepted. One route lookup measured 19.43 ns. oha throughput is not measured: this step does not bind a socket.
+- **Chapter 43.** A crash retries a claimed job at most once. Scanning 1,000 due jobs is < 10 ms (measured 1.607 µs). The watchdog and a chained job stay off the request path.
+- **Chapter 44.** Translating an ACP update onto the session queue is < 1 ms (one translate measured 119.9 ns).
 
 ### Part VI: Loosely coupled teams
 
 | Ch | Title | Step | Rust, just in time | What the harness gains |
 |---|---|---|---|---|
-| 43 | The Blackboard | `steps/ch43-blackboard` | shared state behind a lock | shared state, agents woken by a condition, a thin scheduler |
-| 44 | The Kanban Board | `steps/ch44-kanban` | a compare-and-swap claim | a durable board; separate processes claim, complete, review, or block a task |
-| 45 | The Message Bus | `steps/ch45-message-bus` | bounded channels | peer-to-peer messaging with backpressure |
-| 46 | Shared Team Skills | `steps/ch46-team-skills` | a single writer | a layered skill store, `skill_propose` on the bus, a librarian agent, `skills.updated`, a versioned library, `TEAM.md` |
-| 47 | A2A for External Agents | `steps/ch47-a2a` | traits at the process boundary | A2A only for agents outside this process; MCP already covers tools, agents, and skills we expose |
-| 48 | Seeing Inside | `steps/ch48-tracing` | tracing | spans on the chapter 1 events and across the gateway, the same criterion bench with tracing on, a capstone research team that learns across runs |
-| 49 | Load and Token Capstone *(server)* | `steps/ch49-capstone` | a load generator | the load test (throughput and p99) together with tokens per completed task for every tool, a static set, and a dynamic set, each with task success. Written. In memory. No socket |
-| 50 | Evals | `steps/ch50-evals` | a batch over the benches | re-run the saved tasks from chapter 9, plus trajectories, scored with the chapter 1 and chapter 9 benches, still with no fail threshold |
+| 45 | The Blackboard | `steps/ch45-blackboard` | shared state behind a lock | shared state, agents woken by a condition, a thin scheduler |
+| 46 | The Kanban Board | `steps/ch46-kanban` | a compare-and-swap claim | a durable board; separate processes claim, complete, review, or block a task |
+| 47 | The Message Bus | `steps/ch47-message-bus` | bounded channels | peer-to-peer messaging with backpressure |
+| 48 | Shared Team Skills | `steps/ch48-team-skills` | a single writer | a layered skill store, `skill_propose` on the bus, a librarian agent, `skills.updated`, a versioned library, `TEAM.md` |
+| 49 | A2A for External Agents | `steps/ch49-a2a` | traits at the process boundary | A2A only for agents outside this process; MCP already covers tools, agents, and skills we expose |
+| 50 | Seeing Inside | `steps/ch50-tracing` | tracing | spans on the chapter 1 events and across the gateway, the same criterion bench with tracing on, a capstone research team that learns across runs |
+| 51 | Load and Token Capstone *(server)* | `steps/ch51-capstone` | a load generator | the load test (throughput and p99) together with tokens per completed task for every tool, a static set, and a dynamic set, each with task success. Written. In memory. No socket |
+| 52 | Evals | `steps/ch52-evals` | a batch over the benches | re-run the saved tasks from chapter 9, plus trajectories, scored with the chapter 1 and chapter 9 benches, still with no fail threshold |
 
 **Guardrail notes**
 
-- **Chapter 45.** Replace this chapter's narrow secret scrub with chapter 20's `redact_for_egress`. Do not keep a second redactor.
-- **Chapter 50.** One red-team eval per layer, L1 through L9 and the cross-cutting layer. The checklist is section 4 of the catalog. The catalog does not name an eval suite or a file to copy. The saved tasks from chapter 9 stay the regression set; these cases are the extra set, still with no fail threshold.
+- **Chapter 47.** Replace this chapter's narrow secret scrub with chapter 20's `redact_for_egress`. Do not keep a second redactor.
+- **Chapter 52.** One red-team eval per layer, L1 through L9 and the cross-cutting layer. The checklist is section 4 of the catalog. The catalog does not name an eval suite or a file to copy. The saved tasks from chapter 9 stay the regression set; these cases are the extra set, still with no fail threshold.
 
 **Performance budget**
 
-- **Chapter 43.** A claim < 1 ms with 100 waiters (measured 4.97 µs). The lock is not held across a model call.
-- **Chapter 44.** Claim, complete, review, or block is one transaction < 5 ms (one claim measured 321.89 µs). Two processes cannot hold the same task.
-- **Chapter 45.** Publish of one small envelope < 1 ms at 100 agents (measured 45.75 µs). A slow subscriber hits a bounded channel.
-- **Chapter 46.** `skill_propose` enqueues in < 1 ms (measured 73.7 ns). The index swap is an `Arc` swap (measured 199.9 ns). Workers do not wait on the librarian.
-- **Chapter 47.** Remote calls use the HTTP pool and the same bound. Cancel reaches an in-flight call in < 50 ms (measured 48.33 µs).
-- **Chapter 48.** A span per event adds < 0.1 ms (a bare complete measured 17.29 ns; the spanned turn measured 115.7 ns). The chapter 1 bench still meets its budget with tracing on. Spans cross the harness and the gateway. The capstone runs 100 or more concurrent mock agents.
-- **Chapter 49.** *(server)* The dynamic arm measured 245.5 ns. A load of 100 in-memory dispatches measured 30.05 µs. Tokens are 128, 32, and 4, each with task success for `tool_07`. oha is not measured: this step does not bind a socket.
-- **Chapter 50.** Re-running the saved eval set (measured 51.1 ns), and one hundred mock trajectories, stays inside the worker bound. Appending one trajectory event is < 1 ms (measured 81.3 ns). There is no fail threshold.
+- **Chapter 45.** A claim < 1 ms with 100 waiters (measured 4.97 µs). The lock is not held across a model call.
+- **Chapter 46.** Claim, complete, review, or block is one transaction < 5 ms (one claim measured 321.89 µs). Two processes cannot hold the same task.
+- **Chapter 47.** Publish of one small envelope < 1 ms at 100 agents (measured 45.75 µs). A slow subscriber hits a bounded channel.
+- **Chapter 48.** `skill_propose` enqueues in < 1 ms (measured 73.7 ns). The index swap is an `Arc` swap (measured 199.9 ns). Workers do not wait on the librarian.
+- **Chapter 49.** Remote calls use the HTTP pool and the same bound. Cancel reaches an in-flight call in < 50 ms (measured 48.33 µs).
+- **Chapter 50.** A span per event adds < 0.1 ms (a bare complete measured 17.29 ns; the spanned turn measured 115.7 ns). The chapter 1 bench still meets its budget with tracing on. Spans cross the harness and the gateway. The capstone runs 100 or more concurrent mock agents.
+- **Chapter 51.** *(server)* The dynamic arm measured 245.5 ns. A load of 100 in-memory dispatches measured 30.05 µs. Tokens are 128, 32, and 4, each with task success for `tool_07`. oha is not measured: this step does not bind a socket.
+- **Chapter 52.** Re-running the saved eval set (measured 51.1 ns), and one hundred mock trajectories, stays inside the worker bound. Appending one trajectory event is < 1 ms (measured 81.3 ns). There is no fail threshold.
 
-Chapters 1 through 4, chapter 6, and chapters 9 through 50 have step crates. Chapter 6 is five sections under `steps/ch06-*`. Chapter 9 is ten sections under `steps/ch09-*`, and the section labels in that chapter stay 9.1–9.10 so they match the crates. From chapter 10 on, a harness step is a copy of the previous harness plus that chapter's modules (`docs/harness-architecture.md`). Chapter 10's `run_loop` drives the turn table. Chapter 15 vendors chapters 7 and 8 and still exposes `LimitedGateway`. Chapter 16 copies chapter 14, not chapter 15. Chapter 18 copies chapter 17. `mcp-gateway` re-exports the chapter 23 learned gateway, which wraps the chapter 15 limits and still opens an empty catalog. Chapter 6's 10,000-tool benches still use a synthetic catalog. A real `tools/list` enters that cache through `cards_from_listed`. Chapter 9 starts a saved eval set that later chapters re-run, and chapter 50 scores that set. Pull requests and pushes to `main` report the Criterion median, low, and high in the Benchmarks workflow and upload one JSON artifact per commit. A push to `main` appends the run to the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/) on `gh-pages`. The same job still updates the `dev/bench` chart when it can publish. There is no fail threshold. Chapters 41 through 50 are written. Their step crates are in the workspace, and `steps/ch49-capstone` does not bind a socket. The same list is `.github/chapters.json`, which CI uses. Every chapter row in `book/SUMMARY.md` links a chapter file. Every step directory is `steps/chNN-<slug>`, including the server track. There is no `gw-` prefix.
+Chapters 1 through 4, chapter 6, and chapters 9 through 52 have step crates. Chapter 6 is five sections under `steps/ch06-*`. Chapter 9 is ten sections under `steps/ch09-*`, and the section labels in that chapter stay 9.1–9.10 so they match the crates. From chapter 10 on, a harness step is a copy of the previous harness plus that chapter's modules (`docs/harness-architecture.md`). Chapter 10's `run_loop` drives the turn table. Chapter 15 vendors chapters 7 and 8 and still exposes `LimitedGateway`. Chapter 16 copies chapter 14, not chapter 15. Chapter 18 copies chapter 17. `mcp-gateway` re-exports the chapter 23 learned gateway, which wraps the chapter 15 limits and still opens an empty catalog. Chapter 6's 10,000-tool benches still use a synthetic catalog. A real `tools/list` enters that cache through `cards_from_listed`. Chapter 9 starts a saved eval set that later chapters re-run, and chapter 52 scores that set. Pull requests and pushes to `main` report the Criterion median, low, and high in the Benchmarks workflow and upload one JSON artifact per commit. A push to `main` appends the run to the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/) on `gh-pages`. The same job still updates the `dev/bench` chart when it can publish. There is no fail threshold. Chapters 33 through 52 are written, including Browser Tools and Vision. Their step crates are in the workspace, and `steps/ch51-capstone` does not bind a socket. The same list is `.github/chapters.json`, which CI uses. Every chapter row in `book/SUMMARY.md` links a chapter file. Every step directory is `steps/chNN-<slug>`, including the server track. There is no `gw-` prefix.
 
 **Recurring sidebars:**
 

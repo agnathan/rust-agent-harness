@@ -1,0 +1,26 @@
+[package]
+name = "ch42-service"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+description = "Chapter 42: chapter 37 vendored, plus routes, drain, quotas, and a bearer check."
+
+[lib]
+name = "gwservice"
+
+[[bin]]
+name = "ch42-service"
+path = "src/main.rs"
+
+[dependencies]
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync", "time"] }
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "service"
+harness = false
