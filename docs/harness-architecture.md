@@ -1,6 +1,6 @@
 # Growing harness, chapters 10–52
 
-Chapters 1–10 grow one harness by copying the previous step and adding the new behavior. From chapter 11 onward the book had drifted into standalone demo crates. This document is the plan that puts it back. Batch 1 (chapters 11–22, plus the chapter 10 driver) is done. Batch 2 (chapters 23–32) is done. Batch 3 (chapters 33–44, including the Browser Tools and Vision insert) is done in the same change as the updates below. Later work is chapters 45–52, which are renamed and not yet rebuilt as growing-harness copies.
+Chapters 1–10 grow one harness by copying the previous step and adding the new behavior. From chapter 11 onward the book had drifted into standalone demo crates. This document is the plan that puts it back. Batch 1 (chapters 11–22, plus the chapter 10 driver) is done. Batch 2 (chapters 23–32) is done. Batch 3 (chapters 33–44, including the Browser Tools and Vision insert) is done. Batch 4 (chapters 45–52) is done. The harness line ends at chapter 52. The server line ends at chapter 51.
 
 A later step is a new copy, not a path dependency and not a patch of the previous directory. `steps/README.md` already says that. Unique Cargo package names stay. The library name inside a harness step stays `harness_core`.
 
@@ -39,7 +39,7 @@ ch09-10-evals
   → ch45-blackboard … ch50-tracing, ch52-evals
 ```
 
-Chapter 33 copies chapter 32. Chapter 38 copies chapter 36. Chapter 40 copies chapter 39. Chapter 43 copies chapter 41. Chapter 45 still has the pre-batch standalone tree under its new directory name; its batch copies chapter 44.
+Chapter 33 copies chapter 32. Chapter 38 copies chapter 36. Chapter 40 copies chapter 39. Chapter 43 copies chapter 41. Chapter 45 copies chapter 44. Chapter 46 copies 45, and so on through chapter 50. Chapter 52 copies chapter 50. Chapter 51 is the server copy of chapter 42.
 
 Chapter 16 copies chapter 14, not chapter 15. Chapter 17 copies chapter 16. Chapter 18 copies chapter 17. Team chapters copy the previous harness chapter. Chapter 24 copies chapter 22. Chapter 28 copies chapter 27, and so on. Do not restart from a standalone demo.
 
@@ -58,9 +58,9 @@ ch05-minimal-server
 
 Chapter 15 no longer path-depends on `ch07-catalog` or `ch08-session-toolsets`. Their sources live in `steps/ch15-limits/src/catalog/` and `src/session.rs`. The public names chapter 23 already calls are unchanged: `Catalog` (the chapter 7 `Gateway`), `LimitedGateway` (`new`, `catalog`, `open_session`, `session_tools`), `SessionView`. The lib name stays `gw_limits`. The package stays `ch15-limits`. The bench stays `limits`.
 
-Chapter 23 vendors chapter 15's sources into `ch23-learned-tools` the same way chapter 15 vendored chapters 7 and 8. The lib name stays `gw_learned`. `mcp-gateway` still imports `LearnedGateway`. There is no path dependency on `ch15-limits`. Chapter 37 vendors that learned gateway and adds `federation`. Its lib name is `balancing`. Chapter 42 vendors chapter 37 and adds `service`. Its lib name is `gwservice`. Chapter 51 is the renamed capstone and still the pre-batch tree; its batch copies chapter 42. Keep each chapter's package name, lib name, and `[[bench]]` name. Those are what `.github/workflows/benchmarks.yml` passes to `cargo bench -p`.
+Chapter 23 vendors chapter 15's sources into `ch23-learned-tools` the same way chapter 15 vendored chapters 7 and 8. The lib name stays `gw_learned`. There is no path dependency on `ch15-limits`. Chapter 37 vendors that learned gateway and adds `federation`. Its lib name is `balancing`. Chapter 42 vendors chapter 37 and adds `service`. Its lib name is `gwservice`. Chapter 51 copies chapter 42 and adds `capstone`. The lib name stays `gwservice`. The package stays `ch51-capstone`. The bench stays `capstone`. Keep each chapter's package name, lib name, and `[[bench]]` name. Those are what `.github/workflows/benchmarks.yml` passes to `cargo bench -p`.
 
-`mcp-gateway/` stays the process crate. It re-exports the latest server step. After chapter 23 it re-exports `LearnedGateway`. After chapter 51 it re-exports the capstone. Do not bind a socket in any of these steps.
+`mcp-gateway/` stays the process crate. It re-exports chapter 51: `gwservice::LearnedGateway` as `Gateway`, plus `gw_session` from chapter 8. It does not path-depend on `ch23-learned-tools`. Do not bind a socket in any of these steps.
 
 ## Harness crate layout
 
@@ -146,7 +146,7 @@ Inherited chapter 9 tests must still pass. If a new guard would deny `echo`, the
 
 ## Chapter length and shape
 
-Chapters 1–4 run about 3,500–7,000 words. Every chapter from 10 through 44 matches that size and this shape. Chapters 45–52 are the renamed trees and still need that expansion. Later work follows this rule. Do not ship a chapter that only names the new functions.
+Chapters 1–4 run about 3,500–7,000 words. Every chapter from 10 through 52 matches that size and this shape. Do not ship a chapter that only names the new functions.
 
 - Numbered sections (`## N.1`, `## N.2`, …). Each section walks one type or one function.
 - Full listings of that code, copied from the step crate. A reader who has not opened the file can still read the function.
@@ -200,14 +200,14 @@ Bench IDs are `section/function` from `benchmarks/descriptions.json`. Keep both 
 | 42 | server copy of chapter 37, plus routes, drain, quotas, bearer check | M7 sampling limit, H4 OSV check before npx/uvx. No socket. OAuth issuance stays deferred | `ch42.rs`: killing the route record fails the next lookup over to the other replica id | `42/route_session` |
 | 43 | durable cron claim on the chapter 41 harness | M1 prompt scan, M2 `check_lifecycle` (stays here; do not move it to 39). Unattended dangerous-command denial stays chapter 11's A4 | `ch43.rs`: a claimed job retries at most once; a lifecycle command in the job is blocked | `43/scan_thousand` |
 | 44 | ACP adapter on the session inbox | none new | `ch44.rs`: one ACP update becomes one inbox submit | `44/translate_update` |
-| 45 | blackboard | the lock is not held across a model call | `ch45.rs`: 100 waiters, one claim | `45/claim_with_waiters` |
-| 46 | durable kanban | compare-and-swap claim | `ch46.rs`: two claims of one task, one wins | `46/claim_transaction` |
-| 47 | message bus | replace the narrow scrub this chapter has today with `redact_for_egress` from chapter 20. Do not keep a second redactor | `ch47.rs`: a published envelope that contains a key is scrubbed; a slow subscriber hits the bound | `47/publish_to_agents` |
-| 48 | team skill library and librarian | the index swap is an `Arc` swap | `ch48.rs`: `skill_propose` enqueues and workers do not wait | `48/skill_propose`, `48/index_swap` |
-| 49 | A2A for agents outside this process | outbound text calls `redact_for_egress`. MCP stays the path for tools we own | `ch49.rs`: cancel reaches an in-flight remote call | `49/cancel_inflight` |
-| 50 | tracing on chapter 1 events, and the research team | the capstone research team lives here. Chapter 51 is the load and token comparison, not this team | `ch50.rs`: a span per event still finishes the mock turn | `50/event_without_span`, `50/span_per_event` |
-| 51 | server copy of chapter 42, plus the three token arms and an in-memory load | no socket. oha is not measured | `ch51.rs`: dynamic, static, and every-tool arms each report tokens and task success | `51/dynamic_tokens`, `51/load_100` |
-| 52 | re-run chapter 9's saved evals, plus one red-team case per layer L1–L9 and the cross-cutting layer | the checklist is section 4 of `docs/hermes-guardrails.md`. No fail threshold | `ch52.rs`: the saved set still passes on the mock; one appended trajectory event is ordered | `52/append_event`, `52/saved_set` |
+| 45 | blackboard on the chapter 44 harness | the lock is not held across a model call | `ch45.rs`: 100 waiters, one claim | `45/claim_with_waiters` |
+| 46 | durable kanban on the chapter 45 harness | compare-and-swap claim | `ch46.rs`: two claims of one task, one wins | `46/claim_transaction` |
+| 47 | message bus on the chapter 46 harness | `deliver` calls chapter 20 `redact_for_egress`. The narrow scrubber is gone | `ch47.rs`: a published envelope that contains a key is scrubbed; a slow subscriber hits the bound | `47/publish_to_agents` |
+| 48 | team skill library and librarian on the chapter 47 harness | the index swap is an `Arc` swap. `allow_install` calls chapter 25 `scan_text` and `should_allow_install`. Community dangerous stays refused when `force` is set | `ch48.rs`: `skill_propose` enqueues and workers do not wait | `48/skill_propose`, `48/index_swap` |
+| 49 | A2A on the chapter 48 harness | `call` passes `redact_for_egress` into `send`. MCP stays the path for tools we own | `ch49.rs`: cancel reaches an in-flight remote call | `49/cancel_inflight` |
+| 50 | tracing on the chapter 49 harness, and the research team | the capstone research team lives here. Chapter 51 is the load and token comparison, not this team | `ch50.rs`: a span per event still finishes the mock turn | `50/event_without_span`, `50/span_per_event` |
+| 51 | server copy of chapter 42, plus the three token arms and an in-memory load | no socket. oha is not measured. Token counts use `approx_tokens` (`div_ceil`) | `ch51.rs`: dynamic, static, and every-tool arms each report tokens and task success | `51/dynamic_tokens`, `51/load_100` |
+| 52 | chapter 50 harness plus `suite`. Re-runs chapter 9's saved evals on `run_loop`, plus one red-team case per layer L1–L9 and X | each case calls the real module. No `repair_tool` stub. No fail threshold. `FAIL_THRESHOLD` is `None` | `ch52.rs`: the saved set still passes on the mock; one appended trajectory event is ordered | `52/append_event`, `52/saved_set` |
 
 ## Where the orphaned deferrals live
 
@@ -234,7 +234,7 @@ Do not move existing `step-NN` tags. After this batch merges, tags `step-10` thr
 
 ## Planned chapters: built-in tools, browser, and vision
 
-Chapters 16 and 17 are built. Browser Tools is chapter 40 and Vision is chapter 41. Both are written. The book is chapters 0–52. Means for the shifted chapters 10–15 and 18–22 stay the `mean.point_estimate` values from [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918). Means for `16/fake_search`, `16/ssrf_block`, `17/patch_apply`, and `17/todo_merge` are `mean.point_estimate` from [run 39114427940](https://github.com/agnathan/rust-agent-harness/actions/runs/39114427940). Means for chapters 23–32 stay the values from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589). Means for chapters 33–44 are the `mean.point_estimate` values from this batch's Benchmarks run.
+Chapters 16 and 17 are built. Browser Tools is chapter 40 and Vision is chapter 41. Both are written. The book is chapters 0–52. Means for the shifted chapters 10–15 and 18–22 stay the `mean.point_estimate` values from [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918). Means for `16/fake_search`, `16/ssrf_block`, `17/patch_apply`, and `17/todo_merge` are `mean.point_estimate` from [run 39114427940](https://github.com/agnathan/rust-agent-harness/actions/runs/39114427940). Means for chapters 23–32 stay the values from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589). Means for chapters 33–44 are the `mean.point_estimate` values from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). Means for chapters 45–52 are the `mean.point_estimate` values from [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196).
 
 ### Where the two tool chapters go
 
@@ -335,7 +335,15 @@ The harness modules are `browser` (`PageBackend`, `FakeBrowser`) and `vision` (`
 ## What batch 3 changed that later batches must not undo
 
 - Chapters 33–36, 38–41, and 43–44 are copies of the previous harness. Chapter 33 copies chapter 32. Chapter 38 copies chapter 36. Chapter 40 copies chapter 39. Chapter 43 copies chapter 41. Do not replace them with standalone crates. The new modules are `composition`, `context`, `actors`, `supervision` (heartbeats live in that module), `profiles`, `gateway` (B4 and `send_out` live there), `browser`, `vision`, `cron`, and `acp`. `lib.rs` does not glob-reexport them.
-- Chapter 37 vendors chapter 23. Lib name `balancing`, module `federation`. Chapter 42 vendors chapter 37. Lib name `gwservice`, module `service`. `mcp-gateway` still re-exports chapter 23's `LearnedGateway`.
+- Chapter 37 vendors chapter 23. Lib name `balancing`, module `federation`. Chapter 42 vendors chapter 37. Lib name `gwservice`, module `service`. At the end of batch 3, `mcp-gateway` re-exported chapter 23's `LearnedGateway`. Batch 4 moves that re-export to chapter 51.
 - Browser Tools is chapter 40. Vision is chapter 41. Former chapters 40–50 are 42–52. Bench ids moved with them and kept the old id as an alias. `40/fake_navigate` and `41/sniff_png` are new ids.
 - Heartbeats are `is_stale` in chapter 36. B4 is `gateway_lifecycle_block` in chapter 39. Cron M2 stays in chapter 43.
-- Chapters 45–52 are the renamed trees. Their batch still has to copy the previous harness. Do not treat the rename as that copy.
+
+## What batch 4 changed that later batches must not undo
+
+- Chapters 45–50 and 52 are copies of the previous harness. Chapter 45 copies chapter 44. Chapter 52 copies chapter 50. Do not replace them with standalone crates. The new modules are `blackboard`, `kanban`, `bus`, `team_skills`, `a2a`, `spans`, and `suite`. `lib.rs` does not glob-reexport them.
+- Chapter 51 copies chapter 42. Lib name `gwservice`, module `capstone`. It is not in the harness copy chain. `mcp-gateway` re-exports `gwservice::LearnedGateway` as `Gateway` and `gw_session` from chapter 8. No socket.
+- `bus::deliver` and `a2a::call` call `crate::redact::redact_for_egress`. There is no second scrubber in those files.
+- `team_skills::allow_install` calls chapter 25 `scan_text` and `should_allow_install`. The local `rm -rf /` check stays, because that scanner does not name the command. Community plus `force` does not override a dangerous body.
+- Chapter 52 `suite` re-runs `evals::run_saved_evals` and `run_stress_evals` on this copy of `run_loop`. `unknown-tool-repair` is `repair_name` inside the loop (`eco` → `echo`). The red-team cases call the real modules. `FAIL_THRESHOLD` is `None`.
+- The kanban two-process test uses the bin `chNN_kanban_claim` and `env!("CARGO_BIN_EXE_chNN_kanban_claim")`. Do not point that test at the chapter binary name. Cargo turns hyphens into underscores, and a shared bin name overwrites `target/debug`.

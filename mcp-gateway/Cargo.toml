@@ -4,12 +4,11 @@ version = "0.1.0"
 edition = "2021"
 rust-version = "1.85"
 publish = false
-description = "Standalone MCP gateway. Chapter 23's learned tools wrap the chapter 15 limits."
+description = "Standalone MCP gateway. Chapter 51's capstone is the re-export. It binds no socket."
 
 [lib]
 name = "mcp_gateway"
 
 [dependencies]
-ch23-learned-tools = { path = "../steps/ch23-learned-tools" }
-ch15-limits = { path = "../steps/ch15-limits" }
+ch51-capstone = { path = "../steps/ch51-capstone" }
 ch08-session-toolsets = { path = "../steps/ch08-session-toolsets" }

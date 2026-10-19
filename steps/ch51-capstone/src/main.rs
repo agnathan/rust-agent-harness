@@ -1,4 +1,4 @@
-use capstone::demo;
+use gwservice::capstone::demo;
 
 fn main() {
     println!("{}", demo());

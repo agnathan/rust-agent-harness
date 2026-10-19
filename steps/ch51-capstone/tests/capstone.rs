@@ -1,6 +1,6 @@
-use capstone::{
-    admit, compare, demo, load, p99, sample_catalog, schema_tokens, CALL_BOUND, CATALOG_LEN,
-    STATIC_LEN,
+use gwservice::capstone::{
+    admit, compare, demo, load, p99, sample_catalog, schema_tokens, task_arms, CALL_BOUND,
+    CATALOG_LEN, STATIC_LEN,
 };
 
 #[test]
@@ -30,6 +30,18 @@ fn three_arms_share_a_success_and_not_a_token_count() {
 }
 
 #[test]
+fn the_session_gateway_arms_each_report_tokens_and_success() {
+    let tasks = task_arms(CATALOG_LEN);
+    assert!(
+        tasks
+            .iter()
+            .all(|task| task.success && task.schema_tokens > 0),
+        "{tasks:?}"
+    );
+    assert!(tasks[0].schema_tokens >= tasks[2].schema_tokens);
+}
+
+#[test]
 fn a_tight_deadline_fails_the_wide_arm_only() {
     let catalog = sample_catalog();
     let dynamic = compare(&catalog, "tool_07", None)[2].tokens;
@@ -45,8 +57,7 @@ fn the_load_stays_inside_the_bound_and_ranks_p99() {
     assert!(!admit(CALL_BOUND));
     let samples: Vec<u128> = (1..=100).map(|n| n as u128).collect();
     assert_eq!(p99(samples), 99);
-    let catalog = sample_catalog();
-    let report = load(&catalog, 100);
+    let report = load(100);
     assert_eq!(report.successes, 100);
     assert_eq!(report.requests, 100);
     assert_eq!(report.waves, 13);
@@ -57,5 +68,7 @@ fn the_load_stays_inside_the_bound_and_ranks_p99() {
 fn demo_reports_three_successes() {
     let line = demo();
     assert!(line.contains("success=1/1/1"), "{line}");
+    assert!(line.contains("task=1/1/1"), "{line}");
     assert!(line.contains("load=100/100"), "{line}");
+    assert!(line.contains("waves=13"), "{line}");
 }
