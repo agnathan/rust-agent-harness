@@ -1,7 +1,7 @@
 //! Book chapter 5. A minimal MCP server process: a fixed tool list, a session
 //! view of that list, and a gate that accepts 32 calls and runs 8 at once.
 //!
-//! This step binds no socket. Streamable HTTP is chapter 38. The process crate
+//! This step binds no socket. Streamable HTTP is chapter 40. The process crate
 //! `mcp-gateway` starts from the same empty catalog; chapters 7 and 8 fill it.
 
 use std::future::Future;

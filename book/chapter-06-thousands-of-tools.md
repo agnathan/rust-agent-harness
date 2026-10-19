@@ -372,7 +372,7 @@ Chapter 4's `ToolListCache` is the connection that sees the real notification. T
 
 `AgentView` is the per-agent toolset: an agent name and the servers it may use. Two agents can hold the same cached `Arc` and see different servers. The loaded names, the core tool plus whatever `begin_turn` has revealed, are the ones chapter 3's registry would actually register. The other cards stay as data until a search reveals them.
 
-Two groupings use this same filter later, and this chapter does not build them. Code mode is one code tool plus the sandbox in chapter 13: the model sees that tool, and the sandbox runs the code, instead of seeing thousands of file tools. A specialist is a sub-agent with its own server set. The supervisor in chapter 27 is where that sub-agent is called. Both are a view over one catalog.
+Two groupings use this same filter later, and this chapter does not build them. Code mode is one code tool plus the sandbox in chapter 13: the model sees that tool, and the sandbox runs the code, instead of seeing thousands of file tools. A specialist is a sub-agent with its own server set. The supervisor in chapter 29 is where that sub-agent is called. Both are a view over one catalog.
 
 ### Build, run, and benchmark
 
@@ -458,7 +458,7 @@ A size cap on what the model is shown, which is the L2 idea applied to the tool 
 
 **Short descriptions.** `trim_words` cuts on a character count, at the last whitespace inside the window. Search blurbs and routed descriptions both pass 80. That is the only description cap in this chapter.
 
-Hermes F3 (`agent/prompt_builder.py`, `CONTEXT_FILE_MAX_CHARS`, 20,000 characters, keeping the head and a tail) caps context files such as `AGENTS.md`. That belongs to chapter 32. This chapter does not apply it to tool output either.
+Hermes F3 (`agent/prompt_builder.py`, `CONTEXT_FILE_MAX_CHARS`, 20,000 characters, keeping the head and a tail) caps context files such as `AGENTS.md`. That belongs to chapter 34. This chapter does not apply it to tool output either.
 
 ## Chapter summary
 
@@ -474,4 +474,4 @@ Hermes F3 (`agent/prompt_builder.py`, `CONTEXT_FILE_MAX_CHARS`, 20,000 character
 
 Chapter 4 is the MCP client. A session there lists tools and hears `list_changed`. `cards_from_listed` is how that list becomes the cards this chapter already caches. The generator stays for the benches.
 
-This chapter is the client half of the catalog. It decides what enters the prompt: the task, the budget, the cache, and which servers an agent may see. Chapter 5 is the process that holds a fixed list and a 32/8 call gate. It still binds no socket. Chapter 7 is the server-side catalog and search, on that process. Chapter 9 is the agent loop: the model chooses a tool, the dispatcher runs it, and the result comes back as a message. `search_tools` is one of those choices. The loop is also where a cancellation token and a budget show up, and where the saved eval set starts.
+This chapter is the client half of the catalog. It decides what enters the prompt: the task, the budget, the cache, and which servers an agent may see. Chapter 5 is the process that holds a fixed list and a 34/8 call gate. It still binds no socket. Chapter 7 is the server-side catalog and search, on that process. Chapter 9 is the agent loop: the model chooses a tool, the dispatcher runs it, and the result comes back as a message. `search_tools` is one of those choices. The loop is also where a cancellation token and a budget show up, and where the saved eval set starts.

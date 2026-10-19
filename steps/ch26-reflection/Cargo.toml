@@ -1,0 +1,24 @@
+[package]
+name = "ch26-reflection"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+description = "Chapter 26: nudge counters and a forked reviewer with skill and memory tools."
+
+[lib]
+name = "reflection"
+
+[[bin]]
+name = "ch26-reflection"
+path = "src/main.rs"
+
+[dependencies]
+ch24-skills = { path = "../ch24-skills" }
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "reflection"
+harness = false

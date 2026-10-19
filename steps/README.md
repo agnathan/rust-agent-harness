@@ -42,45 +42,45 @@ cargo run -p ch02-harness-cli -- --mock chat
 | ch09-8-canonical | 9 (section 9.8) | Sorted, compact tool-call arguments on the send path |
 | ch09-9-outcome | 9 (section 9.9) | `TurnOutcome` enum and a budget wrap-up call |
 | ch09-10-evals | 9 (section 9.10) | Stress evals, optionally live, still keyless in CI |
-| ch10-turn-state | 10 | `Phase` and a tested `step` table |
-| ch11-approvals | 11 | Approval pipeline, one human prompt, permit dropped before the wait |
+| ch10-turn-state | 10 | Chapter 9's harness, plus `Phase` / `Driver`. `run_loop` drives the table |
+| ch11-approvals | 11 | Chapter 10's harness, plus the approval pipeline. `deny_tool` runs before dispatch |
 | ch12-hooks | 12 | Tool hooks, a borrowing API hook, a memory queue |
 | ch13-sandbox | 13 | Child worker, Docker argv, env scrub, checkpoints |
 | ch14-when-things-fail | 14 | Empty retries, repetition guard, timeout drops the permit |
-| ch16-providers | 16 | Anthropic and Bedrock bodies, a route, key rotation |
-| ch17-streaming | 17 | Think-block scrubber, folded deltas, read-only overlap |
-| ch18-sessions | 18 | WAL sessions, one append, FTS ids queued |
-| ch19-memory | 19 | MEMORY.md and USER.md, frozen snapshot, strict scan |
-| ch20-recall | 20 | FTS5 trigram session_search: discover, scroll, read, browse |
-| ch21-learned-tools | 21 *(server)* | Predicted offer, composite and macro tools, code-mode lines |
-| ch22-skills | 22 | `SKILL.md`, a cache-stable index, `skills_list` / `skill_view` |
-| ch23-skill-writing | 23 | create, patch, delete, a scanner, the approval gate, read-before-write |
-| ch24-reflection | 24 | nudge counters, a forked reviewer, cancel on return |
-| ch25-curation | 25 | stale, then archived, a snapshot, off the request path |
-| ch26-pipeline | 26 | outline, draft, critique, revise, one shared `Arc` |
-| ch27-supervisor | 27 | eight specialists, one `Arc`, blocked child tools, depth 1 |
-| ch28-handoffs | 28 | a filtered transcript and a cap of four handoffs |
-| ch29-fan-out | 29 | a queue of 100, the supervisor bound, summaries in index order |
-| ch30-critic | 30 | a verdict, one permit, accept only on done |
-| ch31-composition | 31 | nested fan-out under one pool, a handoff only when ownership moves, the critic loop |
-| ch32-context | 32 | a scan, a 20,000-character cap, an untrusted wrap, preflight compression |
-| ch33-actors | 33 | one task per agent, an inbox of 64, steer and interrupt |
-| ch34-supervision | 34 | one restart, a chain of three, cancel and budget |
-| ch35-balancing | 35 *(server)* | least outstanding, power of two, federation, discovery cap of 4 |
-| ch36-profiles | 36 | personas, a secret map per profile, fail closed with no scope |
-| ch37-gateway | 37 | allowlist, pairing, bot-loop guard, emergency stop, the session inbox |
-| ch38-service | 38 *(server)* | session routing, an `Arc` reload, quotas, a drain, sampling and OSV |
-| ch39-cron | 39 | one claim, one crash retry, a prompt scan, the lifecycle guard |
-| ch40-acp | 40 | one inbox message per ACP update, `end_turn` or `cancelled` |
-| ch41-blackboard | 41 | facts and waiters, a claim that drops the lock, pause and an injection check |
-| ch42-kanban | 42 | one JSON board, a `create_new` lock, claim, complete, review, or block |
-| ch43-message-bus | 43 | a bus of 64, `try_send`, a bot cooldown of 20, egress redaction |
-| ch44-team-skills | 44 | a proposal queue, a librarian as the only writer, an `Arc` index swap |
-| ch45-a2a | 45 | A2A for a URL outside this process, a pool of 8, a cancel flag |
-| ch46-tracing | 46 | a counting subscriber, content-free span names, 100 mock researchers |
-| ch47-capstone | 47 *(server)* | three token arms and a load of 100. No socket |
-| ch48-evals | 48 | the chapter 9 task names, one red-team case per layer, no fail threshold |
-| ch15-limits | 15 *(server)* | Per-tool permits, idempotent retry, a breaker, caps of 50 |
-| ch05-minimal-server | 5 *(server)* | Empty `mcp-gateway` catalog. No socket |
+| ch18-providers | 16 | Anthropic and Bedrock bodies, a route, key rotation |
+| ch19-streaming | 17 | Think-block scrubber, folded deltas, read-only overlap |
+| ch20-sessions | 18 | WAL sessions, one append, FTS ids queued |
+| ch21-memory | 19 | MEMORY.md and USER.md, frozen snapshot, strict scan |
+| ch22-recall | 20 | FTS5 trigram session_search: discover, scroll, read, browse |
+| ch23-learned-tools | 21 *(server)* | Predicted offer, composite and macro tools, code-mode lines |
+| ch24-skills | 22 | `SKILL.md`, a cache-stable index, `skills_list` / `skill_view` |
+| ch25-skill-writing | 23 | create, patch, delete, a scanner, the approval gate, read-before-write |
+| ch26-reflection | 24 | nudge counters, a forked reviewer, cancel on return |
+| ch27-curation | 25 | stale, then archived, a snapshot, off the request path |
+| ch28-pipeline | 26 | outline, draft, critique, revise, one shared `Arc` |
+| ch29-supervisor | 27 | eight specialists, one `Arc`, blocked child tools, depth 1 |
+| ch30-handoffs | 28 | a filtered transcript and a cap of four handoffs |
+| ch31-fan-out | 29 | a queue of 100, the supervisor bound, summaries in index order |
+| ch32-critic | 30 | a verdict, one permit, accept only on done |
+| ch33-composition | 31 | nested fan-out under one pool, a handoff only when ownership moves, the critic loop |
+| ch34-context | 32 | a scan, a 20,000-character cap, an untrusted wrap, preflight compression |
+| ch35-actors | 33 | one task per agent, an inbox of 64, steer and interrupt |
+| ch36-supervision | 34 | one restart, a chain of three, cancel and budget |
+| ch37-balancing | 35 *(server)* | least outstanding, power of two, federation, discovery cap of 4 |
+| ch38-profiles | 36 | personas, a secret map per profile, fail closed with no scope |
+| ch39-gateway | 37 | allowlist, pairing, bot-loop guard, emergency stop, the session inbox |
+| ch40-service | 38 *(server)* | session routing, an `Arc` reload, quotas, a drain, sampling and OSV |
+| ch41-cron | 39 | one claim, one crash retry, a prompt scan, the lifecycle guard |
+| ch42-acp | 40 | one inbox message per ACP update, `end_turn` or `cancelled` |
+| ch43-blackboard | 41 | facts and waiters, a claim that drops the lock, pause and an injection check |
+| ch44-kanban | 42 | one JSON board, a `create_new` lock, claim, complete, review, or block |
+| ch45-message-bus | 43 | a bus of 64, `try_send`, a bot cooldown of 20, egress redaction |
+| ch46-team-skills | 44 | a proposal queue, a librarian as the only writer, an `Arc` index swap |
+| ch47-a2a | 45 | A2A for a URL outside this process, a pool of 8, a cancel flag |
+| ch48-tracing | 46 | a counting subscriber, content-free span names, 100 mock researchers |
+| ch49-capstone | 47 *(server)* | three token arms and a load of 100. No socket |
+| ch50-evals | 48 | the chapter 9 task names, one red-team case per layer, no fail threshold |
+| ch15-limits | 15 *(server)* | Chapters 7 and 8 vendored, plus per-tool permits, idempotent retry, a breaker, caps of 50 |
+| ch05-minimal-server | 5 *(server)* | Fixed tool list, `echo`, a 34/8 gate. No socket |
 
-Your own copy is `my-harness/` at the repo root. Milestone tests there start failing until you implement each chapter. The course plan is chapters 0–48 in six parts, listed in `book/book-outline.md` and `.github/chapters.json`. Performance budgets for every chapter are `docs/performance.md`. MCP is a first-class tool boundary from chapter 3 (client in chapter 4, gateway server in chapter 5). The gateway design is `docs/mcp-gateway.md`. Part II is how one agent learns; the design is `docs/self-improvement.md`. How the team patterns fit together is `docs/team-patterns.md`. The steps in the table above are the written chapters, including `ch47-capstone`. None of the server steps bind a socket. Section numbers inside chapters 6 and 9 stay aligned with the `ch06-*` and `ch09-*` crate names.
+From chapter 10 on, each harness directory is a copy of the previous one plus that chapter's modules. The layout and the plan for chapters 23–50 are `docs/harness-architecture.md`. Your own copy is `my-harness/` at the repo root. Milestone tests there compile and panic with `todo!` until you implement each chapter. The course plan is chapters 0–50 in six parts, listed in `book/book-outline.md` and `.github/chapters.json`. Performance budgets for every chapter are `docs/performance.md`. MCP is a first-class tool boundary from chapter 3 (client in chapter 4, gateway server in chapter 5). The gateway design is `docs/mcp-gateway.md`. Part II is how one agent learns; the design is `docs/self-improvement.md`. How the team patterns fit together is `docs/team-patterns.md`. The steps in the table above are the written chapters, including `ch49-capstone`. None of the server steps bind a socket. Section numbers inside chapters 6 and 9 stay aligned with the `ch06-*` and `ch09-*` crate names.

@@ -59,18 +59,16 @@ Rust's async runtime (tokio) can run thousands of lightweight tasks on a handful
 
 ## The plan
 
-The course behind this book has sixteen lessons. Each has a test suite that fails until I've written the code correctly. Roughly:
+The book is six parts and chapters 0 through 50. The outline is [`book/book-outline.md`](book-outline.md). Each chapter has a milestone test in `my-harness/tests/chNN.rs` that fails until the code for that chapter is in place, and a finished reference under `steps/`.
 
-1. **Rust fundamentals through agent types.** Messages and roles as structs and enums, ownership through conversation history, error handling through command parsing, JSON through the OpenAI wire format, and traits through a `Tool` interface and registry.
-2. **A working agent.** A synchronous loop against a scripted fake model, then a real OpenAI-compatible client that also works with local models.
-3. **Async and streaming.** tokio, concurrent work, and parsing tokens as they stream in.
-4. **Making the turn explicit.** Hermes's turn logic, rebuilt as an explicit state machine: one `TurnState` enum and a transition table I can test for every edge case.
-5. **Parallel tools.** A planner that decides which tool calls can safely run at the same time, the same distinction Hermes makes between read-only tools and tools that write to files.
-6. **Agents as actors.** Each agent becomes an independent task with a bounded inbox, so a busy agent pushes back instead of being flooded with work.
-7. **Teams.** Cancellation trees (cancel a parent and every descendant stops), a shared budget, a supervisor that delegates to child agents, and a message bus that supports orchestrator–worker setups, peer messaging, and a shared task board.
-8. **Making it real.** Saving sessions to SQLite, tracing, and benchmarks.
+1. **Part I, one agent.** Messages, a provider, tools, an MCP client, then the agent loop and the turn table that loop drives. Approvals, hooks, a sandbox, and failure handling sit on that same harness. A separate MCP gateway starts in chapter 5 and grows beside the harness (chapters 7, 8, and 15).
+2. **Part II, learning.** Sessions, memory, recall, skills, reflection, and curation. That work stays off the hot path.
+3. **Part III, team patterns.** A pipeline, a supervisor, handoffs, fan-out, a critic, and composing those patterns. The default team is a supervisor that calls specialists as tools.
+4. **Part IV, making it robust.** Context, actors with a bounded inbox, supervision and restart, and a server chapter that balances upstream MCP servers.
+5. **Part V, running as a service.** Profiles, a chat gateway into the session inbox, the MCP gateway as a service, cron, and an editor protocol.
+6. **Part VI, loosely coupled teams.** A blackboard, a kanban board, a message bus, shared skills, A2A for agents outside this process, tracing, a load and token capstone, and evals.
 
-I'm not trying to port Hermes. It has years of integrations I don't need. I'm borrowing its *ideas*: stable prompts, summary-only results from subagents, restricted toolsets for children, and classifying an error before deciding how to recover. Then I'm seeing what changes when the language's guarantees do some of the work.
+Rust shows up when the harness needs it: ownership when the conversation is a value, a trait when a tool is, a mutex when a human prompt must be held across `.await`. I'm not trying to port Hermes. It has years of integrations I don't need. I'm borrowing its ideas: stable prompts, summary-only results from subagents, restricted toolsets for children, and classifying an error before deciding how to recover. Then I'm seeing what changes when the language's guarantees do some of the work.
 
 ## How to read this book
 

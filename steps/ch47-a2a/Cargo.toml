@@ -1,0 +1,21 @@
+[package]
+name = "ch47-a2a"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+description = "Chapter 47: A2A for an agent outside this process."
+
+[lib]
+name = "a2a"
+
+[[bin]]
+name = "ch47-a2a"
+path = "src/main.rs"
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "a2a"
+harness = false

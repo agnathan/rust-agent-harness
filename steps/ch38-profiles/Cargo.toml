@@ -1,0 +1,21 @@
+[package]
+name = "ch38-profiles"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+description = "Chapter 38: several personas in one config, each with secrets kept out of the prompt."
+
+[lib]
+name = "profiles"
+
+[[bin]]
+name = "ch38-profiles"
+path = "src/main.rs"
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "profiles"
+harness = false

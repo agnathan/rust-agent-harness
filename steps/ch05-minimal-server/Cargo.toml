@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 rust-version = "1.85"
 publish = false
-description = "Chapter 5: a minimal MCP gateway with a fixed tool list and a 32/8 call gate."
+description = "Chapter 5: a minimal MCP gateway with a fixed tool list and a 34/8 call gate."
 
 [lib]
 name = "gw_minimal"

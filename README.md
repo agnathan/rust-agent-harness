@@ -57,7 +57,7 @@ mdbook build book
 
 The chapter 1 and chapter 2 clients default to OpenRouter (`https://openrouter.ai/api/v1`), `OPENROUTER_API_KEY`, and `HARNESS_MODEL` (default `openai/gpt-4o-mini`). `--base-url` points the same client at another OpenAI-compatible server and then reads `OPENAI_API_KEY` (empty is allowed for Ollama). `--mock` uses the offline provider. Chapter 2 submits each turn to a session inbox before the provider runs.
 
-Chapters 0 through 48, in six parts. Eight chapters are a standalone MCP gateway, marked *(server)* and interleaved with the harness. The split, and the notes from Hermes and from existing gateways, are [docs/mcp-gateway.md](docs/mcp-gateway.md). Performance is a budget on every chapter, starting with tokio in chapter 1. The targets are [docs/performance.md](docs/performance.md). MCP is first-class: tools are MCP-shaped (chapter 3), the harness is an MCP client (chapter 4, via `rmcp`), and the gateway is the MCP server (chapter 5, skeleton only). Part II is learning, and that work stays off the hot path: sessions, memory, recall, skills, reflection, and curation. The design is [docs/self-improvement.md](docs/self-improvement.md). Which team pattern to use is [docs/team-patterns.md](docs/team-patterns.md). The default is a supervisor that calls specialists as tools and fans them out under a bound. Part V runs the harness as a service, and chapter 38 runs the gateway as one. Chapter 37 is the chat gateway into the session inbox. It is a different process from the MCP server.
+Chapters 0 through 50, in six parts. Eight chapters are a standalone MCP gateway, marked *(server)* and interleaved with the harness. The split, and the notes from Hermes and from existing gateways, are [docs/mcp-gateway.md](docs/mcp-gateway.md). Performance is a budget on every chapter, starting with tokio in chapter 1. The targets are [docs/performance.md](docs/performance.md). MCP is first-class: tools are MCP-shaped (chapter 3), the harness is an MCP client (chapter 4, via `rmcp`), and the gateway is the MCP server (chapter 5, then chapters 7, 8, 15, 21, 35, 38, and 47). Part II is learning, and that work stays off the hot path: sessions, memory, recall, skills, reflection, and curation. The design is [docs/self-improvement.md](docs/self-improvement.md). Which team pattern to use is [docs/team-patterns.md](docs/team-patterns.md). The default is a supervisor that calls specialists as tools and fans them out under a bound. Part V runs the harness as a service, and chapter 40 runs the gateway as one. Chapter 39 is the chat gateway into the session inbox. It is a different process from the MCP server.
 
 **Part I: One agent**
 
@@ -68,10 +68,10 @@ Chapters 0 through 48, in six parts. Eight chapters are a standalone MCP gateway
 | 2 | Conversations | `steps/ch02-conversations` | a real conversation, a cache-stable system prompt, a `chat` REPL, and the session inbox |
 | 3 | Tools | `steps/ch03-1-registry`, `ch03-2-toolsets`, `ch03-3-dispatch` | an MCP-shaped tool trait, named toolsets gated on env and checks, concurrent reads and exclusive writes |
 | 4 | MCP Client | `steps/ch04-1-stdio`, `ch04-2-http`, `ch04-3-registry`, `ch04-4-cache` | `rmcp` over stdio and streamable HTTP; MCP and native tools share one scheduler; a cached `tools/list` |
-| 5 | A Minimal MCP Server *(server)* | `steps/ch05-minimal-server` | an empty catalog in `mcp-gateway/`; no socket yet |
+| 5 | A Minimal MCP Server *(server)* | `steps/ch05-minimal-server` | a fixed tool list, `echo`, and a 34/8 gate; no socket |
 | 6 | Thousands of Tools | `steps/ch06-1-schema-cost`, `ch06-2-tool-index`, `ch06-3-search-tool`, `ch06-4-routing`, `ch06-5-lazy-list` | the client half: schema cost, a search index, `search_tools`, routing, a cached list. Crates stay `ch06-*` |
-| 7 | Dynamic Catalog *(server)* | `steps/ch07-catalog` | server-side BM25 plus embeddings, and a catalog reload. Not written |
-| 8 | Session Toolsets *(server)* | `steps/ch08-session-toolsets` | per-session toolsets, `set_task`, compact schemas, token telemetry. Not written |
+| 7 | Dynamic Catalog *(server)* | `steps/ch07-catalog` | server-side BM25 plus embeddings, and a catalog reload |
+| 8 | Session Toolsets *(server)* | `steps/ch08-session-toolsets` | per-session toolsets, `set_task`, compact schemas, token telemetry |
 | 9 | The Agent Loop | `steps/ch09-10-evals` | model, tools, results, repeat; cancellation; validation; stall; budget; truncation; steering; canonical args; a typed outcome; stress evals. Sections stay 9.1–9.10 |
 | 10 | The Turn State Machine | `steps/ch10-turn-state` | one explicit turn, right after the loop |
 | 11 | Approvals and Guardrails | `steps/ch11-approvals` | risk levels, human or second-model review or skip, one approval prompt at a time |
@@ -79,66 +79,66 @@ Chapters 0 through 48, in six parts. Eight chapters are a standalone MCP gateway
 | 13 | Sandboxed Execution | `steps/ch13-sandbox` | a code tool outside the process, plus file checkpoint and rewind |
 | 14 | When Things Fail | `steps/ch14-when-things-fail` | classify failures, retry, fall back, including MCP crashes and reconnects |
 | 15 | Limits and Breakers *(server)* | `steps/ch15-limits` | timeouts, idempotent-only retries, breakers, queues |
-| 16 | Providers | `steps/ch16-providers` | native Anthropic and Bedrock adapters, OpenRouter fallback and routing, key rotation, a cheaper side model |
-| 17 | Streaming | `steps/ch17-streaming` | the same events, as tokens arrive |
+| 16 | Providers | `steps/ch18-providers` | native Anthropic and Bedrock adapters, OpenRouter fallback and routing, key rotation, a cheaper side model |
+| 17 | Streaming | `steps/ch19-streaming` | the same events, as tokens arrive |
 
 **Part II: Learning**
 
 | Ch | Title | Step | You add |
 |---|---|---|---|
-| 18 | Sessions on Disk | `steps/ch18-sessions` | SQLite sessions (append-only, WAL) and resume |
-| 19 | Memory Files | `steps/ch19-memory` | `MEMORY.md` / `USER.md`, the `memory` tool, a frozen system-prompt snapshot |
-| 20 | Recall | `steps/ch20-recall` | FTS5 `session_search`: discover, scroll, read, browse |
-| 21 | Learned Tools *(server)* | `steps/ch21-learned-tools` | a predicted offer, composite and macro tools, a code-mode script |
-| 22 | Using Skills | `steps/ch22-skills` | `SKILL.md`, a cache-stable `<available_skills>` index, `skills_list` / `skill_view` |
-| 23 | Writing Skills | `steps/ch23-skill-writing` | create, patch, delete, a scanner, the approval gate, read-before-write |
-| 24 | The Reflection Loop | `steps/ch24-reflection` | nudge counters and a forked reviewer with only skill and memory tools |
-| 25 | Curation | `steps/ch25-curation` | stale to archived, pinning, backups, optional consolidation |
+| 18 | Sessions on Disk | `steps/ch20-sessions` | SQLite sessions (append-only, WAL) and resume |
+| 19 | Memory Files | `steps/ch21-memory` | `MEMORY.md` / `USER.md`, the `memory` tool, a frozen system-prompt snapshot |
+| 20 | Recall | `steps/ch22-recall` | FTS5 `session_search`: discover, scroll, read, browse |
+| 21 | Learned Tools *(server)* | `steps/ch23-learned-tools` | a predicted offer, composite and macro tools, a code-mode script |
+| 22 | Using Skills | `steps/ch24-skills` | `SKILL.md`, a cache-stable `<available_skills>` index, `skills_list` / `skill_view` |
+| 23 | Writing Skills | `steps/ch25-skill-writing` | create, patch, delete, a scanner, the approval gate, read-before-write |
+| 24 | The Reflection Loop | `steps/ch26-reflection` | nudge counters and a forked reviewer with only skill and memory tools |
+| 25 | Curation | `steps/ch27-curation` | stale to archived, pinning, backups, optional consolidation |
 
 **Part III: The team patterns**
 
 | Ch | Title | Step | You add |
 |---|---|---|---|
-| 26 | The Sequential Pipeline | `steps/ch26-pipeline` | outline, draft, critique, revise; an agent as a reusable value |
-| 27 | The Supervisor | `steps/ch27-supervisor` | the default team: manager, agents-as-tools, fan-out under a bound, `Arc` context |
-| 28 | Handoffs | `steps/ch28-handoffs` | ownership transfer, handoff-as-tool, max-handoff limit, context filtering |
-| 29 | Fan-out and Gather | `steps/ch29-fan-out` | parallel specialists, a worker limit, an aggregator |
-| 30 | The Critic | `steps/ch30-critic` | an evaluator as a tool and as a final gate |
-| 31 | Composing Patterns | `steps/ch31-composition` | a supervisor that fans out and hands off only when ownership moves |
+| 26 | The Sequential Pipeline | `steps/ch28-pipeline` | outline, draft, critique, revise; an agent as a reusable value |
+| 27 | The Supervisor | `steps/ch29-supervisor` | the default team: manager, agents-as-tools, fan-out under a bound, `Arc` context |
+| 28 | Handoffs | `steps/ch30-handoffs` | ownership transfer, handoff-as-tool, max-handoff limit, context filtering |
+| 29 | Fan-out and Gather | `steps/ch31-fan-out` | parallel specialists, a worker limit, an aggregator |
+| 30 | The Critic | `steps/ch32-critic` | an evaluator as a tool and as a final gate |
+| 31 | Composing Patterns | `steps/ch33-composition` | a supervisor that fans out and hands off only when ownership moves |
 
 **Part IV: Making it robust**
 
 | Ch | Title | Step | You add |
 |---|---|---|---|
-| 32 | Managing Context | `steps/ch32-context` | compression, summaries, `[SKILL_PRUNED]`, a memory flush |
-| 33 | Agents as Actors | `steps/ch33-actors` | one task per agent, the session inbox, backpressure |
-| 34 | Supervision and Restart | `steps/ch34-supervision` | restart a failed child |
-| 35 | Balancing and Federation *(server)* | `steps/ch35-balancing` | per-tool pools and upstream MCP federation |
+| 32 | Managing Context | `steps/ch34-context` | compression, summaries, `[SKILL_PRUNED]`, a memory flush |
+| 33 | Agents as Actors | `steps/ch35-actors` | one task per agent, the session inbox, backpressure |
+| 34 | Supervision and Restart | `steps/ch36-supervision` | restart a failed child |
+| 35 | Balancing and Federation *(server)* | `steps/ch37-balancing` | per-tool pools and upstream MCP federation |
 
 **Part V: Running as a service**
 
 | Ch | Title | Step | You add |
 |---|---|---|---|
-| 36 | Profiles | `steps/ch36-profiles` | several personas, each with its own secrets, kept out of the prompt |
-| 37 | The Gateway | `steps/ch37-gateway` | allowlist, pairing, and platform messages into the session inbox. Not the MCP server |
-| 38 | MCP Gateway Service *(server)* | `steps/ch38-service` | session routing, quotas, a drain, sampling and an OSV check. No socket |
-| 39 | Cron | `steps/ch39-cron` | one claim, one crash retry, a prompt scan, the lifecycle guard |
-| 40 | Editor Integration | `steps/ch40-acp` | ACP as another client of the session inbox, `end_turn` or `cancelled` |
+| 36 | Profiles | `steps/ch38-profiles` | several personas, each with its own secrets, kept out of the prompt |
+| 37 | The Gateway | `steps/ch39-gateway` | allowlist, pairing, and platform messages into the session inbox. Not the MCP server |
+| 38 | MCP Gateway Service *(server)* | `steps/ch40-service` | session routing, quotas, a drain, sampling and an OSV check. No socket |
+| 39 | Cron | `steps/ch41-cron` | one claim, one crash retry, a prompt scan, the lifecycle guard |
+| 40 | Editor Integration | `steps/ch42-acp` | ACP as another client of the session inbox, `end_turn` or `cancelled` |
 
 **Part VI: Loosely coupled teams**
 
 | Ch | Title | Step | You add |
 |---|---|---|---|
-| 41 | The Blackboard | `steps/ch41-blackboard` | shared state, condition-triggered agents, a thin scheduler |
-| 42 | The Kanban Board | `steps/ch42-kanban` | a durable board; processes claim, complete, review, or block |
-| 43 | The Message Bus | `steps/ch43-message-bus` | peer-to-peer messaging |
-| 44 | Shared Team Skills | `steps/ch44-team-skills` | a layered store, `skill_propose`, a librarian as the single writer |
-| 45 | A2A for External Agents | `steps/ch45-a2a` | A2A only for agents outside this process |
-| 46 | Seeing Inside | `steps/ch46-tracing` | spans on the chapter 1 events and across the gateway |
-| 47 | Load and Token Capstone *(server)* | `steps/ch47-capstone` | load test plus tokens per completed task. No socket |
-| 48 | Evals | `steps/ch48-evals` | re-run the chapter 9 task names, plus trajectories, still with no fail threshold |
+| 41 | The Blackboard | `steps/ch43-blackboard` | shared state, condition-triggered agents, a thin scheduler |
+| 42 | The Kanban Board | `steps/ch44-kanban` | a durable board; processes claim, complete, review, or block |
+| 43 | The Message Bus | `steps/ch45-message-bus` | peer-to-peer messaging |
+| 44 | Shared Team Skills | `steps/ch46-team-skills` | a layered store, `skill_propose`, a librarian as the single writer |
+| 45 | A2A for External Agents | `steps/ch47-a2a` | A2A only for agents outside this process |
+| 46 | Seeing Inside | `steps/ch48-tracing` | spans on the chapter 1 events and across the gateway |
+| 47 | Load and Token Capstone *(server)* | `steps/ch49-capstone` | load test plus tokens per completed task. No socket |
+| 48 | Evals | `steps/ch50-evals` | re-run the chapter 9 task names, plus trajectories, still with no fail threshold |
 
-Chapters 1 through 48 have step crates. Chapter 5 has the `mcp-gateway` skeleton. The server steps, including `steps/ch47-capstone`, do not bind a socket. The same list drives CI (`.github/chapters.json`).
+Chapters 1 through 50 have step crates. Chapter 5 has the `mcp-gateway` skeleton. The server steps, including `steps/ch49-capstone`, do not bind a socket. The same list drives CI (`.github/chapters.json`).
 
 The book builds with [mdBook](https://rust-lang.github.io/mdBook/): `mdbook build` in `book/` (output in `book/_build/`, not committed).
 
@@ -167,7 +167,7 @@ The workflow installs `cargo-nextest` and runs `cargo nextest run -p my-harness 
 
 | Input | Values |
 |---|---|
-| `chapters` | `all` (default), `1`, `1-48`, or `9,12,14`. Chapters 1–48 are the plan; a chapter runs only after its `tests/chNN.rs` exists (today: 1 and 2) |
+| `chapters` | `all` (default), `1`, `1-48`, or `9,12,14`. Chapters 1–50 are the plan; a chapter runs only after its `tests/chNN.rs` exists (today: 1 and 2) |
 | `os` | `all` (default), `ubuntu`, `macos`, or `windows` |
 
 A manual run fails if any selected chapter fails.
