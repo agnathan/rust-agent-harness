@@ -2,7 +2,7 @@
 
 The chapter list for browsing on GitHub. Grouping, titles, and the *(server)* marks match [book/SUMMARY.md](book/SUMMARY.md). The longer plan is [book/book-outline.md](book/book-outline.md).
 
-Written chapters link to `book/chapter-….md`. A chapter that has no page yet is marked (not yet written). Each line also links the step crates under `steps/` that exist for that chapter. Server-track chapters are marked *(server)*. The process crate is [`mcp-gateway/`](mcp-gateway/).
+Written chapters link to `book/chapter-….md`. A chapter that has no page yet is marked (not yet written). Each line also links the step crates under `steps/` that exist for that chapter. Server-track chapters are marked *(server)*. They are chapters 5, 7, 8, 15, 23, 37, 42, and 51. The process crate is [`mcp-gateway/`](mcp-gateway/).
 
 ## Part I: One agent
 
@@ -58,19 +58,19 @@ Written chapters link to `book/chapter-….md`. A chapter that has no page yet i
 
 - [Chapter 38: Profiles](book/chapter-38-profiles.md) — [`steps/ch38-profiles`](steps/ch38-profiles)
 - [Chapter 39: The Gateway](book/chapter-39-gateway.md) — [`steps/ch39-gateway`](steps/ch39-gateway)
-- [Chapter 40: MCP Gateway Service](book/chapter-40-service.md) *(server)* — [`steps/ch40-service`](steps/ch40-service)
-- [Chapter 41: Cron](book/chapter-41-cron.md) — [`steps/ch41-cron`](steps/ch41-cron)
-Planned, not yet written. No page and no step crate. Browser Tools, then Vision, will be inserted here in Part V, after the gateway and before Editor Integration. The spec is [docs/harness-architecture.md](docs/harness-architecture.md).
-
-- [Chapter 42: Editor Integration](book/chapter-42-acp.md) — [`steps/ch42-acp`](steps/ch42-acp)
+- [Chapter 40: Browser Tools](book/chapter-40-browser.md) — [`steps/ch40-browser`](steps/ch40-browser)
+- [Chapter 41: Vision](book/chapter-41-vision.md) — [`steps/ch41-vision`](steps/ch41-vision)
+- [Chapter 42: MCP Gateway Service](book/chapter-42-service.md) *(server)* — [`steps/ch42-service`](steps/ch42-service)
+- [Chapter 43: Cron](book/chapter-43-cron.md) — [`steps/ch43-cron`](steps/ch43-cron)
+- [Chapter 44: Editor Integration](book/chapter-44-acp.md) — [`steps/ch44-acp`](steps/ch44-acp)
 
 ## Part VI: Loosely coupled teams
 
-- [Chapter 43: The Blackboard](book/chapter-43-blackboard.md) — [`steps/ch43-blackboard`](steps/ch43-blackboard)
-- [Chapter 44: The Kanban Board](book/chapter-44-kanban.md) — [`steps/ch44-kanban`](steps/ch44-kanban)
-- [Chapter 45: The Message Bus](book/chapter-45-message-bus.md) — [`steps/ch45-message-bus`](steps/ch45-message-bus)
-- [Chapter 46: Shared Team Skills](book/chapter-46-team-skills.md) — [`steps/ch46-team-skills`](steps/ch46-team-skills)
-- [Chapter 47: A2A for External Agents](book/chapter-47-a2a.md) — [`steps/ch47-a2a`](steps/ch47-a2a)
-- [Chapter 48: Seeing Inside](book/chapter-48-tracing.md) — [`steps/ch48-tracing`](steps/ch48-tracing)
-- [Chapter 49: Load and Token Capstone](book/chapter-49-capstone.md) *(server)* — [`steps/ch49-capstone`](steps/ch49-capstone)
-- [Chapter 50: Evals](book/chapter-50-evals.md) — [`steps/ch50-evals`](steps/ch50-evals)
+- [Chapter 45: The Blackboard](book/chapter-45-blackboard.md) — [`steps/ch45-blackboard`](steps/ch45-blackboard)
+- [Chapter 46: The Kanban Board](book/chapter-46-kanban.md) — [`steps/ch46-kanban`](steps/ch46-kanban)
+- [Chapter 47: The Message Bus](book/chapter-47-message-bus.md) — [`steps/ch47-message-bus`](steps/ch47-message-bus)
+- [Chapter 48: Shared Team Skills](book/chapter-48-team-skills.md) — [`steps/ch48-team-skills`](steps/ch48-team-skills)
+- [Chapter 49: A2A for External Agents](book/chapter-49-a2a.md) — [`steps/ch49-a2a`](steps/ch49-a2a)
+- [Chapter 50: Seeing Inside](book/chapter-50-tracing.md) — [`steps/ch50-tracing`](steps/ch50-tracing)
+- [Chapter 51: Load and Token Capstone](book/chapter-51-capstone.md) *(server)* — [`steps/ch51-capstone`](steps/ch51-capstone)
+- [Chapter 52: Evals](book/chapter-52-evals.md) — [`steps/ch52-evals`](steps/ch52-evals)

@@ -1511,23 +1511,105 @@ dependencies = [
 name = "ch33-composition"
 version = "0.1.0"
 dependencies = [
- "ch32-critic",
+ "anyhow",
+ "async-trait",
+ "axum",
  "criterion",
+ "flate2",
+ "regex",
+ "reqwest 0.12.28",
+ "rmcp",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tar",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch33-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch33-composition",
+ "clap",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]
 name = "ch34-context"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
  "criterion",
+ "flate2",
  "regex",
+ "reqwest 0.12.28",
+ "rmcp",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tar",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch34-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch34-context",
+ "clap",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]
 name = "ch35-actors"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
  "criterion",
+ "flate2",
+ "regex",
+ "reqwest 0.12.28",
+ "rmcp",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tar",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch35-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch35-actors",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "ch36-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch36-supervision",
+ "clap",
+ "serde_json",
  "tokio",
 ]
 
@@ -1535,7 +1617,22 @@ dependencies = [
 name = "ch36-supervision"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
  "criterion",
+ "flate2",
+ "regex",
+ "reqwest 0.12.28",
+ "rmcp",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tar",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
 ]
 
 [[package]]
@@ -1543,53 +1640,222 @@ name = "ch37-balancing"
 version = "0.1.0"
 dependencies = [
  "criterion",
+ "serde_json",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "ch38-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch38-profiles",
+ "clap",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]
 name = "ch38-profiles"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
  "criterion",
+ "flate2",
+ "regex",
+ "reqwest 0.12.28",
+ "rmcp",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tar",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
 ]
 
 [[package]]
 name = "ch39-gateway"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
  "criterion",
-]
-
-[[package]]
-name = "ch40-service"
-version = "0.1.0"
-dependencies = [
- "criterion",
-]
-
-[[package]]
-name = "ch41-cron"
-version = "0.1.0"
-dependencies = [
- "criterion",
+ "flate2",
  "regex",
+ "reqwest 0.12.28",
+ "rmcp",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tar",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
 ]
 
 [[package]]
-name = "ch42-acp"
+name = "ch39-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch39-gateway",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "ch40-browser"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "criterion",
+ "flate2",
+ "regex",
+ "reqwest 0.12.28",
+ "rmcp",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tar",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch40-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch40-browser",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "ch41-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch41-vision",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "ch41-vision"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "criterion",
+ "flate2",
+ "regex",
+ "reqwest 0.12.28",
+ "rmcp",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tar",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch42-service"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+ "serde_json",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "ch43-cron"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "criterion",
+ "flate2",
+ "regex",
+ "reqwest 0.12.28",
+ "rmcp",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tar",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch43-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch43-cron",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "ch44-acp"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "criterion",
+ "flate2",
+ "regex",
+ "reqwest 0.12.28",
+ "rmcp",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tar",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "wiremock",
+]
+
+[[package]]
+name = "ch44-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch44-acp",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "ch45-blackboard"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch43-blackboard"
-version = "0.1.0"
-dependencies = [
- "criterion",
-]
-
-[[package]]
-name = "ch44-kanban"
+name = "ch46-kanban"
 version = "0.1.0"
 dependencies = [
  "criterion",
@@ -1598,28 +1864,28 @@ dependencies = [
 ]
 
 [[package]]
-name = "ch45-message-bus"
+name = "ch47-message-bus"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch46-team-skills"
+name = "ch48-team-skills"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch47-a2a"
+name = "ch49-a2a"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch48-tracing"
+name = "ch50-tracing"
 version = "0.1.0"
 dependencies = [
  "criterion",
@@ -1627,14 +1893,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "ch49-capstone"
+name = "ch51-capstone"
 version = "0.1.0"
 dependencies = [
  "criterion",
 ]
 
 [[package]]
-name = "ch50-evals"
+name = "ch52-evals"
 version = "0.1.0"
 dependencies = [
  "criterion",

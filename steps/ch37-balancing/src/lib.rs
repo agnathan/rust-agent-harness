@@ -1,199 +1,285 @@
-//! Book chapter 37. One tool can have several upstreams. The pick is local:
-//! least outstanding, or the quieter of two indexes. Discovery connects at
-//! most four upstreams at once. Nothing here opens a socket.
+//! Book chapter 23. A prediction is installed before the request.
+//! `session_tools` only reads that set. Composite and macro tools expand
+//! to names. Code mode runs a line script against an allowlist.
 
-use std::collections::HashMap;
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::{Condvar, Mutex};
-use std::thread;
-use std::time::Duration;
+use std::collections::{BTreeMap, BTreeSet};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::{Arc, Mutex};
 
-/// Hermes `mcp.discovery_concurrency` default, from `tools/mcp_tool_discovery.py`.
-pub const DISCOVERY_CONCURRENCY: usize = 4;
+pub mod catalog;
+pub mod federation;
+pub mod limits;
+pub mod session;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Policy {
-    LeastOutstanding,
-    PowerOfTwo { a: usize, b: usize },
+pub use limits::{Catalog, LimitedGateway, SessionError, SessionView};
+
+/// Tools a code-mode script may call. Same names as Hermes
+/// `SANDBOX_ALLOWED_TOOLS`.
+pub const SANDBOX_ALLOWED: &[&str] = &[
+    "web_search",
+    "web_extract",
+    "read_file",
+    "write_file",
+    "search_files",
+    "patch",
+    "terminal",
+];
+
+/// One script stops at this many tool calls.
+pub const CODE_MODE_MAX_CALLS: usize = 50;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Use {
+    pub task: String,
+    pub tool: String,
 }
 
-pub struct Backend {
-    pub server: String,
-    pub reply: String,
-    outstanding: AtomicUsize,
-}
-
-impl Backend {
-    pub fn new(server: impl Into<String>, reply: impl Into<String>, outstanding: usize) -> Self {
-        Self {
-            server: server.into(),
-            reply: reply.into(),
-            outstanding: AtomicUsize::new(outstanding),
-        }
-    }
-
-    pub fn outstanding(&self) -> usize {
-        self.outstanding.load(Ordering::Relaxed)
-    }
-}
-
-pub struct Pool {
-    backends: Vec<Backend>,
-}
-
-impl Pool {
-    pub fn new(backends: Vec<Backend>) -> Self {
-        Self { backends }
-    }
-
-    pub fn len(&self) -> usize {
-        self.backends.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.backends.is_empty()
-    }
-
-    pub fn pick(&self, policy: Policy) -> Option<usize> {
-        if self.backends.is_empty() {
-            return None;
-        }
-        Some(match policy {
-            Policy::LeastOutstanding => self
-                .backends
-                .iter()
-                .enumerate()
-                .min_by_key(|(_, backend)| backend.outstanding())
-                .map(|(index, _)| index)
-                .unwrap_or(0),
-            Policy::PowerOfTwo { a, b } => {
-                let left = a % self.backends.len();
-                let right = b % self.backends.len();
-                if self.backends[left].outstanding() <= self.backends[right].outstanding() {
-                    left
-                } else {
-                    right
-                }
-            }
-        })
-    }
-
-    /// Pick, count one outstanding request, return the scripted reply, then drop the count.
-    pub fn call(&self, policy: Policy) -> Option<String> {
-        let index = self.pick(policy)?;
-        let backend = &self.backends[index];
-        backend.outstanding.fetch_add(1, Ordering::Relaxed);
-        let reply = format!("{} via {}", backend.reply, backend.server);
-        backend.outstanding.fetch_sub(1, Ordering::Relaxed);
-        Some(reply)
-    }
+#[derive(Debug, Clone)]
+pub struct PredictInput<'a> {
+    pub task: &'a str,
+    pub usage: &'a [Use],
+    pub memory: &'a str,
+    pub session_note: &'a str,
+    pub catalog: &'a [String],
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Upstream {
-    pub server: String,
-    pub tools: Vec<String>,
+pub enum CodeError {
+    TooManyCalls,
+    NotAllowed(String),
+    NotOffered(String),
+    BadLine(String),
 }
 
-/// Tool name to the servers that offer it. Order follows the upstream list.
-pub fn federate(upstreams: &[Upstream]) -> HashMap<String, Vec<String>> {
-    let mut pools: HashMap<String, Vec<String>> = HashMap::new();
-    for upstream in upstreams {
-        for tool in &upstream.tools {
-            pools
-                .entry(tool.clone())
-                .or_default()
-                .push(upstream.server.clone());
+/// A keyless stand-in. The prediction path does not call it.
+#[derive(Debug)]
+pub struct ScriptedModel {
+    reply: String,
+    calls: u32,
+}
+
+impl ScriptedModel {
+    pub fn new(reply: impl Into<String>) -> Self {
+        Self {
+            reply: reply.into(),
+            calls: 0,
         }
     }
-    pools
-}
 
-pub fn pool_for(tool: &str, upstreams: &[Upstream]) -> Pool {
-    let servers = federate(upstreams).remove(tool).unwrap_or_default();
-    Pool::new(
-        servers
-            .into_iter()
-            .map(|server| Backend::new(server.clone(), tool, 0))
-            .collect(),
-    )
-}
-
-struct Gate {
-    inflight: Mutex<usize>,
-    max_seen: Mutex<usize>,
-    cv: Condvar,
-}
-
-impl Gate {
-    fn enter(&self) {
-        let mut inflight = self.inflight.lock().expect("inflight");
-        while *inflight >= DISCOVERY_CONCURRENCY {
-            inflight = self.cv.wait(inflight).expect("inflight");
-        }
-        *inflight += 1;
-        let mut max_seen = self.max_seen.lock().expect("max");
-        *max_seen = (*max_seen).max(*inflight);
+    pub fn calls(&self) -> u32 {
+        self.calls
     }
 
-    fn leave(&self) {
-        let mut inflight = self.inflight.lock().expect("inflight");
-        *inflight = inflight.saturating_sub(1);
-        self.cv.notify_one();
-    }
-}
-
-/// Connect `n` upstreams with at most `DISCOVERY_CONCURRENCY` in flight.
-/// `hold` is the test's overlap. A zero hold is still bounded. Returns max in flight.
-pub fn discover(n: usize, hold: Duration) -> usize {
-    let gate = Gate {
-        inflight: Mutex::new(0),
-        max_seen: Mutex::new(0),
-        cv: Condvar::new(),
-    };
-    thread::scope(|scope| {
-        for _ in 0..n {
-            scope.spawn(|| {
-                gate.enter();
-                if !hold.is_zero() {
-                    thread::sleep(hold);
-                }
-                gate.leave();
-            });
-        }
-    });
-    let seen = *gate.max_seen.lock().expect("max");
-    seen
-}
-
-/// Scripted upstream replies. `call` does not open a socket.
-pub struct FakeModel {
-    pub reply: String,
-}
-
-impl FakeModel {
-    pub fn complete(&self) -> String {
+    pub fn complete(&mut self, _prompt: &str) -> String {
+        self.calls += 1;
         self.reply.clone()
     }
 }
 
-pub fn demo() -> String {
-    let upstreams = [
-        Upstream {
-            server: "alpha".into(),
-            tools: vec!["echo".into()],
-        },
-        Upstream {
-            server: "beta".into(),
-            tools: vec!["echo".into()],
-        },
-    ];
-    let pool = pool_for("echo", &upstreams);
-    let model = FakeModel {
-        reply: "echo".into(),
+pub struct LearnedGateway {
+    inner: LimitedGateway,
+    offered: Mutex<Arc<Vec<String>>>,
+    pending_change: AtomicBool,
+    predict_calls: AtomicU64,
+    composites: Mutex<BTreeMap<String, Vec<String>>>,
+    macros: Mutex<BTreeMap<String, Vec<String>>>,
+}
+
+impl LearnedGateway {
+    pub fn new() -> Self {
+        Self {
+            inner: LimitedGateway::new(),
+            offered: Mutex::new(Arc::new(Vec::new())),
+            pending_change: AtomicBool::new(false),
+            predict_calls: AtomicU64::new(0),
+            composites: Mutex::new(BTreeMap::new()),
+            macros: Mutex::new(BTreeMap::new()),
+        }
+    }
+
+    pub fn catalog(&self) -> &Catalog {
+        self.inner.catalog()
+    }
+
+    pub fn open_session(&self, session_id: impl Into<String>) {
+        self.inner.open_session(session_id);
+    }
+
+    pub fn predict_calls(&self) -> u64 {
+        self.predict_calls.load(Ordering::SeqCst)
+    }
+
+    /// The request path. Clones the installed `Arc`. Does not score usage.
+    pub fn offered_arc(&self) -> Arc<Vec<String>> {
+        Arc::clone(&self.offered.lock().expect("offered"))
+    }
+
+    pub fn session_tools(&self, session_id: &str) -> Option<SessionView> {
+        let mut view = self.inner.session_tools(session_id)?;
+        let offered = self.offered_arc();
+        if !offered.is_empty() {
+            view.tools = offered.as_ref().clone();
+            view.list_changed = self.pending_change.swap(false, Ordering::SeqCst);
+        }
+        Some(view)
+    }
+
+    /// Offline. Scores the catalog from the usage log, memory, and a session note.
+    pub fn refresh_prediction(&self, input: &PredictInput<'_>) -> Arc<Vec<String>> {
+        self.predict_calls.fetch_add(1, Ordering::SeqCst);
+        let names = predict(input);
+        let arc = Arc::new(names);
+        *self.offered.lock().expect("offered") = Arc::clone(&arc);
+        self.pending_change.store(true, Ordering::SeqCst);
+        arc
+    }
+
+    pub fn save_composite(&self, name: &str, steps: Vec<String>) {
+        self.composites
+            .lock()
+            .expect("composites")
+            .insert(name.to_string(), steps);
+    }
+
+    pub fn save_macro(&self, name: &str, steps: Vec<String>) {
+        self.macros
+            .lock()
+            .expect("macros")
+            .insert(name.to_string(), steps);
+    }
+
+    pub fn expand(&self, name: &str) -> Option<Vec<String>> {
+        self.composites
+            .lock()
+            .expect("composites")
+            .get(name)
+            .cloned()
+            .or_else(|| self.macros.lock().expect("macros").get(name).cloned())
+    }
+
+    pub fn run_code_mode(
+        &self,
+        script: &str,
+        offered: &[String],
+        mut call: impl FnMut(&str, &str) -> String,
+    ) -> Result<Vec<String>, CodeError> {
+        let offered_set: BTreeSet<&str> = offered.iter().map(String::as_str).collect();
+        let mut lines = Vec::new();
+        for raw in script.lines() {
+            let line = raw.trim();
+            if line.is_empty() || line.starts_with('#') {
+                continue;
+            }
+            let rest = line
+                .strip_prefix("call ")
+                .ok_or_else(|| CodeError::BadLine(line.to_string()))?;
+            let (tool, args) = rest
+                .split_once(char::is_whitespace)
+                .ok_or_else(|| CodeError::BadLine(line.to_string()))?;
+            if !SANDBOX_ALLOWED.contains(&tool) {
+                return Err(CodeError::NotAllowed(tool.to_string()));
+            }
+            if !offered_set.contains(tool) {
+                return Err(CodeError::NotOffered(tool.to_string()));
+            }
+            lines.push((tool.to_string(), args.trim().to_string()));
+            if lines.len() > CODE_MODE_MAX_CALLS {
+                return Err(CodeError::TooManyCalls);
+            }
+        }
+        Ok(lines
+            .into_iter()
+            .map(|(tool, args)| call(&tool, &args))
+            .collect())
+    }
+}
+
+impl Default for LearnedGateway {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+pub fn predict(input: &PredictInput<'_>) -> Vec<String> {
+    let task_tokens = tokens(input.task);
+    let memory = input.memory.to_ascii_lowercase();
+    let note = input.session_note.to_ascii_lowercase();
+    let mut scored: Vec<(i32, &str)> = input
+        .catalog
+        .iter()
+        .map(|name| {
+            let mut score = 0;
+            for row in input.usage {
+                if row.tool == *name && shares_token(&task_tokens, &row.task) {
+                    score += 1;
+                }
+            }
+            if contains_name(&memory, name) || contains_name(&note, name) {
+                score += 3;
+            }
+            (score, name.as_str())
+        })
+        .filter(|(score, _)| *score > 0)
+        .collect();
+    scored.sort_by(|a, b| b.0.cmp(&a.0).then_with(|| a.1.cmp(b.1)));
+    scored
+        .into_iter()
+        .map(|(_, name)| name.to_string())
+        .collect()
+}
+
+fn tokens(text: &str) -> BTreeSet<String> {
+    text.split(|ch: char| !ch.is_ascii_alphanumeric())
+        .filter(|word| word.len() >= 3)
+        .map(|word| word.to_ascii_lowercase())
+        .collect()
+}
+
+fn shares_token(task: &BTreeSet<String>, other: &str) -> bool {
+    tokens(other).iter().any(|token| task.contains(token))
+}
+
+fn contains_name(haystack: &str, name: &str) -> bool {
+    let name = name.to_ascii_lowercase();
+    haystack.match_indices(&name).any(|(at, _)| {
+        let before_ok = at == 0 || !is_name_char(haystack.as_bytes()[at - 1]);
+        let after = at + name.len();
+        let after_ok = after >= haystack.len() || !is_name_char(haystack.as_bytes()[after]);
+        before_ok && after_ok
+    })
+}
+
+fn is_name_char(byte: u8) -> bool {
+    byte.is_ascii_alphanumeric() || byte == b'_'
+}
+
+pub fn demo() -> (String, String) {
+    let gateway = LearnedGateway::new();
+    gateway.open_session("desk");
+    let catalog = vec!["read_file".to_string(), "web_search".to_string()];
+    let usage = vec![Use {
+        task: "read the note".into(),
+        tool: "read_file".into(),
+    }];
+    let input = PredictInput {
+        task: "read the note",
+        usage: &usage,
+        memory: "prefer read_file for notes",
+        session_note: "",
+        catalog: &catalog,
     };
-    let picked = pool
-        .call(Policy::LeastOutstanding)
-        .unwrap_or_else(|| model.complete());
-    format!("pick: {picked}")
+    gateway.refresh_prediction(&input);
+    let before = gateway.predict_calls();
+    let view = gateway.session_tools("desk").expect("session");
+    let after = gateway.predict_calls();
+    assert_eq!(before, after);
+    let offered = view.tools.join(",");
+    let bodies = gateway
+        .run_code_mode(
+            "call read_file {\"path\":\"note\"}\n",
+            &view.tools,
+            |_tool, _args| "ok".into(),
+        )
+        .expect("code");
+    (offered, bodies.join(","))
 }

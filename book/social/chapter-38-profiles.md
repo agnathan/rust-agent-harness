@@ -4,21 +4,21 @@
 1/
 Chapter 38 is up: Profiles.
 
-Several personas in one config. Each one has its own secrets. The prompt is the persona. Multiplex with no scope fails closed. 🧵
+Several personas share one process. Each profile has its own secret map. The prompt is the persona. Multiplex with no scope fails closed. The secret does not go into the prompt. 🧵
 
 2/
-Hermes Agent raises UnscopedSecretError from agent/secret_scope.py when multiplexing is on and get_secret has no profile scope. A miss under multiplex does not fall through to another profile's environment.
+Hermes Agent at 9e01b44, agent/secret_scope.py. This is E4. get_secret raises UnscopedSecretError when multiplexing is on and no scope is installed. A scope reads that profile's map. Under multiplex a miss does not fall through to os.environ. Global names such as PATH still read the process env. API_KEY is not one of those names.
 
 3/
-The maps are in memory. resolve clones the persona Arc and reports whether the secret is present. Fake replies. No key is printed.
+The harness returns Result instead of raising. The maps are HashMaps. There is no ContextVar, and there is no global-env allowlist, so an unscoped multiplex read fails closed for every name. resolve keeps a bool for "the secret was present" and drops the string. The persona Arc is the prompt.
 
 4/
-One resolve measured 95.95 ns. The demo prints "profile: writer".
+The bench is resolve_profile, the scoped hit. The mean is 96.7 ns, mean.point_estimate from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The demo prints "profile: writer". The key stays in the map.
 
 [personal note]
 
 5/
-Next is the chat gateway: who may speak, a pairing code, and a message onto the session inbox.
+Next is chapter 39, the chat gateway. A stranger is denied. A pairing code is eight characters and expires. A platform message lands on the session inbox.
 
 Read Chapter 38: [link]
 
@@ -27,14 +27,12 @@ Read Chapter 38: [link]
 ## LinkedIn
 Chapter 38 is out: Profiles.
 
-Hermes Agent serves more than one profile from one process. A secret read has to know which profile it is in. get_secret in agent/secret_scope.py raises UnscopedSecretError when multiplexing is on and no scope is installed. With a scope, the value comes from that profile. A miss does not borrow the next profile's environment.
+One process can hold more than one persona. Hermes Agent's get_secret fails closed when the multiplex gateway has no profile scope installed: UnscopedSecretError, rather than reading another profile's environment. I kept that. Writer and reader each have an API_KEY. The scope selects one map. The prompt is the persona, "you write", and the secret is not copied into it. An unscoped read is the error. The demo prints "profile: writer" and does not print the key.
 
-This chapter stores each persona and each secret map in process. The prompt handed to the model is the persona. The secret is a lookup, and the lookup result is not written into that string.
+The mean for resolve_profile is 96.7 ns.
 
-One resolve measured 95.95 ns. The demo does not need an API key.
+[personal note]
 
-[personal note: one takeaway from writing this chapter]
-
-Next: the chat gateway. Read Chapter 38: [link]
+Next: the chat gateway. Who is allowed to speak, a pairing code, and a platform message on the inbox. Read Chapter 38: [link]
 
 #Rust #AIAgents #LearningInPublic #SoftwareEngineering

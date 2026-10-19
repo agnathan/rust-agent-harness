@@ -1,4 +1,4 @@
-use balancing::demo;
+use balancing::federation::demo;
 
 fn main() {
     println!("{}", demo());

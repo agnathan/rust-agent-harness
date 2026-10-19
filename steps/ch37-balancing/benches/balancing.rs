@@ -1,6 +1,6 @@
 use std::hint::black_box;
 
-use balancing::{Backend, Policy, Pool};
+use balancing::federation::{Backend, Policy, Pool};
 use criterion::{criterion_group, criterion_main, Criterion};
 
 fn pick_least(c: &mut Criterion) {

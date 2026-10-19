@@ -1,11 +1,3 @@
-# Chapter 37: Balancing and Federation
+# Chapter 23 — Learned tools
 
-Pick a backend by least outstanding requests, or by the quieter of two indexes. Upstream servers that offer the same tool share a pool. Discovery connects four at a time. No socket.
-
-```bash
-cargo nextest run --locked -p ch37-balancing
-cargo run -p ch37-balancing
-cargo bench -p ch37-balancing --bench balancing --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
-```
-
-The binary prints `pick: echo via alpha`. No API key.
+`ch37-balancing` installs a predicted tool list before the request. `session_tools` reads that list. Composite and macro names expand to steps. Code mode runs `call tool json` lines, at most 50, and only for tools on the allowlist and in the offer. The demo needs no API key.

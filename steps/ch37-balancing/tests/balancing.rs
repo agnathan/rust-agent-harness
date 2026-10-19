@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use balancing::{
+use balancing::federation::{
     discover, federate, pool_for, Backend, Policy, Pool, Upstream, DISCOVERY_CONCURRENCY,
 };
 
@@ -68,5 +68,5 @@ fn discovery_stays_at_four() {
 
 #[test]
 fn the_demo_picks_alpha() {
-    assert_eq!(balancing::demo(), "pick: echo via alpha");
+    assert_eq!(balancing::federation::demo(), "pick: echo via alpha");
 }

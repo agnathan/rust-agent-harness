@@ -883,7 +883,7 @@ The queue is the accept bound of 32. The 33rd call is refused. Nothing parks pas
 
 **Breaker.** Three failed calls open it. The next call does not reach the backend.
 
-**Left for later.** The client reconnect cooldown (30 seconds, doubling to 10 minutes) is not this breaker. Replica routing is chapter 37. The socket is chapter 40. Secret redaction (E1, E2) is still absent.
+**Left for later.** The client reconnect cooldown (30 seconds, doubling to 10 minutes) is not this breaker. Replica routing is chapter 37. The socket is chapter 42. Secret redaction (E1, E2) is still absent.
 
 ## Chapter summary
 

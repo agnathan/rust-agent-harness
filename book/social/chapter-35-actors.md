@@ -4,21 +4,21 @@
 1/
 Chapter 35 is up: Agents as Actors.
 
-Each agent is a task with a mailbox. The inbox holds 64 messages. The 65th send is refused. A steer waits for the next turn. An interrupt skips the model. 🧵
+The inbox holds 64 messages. try_submit of the next one returns Full, and len stays 64. A steer waits for the turn. An interrupt returns "interrupted" and does not call the model. 🧵
 
 2/
-Hermes Agent's steer is agent/interrupt_control.py. Empty text returns false. Two steers join with a newline. A steer does not cancel the turn. redirect is the path that cancels a model request.
+Hermes has no actor inbox. I read gateway/turn_executor.py at 9e01b44: one thread per submitted work item, no queue, no cap. gateway/session_bot.py says the mailbox is a delivery receipt, not an execution queue.
 
 3/
-The capacity of 64 is the harness budget, not a number I found in steer. One hundred tasks means one hundred inboxes. FakeModel answers. No key.
+agent/prompt_builder.py wraps a steer with STEER_MARKER_OPEN. This mailbox appends the trimmed text on the turn that runs. fan starts one tokio task per agent. Each channel is created with INBOX_CAP. One hundred tasks, one reply each.
 
 4/
-One submit into an empty inbox measured 289.2 ns. The demo prints "agent: ok".
+The bench id is 35/inbox_submit. The mean is 250.1 ns, mean.point_estimate from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The demo prints "agent: ok". No key.
 
 [personal note]
 
 5/
-Next is restarting a failed child, and keeping that restart off the child's own work.
+Next is supervision: restart a failed child. join_next surfaces a panic. This chapter does not start the agent again.
 
 Read Chapter 35: [link]
 
@@ -27,12 +27,12 @@ Read Chapter 35: [link]
 ## LinkedIn
 Chapter 35 is out: Agents as Actors.
 
-An agent that shares the caller's thread cannot tell a second message to wait. Hermes Agent queues a steer without cancelling the turn, and it refuses empty steer text. I kept that. The mailbox here is a bounded channel of 64. A full inbox returns Full instead of growing. An interrupt is a different message: the turn it marks does not call the model. One hundred agents means one hundred of those inboxes, each with a scripted reply.
+Each agent needs a mailbox with a size. Hermes has no actor inbox. gateway/turn_executor.py starts one thread per submitted work item and says there is no queue and no cap. gateway/session_bot.py describes a delivery receipt, not an execution queue. I gave the harness an inbox of 64. A full inbox refuses the next message and does not grow. A steer is stored until the turn. An interrupt drops that turn before the model. One hundred tasks each answer once, on their own channel of the same cap. The steer marker in agent/prompt_builder.py is not wrapped here.
 
-One submit into an empty inbox measured 289.2 ns. The demo does not need an API key.
+The bench id is 35/inbox_submit. The mean is 250.1 ns, mean.point_estimate from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573).
 
-[personal note: one takeaway from writing this chapter]
+[personal note]
 
-Next: restart a failed child without pretending the restart did the child's work. Read Chapter 35: [link]
+Next: supervision and restart. Read Chapter 35: [link]
 
 #Rust #AIAgents #LearningInPublic #SoftwareEngineering

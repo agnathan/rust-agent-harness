@@ -1,6 +1,6 @@
 # Filter names match steps/ directory names.
 # `shared` means "retest every step that exists".
-# The chapter plan itself is .github/chapters.json (chapters 0–50, parts I–VI).
+# The chapter plan itself is .github/chapters.json (chapters 0–52, parts I–VI).
 # Every step directory is named steps/chNN-<slug>, including the server track.
 # There is no steps/ch04-mcp-client directory. Chapter 4 is ch04-1 through ch04-4.
 shared:
@@ -98,11 +98,15 @@ ch23-learned-tools:
 ch37-balancing:
   - "steps/ch37-balancing/**"
   - "mcp-gateway/**"
-ch40-service:
-  - "steps/ch40-service/**"
+ch40-browser:
+  - "steps/ch40-browser/**"
+ch41-vision:
+  - "steps/ch41-vision/**"
+ch42-service:
+  - "steps/ch42-service/**"
   - "mcp-gateway/**"
-ch49-capstone:
-  - "steps/ch49-capstone/**"
+ch51-capstone:
+  - "steps/ch51-capstone/**"
   - "mcp-gateway/**"
 ch10-turn-state:
   - "steps/ch10-turn-state/**"
@@ -158,21 +162,21 @@ ch38-profiles:
   - "steps/ch38-profiles/**"
 ch39-gateway:
   - "steps/ch39-gateway/**"
-ch41-cron:
-  - "steps/ch41-cron/**"
-ch42-acp:
-  - "steps/ch42-acp/**"
-ch43-blackboard:
-  - "steps/ch43-blackboard/**"
-ch44-kanban:
-  - "steps/ch44-kanban/**"
-ch45-message-bus:
-  - "steps/ch45-message-bus/**"
-ch46-team-skills:
-  - "steps/ch46-team-skills/**"
-ch47-a2a:
-  - "steps/ch47-a2a/**"
-ch48-tracing:
-  - "steps/ch48-tracing/**"
-ch50-evals:
-  - "steps/ch50-evals/**"
+ch43-cron:
+  - "steps/ch43-cron/**"
+ch44-acp:
+  - "steps/ch44-acp/**"
+ch45-blackboard:
+  - "steps/ch45-blackboard/**"
+ch46-kanban:
+  - "steps/ch46-kanban/**"
+ch47-message-bus:
+  - "steps/ch47-message-bus/**"
+ch48-team-skills:
+  - "steps/ch48-team-skills/**"
+ch49-a2a:
+  - "steps/ch49-a2a/**"
+ch50-tracing:
+  - "steps/ch50-tracing/**"
+ch52-evals:
+  - "steps/ch52-evals/**"

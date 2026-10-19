@@ -366,7 +366,7 @@ Still layer L5, for tools that arrive from another process. The catalog is [`doc
 
 **A duplicate remote name is refused.** `register_remote` lists the session once and calls `registry.register` for each tool. The `?` returns `ToolError::Duplicate` and stops the rest of that registration.
 
-Sampling and elicitation limits (M7, `tools/mcp_tool_sampling.py`) are not in this client. Chapter 40 is where a server-driven call gets a limit, next to the gateway's own auth.
+Sampling and elicitation limits (M7, `tools/mcp_tool_sampling.py`) are not in this client. Chapter 42 is where a server-driven call gets a limit, next to the gateway's own auth.
 
 ## Chapter summary
 

@@ -65,22 +65,24 @@ cargo run -p ch02-harness-cli -- --mock chat
 | ch33-composition | 33 | nested fan-out under one pool, a handoff only when ownership moves, the critic loop |
 | ch34-context | 34 | a scan, a 20,000-character cap, an untrusted wrap, preflight compression |
 | ch35-actors | 35 | one task per agent, an inbox of 64, steer and interrupt |
-| ch36-supervision | 36 | one restart, a chain of three, cancel and budget |
+| ch36-supervision | 36 | one restart, a chain of three, heartbeats, cancel and budget |
 | ch37-balancing | 37 *(server)* | least outstanding, power of two, federation, discovery cap of 4 |
 | ch38-profiles | 38 | personas, a secret map per profile, fail closed with no scope |
-| ch39-gateway | 39 | allowlist, pairing, bot-loop guard, emergency stop, the session inbox |
-| ch40-service | 40 *(server)* | session routing, an `Arc` reload, quotas, a drain, sampling and OSV |
-| ch41-cron | 41 | one claim, one crash retry, a prompt scan, the lifecycle guard |
-| ch42-acp | 42 | one inbox message per ACP update, `end_turn` or `cancelled` |
-| ch43-blackboard | 43 | facts and waiters, a claim that drops the lock, pause and an injection check |
-| ch44-kanban | 44 | one JSON board, a `create_new` lock, claim, complete, review, or block |
-| ch45-message-bus | 45 | a bus of 64, `try_send`, a bot cooldown of 20, egress redaction |
-| ch46-team-skills | 46 | a proposal queue, a librarian as the only writer, an `Arc` index swap |
-| ch47-a2a | 47 | A2A for a URL outside this process, a pool of 8, a cancel flag |
-| ch48-tracing | 48 | a counting subscriber, content-free span names, 100 mock researchers |
-| ch49-capstone | 49 *(server)* | three token arms and a load of 100. No socket |
-| ch50-evals | 50 | the chapter 9 task names, one red-team case per layer, no fail threshold |
+| ch39-gateway | 39 | allowlist, pairing, bot-loop guard, emergency stop, the session inbox, gateway lifecycle block |
+| ch40-browser | 40 | navigate and snapshot behind `PageBackend`, secret URL and SSRF, untrusted page text |
+| ch41-vision | 41 | sniff, size and type caps, untrusted caption, no vision API |
+| ch42-service | 42 *(server)* | session routing, an `Arc` reload, quotas, a drain, sampling and OSV |
+| ch43-cron | 43 | one claim, one crash retry, a prompt scan, the lifecycle guard |
+| ch44-acp | 44 | one inbox message per ACP update, `end_turn` or `cancelled` |
+| ch45-blackboard | 45 | facts and waiters, a claim that drops the lock, pause and an injection check |
+| ch46-kanban | 46 | one JSON board, a `create_new` lock, claim, complete, review, or block |
+| ch47-message-bus | 47 | a bus of 64, `try_send`, a bot cooldown of 20, egress redaction |
+| ch48-team-skills | 48 | a proposal queue, a librarian as the only writer, an `Arc` index swap |
+| ch49-a2a | 49 | A2A for a URL outside this process, a pool of 8, a cancel flag |
+| ch50-tracing | 50 | a counting subscriber, content-free span names, 100 mock researchers |
+| ch51-capstone | 51 *(server)* | three token arms and a load of 100. No socket |
+| ch52-evals | 52 | the chapter 9 task names, one red-team case per layer, no fail threshold |
 | ch15-limits | 15 *(server)* | Chapters 7 and 8 vendored, plus per-tool permits, idempotent retry, a breaker, caps of 50 |
 | ch05-minimal-server | 5 *(server)* | Fixed tool list, `echo`, a 34/8 gate. No socket |
 
-From chapter 10 on, each harness directory is a copy of the previous one plus that chapter's modules. The layout and the plan for chapters 23–50 are `docs/harness-architecture.md`. Your own copy is `my-harness/` at the repo root. Milestone tests there compile and panic with `todo!` until you implement each chapter. The course plan is chapters 0–50 in six parts, listed in `book/book-outline.md` and `.github/chapters.json`. Performance budgets for every chapter are `docs/performance.md`. MCP is a first-class tool boundary from chapter 3 (client in chapter 4, gateway server in chapter 5). The gateway design is `docs/mcp-gateway.md`. Part II is how one agent learns; the design is `docs/self-improvement.md`. How the team patterns fit together is `docs/team-patterns.md`. The steps in the table above are the written chapters, including `ch49-capstone`. None of the server steps bind a socket. Section numbers inside chapters 6 and 9 stay aligned with the `ch06-*` and `ch09-*` crate names.
+From chapter 10 on, each harness directory is a copy of the previous one plus that chapter's modules. The layout and the plan for chapters 23–52 are `docs/harness-architecture.md`. Your own copy is `my-harness/` at the repo root. Milestone tests there compile and panic with `todo!` until you implement each chapter. The course plan is chapters 0–52 in six parts, listed in `book/book-outline.md` and `.github/chapters.json`. Performance budgets for every chapter are `docs/performance.md`. MCP is a first-class tool boundary from chapter 3 (client in chapter 4, gateway server in chapter 5). The gateway design is `docs/mcp-gateway.md`. Part II is how one agent learns; the design is `docs/self-improvement.md`. How the team patterns fit together is `docs/team-patterns.md`. The steps in the table above are the written chapters, including `ch51-capstone`. None of the server steps bind a socket. Section numbers inside chapters 6 and 9 stay aligned with the `ch06-*` and `ch09-*` crate names.

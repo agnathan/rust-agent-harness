@@ -547,7 +547,7 @@ outcome_label           time:   [5.5660 ns 5.6528 ns 5.7058 ns]
 
 ## 9.10 Stronger evals
 
-`run_saved_evals` is the three tasks from the first version of this chapter. `echo-hello` calls `echo` and finishes with `hello`. `direct` finishes with `ok` and calls nothing. `eight-reads` fans eight `delay_read`s of 20 ms and fails the score if the peak in flight is above 8. Later chapters re-run this set. Chapter 50 is where it gets a score report.
+`run_saved_evals` is the three tasks from the first version of this chapter. `echo-hello` calls `echo` and finishes with `hello`. `direct` finishes with `ok` and calls nothing. `eight-reads` fans eight `delay_read`s of 20 ms and fails the score if the peak in flight is above 8. Later chapters re-run this set. Chapter 52 is where it gets a score report.
 
 `run_stress_evals` adds four:
 
