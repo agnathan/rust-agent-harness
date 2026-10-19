@@ -2,13 +2,27 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-*(server)*
+Chapter 8 defined three ways to offer tools for one fake task and counted schema tokens, call tokens, and result tokens. Chapter 50's research team is a harness story. It does not answer the catalog question: how many tokens does the dynamic offer cost, does the task still succeed, and what does a hundred in-process dispatches cost? This chapter answers that on the server. The crate is `steps/ch51-capstone`. It copies chapter 42, library name `gwservice`, new module `capstone`. It is not on the harness copy chain. It binds no socket. `oha` is not run, because there is no listener to point it at. `mcp-gateway` re-exports `LearnedGateway` from this crate as `Gateway`, and it re-exports chapter 8's session types beside it.
 
-Chapter 50 can see a turn. This chapter asks a smaller question on the server line. How many schema tokens does a finished task spend if the offer is every card, a fixed eight, or the one card the task named? The same crate then runs 100 calls through the session gateway that already lives in memory. Nothing listens.
+`Card` is a tool in the sample catalog. `Arm` is dynamic, static, or every tool. `sample_catalog` builds the fixed set the three arms share. `approx_tokens` divides by four and rounds up with `div_ceil`, so the count is deterministic and does not call a tokenizer. `tokens_of` and `offers_needed` are the arithmetic. `compare` runs the three arms and reports tokens and task success for each. The dynamic arm offers the names the task needs. The static arm offers a fixed eight. The every-tool arm offers the whole sample. `task_arms` is the rename task, the same shape as chapter 8's fake task. `load` admits 100 in-memory dispatches. `p99` is the nearest-rank percentile inside that process, not a network percentile. `admit` is the gate the load passes through. `demo` prints the arms and the load line.
 
-The step crate is `steps/ch51-capstone`. The book number is 51. The package is `ch51-capstone`. The library name stays `gwservice`, so `gwservice::` still resolves. This is a copy of `steps/ch42-service`, the MCP gateway service, plus `src/capstone.rs`. It is not in the harness copy chain. There is no path dependency on `ch42-service`. The sources are copied. Edition is 2021. `rust-version` is 1.85. `Cargo.toml` says the chapter 42 tree vendored, plus the three token arms and an in-memory load. `lib.rs` still opens with the chapter 23 comment about a prediction installed before the request. `pub mod capstone` is the new module. The other modules are the vendored ones: `catalog`, `federation`, `limits`, `service`, and `session`. The bench target is named `capstone`. The binary is `ch51-capstone`, and `src/main.rs` prints `gwservice::capstone::demo()`.
+The server stays a separate program because the token cost of a catalog is a property of the catalog. Measuring it inside the harness would mix prompt-building overhead with the offer. The client, chapter 6, already measured what a 10,000-tool schema list costs when the agent holds it. This chapter measures the three offers the gateway can make, with success beside the number, so a smaller offer that fails the task does not win. That comparison is why the session toolset, the learned offer, and the limits exist. A self-improving harness that adds tools without an offer policy will eventually put every schema in the prompt. The dynamic arm is the counterexample, and it has to succeed at the task or it is only a smaller prompt.
 
-`mcp-gateway` now depends on `ch51-capstone` and on `ch08-session-toolsets`. The chapter 8 library name is `gw_session`. `mcp-gateway/src/lib.rs` re-exports `gwservice::LearnedGateway` as `Gateway`. It also re-exports the chapter 8 session types. The file comment says this process still binds no socket. The crate has no `[[bin]]`. The smoke test builds `Gateway::new()` and reads an empty catalog. It does not call `capstone::demo`.
+Rust, at the arithmetic: integer `div_ceil` is the token estimate, a `struct` per arm keeps the three results from collapsing into one number, and the percentile is a sort plus an index. The load is a loop of in-memory calls. No socket, no HTTP framework, no key.
+
+`cargo run -p ch51-capstone` prints the arms. The exercise is `my-harness/tests/ch51.rs`: the dynamic, static, and every-tool arms each report tokens and task success.
+
+**In this chapter**
+
+- 51.1 The constants, `Card`, `Arm`, and `LoadReport`
+- 51.2 `schema_tokens` and `approx_tokens`
+- 51.3 `sample_catalog`
+- 51.4 `tokens_of`, `offers_needed`, `compare`, and `arm`
+- 51.5 `task_arms` and the rename task
+- 51.6 `admit` and `p99`
+- 51.7 `load`
+- 51.8 `demo`
+- 51.9 The package tests
 
 | Section | What it walks |
 |---|---|
@@ -579,7 +593,7 @@ The wave counter is not a thread pool. Resetting `in_flight` to 0 is what opens 
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). The catalog does not have a row for this capstone. The behaviors below are the ones `capstone.rs` actually implements.
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). The catalog does not have a row for this capstone. The behaviors below are the ones `capstone.rs` actually implements.
 
 **Tokens.** Four characters per token, through `session::approx_tokens`. The arms report the sum and a success bit. Success requires the needed tool to be in the offered set.
 

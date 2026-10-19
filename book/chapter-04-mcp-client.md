@@ -2,9 +2,24 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 3 can call a tool that lives in this process. A real workspace does not keep every tool there. A file server, a browser, a notes database: each one is its own program, and the way those programs advertise tools is MCP. This chapter is the client. It speaks MCP over a child process's stdin and stdout, and over streamable HTTP on `127.0.0.1`. The tools that come back are the same `Tool` values chapter 3 already dispatches.
+Chapter 3 can call a tool that lives in this process. A real workspace does not keep every tool there. A file server, a browser, a notes database: each is its own program, and the way those programs advertise tools is MCP. This chapter is the client. It speaks MCP over a child process's stdin and stdout, and over streamable HTTP on `127.0.0.1`. The tools that come back are the same `Tool` values chapter 3 already dispatches. The four copies are `steps/ch04-1-stdio`, `steps/ch04-2-http`, `steps/ch04-3-registry`, and `steps/ch04-4-cache`. The library in every copy is still `harness_core`.
 
-The server in the tests is a fixture in this repo, `steps/ch04-fixture`. It does not dial an external host. Linux, macOS, and Windows all run it. `echo` returns its text argument and is marked read-only. `note` stores a line and is a write. `grow` reveals a fourth tool, `extra`, and sends `notifications/tools/list_changed`. `FIXTURE_DELAY_MS` makes `echo` sleep, so a test can see overlapping calls.
+`McpSession` is the connection. `McpTool` is the registry entry. `readOnlyHint` becomes `ToolKind`, and a missing hint means `Write`, because treating silence as a read would let a mutating tool overlap its neighbors. A duplicate name is `ToolError::Duplicate`. The test server is the fixture in `steps/ch04-fixture`, included into each step so the tests can see `CARGO_BIN_EXE_mcp_fixture`. It does not dial an external host. Linux, macOS, and Windows all run it. `echo` returns its text and is read-only. `note` stores a line and is a write. `grow` reveals a fourth tool, `extra`, and sends `notifications/tools/list_changed`. Section 4.4's `ToolListCache` remembers the last `tools/list` for one connection and drops it on that notification.
+
+This client is why the server track can stay a separate program. Chapter 5 will be a small MCP server. Chapters 7, 8, 15, 23, 37, 42, and 51 grow that server. The harness never becomes the catalog. It connects, lists, and calls. Two `harness_core` crates cannot be dependencies of one package, which is why chapter 6 does not link `rmcp`. It takes a list of cards. The end of this chapter is where that list comes from: `cards_from_listed` is the seam. `rmcp` 3.5.1 needs rustc 1.88, so these four crates and the fixture set `rust-version = "1.88"`. Earlier chapters stay on 1.85.
+
+The split matters for everything that comes later. Chapter 9's loop will call an MCP tool and a native tool through the same `Arc<dyn Tool>`. Chapter 6 will measure what happens when the list is thousands of names long, and it will keep the full schemas off the prompt. A self-improving harness that learned a new procedure would still want to call tools it does not contain. MCP is that boundary. Skills and memory, when they arrive, are harness stores. The tool catalog is the server's.
+
+Rust, in sidebars: a child process and stdio, an HTTP session, `async` across the call, and a cache that is just a value you drop. The fixture is pulled in with `include!` because a binary dependency of the kind Cargo prefers needs a nightly flag this repo does not use.
+
+`cargo run -p ch04-4-harness-core --example demo --quiet` runs the fixture. `cargo run -p ch04-4-harness-cli -- --mock ask "hello"` is the CLI. No step calls OpenRouter. A key that is present is refused with the message that this demo does not place a live call.
+
+**In this chapter**
+
+- 4.1 Stdio
+- 4.2 Streamable HTTP
+- 4.3 The same registry
+- 4.4 A cache, and the chapter 6 seam
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -12,10 +27,6 @@ The server in the tests is a fixture in this repo, `steps/ch04-fixture`. It does
 | 4.2 | `steps/ch04-2-http` | the same session over streamable HTTP |
 | 4.3 | `steps/ch04-3-registry` | remote tools in the chapter 3 registry and dispatcher |
 | 4.4 | `steps/ch04-4-cache` | a `tools/list` cache dropped by `list_changed` |
-
-Each step is its own copy. Section 4.1 still builds after 4.4 exists. The library crate in every copy is still named `harness_core`. Two of those crates cannot be dependencies of one package, which is why chapter 6 does not link `rmcp`. It takes a list of cards. The end of this chapter is where that list comes from.
-
-`rmcp` 3.5.1 needs rustc 1.88. These four crates, and the fixture, set `rust-version = "1.88"`. The earlier chapters stay on 1.85. CI installs stable, which is past 1.88 on the runners I use.
 
 > **How Hermes does it**
 >

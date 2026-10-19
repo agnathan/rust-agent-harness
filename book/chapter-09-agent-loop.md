@@ -2,20 +2,28 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-The earlier chapters can each do one piece of a turn. Chapter 1 can ask a model. Chapter 2 can hold the messages and a session inbox. Chapter 3 can run tools, reads together and a write alone. Chapter 4 can run those tools in another process. Chapter 6 can keep a huge catalog off the prompt. None of them yet asks the model, runs what it asked for, and asks again.
+The earlier chapters can each do one piece of a turn. Chapter 1 can ask a model. Chapter 2 can hold the messages and a session inbox. Chapter 3 can run tools, reads together and a write alone. Chapter 4 can run those tools in another process. Chapter 6 can keep a huge catalog off the prompt. None of them yet asks the model, runs what it asked for, and asks again. This chapter is that loop, in ten copies under `steps/ch09-*`. The section numbers stay 9.1 through 9.10 so they match the crate names. The finished loop, the one chapter 10 copies, is `steps/ch09-10-evals`. The library there is `harness_core`, package `ch09-10-harness-core`. The mock stays the default. `--live` is an opt-in that calls OpenRouter with two real tools, `echo` and `note`. CI does not pass that flag and does not set a key.
 
-This chapter is that loop, in ten copies. Each copy adds one behavior and keeps the ones before it. The mock stays the default. `--live` is an opt-in that calls OpenRouter with two real tools, `echo` and `note`. CI does not pass that flag, and it does not set a key.
+`run_loop` is the function. It calls the provider, dispatches the tool calls through chapter 3's scheduler, appends the results, and calls the provider again. A hard cancel aborts the in-flight model call or tool call and drops a pending steer. A soft stop lets the current work finish, then makes one model call and does not dispatch tools from that reply. Validation repairs a close unknown name, retries broken JSON, and leaves after three bad batches with the partial transcript. A stall is an identical call or a short cycle. An iteration warning fires at half the budget, and a wrap-up notice lands once the time budget is 80 percent spent. A tool result is capped. A steer from the session inbox is appended onto the newest tool result, so the cached prefix stays put. Tool-call arguments are sent as stable JSON. `TurnOutcome` is the enum every exit returns. A saved eval set and four stress tasks run on the mock.
 
-By the end of the chapter a turn can:
+Chapter 10 will take this same loop and make it walk a table of legal moves, so a chapter 9 outcome the table cannot name fails a test instead of drifting. Chapter 11 puts an approval denial in front of dispatch. Chapter 14 picks up the empty-response retry, the length continuation, and the repetition guard this chapter defers. Chapter 19 is where a tool call can start before the buffered reply is finished. Chapter 34 is where preflight compression runs before the model call. Chapter 52 re-runs this chapter's saved tasks on a much later copy of `run_loop`. The loop is the thing those chapters grow. A self-improving agent is still this loop: the learning, the memory write, and the skill patch happen beside it, not instead of it. If the loop cannot say why it stopped, later reflection has nothing honest to review.
 
-- call the model, dispatch the tool calls, append the results, and call the model again
-- stop on a hard cancel in the middle of a model call or a tool call, or take one soft wrap-up
-- repair a close unknown tool name, retry broken JSON, and exit with the partial transcript after three bad batches
-- notice an identical call or a short A, B cycle, and halt
-- warn at half the iteration budget, and append a wrap-up notice once the time budget is 80% spent
-- cap a tool result, append a steer from the session inbox, and send tool-call arguments in a stable JSON form
-- return one typed outcome per exit, and make a final wrap-up call when the budget runs out
-- pass a saved eval set and four stress tasks on the mock
+Rust, beside the code: `TurnOutcome` and the scripted reply are enums, so every exit is named. `CancellationToken` is a flag you race against the call. `Arc<dyn Tool>` is how a native tool and an MCP tool share one dispatch path. The worker bound of 8 is the semaphore from chapter 3.
+
+`cargo run -p ch09-10-harness-core --example demo --locked --offline --quiet` runs the finished mock. `cargo run -p ch09-10-harness-cli --locked --offline --quiet -- evals` runs the saved set. `--live-evals` is the opt-in I am not treating as the default.
+
+**In this chapter**
+
+- 9.1 A live call, and the mock that stays the default
+- 9.2 Prompt cancellation
+- 9.3 Tool-call validation
+- 9.4 Stall detection
+- 9.5 Budget warnings and wrap-up
+- 9.6 A per-tool output cap
+- 9.7 Steering
+- 9.8 Stable request formatting
+- 9.9 A typed turn outcome
+- 9.10 Stronger evals
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -29,10 +37,6 @@ By the end of the chapter a turn can:
 | 9.8 | `steps/ch09-8-canonical` | stable tool-call arguments on the send path |
 | 9.9 | `steps/ch09-9-outcome` | a `TurnOutcome` enum, and a budget wrap-up call |
 | 9.10 | `steps/ch09-10-evals` | stress evals, still optional to run live |
-
-The section numbers in this chapter stay 9.1–9.10. They match the `steps/ch09-*` crate names. The book number is 9.
-
-Each crate sets `rust-version = "1.88"` because it includes the chapter 4 client. `rmcp` 3.5.1 needs that compiler. The library package is `ch06-N-harness-core`. The binary is `ch06-N-harness`.
 
 > **How Hermes does it**
 >

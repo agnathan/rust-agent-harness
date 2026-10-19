@@ -2,9 +2,26 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 37 can pick a backend on the server crate. The harness still has one persona and one pile of secrets. This chapter stays on the harness. It copies chapter 36 and does not depend on `ch37-balancing`. Several personas share one process. Each profile owns a secret map. The prompt is the persona, an `Arc<str>`. `get_secret` and `resolve` fail closed when multiplex is on and no scope is installed. The error is `UnscopedSecretError`. The secret value is not written into the prompt.
+Chapter 36's harness can supervise a child. It still has one persona and one pile of secrets. A process that serves more than one user, or more than one role, needs several personas in one config, and it needs a secret that stays out of the system prompt. This chapter adds that map. The crate is `steps/ch38-profiles`, a copy of chapter 36 plus `profiles`. The package is `ch38-profiles`. It is the harness line. Chapter 37, the balancer, is not copied in.
 
-The step crate is `steps/ch38-profiles`. The package is `ch38-profiles`. The library name is `harness_core`. I diffed `lib.rs` against chapter 36. The added line is `pub mod profiles`. `supervision.rs` is unchanged from chapter 36, including `is_stale`. `Cargo.toml` names the package `ch38-profiles` and sets `[lib] name = "harness_core"`. There is no `balancing = { path = ... }` line, and there is no path dependency on `ch36-supervision`. The files are a copy. The binary the chapter runs is `ch38-profiles`, from `src/bin/chapter_demo.rs`. It prints `profiles::demo()`. `examples/demo.rs` is the eval runner copied with the harness.
+`Profile` owns the persona text and the secret map. The store is built from config. `get_secret` fails closed when no scope is installed: the error is the unscoped-secret error, and the secret is not in the prompt. That is the multiplex rule. A profile that is selected resolves in well under the cost of a model call, and the resolved persona is what the prompt receives. The map stays beside it. `FakeModel` echoes the persona, so a test can see the secret did not ride along in the string.
+
+Chapter 39's chat gateway is the first caller that needs more than one persona, because a platform session is bound to a user. Chapter 20's redaction still runs on text that is stored or sent. Profiles are a different control: a secret that never enters the prompt does not need to be scrubbed out of the prompt later. Chapter 49's external call will scrub again on the way out, because the other process is a reader. The profile map is why there is a scoped value to refuse in the first place.
+
+A self-improving agent makes this sharper. Memory and skills are written by the model from whatever it can see. A secret that leaks into the persona becomes a fact in `USER.md` or a line in a skill, and chapter 21's scanner is looking for instructions, not for every credential shape. Keeping the secret out of the prompt is the earlier cut. Reflection then has nothing secret to memorize.
+
+Rust, at the map: the store is a struct built once, the profile is an owned persona plus a map, and `get_secret` returns `Result` so the unscoped case is an error rather than an empty string that looks like a value. The prompt builder takes the persona by reference and never the map.
+
+`cargo run -p ch38-profiles --bin ch38-profiles --offline` prints the persona. The exercise is `my-harness/tests/ch38.rs`: an unscoped secret read is the error, and the secret is not in the prompt.
+
+**In this chapter**
+
+- 38.1 The error types
+- 38.2 `Profile` owns the persona and the map
+- 38.3 Building the store
+- 38.4 `get_secret` fails closed
+- 38.5 The prompt is the persona
+- 38.6 `FakeModel` and `demo`
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -416,7 +433,7 @@ Hermes serves `_is_global_env` names from `os.environ` even when multiplex is on
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
 **Secrets (E4).** Multiplex with no scope returns `UnscopedSecretError`. The name on the error is the env var that was asked for. The process map is not consulted. `resolve` of a profile that exists turns that into `ResolveError::Unscoped`. The catalog row and `get_secret` in `agent/secret_scope.py` are this rule. Hermes raises. This function returns `Err`.
 

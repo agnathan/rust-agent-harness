@@ -2,11 +2,25 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 35 can run a hundred agents, each with its own inbox. It does not start a failed child again, and it does not decide that a child has gone quiet. This chapter adds both decisions to the copied harness. `restart_child` runs a scripted child, and on one failure it records a boot and tries once more. Three chained boots trip a breaker. A cancelled call, or a budget of zero, returns before the child runs. `is_stale` is the heartbeat check, and it is implemented. An idle child is stale after 15 cycles. A child inside a tool uses 40 cycles. The interval is 30 seconds, so those caps are 450 seconds and 1200 seconds. Progress is a new iteration, a different tool, or a newer activity timestamp, and progress returns false. The function does not sleep, and it does not start a thread.
+Chapter 35 can run an agent as a task with a bounded inbox. A task that panics, or that sits inside a tool and never returns, stays dead or stays stuck. Chapter 9 can cancel a call. It does not restart the child, and it does not decide that "no progress" has gone on long enough. This chapter does both. The crate is `steps/ch36-supervision`, a copy of chapter 35 plus `supervision`. The package is `ch36-supervision`. Heartbeats, deferred by chapter 29 and chapter 31, land here.
 
-The step crate is `steps/ch36-supervision`. The package is `ch36-supervision`. The library name is `harness_core`. This is chapter 35's harness copied forward, plus `supervision`. `lib.rs` adds `pub mod supervision`. I diffed it against chapter 35's `lib.rs`: that one line is the difference. `Cargo.toml` names the package `ch36-supervision` and sets `[lib] name = "harness_core"`. It lists the crate's own dependencies. There is no `ch35-actors = { path = ... }` line. The step builds alone.
+`Supervisor::record` is the chain of what the child has done. `restart_child` retries once, and the demo prints the retry. The cancellation token and the budget stay the ones chapter 9 put on the call. `Pulse` and `is_stale` are the heartbeat. The interval is 30 seconds. Idle stale is 15 cycles, 450 seconds. A child that is inside a tool uses 40 cycles, 1,200 seconds. Progress is a new iteration, a different tool, or a newer `last_activity_ts`. An in-flight model wait refreshes that timestamp, so a slow model is not idle. `is_stale` does not sleep and does not start a thread. The caller asks, and the caller decides to restart. That keeps the clock out of the function the bench times.
 
-The binary the chapter runs is `ch36-supervision`, from `src/bin/chapter_demo.rs`. It prints `supervision::demo()`. `examples/demo.rs` is the eval runner copied with the harness. It is a different binary.
+Chapter 37 is the server, a copy of the learned gateway plus pools. It does not copy this harness. Chapter 38 copies this harness and adds profiles. The restart stays on the harness because it is about the child task the supervisor started, not about an upstream MCP connection. Federation has its own idea of a dead backend, and mixing the two clocks would restart an agent because a remote tool was slow, or refuse a remote tool because an agent was idle.
+
+A self-improving team needs this more than a single loop does. Reflection is a child. A specialist is a child. A curator is a scheduled child. If a reviewer hangs, the parent has to notice and either cancel it or start it again, without running the reviewer's writes twice. One retry is the bound this chapter locks. A restart loop that tried forever would be a second agent, spending the budget the first one lost.
+
+Rust, at the pulse: the timestamps are integers, and the comparison is pure, which is why the test does not wait 450 seconds. Atomics are the counters the record updates from more than one task. `Result` is the child's error, distinct from "stale," which is a boolean the supervisor turns into a restart.
+
+`cargo run -p ch36-supervision --bin ch36-supervision --offline` prints the retry. The exercise is `my-harness/tests/ch36.rs`: a child with no progress for the idle threshold is stale, and one that is inside a tool uses the longer threshold.
+
+**In this chapter**
+
+- 36.1 The restart constants and the two error types
+- 36.2 `FakeModel` scripts a child, and `Call` holds the flag and the budget
+- 36.3 `Supervisor::record` is the chain
+- 36.4 `restart_child` retries once, and `demo` prints the retry
+- 36.5 `Pulse` and `is_stale` are the heartbeat
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -460,7 +474,7 @@ The second `complete` runs only when the breaker did not trip and the flag is st
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
 **Heartbeat.** Interval 30 seconds. Idle stale at 15 cycles, 450 seconds. In a tool, 40 cycles, 1200 seconds. Progress is a new iteration, a different tool, or a newer `last_activity_ts`, and that progress returns false from `is_stale`. The numbers are `_HEARTBEAT_INTERVAL`, `_HEARTBEAT_STALE_CYCLES_IDLE`, and `_HEARTBEAT_STALE_CYCLES_IN_TOOL` in `tools/delegate_tool.py`. The choice of 40 versus 15 is the `stale_cycles` line in `tools/delegate_tool_child_run.py`. This function does not sleep and does not start a thread.
 

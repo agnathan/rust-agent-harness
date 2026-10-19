@@ -2,9 +2,26 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 29 can run specialists and take their replies back. It does not give the conversation to a different owner. This chapter records a handoff. The next owner sees the transcript with role `scratch` removed. A board may do this four times. The fifth call is `HandoffError::Limit`, and the owner string stays. The count is an `AtomicU32`. The filter runs before the count moves. Nothing in this module calls a model.
+Chapter 29's supervisor calls specialists and gets summaries back. The parent still owns the task. Sometimes ownership should move: a router decides that a different agent continues, and the first agent is done. If that transfer copied the whole transcript, the next agent would see scratch it should not see, and if the transfer rewrote the system prompt, chapter 2's cache rule would break. This chapter filters the transcript and then moves a pointer. The crate is `steps/ch30-handoffs`, a copy of chapter 29 plus `handoffs`. The package is `ch30-handoffs`.
 
-The step crate is `steps/ch30-handoffs`. The package is `ch30-handoffs`. The library name is `harness_core`. It is chapter 29's harness copied forward, plus `handoffs`. `lib.rs` adds `pub mod handoffs`. `pipeline` and `supervisor` are still in the crate, copied forward. There is no path dependency on `ch29-supervisor`.
+The board is a count and an owner. `filter_transcript` drops scratch and keeps order. `handoff` filters, then counts, then writes the owner. A max-handoff limit stops a task from bouncing forever. The demo shows the next owner and the filtered length. The bench times the filter on 100 messages, which is the copy the next owner receives, not the full transcript. Platform re-bind, the part where a chat session starts talking to the new owner, stays in chapter 39. This chapter changes the owner field. It does not talk to Telegram.
+
+The filter is the guardrail. A handoff that forwards every tool result forwards every secret and every poisoned page the first agent saw. Chapter 20's scrub already ran on the way into the session. The filter is a second, structural cut: scratch roles and notes the next agent must not see are dropped before the pointer moves. Chapter 33 will call this only when the route says ownership should move. A supervisor that fans out does not hand off on every specialist result. Confusing the two is how a team loses the parent.
+
+Nothing here writes a skill. The lesson, if there is one, is still chapter 26's job, and it reviews the parent's view. A handoff that let the next agent inherit the reviewer's tool slice would spread writes across owners. The next agent gets the filtered transcript and the tools its own role already had.
+
+Rust, at the board: the owner is an enum or a name in a struct, and the count is an integer the limit checks. The filter allocates a new `Vec` because the next agent must not share a buffer it can push scratch back into. Order is preserved by iterating once. The 100-message bench is that allocation.
+
+`cargo run --locked -p ch30-handoffs --bin ch30-handoffs` prints the next owner. The exercise is `my-harness/tests/ch30.rs`: a 100-message filter drops what the next agent must not see.
+
+**In this chapter**
+
+- 30.1 The board is a count and an owner
+- 30.2 `filter_transcript` drops scratch and keeps order
+- 30.3 `handoff` filters, then counts, then writes the owner
+- 30.4 The demo shows the next owner and the filtered length
+- 30.5 `filter_100` times the copy the next owner receives
+- 30.6 The count moves one accepted call at a time
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -448,7 +465,7 @@ Error 4009 is the Hermes response when the session is running. `HandoffError` ha
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). This chapter filters context on a transfer.
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). This chapter filters context on a transfer.
 
 **Filter.** `filter_transcript` drops role `scratch` before the owner changes. The next agent receives the `Vec` inside `Ok`. The caller's slice still holds the unfiltered rows. Hermes `handoff.request` writes pending and does not do this filter. The filter is the adaptation.
 

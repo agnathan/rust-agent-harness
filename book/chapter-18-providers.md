@@ -2,9 +2,27 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 1 talks to OpenRouter. A turn that needs Anthropic or Bedrock has a different JSON body, and a failed key should not build a new client. This chapter builds those bodies, an OpenRouter route, and a rotation that keeps one client id. The cheaper side model stays off unless the turn asked for a summary. Nothing here opens a socket.
+Chapter 1 can call OpenRouter, and every later harness copy still can. A harness that is serious about more than one model needs a native adapter beside that client, a way to fall through when a route is invalid, a way to rotate a key without building a new HTTP client, and a cheaper model for the summaries it will soon want. This chapter adds that module. It is `adapters`, on a copy of chapter 17. The crate is `steps/ch18-providers`. The package is `ch18-providers`. The library is `harness_core`. `drive_loop` does not call this module yet. The chapter's tests and the demo do. The chapter 9 provider stays the loop's client until a later edit wires the route in.
 
-The step crate is `steps/ch18-providers`. It is chapter 17's harness copied forward, plus `adapters`. The package name stays `ch18-providers`. The module is not named `providers` because `provider.rs` is already the chapter 9 client.
+`Msg` is the message this module sends. Two request bodies, both JSON values, cover the OpenAI-compatible shape and the native Anthropic shape. Bedrock sits beside them. TLS stays on the operating system's trust store. `Preferences` and the route picker choose the next model. An invalid route falls through to the fallback. Key rotation returns the same pooled client chapter 1 created, so a new key is not a new connection pool. The side model is named for summaries and is not invoked on the user turn unless that turn asked for a summary. Duplicate tool-call ids in one batch are uniquified, and a dangling tool row is repaired, which is the rest of the body-repair work chapter 9 started.
+
+Chapter 19 will stream these same adapters. Chapter 34 will ask the side model for a structured summary when it compresses. Chapter 26's reviewer reuses the parent's model so the provider can cache the shared prefix. All three of those depend on this chapter having somewhere to put "a different model" that is not a rewrite of `Provider`. A self-improving harness uses the side model on purpose: reflection and compression are extra calls, and they should be cheap calls. Running them on the user-facing model, inline, would make every lesson as expensive as the task.
+
+Rust, in the sidebars: another impl of the same trait is how a new provider appears. An enum is the route. The client id is a value you can assert stayed put across rotation, which is the test that the pool was reused. `serde_json::Value` is the body, so the two request shapes can differ without two HTTP stacks.
+
+`cargo run -p ch18-providers` runs the fake turn. The exercise is `my-harness/tests/ch18.rs`: an invalid route falls through to the fallback model, and rotation keeps the same client.
+
+**In this chapter**
+
+- 18.1 The module is `adapters`, and `drive_loop` does not call it
+- 18.2 `Msg`, two enums, and the TLS decision
+- 18.3 Two request bodies, both a `Value`
+- 18.4 Preferences, the route, and the next model
+- 18.5 One pool, one client id, and the side model
+- 18.6 Duplicate ids, then a dangling tool row
+- 18.7 The fake turn the binary runs
+- 18.8 What each test locks
+- 18.9 What the two benches time
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -687,7 +705,7 @@ A side-model summary does not run because the turn printed text. It runs when `a
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Layer L3.
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Layer L3.
 
 **K4.** Duplicate tool-call ids in one batch are renamed with `_dN` starting at 2. A transcript that ends on a tool row is closed with the interrupted placeholder so the next user message is not `tool` then `user`.
 

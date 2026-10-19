@@ -2,13 +2,25 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 32 can judge one reply. It takes one permit, locks the notes, and returns. It does not place a fan-out on that same pool, it does not move ownership, and it does not call the critic again. A width that would put more workers in flight than the pool allows has nowhere to be refused. A `Wait` verdict has no session, no pid, and no number of seconds. A shell gate that must pass before the judge runs is still a comment in Hermes.
+The team patterns now exist as separate modules: a pipeline, a supervisor with a pool of eight, a filtered handoff, a fan-out of 100, and a critic with one permit. A real task uses more than one of them. A supervisor fans out, and it hands off only when ownership should move. A nested fan-out that ignores the pool will schedule a width the machine never agreed to. This chapter composes the patterns and puts the limits in front of the scheduling. The crate is `steps/ch33-composition`, a copy of chapter 32. The new module is `composition`. The package is `ch33-composition`. It does not path-depend on four older crates. The sources are copied, which is the rule from chapter 10 on.
 
-This chapter composes those patterns. `nested_fanout` refuses when `held` plus `width` would pass `pool.limit()`, and it refuses before any task is scheduled. A width that fits is gathered on the same `Pool`. `dispatch` calls the handoff board only for `Route::Move`. `run_continuation` speaks, runs the gates, and only then calls `as_tool`. A wait with a target parks. Twenty turns stop the loop. The constants 30 and 300 are stored. Nothing in this file sleeps them.
+`nested_fanout` refuses a width of 9 before `schedule` is called. Eight is the pool. The refusal happens before any task starts, so a too-wide request does not leave orphan work. `dispatch` moves ownership only for `Route::Move`. Any other route keeps the parent, which is how a fan-out result stays a result instead of becoming a handoff. `wait_target` reads a session, then a pid, then seconds, the wait chapter 30 deferred. `Gate` records shell exits for the quality gate, also deferred from chapter 30. The loop runs the gates, then the critic from chapter 32. `limits` returns the four numbers the composition actually enforces, and the demo stays inside them. `FakeModel` pops a scripted line.
 
-Context files, a shared snapshot, and an actor inbox wait. Chapter 34 scans and freezes context. Chapter 35 gives each agent a mailbox. Chapter 36 restarts a failed child.
+Composition is what makes the patterns a harness instead of a menu. Chapter 34 will compress the context this composition shares. Chapter 35 will turn each agent into a task with a mailbox, which is a different structure: here the parent still drives. Chapter 50's research team is a later consumer of these patterns, with tracing on. None of that works if nested width is a suggestion. The learning loop still does not run inside the composition. A reflection note can be enqueued when the composed run finishes. The critic's verdict is not, by itself, a skill.
 
-The step crate is `steps/ch33-composition`. The package is `ch33-composition`. The library name is `harness_core`. This crate is chapter 32's harness copied forward, plus `composition`. `lib.rs` adds `pub mod composition`. The top comment in `lib.rs` still says chapter 10. `Cargo.toml` describes the package as the previous harness plus this chapter. The `[dependencies]` table lists `tokio`, `regex`, `rusqlite`, and the rest of the copied stack. It does not list `ch32-critic`. There is no path dependency on the previous crate. The pool, the fan-out board, the handoff board, and the critic in this tree are the copies that already live in this crate.
+Rust, at the refusal: the route is an enum, so "move" and "stay" are not booleans you can mix with a width. The width check is a comparison before any spawn. `Result` is the refusal. The gate's exit codes are a small struct you record, not a shell the test has to launch.
+
+`cargo run -p ch33-composition --bin ch33-composition --offline` stays inside the limits. The exercise is `my-harness/tests/ch33.rs`: nested width 9 is refused before any task starts.
+
+**In this chapter**
+
+- 33.1 Four constants, and the enums that carry a stop
+- 33.2 `Gate` records exits, and `FakeModel` pops a line
+- 33.3 `nested_fanout` refuses before `schedule`
+- 33.4 `dispatch` moves ownership only for `Route::Move`
+- 33.5 `wait_target` reads a session, then a pid, then seconds
+- 33.6 The loop runs the gates, then the critic
+- 33.7 `limits` returns the four numbers, and the demo stays
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -536,7 +548,7 @@ A red gate consumes the model line and skips `as_tool`. The line can say `verdic
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
 **Nested bound.** `held.saturating_add(width) > pool.limit()` returns `ComposeError::ExceedsBound` before `FanBoard::new` and before `schedule`. Width 9 on a pool of 8, and width 8 with `held` of 1, leave `max_seen` at 0. The pool the tests build has limit 8, from `WORKER_BOUND`.
 

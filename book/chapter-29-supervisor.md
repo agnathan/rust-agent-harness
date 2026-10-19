@@ -2,9 +2,25 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 28 runs four stages one after another on one `Arc`. It does not run two specialists at the same time, and it does not refuse a tool because the caller is a child. This chapter is the supervisor. Jobs share one pool. `WORKER_BOUND` is 8. A child at depth 1 cannot call the blocked tools. Depth above 1 cannot call any tool. A worktree is opt-in and is a marker. `enqueue_reflection` pushes a string. It does not start chapter 26's reviewer. This chapter closes M5 and M6.
+Chapter 28 can run four stages in order on one context. A lot of work is not a sequence. A manager names specialists, they run, and only a summary comes back. That is the default team in this book. The crate is `steps/ch29-supervisor`, a copy of chapter 28 plus `supervisor`. The package is `ch29-supervisor`. Specialists are tools. They use the same `Tool` shape chapter 3 defined, so the loop does not learn a second way to call an agent.
 
-The step crate is `steps/ch29-supervisor`. The package is `ch29-supervisor`. The library name is `harness_core`. It is chapter 28's harness copied forward, plus `supervisor`. `lib.rs` adds `pub mod supervisor`. `pipeline` is still there, copied unchanged. There is no path dependency on the `ch28-pipeline` package.
+The bound is 8. Hermes caps concurrent children higher, at 10, and that default stays in the comments as Hermes's number. The harness measurement, and the pool, is eight, the same bound the dispatcher has used since chapter 3. `acquire` waits for a permit, and `Drop` wakes one waiter, so a finished specialist releases the slot even when the caller forgets. `thread::scope` runs the jobs and joins them, which keeps the borrows honest: a specialist cannot outlive the scope that lent it the context. `child_call` is a `Result`. The blocked tools are the ones a child must not have: `delegate_task`, `clarify`, `memory`, `send_message`, and cron. Depth is 1. A child does not spawn another supervisor. The worktree is a marker, opt-in, not a git operation this chapter performs. The reflection note is a string you enqueue. It does not run chapter 26's reviewer on the team turn.
+
+Eight specialists share one pool and one `Arc` context. That is the shape chapter 31 will push to a queue of 100, and the shape chapter 32's critic borrows one permit from. Heartbeats are not here. Chapter 31 does not start them either. Chapter 36 implements `is_stale`. Putting the liveness check in the supervisor chapter would hide a clock inside the scheduler. The scheduler's job is the pool, the depth, and the tool slice.
+
+The learning loop stays off this path on purpose. A team run can leave a note that reflection should look at the summaries. The reviewer still has only skill and memory tools, and it still runs after the turn. A specialist that could write memory would race the others to define the lesson. The parent decides what to keep. That is the same rule chapter 48 will use for a team library: workers propose, one writer applies.
+
+Rust, at the pool: a semaphore permit is a guard, and `Drop` is the release. `thread::scope` is the standard-library way to borrow data across threads without `'static`. The blocked-tool check is a match on the name before the child runs. Depth is an integer you refuse to increment past 1.
+
+`cargo run --locked -p ch29-supervisor --bin ch29-supervisor` runs the scripted specialists. The exercise is `my-harness/tests/ch29.rs`: eight specialists share one pool, and a reflection note does not run the reviewer.
+
+**In this chapter**
+
+- 29.1 The bound is 8, and the Hermes default stays 10
+- 29.2 `acquire` waits, and `Drop` wakes one thread
+- 29.3 `thread::scope` runs the jobs and joins them
+- 29.4 `child_call` is a `Result`
+- 29.5 The worktree is a marker, and the reflection is a string
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -554,7 +570,7 @@ The ninth job blocks inside `acquire`. It does not fail the `Result`. `run_speci
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). This chapter closes M5 and M6.
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). This chapter closes M5 and M6.
 
 **M5.** `BLOCKED_TOOLS` is `delegate_task`, `clarify`, `memory`, `send_message`, `cronjob_manage`. That is `DELEGATE_BLOCKED_TOOLS` in `tools/delegate_tool_toolsets.py`. `child_call` returns `TeamError::Blocked` for those names when `depth >= MAX_DEPTH`.
 

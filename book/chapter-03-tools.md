@@ -2,24 +2,29 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-A conversation that can only talk is still just a chat. The next thing the model needs is a way to *act*: look something up, write something down, and get a result back. This chapter adds that, in three steps. It does not add the loop that asks the model which tool to call. That is chapter 9. It also does not speak MCP on the wire. That is chapter 4. Loading thousands of tool schemas on demand, instead of putting every one in the prompt, is chapter 6. What it does add is the shape those later chapters will share.
+A conversation that can only talk is still a chat. The model needs a way to act: look something up, write something down, and receive a result it can read on the next turn. This chapter adds that shape. It does not yet ask the model which tool to call. That loop is chapter 9. It does not speak MCP on the wire. That client is chapter 4. It does not load thousands of schemas. That is chapter 6. What it adds is the shape those chapters share, in three copies: `steps/ch03-1-registry`, `steps/ch03-2-toolsets`, and `steps/ch03-3-dispatch`.
 
-By the end a tool has:
+A tool has a name, a description, a JSON Schema for its arguments, and a content result. That is the same shape as an MCP tool, chosen now while every tool is still a function in this process. If a native tool and a remote tool were different types, chapter 9's loop would grow a match arm for each. One trait means the loop asks for a name and a JSON object, and the registry answers. `Tool` carries the schema, a `ToolKind`, and `call`. The registry rejects a second registration of the same name, so a later plugin cannot quietly replace a built-in. `Catalog` turns named toolsets on only when an environment map contains the expected value and a check accepts it. The library never reads `std::env` itself, so a test builds the map it wants. The list a later chapter shows the model contains only the tools that passed.
 
-- a name
-- a description
-- a JSON Schema for its arguments
-- a content result
+`Dispatcher` runs the calls. Read-only calls in one batch overlap, up to 8 at a time. A write runs alone. The kind is a field on the tool, not a hand-maintained list of names, so a new read that forgets to join a list cannot sneak into the parallel set, and a new write cannot either. The bound of 8 is the number the rest of the book shares for in-flight tool work. The session inbox from chapter 2 is a different bound, 64, and it queues turns. This one queues calls inside a turn. Chapter 11 will put an approval decision in front of this dispatcher. Chapter 4 will wrap an MCP tool in the same trait and the same kind. Chapter 13's sandbox and chapter 17's files and terminal sit on this scheduler rather than inventing another one.
 
-That is the same shape as an MCP tool. A registry holds them. Named toolsets turn on only when an environment variable is set and a check accepts the value. The list a later chapter will show the model contains only the tools that passed. Read-only calls in one batch run together, up to 8 at a time. A write runs alone.
+The model is not in this chapter. `ask --mock` still prints the scripted reply from chapter 1. Nothing here sends a schema to OpenRouter, which is why the registry tests need no key. The CLI copies still know how to resolve a key, and a missing key is the chapter 1 error.
+
+Rust, introduced where it is used: a trait is the tool. `serde_json` and a JSON Schema are the arguments. `Arc` shares one tool with the registry and the dispatcher. A semaphore is the bound of 8. `async` is how eight reads overlap.
+
+The demos are offline. `cargo run -p ch03-3-harness-core --example demo` is the dispatcher. `cargo run -p ch03-3-harness-cli -- --mock ask "Say hello"` still takes the chapter 1 path. There is no `my-harness` exercise file for this chapter yet. The tests live in the step crates.
+
+**In this chapter**
+
+- 3.1 A tool and a registry
+- 3.2 Toolsets
+- 3.3 Concurrent reads, exclusive writes
 
 | Section | Step | What it adds |
 |---|---|---|
 | 3.1 | `steps/ch03-1-registry` | the `Tool` trait, a JSON Schema, a registry |
 | 3.2 | `steps/ch03-2-toolsets` | named toolsets gated on env vars and checks |
 | 3.3 | `steps/ch03-3-dispatch` | concurrent reads, exclusive writes, a bound of 8 |
-
-Each step is its own copy, the way chapter 1 was. Section 3.1 still builds after 3.3 exists. The runnable demos are offline. Nothing in this chapter calls OpenRouter.
 
 > **How Hermes does it**
 >

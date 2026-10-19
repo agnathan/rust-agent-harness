@@ -2,9 +2,28 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 25 can write a skill when something calls `Writer`. It does not count turns, and it does not build a reviewer. This chapter counts user turns and tool iterations. On every tenth user turn, and on every tenth tool iteration, `Loop::finalize` returns a `Fork`. The fork's tool slice is the skill tools, plus `memory` only when the memory nudge is what fired. Both nudge intervals on the fork are 0. Cancel stores a flag. The turn does not sleep for two seconds. `run_loop` does not call `finalize`. The fork is a value the caller can run later, with `execute`.
+Chapter 25 can write a skill when something asks it to. Nothing yet asks. A turn can finish, the user can correct a style or a workflow, and the harness will store the session and otherwise move on. The lesson sits in the transcript until it scrolls out. This chapter adds the nudge and the fork that reads the turn afterward. The crate is `steps/ch26-reflection`, a copy of chapter 25 plus `reflection`. The package is `ch26-reflection`.
 
-The step crate is `steps/ch26-reflection`. It is chapter 25's harness copied forward, plus `reflection`. The package name is `ch26-reflection`. The library name is `harness_core`. `lib.rs` adds `pub mod reflection`. There is no path dependency on chapter 25. `execute` calls `crate::skills::skill_view` when the scripted line is `skill_view`. The file is `steps/ch26-reflection/crates/harness-core/src/reflection.rs`.
+Two counters live on the loop. A memory nudge fires every 10 user turns. A skill nudge fires every 10 tool iterations. Both defaults can be changed. `finalize` returns the fork and clears the flags. `spawn_reviewer` builds a tool slice that contains only the skill and memory tools, and it zeroes the intervals so the same turn cannot fork twice. The reviewer is a supervised child with its own cancellation. A new user turn cancels it. `execute` runs the scripted model one tool at a time. The parent transcript is not edited, so the prompt cache from the user turn stays valid. The reviewer uses the parent's model and the same system-prompt prefix for that reason.
+
+Spawning the reviewer is the cost that stays on the turn. Running it is not. The hot path still awaits the model and the tools the model called. That split is the performance rule for the whole learning half of the book: reflection, curation, index rebuilds, and full-text updates are background work. Chapter 27 will enqueue curation the same way, and it will not run the reviewer either. Chapter 29's team can enqueue a reflection note without running this fork on the team's turn. Chapter 36 is what "supervised" will later mean for a child that stops making progress. This chapter's cancel is the chapter 9 token, raced with the review.
+
+The fork is how the harness moves toward the closed loop without putting the closed loop on the user's latency. The reviewer writes straight to the stores chapter 21 and chapter 25 already guard. It does not get `terminal`, `web_search`, or `delegate`. A reviewer that can do the user's task will do the user's task. A reviewer that can only patch a skill or add a memory line has to write the lesson down.
+
+Rust, beside the fork: a child is a thread the cancel bench can join. The tool slice is a set of names you build once. An interval counter is an integer, and the flag is the nudge. `Drop` or an explicit cancel is how the child stops when the user types again.
+
+`cargo run --locked -p ch26-reflection --bin ch26-reflection` forks after ten user turns. The exercise is `my-harness/tests/ch26.rs`: spawning the reviewer does not run it on the user turn.
+
+**In this chapter**
+
+- 26.1 Two intervals, one timeout, two slices
+- 26.2 `Loop` counts, and the flags are the nudge
+- 26.3 `finalize` returns the fork and clears the flags
+- 26.4 `spawn_reviewer` builds the slice and zeroes the intervals
+- 26.5 `execute` runs the script, one tool at a time
+- 26.6 `ReviewRun` is the thread the cancel bench joins
+- 26.7 `demo` forks after ten user turns
+- 26.8 The skill index is still a note
 
 | Section | What it walks |
 |---|---|
@@ -533,7 +552,7 @@ The note vec is a `Vec<String>` in the caller. It is not `MEMORY.md`. Chapter 21
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). The new boundary is the fork's tool slice.
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). The new boundary is the fork's tool slice.
 
 **Tool split.** `_review_tool_whitelist` is the slice. A skill-nudge fork does not include `memory`. `terminal` is `NotAllowed`. Write tools are not on either slice. `read_file` and `search_files` are on both.
 

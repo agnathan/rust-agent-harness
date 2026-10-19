@@ -2,9 +2,25 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 27 can mark a skill stale and archive it. It does not hand a piece of writing from one stage to the next. This chapter runs four stages in order: outline, draft, critique, revise. Each stage is a name and a scripted reply. The next stage receives the same `Arc<Context>`. `hand_off` returns that same `Arc`. The message vec is one allocation for the whole run.
+One agent can now remember, search, read a skill, write one under a scanner, reflect, and curate. It still does every stage of a piece of work inside one conversation. Outline, draft, critique, and revise have different jobs, and stuffing them into one transcript makes each stage fight the previous stage's notes. This chapter runs them as four agent runs, in order, on one shared context. The crate is `steps/ch28-pipeline`, a copy of chapter 27 plus `pipeline`. The package is `ch28-pipeline`. It does not write a skill and it does not write a memory file. Those stores stay where chapters 21 and 25 put them.
 
-The step crate is `steps/ch28-pipeline`. The package is `ch28-pipeline`. The library name is `harness_core`. It is chapter 27's harness copied forward, plus `pipeline`. `lib.rs` adds `pub mod pipeline`. The comment at the top of `lib.rs` is still the chapter 10 comment about the turn table. That sentence stays in the copied file. The new module is the one this chapter reads. There is no path dependency on the `ch27-curation` package.
+The context is one allocation. `run` appends a note and returns the same `Arc`. `hand_off` is the pointer the next stage is given. Copying the transcript would be legal and wasteful, and it would tempt a stage to mutate a private copy that the next stage never sees. The demo runs the four names — outline, draft, critique, revise — and prints the last note. The benches time the pointer and, beside it, the cost of copying 100 messages, so the difference is a measurement rather than a slogan.
+
+This is the first of the team patterns, and it is the simplest one: stages are ordered, each stage sees the notes so far, and nobody runs at the same time. Chapter 29's supervisor is the default team, with specialists called as tools under a bound. Chapter 30's handoff is a different operation, a transfer of ownership with a filtered transcript, and it should not be confused with this pointer. Chapter 33 composes them: a supervisor that fans out, and a handoff only when ownership should move. The pipeline stays in the crate because composition calls it.
+
+Sharing the context by `Arc` is also how a team stays cheap enough to learn. Chapter 26's reflection can be enqueued after a team run. If every stage copied the transcript, the thing reflection reviewed would depend on which copy it was handed. One context means the lesson is about the run, not about a stage's private scratch. The chapter attaches that context. It does not, by itself, decide the lesson is worth keeping. Curation remains chapter 27's job, off to the side.
+
+Rust, at the hand-off: `Arc` is a clone of a pointer, and the clone is what you time. The context owns the notes. A stage that needs to add a note takes the `Arc` and pushes, under the rule that the allocation does not change. Mutation of the inner notes is explicit. The demo's model is scripted, so four stages do not mean four network calls.
+
+`cargo run --locked -p ch28-pipeline --bin ch28-pipeline` prints the last note. The exercise is `my-harness/tests/ch28.rs`: the next stage receives the `Arc`.
+
+**In this chapter**
+
+- 28.1 The context is one allocation
+- 28.2 `run` appends a note and returns the same `Arc`
+- 28.3 `hand_off` is the pointer the next stage is given
+- 28.4 The demo runs the four names and prints the last note
+- 28.5 The benches time the pointer and the copy
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -469,7 +485,7 @@ A scripted reply does not read the previous note. The revise reply is the litera
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). This chapter attaches context. It does not write a skill and it does not write a memory file.
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). This chapter attaches context. It does not write a skill and it does not write a memory file.
 
 **Context.** The next stage gets the same `Arc`. The messages stay in the vec that was built before `run`. The mean for handing that pointer across is `9.15 ns`. The mean for cloning the 100 messages is `6.12 µs`. The pipeline takes the first path.
 

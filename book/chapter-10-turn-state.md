@@ -2,9 +2,26 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 9 returns one `TurnOutcome` when a turn ends. The loop that produces it is a nest of checks. This chapter pulls the legal moves out into a table, and then makes that same loop walk the table. The step is not a second demo crate. It is chapter 9's harness (`steps/ch09-10-evals`) copied here, plus `turn`.
+Chapter 9 returns one `TurnOutcome` when a turn ends. The loop that produces it is a nest of checks: cancel, steer, budget, stall, validation, wrap-up. You can read it, and you can still not say which combinations are legal. This chapter pulls the legal moves into a table, and then makes that same loop walk the table. The step is not a second demo sitting beside the loop. It is chapter 9's finished harness, `steps/ch09-10-evals`, copied to `steps/ch10-turn-state`, plus a `turn` module. The package is `ch10-turn-state`, the library is `harness_core`, and the CLI package is `ch10-harness-cli`. The demo binary is `ch10-turn-state`.
 
-The step crate is `steps/ch10-turn-state`. The directory name stays `ch10-turn-state` so it matches the CI filter. The book number is 10. The package is `ch10-turn-state`, library name `harness_core`, under `crates/harness-core`. The CLI package is `ch10-harness-cli`.
+`Phase` names where a turn is: `Idle`, `CallingModel`, `Dispatching`, `WrappingUp`, and the terminals `Finished`, `Cancelled`, `SoftStopped`, `Budget`, `Partial`, `InvalidToolCalls`, `Stalled`. A terminal phase accepts no further event. `TurnEvent` is the observation: the model returned text, the model asked for tools, a hard cancel arrived, the budget hit, the tools finished, and the few cases the first table could not name. `step` maps a phase and an event to the next phase, or to `Illegal`. `note` panics if the move is illegal, so a chapter 9 outcome the table cannot name fails the test instead of drifting. `Driver` remembers which kind of wrap is in progress. `drive_loop` holds that driver and calls `advance` at every observation. `run_loop` and `run_loop_with_inbox` go through it. `run_loop_driven` returns the outcome and the phase together.
+
+Three events exist because the live loop has moves the original rows did not name. `NoDone` is a provider batch with no `Done`. `BudgetAbort` is a budget hit when the counter is already zero after a refund, which must not enter the wrap-up that `BudgetHit` uses. `SoftWrapIgnoredTools` is a soft-stop wrap-up that asked for tools or returned no text. Those tools are not run. Soft stop and a spent budget both pass through a wrap-up, and they do not end as the same phase. That split is chapter 9's split, now refused by the type when a caller mixes them.
+
+Every later harness chapter copies this crate forward. Approvals, hooks, the sandbox, failures, web and local tools, providers, streaming, sessions, memory, skills, the team patterns, and the eval suite in chapter 52 all sit on a loop that asks the table before it calls the model. If the table were a standalone crate the loop never called, the book would have two sources of truth again. `run_script` stays a fake model: a list of scripted steps, no HTTP, no key. Empty-response retries and the repetition guard stay in chapter 14. They are not new phases here. There is no learner stub for this chapter. The exercise is the phase predictions in the chapter itself.
+
+Rust, for a new reader: an enum is the phase and the event. `match` is exhaustive, which is how an unhandled pair becomes `Illegal` instead of a fall-through. A panic on an illegal move is the test's way of saying the loop and the table disagreed.
+
+`cargo run -p ch10-turn-state` runs the scripted demo.
+
+**In this chapter**
+
+- 10.1 Phase, TurnEvent, and Illegal
+- 10.2 Every arm of `step`
+- 10.3 `finish_wrap`, `WrapKind`, and `run_script`
+- 10.4 `Driver` remembers which wrap it was
+- 10.5 How the loop asks the table before it calls the model
+- 10.6 The batch, the tools, the wrap-up, and `absorb`
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -882,7 +899,7 @@ An unmatched script step returns `Illegal` with `event: Start`, which is the wro
 
 ## Guardrails in this chapter
 
-The table is a guardrail on the loop's shape, not a new detector. [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Layer L4.
+The table is a guardrail on the loop's shape, not a new detector. The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Layer L4.
 
 **Illegal moves fail.** A stalled turn cannot start another model call through `step`. A finished turn cannot accept `Start`. The detectors that decide to emit `Stall`, `BudgetHit`, or `InvalidStrikeout` are chapter 9 (K1, J2, I1, I2). This chapter does not reimplement them.
 

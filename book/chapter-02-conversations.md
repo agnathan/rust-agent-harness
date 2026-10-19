@@ -2,21 +2,32 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-At the end of Chapter 1, my harness could do exactly one thing: send a prompt, print the reply, and forget everything. Ask it "What's my name?" right after telling it, and it has no idea, because nothing was remembered between calls.
+At the end of chapter 1 the harness can send one prompt, print the reply, and forget it. Ask "what's my name?" on the next call and the model has nothing to go on. That is how these APIs work. The model stores nothing between requests, so a conversation is a list the program keeps and sends again in full. This chapter builds that list, and the one door a turn goes through before the provider sees it. The code is `steps/ch02-conversations`, starting from the chapter 1 messages, the `Provider` trait, and the pooled client.
 
-That's not a bug in the model. Language-model APIs are *stateless*. The model remembers nothing between requests, so if you want a conversation, you send the whole history every time. "Memory", at this level, is just a list of messages that the program keeps and resends.
+`Conversation` holds a system prompt and an ordered history. The fields are private. `push` refuses a history that would put two user messages or two assistant messages in a row, because strict providers respond to a broken alternation by misbehaving, and a bug of that kind shows up far from the line that caused it. The system prompt is set once and the history cannot touch it. Providers cache the prefix of a request, so a system prompt that changes on turn three makes every later call pay full price. Length is tracked, and a too-long history drops the oldest exchange without touching the system prompt or the newest message. Save and load use JSON. A scripted mock provider lets a multi-turn test run with no network and no key.
 
-So this chapter is about that list, and about the one door a turn goes through before the model sees it. By the end I'll have:
-- a `Conversation` type that holds a system prompt and an ordered history, and *refuses* to get into an invalid state
-- a scriptable mock provider, so I can test multi-turn conversations with no network
-- simple length tracking, plus trimming when the history gets too long
-- saving and loading conversations as JSON
-- `harness chat`: an interactive chat loop (a REPL) with `/help`, `/reset`, `/history`, `/save`, `/load` and `/quit`
-- one session inbox, capacity 64, that the REPL submits to before it calls the provider
-- the same `Event` values as chapter 1, including usage and cost when a server actually sent them
-- OpenRouter as the default server, the same way chapter 1 configured it
+The session inbox is the other half. It holds 64 pending turns. `harness chat` and `harness ask` submit a line, the session pops it, and only then does the provider run. That capacity is the bound chapter 35 will reuse when each agent is a task with a mailbox, and the same queue is where chapter 39's chat gateway, chapter 43's cron, and chapter 44's editor session deliver work. They do not grow a second queue. The events are still chapter 1's events, including usage and cost only when a server sent them.
 
-Same rules as before: Rust is introduced just in time, in short sidebars. The runnable demo is `--mock`. A live call is optional, and it reads `OPENROUTER_API_KEY`.
+Hermes writes these rules down as message-flow invariants: roles alternate, the system prompt stays byte-stable, and compression is the only sanctioned rewrite of the past. This chapter's trim is the crude form of that rewrite. Real compression, with a summary and a marker where a skill was pruned, is chapter 34. SQLite storage is chapter 20. What this chapter locks in is the shape those later chapters are allowed to assume: one list, one inbox, a prefix that stays put. A self-improving agent that rewrote its system prompt every time it learned a fact would throw away the cache on every lesson. Memory and skills, when they arrive, have to land somewhere else.
+
+Rust, for a new reader: ownership is why the conversation is a value the session holds rather than a bag of strings any function can alias. Private fields plus a method are how an invalid history becomes hard to represent. `Result` is the refusal. A `VecDeque` is the inbox. The REPL is an ordinary loop over stdin.
+
+`cargo run -p ch02-harness-cli -- --mock ask "Say hello"` is the offline path. `cargo run -p ch02-harness-core --example demo` walks the conversation. A live call is optional and uses the chapter 1 key rules. The exercise is `my-harness/tests/ch02.rs`.
+
+**In this chapter**
+
+- What Hermes taught me about conversations
+- The Conversation type
+- A mock that can hold a conversation
+- The chat session, separate from the terminal
+- One session inbox
+- The REPL
+- Tests
+- Did it work?
+- Guardrails in this chapter
+- What we built
+- Build, run, and benchmark
+- What's next
 
 > **How Hermes does it**
 >
@@ -25,8 +36,6 @@ Same rules as before: Rust is introduced just in time, in short sidebars. The ru
 > Hermes also has one place a new turn arrives, rather than each client calling the model itself. This chapter's `SessionInbox` is that place. `harness chat` and `harness ask` submit a line, the session pops it, then the provider runs. The gateway, cron, and the editor integration later submit to this same inbox. They do not grow a second queue.
 
 [personal note: how Chapter 1 went, whether you ran it against a real model, and what you wanted to do next]
-
-The code for this chapter lives in `steps/ch02-conversations/`. It starts from the messages, the provider trait, and one pooled client, then adds the conversation and the inbox. A live call uses the chapter 1 rules: OpenRouter by default (`OPENROUTER_API_KEY`, model `openai/gpt-4o-mini`), and `OPENAI_API_KEY` only when `--base-url` points somewhere else.
 
 ## What Hermes taught me about conversations
 

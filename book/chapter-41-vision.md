@@ -2,9 +2,29 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 40 can open a page. It cannot say what an image is. This chapter sniffs bytes, refuses the sizes and types Hermes refuses, and wraps a caption as untrusted. A remote URL goes through the same secret and SSRF checks as `navigate`. A `data:` URL skips that remote check and still has to pass `prepare`. `FakeImages` never downloads. There is no vision model in this crate. The caption is a string the source already has.
+Chapter 40 can navigate a fake page and wrap the text. It cannot look at an image. A screenshot, a diagram, or a photo the user attached is a different input, and the failure modes are size and type rather than HTML. An uncompressed claim of a huge PNG, a file that is not an image, or a caption that carries instructions all have to be refused or wrapped before they reach the model. This chapter adds that check behind a trait, so the tests never call a vision API. The crate is `steps/ch41-vision`, a copy of chapter 40 plus `vision`. The package is `ch41-vision`.
 
-The step crate is `steps/ch41-vision`. It is chapter 40's harness copied forward, plus `vision`. The package is `ch41-vision`. The library name is `harness_core`. `lib.rs` adds `pub mod vision` and does not re-export it. Tests say `harness_core::vision::`. `Cargo.toml` does not depend on the `ch40-browser` package. `browser` and `gateway` stay in the crate. `vision` calls `crate::web` for `url_has_secret`, `is_safe_url`, and `wrap_untrusted`.
+`ImageSource` is the trait. The fake is two maps, bytes by name and a caption by name. `prepare` refuses empty, oversized, foreign, and enormous images. The download cap is 50 MB. The inline cap is 20 MB. The allowed types are jpeg, png, gif, and webp, decided by the header, not the extension. PNG dimensions are two big-endian integers in the header, and the pixel cap is 100,000,000, so a tiny header that claims a gigantic image is rejected before anyone allocates the pixels. Remote URLs use chapter 16's SSRF floor. The caption is wrapped as untrusted, the same idea as a page snapshot. `tiny_png` is a 1-by-1 header the demo looks for. The other three prefixes go through the same sniff function.
+
+Chapter 42 is the MCP server again, a copy of chapter 37. Chapter 43 copies this harness and adds cron. Vision stays on the harness because it is a tool the agent calls, not a catalog the gateway serves. A gateway that sniffed images would be doing the client's job. The client knows the user attached a file. The server knows which tools exist.
+
+A caption is another path into the learning stores. Chapter 26's reviewer will see it in the transcript if the turn is one of the turns that gets reviewed. Wrapping it means the caption is data in that transcript. The scanner on the skill write is still what stops the caption's instruction from becoming `SKILL.md`. This chapter's job is to refuse the bytes that should never have been decoded, and to mark the words that came back.
+
+Rust, at the header: byte slices and big-endian integers are the PNG parse, a few shifts, no image library. The sniff is a match on a prefix. The pixel cap is a multiplication you check for overflow before you compare. `Result` distinguishes "not an image" from "too many pixels" from "unsafe URL."
+
+`cargo run --locked -p ch41-vision --bin ch41-vision` looks for `image/png`. The exercise is `my-harness/tests/ch41.rs`: an oversized image or a bad type is rejected.
+
+**In this chapter**
+
+- 41.1 Two byte caps, one pixel cap
+- 41.2 Sniff is the header, not the extension
+- 41.3 PNG pixels are two big-endian integers
+- 41.4 prepare refuses empty, huge, foreign, and enormous
+- 41.5 The source is a trait, and the fake is two maps
+- 41.6 Analyze checks the URL, then wraps the caption
+- 41.7 tiny_png is a 1×1 header, and the demo looks for image/png
+- 41.8 The other three prefixes are the same function
+- 41.9 The caption the wrapper actually sees
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -445,7 +465,7 @@ The 50 MB arm is real and untested by a buffer of that size. The tested oversize
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
 **Download cap.** `_VISION_MAX_DOWNLOAD_BYTES` is 50 × 1024 × 1024. `prepare` returns `TooBig` with that cap when `bytes.len()` exceeds it. The download itself is not implemented. The check is on the buffer `load` already returned.
 

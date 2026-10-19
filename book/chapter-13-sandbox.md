@@ -2,9 +2,30 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 12 can refuse a tool. The tool still runs in this process. A script that can spawn a process, or a command that can delete a file, needs a boundary that is not another `if` in the harness. This chapter adds a child process, the argv Docker would be given, and a checkpoint you can rewind. The default backend is local. Local is not a sandbox. That is the same default Hermes ships.
+Chapter 11 can deny a dangerous shell command. Chapter 12 can watch a call. Neither of them runs a model-written script outside the harness process. `execute_code` that simply `eval`s in-process is the harness trusting the model with its own address space. This chapter adds the boundary. The crate is `steps/ch13-sandbox`, a copy of chapter 12 plus a `sandbox` module. The package is `ch13-sandbox`. The worker binary stays named `sandbox-worker`, because the tests and the bench compile `CARGO_BIN_EXE_sandbox-worker`. Later copies keep that name.
 
-The step crate is `steps/ch13-sandbox`. It is chapter 12's harness copied forward, plus `sandbox`. The package name stays `ch13-sandbox`. The worker is a second binary, `sandbox-worker`, because the sandbox tests and the bench compile `env!("CARGO_BIN_EXE_sandbox-worker")`. Later copies keep that binary.
+`deny_tool` now calls `sandbox::check_execute_code` for `execute_code`. The default loop path passes interactive presence, mode off false, yolo false, and `whole_script` false, so a local interactive script is approved here and its `terminal` calls still hit chapter 11. Cron, single-query, and unattended deny a local script. An isolated `env_type` — anything other than `local` — approves. `whole_script` asks once, not once per line. That is the script gate Hermes calls `check_execute_code_guard`, deferred from chapter 11 and closed here.
+
+`Backend` describes how a job would be launched. The Docker argv drops capabilities, sets `no-new-privileges`, and sets a pid limit, and the default backend is still local: the sandbox is the real boundary, and it can be off. `scrub_env` builds the child environment from an allowlist plus declared passthrough, so the child does not inherit the parent's keys. `Worker` is the child process. `run_until` is the deadline, the process-tree timeout chapter 1 deferred. Checkpoints snapshot a manifest of paths, and rewind restores it. A warm worker accepts a job without starting a process per call.
+
+The harness keeps growing by copy, and this module stays on that line. Chapter 17's terminal runs through the approval floor and then this worker, rather than growing a second sandbox. Chapter 36 will restart a child that stops making progress. The heartbeat that decides "stopped" is not this chapter. What this chapter contributes to a self-improving agent is the right to run a procedure it just wrote without handing that procedure the parent's environment. A skill that contains a script is still a script. The scanner for that text arrives in chapter 25. The place it runs, if it runs as code, is this worker.
+
+Rust, in the sidebars: a child process is `std::process`, and the worker is a binary so the tests can kill it. A checkpoint is a list of paths and bytes, not a filesystem snapshot library. `Result` is every branch of `check_execute_code`, written out so a cron session cannot fall through to allow.
+
+`cargo run -p ch13-sandbox` runs the demo. The exercise is `my-harness/tests/ch13.rs`: cron cannot run a local script, a container env approves, and a whole-script ask is one prompt.
+
+**In this chapter**
+
+- 13.1 `sandbox` is public, and the loop calls one function in it
+- 13.2 `Backend` and the Docker argv
+- 13.3 `scrub_env`
+- 13.4 `Worker`
+- 13.5 `run_until`
+- 13.6 Checkpoints
+- 13.7 `check_execute_code`, every branch
+- 13.8 The worker binary and the demo
+- 13.9 What each test locks
+- 13.10 What the three benches time
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -880,7 +901,7 @@ The 10 MB skip drops the file from the manifest. Rewind will not put it back, be
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Layer L7.
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Layer L7.
 
 **D1.** `Backend::Local` is the default. It is not a security boundary. The Docker backend is opt-in, and this chapter does not start it.
 

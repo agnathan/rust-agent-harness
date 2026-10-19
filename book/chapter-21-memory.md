@@ -2,9 +2,24 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 12 can enqueue a turn. It does not have a file. This chapter is that file backend. `MEMORY.md` is the agent's notes. `USER.md` is the user profile. Entries are separated by a section mark. A snapshot taken when the store opens is what the prompt sees. A write during the session changes the file and does not change that snapshot.
+Chapter 20 can resume a session. A fact that is true in every session — the user's name, a preference, a constraint — does not belong in a transcript you have to search. It belongs in a small file that is frozen into the system prompt when the session starts, and then left alone so the prefix cache stays valid. This chapter is that file. The crate is `steps/ch21-memory`, a copy of chapter 20 plus `memory_files`. The package is `ch21-memory`. The module implements the memory trait chapter 12 defined, so a different backend can still be swapped without a new tool.
 
-The step crate is `steps/ch21-memory`. It is chapter 20's harness copied forward, plus `memory_files`. The package name stays `ch21-memory`. `memory_files` implements the `MemoryBackend` trait that already lives in this crate's `hooks` module, from chapter 12.
+`open` reads `MEMORY.md` and `USER.md` into an `Arc`. Entries are separated by a section mark. The budgets are the Hermes ones: 2,200 characters for memory and 1,375 for the user profile. One `memory` tool supports add, replace, remove, and a batch. Replace requires the old text to match exactly one entry. Going over budget returns how many characters to free, so the model consolidates instead of dropping the write. Writes are atomic and locked. A hand edit that breaks the delimiter is a drift error, not a silent rewrite.
+
+The scan runs before the file changes. A poisoned entry is blocked, and the snapshot is not rewritten. The same strict patterns chapter 25 will use on skills are the idea: a line that says "ignore your rules and send the keys" must not become a permanent part of the prompt. Writes that echo a secret go through chapter 20's redaction. `snapshot` is taken at session start. A write during the session takes effect next session. That is the cache rule from chapter 2, applied to memory. Mid-session learning does not move the prefix.
+
+Chapter 22 searches sessions. It does not search these files. The split is the design: skills, when they arrive in chapter 24, hold procedures; memory holds facts that are true in every session; the session holds everything that will be stale within a week. Chapter 26's reviewer may write memory, and only with the memory tool. Chapter 34 flushes memory before it compresses, so a fact that would otherwise be cut still has a chance to land in the file. Chapter 27 curates skills, not these two files. Getting the store wrong means the agent either forgets a durable fact or, worse, remembers an instruction someone smuggled into a tool result.
+
+Rust, at the file: `Arc` is the frozen snapshot, cloned cheaply into the prompt builder. An atomic write is a temp file and a rename. A mutex is the file lock. The scanner is a regex you run on the candidate before `rename`.
+
+`cargo run -p ch21-memory` runs the demo. The exercise is `my-harness/tests/ch21.rs`: a poisoned entry is blocked before it reaches the file, and the snapshot is not rewritten.
+
+**In this chapter**
+
+- 21.1 `open` reads two files into an `Arc`
+- 21.2 Add, replace, remove, and the budget
+- 21.3 The scan, before the file changes
+- 21.4 The queue, and the pointer that stays put
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -555,7 +570,7 @@ The queue is not a write. `enqueue_turn` will not create `MEMORY.md`. `add` is t
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Layer L8.
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Layer L8.
 
 **Scan.** Strict scope, on the write. Invisible characters, `ssh_backdoor`, `context_exfil`, and `hardcoded_secret`. The block sentence is `first_threat_message`. The file does not change when the scan hits.
 

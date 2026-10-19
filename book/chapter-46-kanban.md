@@ -2,9 +2,28 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 45 shares a fact inside one process. The board is a `HashMap` in a `Mutex`. A crash drops it, and a second process cannot see it. This chapter is the kanban card: one JSON file, one lock file, and a compare-and-swap on the status.
+Chapter 45's board works inside one process. Two processes that both want the same task will both think they own it, because a mutex does not cross a process boundary. A team of agent processes needs a board on disk, and a claim that one of them wins. This chapter adds that board. The crate is `steps/ch46-kanban`, a copy of chapter 45 plus `kanban`. The package is `ch46-kanban`. The claim binary is `ch46_kanban_claim`, not the chapter demo binary. Cargo turns hyphens into underscores in the environment variable, and a shared binary name would overwrite `target/debug`.
 
-The step crate is `steps/ch46-kanban`. The book number is 46. The package is `ch46-kanban`. The library name is `harness_core`. This is the chapter 45 harness copied forward, including `blackboard`, plus `kanban`. `Cargo.toml` says "Chapter 46: the previous harness plus this chapter." Edition is 2021. `rust-version` is 1.88. There is no path dependency on `ch45-blackboard`. The sources are copied. `lib.rs` adds `pub mod kanban` and still has `pub mod blackboard`. The file comment at the top of `lib.rs` still describes chapter 10's loop. `kanban.rs` itself says book chapter 46. `blackboard.rs` in this crate is the same file as chapter 45. The binary that prints this chapter is `src/bin/chapter_demo.rs`, named `ch46-kanban`. A second binary, `src/bin/kanban_claim.rs`, is named `ch46_kanban_claim`. The two-process test needs a stable `CARGO_BIN_EXE` name. Hyphens in a bin name become underscores in that env var. A shared bin name would overwrite `target/debug`. The test uses `env!("CARGO_BIN_EXE_ch46_kanban_claim")`. The package also builds `ch46_mcp_fixture` and `sandbox-worker`. `examples/demo.rs` is the inherited eval runner. It does not print the kanban line. `ch46-harness-cli` depends on `ch46-kanban` by path. The bench target is `kanban`, with `harness = false`.
+`Task` and `Board` are the JSON document. `Op` is claim, complete, review, or block. `apply` checks `parents_done` before a task can be claimed, so a dependent task waits. `transact` is the compare-and-swap: read the board, apply the op, write it back if the version still matches. Two claims of one task, one wins. `acquire` is the file lock around that transaction. `Unlock` is the guard that releases it. Paths stay inside the board file the test created. `FakeModel` and the demo run one claim. The SQLite form of the same compare-and-swap is the other implementation, for a board that is a database rather than one JSON file. Pause is a field on the JSON. It is not the process-wide emergency stop.
+
+Chapter 47 adds a message bus on this harness. The kanban board stays the durable task list. The bus is how agents talk. They are different couplings: a card has an owner and a status, a message has a topic and a subscriber. Chapter 48's team skills are proposed on the bus, not stored as kanban cards. A skill is a procedure. A card is a unit of work.
+
+The durable claim is what lets a team keep learning across crashes. A process that dies mid-task does not take the task with it. Another process claims it. The work product can still be reviewed, and reflection on the parent can see that the task finished, once. A claim that both processes think they won would run the task twice and might write two skills for one lesson. The transaction is the reason that does not happen.
+
+Rust, at the file: the board is serialized JSON, the version is an integer, and the write is a temp file plus a rename so a reader never sees a half board. The lock is a sibling file. `TxError` is the conflict. The two-process test spawns the claim binary and checks the exit.
+
+`cargo run -p ch46-kanban --bin ch46-kanban` runs the in-process demo. The exercise is `my-harness/tests/ch46.rs`: two claims of one task, one wins.
+
+**In this chapter**
+
+- 46.1 `Task` and `Board`
+- 46.2 `Op` and `TxError`
+- 46.3 `Unlock`, paths, `write_board`, and `read_board`
+- 46.4 `acquire`
+- 46.5 `parents_done` and `apply`
+- 46.6 `transact` and `task_status`
+- 46.7 `FakeModel`, `demo`, and the claim binary
+- 46.8 The SQLite compare-and-swap
 
 | Section | What it walks |
 |---|---|
@@ -674,7 +693,7 @@ Parents gate `Claim` only. A child with a parent still in `ready` gets `Parents`
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). The catalog's N2 row is the ESTOP in `agent/estop.py`. This module does not call `is_engaged`. Pause is the `paused` field on the JSON board. The behaviors below are the ones `kanban.rs` implements.
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). The catalog's N2 row is the ESTOP in `agent/estop.py`. This module does not call `is_engaged`. Pause is the `paused` field on the JSON board. The behaviors below are the ones `kanban.rs` implements.
 
 **Compare-and-swap.** `create_new` makes one lock file. `apply` for `Claim` requires status `ready` and owner `None`, and otherwise returns `Lost`. Two owners cannot both pass that check. `two_processes_cannot_hold_the_same_task` expects one `claimed` and one `lost`, and a card left `running`.
 

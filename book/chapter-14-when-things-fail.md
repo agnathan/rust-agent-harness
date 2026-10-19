@@ -2,9 +2,40 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 13 can kill a child that does not finish. It does not decide what the turn should do next. An empty reply, a reply cut off for length, a reply that repeats one span, a timeout, and a crashed session are different failures. This chapter names them and picks retry, fallback, or stop. The empty-reply retries and the repetition guard were deferred from chapter 9. They land here.
+Chapter 9's loop can stop, stall, and wrap up. It still treats a failure as one outcome. An empty reply, a truncated reply, a repeated paragraph, a timeout, and a model that should have been the fallback all look different and need different next steps. Two dangerous commands also still sit outside the approval floor: deleting the binary that is running, and rewriting this crate's own git tree. This chapter classifies the failure and closes those two floor checks. The crate is `steps/ch14-when-things-fail`, a copy of chapter 13 plus a `failure` module. The package is `ch14-when-things-fail`. The library is `harness_core`.
 
-The step crate is `steps/ch14-when-things-fail`. It is chapter 13's harness copied forward, plus `failure`. The package name stays `ch14-when-things-fail`. Chapter 15 is the server track and is not in this copy. Chapter 16 copies this directory.
+`Kind` is the classification. `retry_budget` and `EmptyAttempt` implement the empty-response rule chapter 9 deferred: three retries, or one if a single attempt costs more than a quarter dollar. `deterministic_empty` refuses to retry a reply that will be empty again for the same reason. `is_repetition_dominated` is the repetition guard: a run of the same text covering enough of the output stops the loop. `length_verdict` is the continuation decision when a reply was cut off. `run_models` walks a route, which is the seed of chapter 18's fallback. `call_with_timeout` cancels the in-flight call and releases its permit, so a stuck call does not pin one of the eight slots. `retry_in_bound` keeps the retries inside that same bound. `FakeMcp` is the stand-in for a server that crashes, times out, or needs a reconnect.
+
+`approval::check` calls `failure::command_deletes_runtime` and `failure::self_repo_git_mutation` before the fast path and before YOLO. Both denials are hardline. The runtime path is `std::env::current_exe()`. The source root is `CARGO_MANIFEST_DIR` of this step. The detectors cover `rm` and its Windows cousins, `find … -delete`, and `uv python uninstall` when the spec is the runtime. Overlap works in both directions, so deleting a parent of the binary is a hit. Alias lookup and heredocs are not parsed, matching the limit Hermes itself documents. A global `git -C` and the wrappers `sudo`, `command`, `time`, `nohup`, and `env` are stripped before the git check. YOLO still denies both.
+
+Chapter 16 copies this harness, not chapter 15. Chapter 15 is the server. The failure types stay on the harness line because they classify the model's behavior and the shell the harness is about to run. A self-improving agent that retries an empty reply forever, or that can `git reset --hard` the tree it is learning inside, will destroy the session it was supposed to learn from. Chapter 52's stress set still includes the stall and the recovery. This chapter is where those failures become named kinds instead of one more stop.
+
+Rust, taught at the match: `Kind` and `Reply` are enums, and `OrderedF64` exists because floating-point cost does not implement the ordering you want in a `BTree` or a sort. `Result` is the floor's denial. Matching on the error is the whole design of the retry.
+
+`cargo run -p ch14-when-things-fail` runs the demo. The exercise is `my-harness/tests/ch14.rs`: YOLO still denies deleting the running binary and `git reset --hard` of this crate's manifest directory.
+
+**In this chapter**
+
+- 14.1 `Kind`
+- 14.2 `EmptyAttempt`
+- 14.3 `retry_budget`
+- 14.4 `deterministic_empty`
+- 14.5 `is_repetition_dominated`
+- 14.6 `length_verdict`
+- 14.7 `Reply` and `OrderedF64`
+- 14.8 `run_models`
+- 14.9 `run_one`
+- 14.10 `call_with_timeout`
+- 14.11 `retry_in_bound`
+- 14.12 `FakeMcp`
+- 14.13 The top of `check`
+- 14.14 `command_deletes_runtime`
+- 14.15 `path_hits`
+- 14.16 `uv_uninstalls_runtime`
+- 14.17 `strip_wrappers`
+- 14.18 `self_repo_git_mutation`
+- 14.19 `locate_git`
+- 14.20 `word_hits`
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -961,7 +992,7 @@ A length reply under 400 characters is continued even if it is `"ok ok ok"`. The
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Layers L3 and L4.
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Layers L3 and L4.
 
 **J4.** Empty replies retry 3 times, or 1 time when one attempt costs more than $0.25. Two consecutive zero-output empties with usage skip the rest and fall back. Missing usage keeps the full budget.
 

@@ -2,9 +2,28 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 7's gateway has one catalog. Every caller who can search it can see every name. A session should see a smaller set: the tools a task starter picked, plus the names a search revealed. The full schema stays off that list until something asks for it. This chapter adds that view, and it counts schema tokens, call tokens, and result tokens for three ways of doing the same fake task.
+Chapter 7's gateway has one catalog. Every caller who can search it can see every name. A session should see a smaller set: the tools a task starter picked, plus the names a search revealed. The full schema stays off that list until something asks for it. This chapter adds that view, and it counts schema tokens, call tokens, and result tokens for three ways of doing the same fake task. The step crate is `steps/ch08-session-toolsets`. It depends on `ch07-catalog`. It binds no socket.
 
-The step crate is `steps/ch08-session-toolsets`. It depends on `ch07-catalog`. The process crate `mcp-gateway` re-exports this session gateway. Still no socket.
+`SessionGateway` is the type a client holds. `set_task` installs a starter set for a task description. `search_tools` returns a short line per hit, `name — blurb`, and refuses more than 7 queries. `describe` returns the server and the full description, and refuses more than 10 names. Those two caps are the ones Hermes puts on its bridge tools. Revealed names accumulate on the session. `SessionView` is what `session_tools` returns: the names this session may see, not the whole catalog. `take_list_changed` flips a flag back to false, which is the bit a later socket would send as `notifications/tools/list_changed`. Results page at 2,000 characters. `Telemetry` records schema tokens, call tokens, and result tokens. `Arm` and `TaskReport` are the three-way comparison: every tool, a static set, and a dynamic set. `run_rename_task` is the fake task those arms share. Token estimates divide bytes by 4.
+
+The server stays a separate program because the session filter is a catalog decision. The harness already knows how to keep a prompt prefix stable. It should receive a small list, not discover the small list by downloading every schema and throwing most of them away. Putting `set_task` and the revealed-name filter in the gateway means two harness processes can share one catalog and still see different sessions. Hermes refuses a session-keyed catalog on the client, because that copy would drift from the live definitions. This server is the source of the list, so the session stores names and the catalog stores cards. `mcp-gateway`, the process crate, re-exports `gw_session` from this chapter — `SessionView`, `Arm`, `Telemetry`, `run_rename_task` — beside the chapter 51 gateway. The re-export is how the process crate stays thin. It still binds no socket.
+
+The three arms are the measurement chapter 51 will report again, on a copied catalog, with task success beside the token count. Collecting the numbers here means the later capstone has a definition of "dynamic" that is this session view, not a new invention. A self-improving offer, chapter 23, changes which names `session_tools` returns. It does not invent a second session type.
+
+Rust, as it arrives: a session is a struct keyed by an id, not a global. A flag you take and clear is the notification. An enum (`Arm`) is the three experiments, so a fourth way of offering tools has to be added on purpose. Integer division for a token estimate is the same four-characters-per-token rule chapter 6 used.
+
+`cargo run -p ch08-session-toolsets` prints the fake task. No port is opened.
+
+**In this chapter**
+
+- What this chapter decides
+- The fake task
+- Tests
+- Build, run, and benchmark
+- Pitfalls
+- Guardrails in this chapter
+- Chapter summary
+- What's next
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -104,7 +123,7 @@ The first search hit for a tied query can be a `calendar_` tool in chapter 6's t
 
 ## Guardrails in this chapter
 
-Layer L2's "do not show everything," applied to the tool list. [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
+Layer L2's "do not show everything," applied to the tool list. The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
 **Caps on one request.** 7 queries, 10 describe names, 5 hits per query, 8 starter tools. The 7 and the 10 are Hermes. The 5 is `search_default_limit` in `ToolSearchConfig` (the default in `from_raw` is 5). The 8 is this chapter's starter cap, the same bound the rest of the book uses for in-flight work.
 

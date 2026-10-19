@@ -2,9 +2,30 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 39 admits a person and a message. It cannot open a page. This chapter adds a browser behind a trait. `navigate` refuses a secret in the URL, then refuses an unsafe URL, and only then calls `open`. The final URL is checked again. A cloud metadata address is blocked with `allow_private` false, and it stays blocked when that flag is true. The snapshot the model sees is capped at 15,000 characters, and the stored copy stops at 2,000,000. Page text of at least 32 characters is wrapped as untrusted. `FakeBrowser` never dials.
+Chapter 39 can accept a chat message into the inbox. The harness still cannot open a page, click, or type. Chapter 16 can extract a URL to text. A page that only makes sense after a click is a different tool, and it has the same ways to go wrong: a secret in the URL, a metadata address, a snapshot so large it becomes the prompt, and page text that tries to give the model instructions. This chapter adds the browser tools behind a trait so the tests never start a browser. The crate is `steps/ch40-browser`, a copy of chapter 39 plus `browser`. The package is `ch40-browser`.
 
-The step crate is `steps/ch40-browser`. It is chapter 39's harness copied forward, plus `browser`. The package is `ch40-browser`. The library name is `harness_core`. `lib.rs` adds `pub mod browser` and does not re-export it. Tests say `harness_core::browser::`. `Cargo.toml` does not depend on the `ch39-gateway` package. `gateway` is still in the crate. So are `web` and `redact`. The new module calls `crate::web`, the chapter 16 helpers, instead of copying a second SSRF checker.
+`PageBackend` is the trait. `FakeBrowser` is the implementation the tests and the bench use. The session holds one page. The resolver is a map, so a hostname lookup in the test is data rather than DNS. Navigate checks in order: a secret URL is refused, then `is_safe_url` with private URLs disallowed, then the backend opens, then `final_url` is checked again so a redirect cannot land on an address the first check allowed. The metadata address is blocked before any lookup. Snapshot text is capped, a head and a tail, with a stored ceiling. Click, type, and scroll go through the same session. The wrapper starts at 32 characters, the same untrusted-result idea as chapter 16, and an embedded closer is neutralized.
+
+Vendor plugins that drive a real hosted browser stay deferred. The harness module is the policy and the trait. A later backend can sit behind `PageBackend` without moving the checks. Chapter 41's vision tools are the next copy. They download an image. They do not navigate. Keeping the page policy here means an image URL and a page URL share the SSRF floor from chapter 16 instead of growing a third copy with a hole in it.
+
+Browser text is a rich way to poison a learning loop. A snapshot that says "save this as a skill" will be in the transcript chapter 26's reviewer reads. The wrapper marks it as data. The reviewer still has only skill and memory tools, and chapter 25's scanner still runs on the write. The wrapper is the first cut, at the moment the page enters.
+
+Rust, at the trait: `async` is the navigate call, and the fake completes immediately. The session struct owns the current page so two navigations cannot interleave on one agent without the caller noticing. The URL check is a function that returns `Result` before the trait method runs.
+
+`cargo run --locked -p ch40-browser --bin ch40-browser` prints the title from the fake page. The exercise is `my-harness/tests/ch40.rs`: a metadata URL is not navigated.
+
+**In this chapter**
+
+- 40.1 The caps, and the error the model can read
+- 40.2 A trait, so the test never starts a browser
+- 40.3 The session holds one page, and the resolver is a map
+- 40.4 Secret first, then is_safe_url with allow_private false
+- 40.5 The metadata address is blocked before any lookup
+- 40.6 Head, tail, and a stored ceiling
+- 40.7 Navigate checks, opens, rechecks, wraps
+- 40.8 Snapshot, click, type, and scroll
+- 40.9 The wrapper starts at 32 characters
+- 40.10 The demo prints the title
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -535,7 +556,7 @@ The delimiter replace is case-sensitive. A page that closes the tag with differe
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
 **Secret URL.** `_secret_url_error` refuses a URL whose raw or decoded form matches a secret prefix. `check_url` calls `url_has_secret` before `open`. The error text starts `Blocked: URL contains what appears to be an API key or token.`
 

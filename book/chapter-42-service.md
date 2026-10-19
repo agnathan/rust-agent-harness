@@ -2,11 +2,30 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-*(server)*
+The chat gateway in chapter 39 can deliver a platform message to the harness. The MCP gateway is still an in-process catalog with a pool. It cannot yet route a session to a replica, drain, enforce a tenant quota, or check a bearer token. Those are service problems, and they belong to the MCP server, which stays a separate program from the harness and from the chat gateway. Mixing them would make a Telegram adapter and a tool catalog the same process, with one failure domain. This chapter is the MCP service. The crate is `steps/ch42-service`. It vendors chapter 37. The library name is `gwservice`. The new module is `service`. It binds no socket. OAuth token issuance stays deferred. A bearer check stands in for the resource-server decision.
 
-Chapter 39 admits a person to the chat gateway. Chapter 37 can pick a backend for a tool. Neither one keeps a session on a replica, and neither one is the process that would sit in front of those replicas. This chapter is that process, still inside one binary. A session id sticks to a replica name. Killing the replica moves the session. A reload swaps an `Arc` and leaves the old config in the caller's hand. A tenant has a concurrent quota. A drain finishes the calls already accepted and refuses new ones. A bearer token is required. Sampling stops at ten requests a minute. URL-mode elicitation is declined. An `npx` or `uvx` launch checks for `MAL-*` advisories and fails open when the network does not answer. Nothing here binds a socket. OAuth issuance stays deferred.
+`Config` is the reloaded configuration. `Service::new` starts from it. `route` and `place` remember which replica holds a session id. `kill` marks a replica dead, and the next lookup fails over to the other id, which is the milestone. `reload` swaps an `Arc`, the same publish-a-snapshot idea as chapter 7, applied to config. `accept` and `finish` are the drain: stop accepting, let the calls already accepted finish. `bearer_ok` checks the token the test presents. `Sampler` enforces the sampling limit. `elicit` is the form-mode approval path. `OsvCache` is the check before an npx or uvx launch, in memory, with no registry call in the test. Quotas are per tenant, concurrent, in memory. The audit log is a vec. Span names are strings. Health and readiness are flags.
 
-The step crate is `steps/ch42-service`. The book number is 42. The package is `ch42-service`. The library name is `gwservice`. `Cargo.toml` describes it as chapter 37 vendored, plus routes, a drain, quotas, and a bearer check. Edition is 2021. `rust-version` is 1.85. There is no path dependency on `ch37-balancing`. The sources are copied in. The binary is `src/main.rs`, and it prints `service::demo`.
+Chapter 51 copies this crate and adds the token arms. `mcp-gateway` re-exports that later copy as `Gateway`, plus chapter 8's session types. It does not re-export this directory directly once chapter 51 exists, and it still binds no socket. The harness connects as a client of these types. A listener, Redis, and issued OAuth tokens remain deferred, so this step can be tested without a port.
+
+The service matters to the learning loop because skills and tools the agent calls through MCP have to keep working while a replica goes away. A drain that dropped in-flight calls would cut a `skill_view` or a search in half and leave reflection to learn from the error. Failover by session id means the same session keeps its offered set. The harness does not learn a new catalog protocol to get that.
+
+Rust, at the route table: a map from session id to replica id, an `Arc` swapped on reload, and a drain flag you check at `accept`. `Result` is `Reject`. The failover test kills the record and looks up again. No operating-system socket is opened, which is why the bench can time a lookup in nanoseconds.
+
+`cargo run -p ch42-service` runs the demo in-process. The exercise is `my-harness/tests/ch42.rs`: killing the route record fails the next lookup over to the other replica id.
+
+**In this chapter**
+
+- 42.1 The crate vendors chapter 37
+- 42.2 The constants, `Config`, `Reject`, and `Service::new`
+- 42.3 `route`, `place`, and `kill`
+- 42.4 `config` and `reload`
+- 42.5 `accept`, `finish`, and the drain
+- 42.6 `bearer_ok`
+- 42.7 `Sampler`
+- 42.8 `elicit`
+- 42.9 `OsvCache`
+- 42.10 `FakeModel` and `demo`
 
 | Section | What it walks |
 |---|---|
@@ -637,7 +656,7 @@ The bearer check does not validate a signature. An empty token and a missing `Be
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
 **Sampling (M7).** Ten requests a minute per sampler. The window is 60 seconds. `SAMPLING_MAX_RPM` and `SAMPLING_WINDOW_SECONDS` are the constants. Hermes's sampling LLM timeout of 30 seconds is `SamplingHandler.timeout`. It is not a constant in this file and it is not slept.
 

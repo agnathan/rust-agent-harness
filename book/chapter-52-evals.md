@@ -2,9 +2,35 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 9 saved three tasks and four stress names, and it said a later chapter would re-run them. This is that chapter. The scores come back as data. `FAIL_THRESHOLD` is `None`. One case per guardrail layer sits beside that set, and each case calls the module that already implements the guard. A trajectory line is one JSON object appended to a vec.
+Chapter 9 saved three tasks and four stress names, and it said a later chapter would re-run them. The harness between then and now has grown approvals, a sandbox, memory, skills, a team, a bus, and tracing. A loop that still compiles can still have changed what `echo-hello` means. This chapter runs the saved set on this copy of `run_loop`, and it adds one red-team case per guardrail layer. The scores come back as data. `FAIL_THRESHOLD` is `None`. There is no fail threshold in CI. The crate is `steps/ch52-evals`, a copy of chapter 50. It is not a copy of chapter 51. The server capstone stays the other program. The new module is `suite`, because a private `mod evals` already exists. The package is `ch52-evals`. The library is `harness_core`.
 
-The step crate is `steps/ch52-evals`. The book number is 52. The package is `ch52-evals`. The library name is `harness_core`. This is a copy of chapter 50, the tracing harness, plus `suite`. It is not a copy of chapter 51. There is no path dependency on `ch50-tracing` or on `ch51-capstone`. The sources are copied. Edition is 2021. `rust-version` is 1.88. `Cargo.toml` says the previous harness plus this chapter. The file comment at the top of `lib.rs` still describes chapter 10's loop. `suite.rs` itself says chapter 52. `mod evals` is private. `pub mod suite` is the new module. The name is `suite` because a private `mod evals` already exists. The binary that prints this chapter is `src/bin/chapter_demo.rs`, named `ch52-evals`. It prints `harness_core::suite::demo()`. `examples/demo.rs` is the inherited eval runner. It prints the saved names and the stress names. It does not print L1 through X, and it does not print the trajectory line.
+`run_saved` and `run_stress` block on the chapter 9 runners, which call the real loop. `echo-hello`, `direct`, and `eight-reads` are the saved names. The stress names are `tool-fails-then-recovers`, `hits-iteration-cap`, `unknown-tool-repair`, and `stall`. `unknown-tool-repair` is the loop repairing `eco` into `echo` through `repair_name`. There is no stub that ignores its input and returns success. `run_red_team` returns ten scores, L1 through L9 and X. Each function calls the module that already implements that layer: the gateway pause, the context scan, redaction, the loop's budget, the dispatcher, the tool guards, the sandbox, the memory and skill scans, the cron and delegation limits, and the cross-cutting case. `append_event` pushes one JSON object onto a vec. `run_trajectories` runs 100 tasks that take permits from the worker bound. The demo prints every score, the trajectory line, and `threshold: None`.
+
+The suite is how the book checks that the growing harness is still the harness. A self-improving agent that writes skills and restarts children is only continuous if the early promises still hold: a direct question does not call a tool, eight reads stay inside the bound, a stall still stalls, a dangerous community skill is still blocked. The red-team cases call those modules. They do not reimplement a smaller version for the test. Chapter 51's token arms are a different measurement, on the server, and this chapter does not fold them into the score.
+
+Rust, at the score: `Score` is a struct with a name and a pass bit. `block_on` runs the async loop from a synchronous test. The permit is an `AtomicUsize`. The trajectory line is a `String` in a `Vec`, appended, so order is the assertion. `FAIL_THRESHOLD` is `Option`, and it is `None` on purpose.
+
+`cargo run -p ch52-evals --bin ch52-evals` prints the scores. The exercise is `my-harness/tests/ch52.rs`: the saved set still passes on the mock, and one appended trajectory event is ordered.
+
+**In this chapter**
+
+- 52.1 `FAIL_THRESHOLD`, `Score`, and the name lists
+- 52.2 `run_saved` and `run_stress`
+- 52.3 `unknown-tool-repair` and `repair_name`
+- 52.4 `run_red_team`
+- 52.5 L1 Entry/Gateway, `layer_entry`
+- 52.6 L2 Prompt/context, `layer_context`
+- 52.7 L3 Model I/O, `layer_model_io`
+- 52.8 L4 Agent loop, `layer_loop` and `usage`
+- 52.9 L5 Tool dispatch, `layer_dispatch` and `allows`
+- 52.10 L6 Individual tools, `layer_tools`
+- 52.11 L7 Execution env, `layer_env`
+- 52.12 L8 Persistence/learning, `layer_supply`
+- 52.13 L9 Scheduling/delegation, `layer_schedule`
+- 52.14 X Cross-cutting, `layer_cross`
+- 52.15 `append_event` and `record_saved`
+- 52.16 The permit, the peak, and `run_trajectories`
+- 52.17 `demo`
 
 | Section | What it walks |
 |---|---|
@@ -742,7 +768,7 @@ The red-team functions are private. The test reaches them through `run_red_team`
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md), section 4. One case per layer. Each case calls the real module. There is no fail threshold. The saved tasks re-run on this copy of the loop.
+The checklist is section 4 of [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). One case per layer. Each case calls the real module. There is no fail threshold. The saved tasks re-run on this copy of the loop.
 
 **L1 Entry/Gateway.** `authorize` allows `owner` and denies an empty user and `stranger` when the caller is not paired. `is_engaged` of `[Error, Absent]` is true. `is_engaged` of `[Absent]` is false. The bot-loop counter stays in chapter 47.
 

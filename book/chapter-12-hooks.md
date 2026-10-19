@@ -2,9 +2,40 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 11 can refuse a command. It cannot refuse an arbitrary tool because a plugin said so, and it cannot rewrite the arguments on the way in. This chapter adds that slot. A hook runs before the tool, and another runs after. A third sees the messages that are about to be sent, by borrow. A memory backend records the turn on a queue. The queue is the trait chapter 21 will fill with files.
+Chapter 11 can refuse a command. It cannot yet let some other code watch the call, rewrite the arguments, or keep a note about the turn. Plugins, a memory backend, and the reflection fork all need a place to stand that is not a copy of `drive_loop`. This chapter adds that place. The crate is `steps/ch12-hooks`, a copy of chapter 11 plus a `hooks` module. The package is `ch12-hooks`. The library is `harness_core`.
 
-The step crate is `steps/ch12-hooks`. It is chapter 11's harness copied forward, plus `hooks`. The package name stays `ch12-hooks`. The library name is `harness_core`. There is no path dependency on chapter 11.
+The loop does not call the hook runner yet. The chapter's own tests do. Wiring every hook into `drive_loop` without changing chapter 9's eval results is left as a follow-on inside this crate if a later edit needs it. A hook must not hold the dispatch permit across a human wait. That rule is chapter 11's, and a plugin does not get to break it.
+
+`ToolHook` is the plugin shape. `PreAction` is one directive: continue, rewrite the arguments, block, or escalate. `dispatch_pre` walks the hooks until one blocks. `merge_args` is a shallow patch. `dispatch_post` lets the last `Some` win, which is how a hook rewrites a tool result. `escalation_block` turns an unapproved escalate into a block, so a plugin cannot promote itself into a human prompt the policy did not ask for. `ApiHook` and `run_api_hook` borrow the messages. They do not clone the conversation to look at it. `TurnRecord` and `MemoryQueue` are the swappable memory backend: the trait is defined here, and chapter 21 is the file implementation behind it. `BlockName` blocks one tool. `scan_plugin_shape` checks the structural caps — 400 files, 10 MB total, 1 MB per file — and never returns `Dangerous` by itself. Oversized is caution. `should_allow_plugin_install` lets `--force` override caution and does not let it override dangerous. The pattern engine that can return dangerous is chapter 25.
+
+This module is the extension point the learning chapters hang on. Chapter 21 writes memory through the trait defined here, so a different backend can be swapped without a new tool shape. Chapter 26's post-turn reviewer is a hook that runs after the turn, with a tool slice of its own. Chapter 27's curator stays off the request path and still needs a place to enqueue. If those writes were pasted into `drive_loop`, every new lesson would be a change to the hot path. The hook is how the hot path stays the model and the tools the model called.
+
+Rust, where the feature needs it: a trait is the plugin and the memory backend. A borrow is why the API hook does not copy a thousand messages. An enum is the pre-action, so a hook returns one directive. The queue is the background write.
+
+`cargo run -p ch12-hooks` runs the scripted block. The exercise is `my-harness/tests/ch12.rs`: an oversized plugin is caution, and force does not pass a dangerous verdict.
+
+**In this chapter**
+
+- 12.1 The module is `hooks`, and `drive_loop` does not call it
+- 12.2 `HookError` is a message the runner drops
+- 12.3 `PreAction` is one directive
+- 12.4 `ToolHook` is the plugin
+- 12.5 `Dispatch` is what the walk returns
+- 12.6 `dispatch_pre` walks hooks until a block
+- 12.7 `merge_args` is a shallow patch
+- 12.8 `dispatch_post` lets the last `Some` win
+- 12.9 `escalation_block` turns an unapproved escalate into a block
+- 12.10 `gate_failed` is the string when the gate cannot run
+- 12.11 `ApiHook` and `run_api_hook` borrow the messages
+- 12.12 `TurnRecord` and `MemoryQueue`
+- 12.13 `Registry` in this file is not the chapter 3 tool registry
+- 12.14 `BlockName` blocks one tool
+- 12.15 `run_script` is the fake model
+- 12.16 `sample_block` is the one-call form of that script
+- 12.17 Three caps, and the verdict types
+- 12.18 `scan_plugin_shape` never returns `Dangerous`
+- 12.19 `should_allow_plugin_install` lets force override caution only
+- 12.20 What the benches time
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -828,7 +859,7 @@ The queue cap drops the oldest job. A caller that treats `len()` as "every turn 
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Layer L5.
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Layer L5.
 
 **Plugin veto.** `PreAction::Block` is the `pre_tool_call` veto. The message is the tool result. The script does not continue.
 

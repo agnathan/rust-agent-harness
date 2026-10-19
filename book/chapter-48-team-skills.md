@@ -2,9 +2,26 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 47 publishes a body onto a bounded channel. A skill is not that body. Workers can propose one. One librarian writes it. Everyone else holds a pointer to the list they already loaded. This chapter is that split.
+Chapter 27 can curate one agent's skills. A team that learns together needs a shared library, and it needs exactly one writer. If every worker patches the team store, two patches will tear a file, and a dangerous install will depend on which worker remembered the scanner. This chapter adds the library, the proposal, and the librarian. The crate is `steps/ch48-team-skills`, a copy of chapter 47 plus `team_skills`. The package is `ch48-team-skills`.
 
-The step crate is `steps/ch48-team-skills`. The book number is 48. The package is `ch48-team-skills`. The library name is `harness_core`. This is the chapter 47 harness copied forward, including `bus`, plus `team_skills`. `Cargo.toml` says "Chapter 48: the previous harness plus this chapter." Edition is 2021. `rust-version` is 1.88. There is no path dependency on `ch47-message-bus`. The sources are copied. `lib.rs` adds `pub mod team_skills`. The file comment at the top of `lib.rs` still describes chapter 10's loop. `team_skills.rs` itself says book chapter 48. `bus.rs` still says book chapter 47. The binary that prints this chapter is `src/bin/chapter_demo.rs`, named `ch48-team-skills`. It calls `team_skills::demo`. It does not call `bus::demo`. `examples/demo.rs` is the inherited eval runner. It does not print the skills line.
+`Library` has layers: team, agent-local, and bundled. `load` reads them. `render_team` writes the index the workers see. `Index` is stored in an `Arc`, and `swap_index` replaces that `Arc`. Workers do not wait on the swap. `skill_propose` enqueues a `Proposal` on the bus from chapter 47 and returns. `PROPOSAL_CAP` bounds that queue. `librarian_accept` is the single writer. It calls `allow_install`, which calls chapter 25's `scan_text` and `should_allow_install`. Community plus `force` does not override a dangerous body. A local check for `rm -rf /` stays, because that scanner does not name the command. `Notice` is what running agents hear on their next turn. Agents spawned after the swap get the new index. `TEAM.md` is the team fact file, and it is not this chapter's worker-writable skill body.
+
+This is the team half of the closed loop. Chapter 24 showed one agent a stable index. Chapter 25 let that agent write, behind a scan. Chapter 26 reflected. Chapter 27 curated. Here the workers propose and the librarian applies, which is the same "one writer" rule scaled to a team. A child still does not write the team store. What it learned comes back in the result, and the parent's reflection, or the librarian, decides what to keep. The index swap is how a running agent hears about a new skill without a rewritten system prompt in the middle of its turn. Chapter 2's cache rule still holds.
+
+Rust, at the swap: `Arc` is the index, and swapping it is one atomic store the readers clone. The proposal queue is a bounded channel, the same shape as the bus. The scanner call is an ordinary function call into `skill_write`, which is on this crate because the harness was copied forward. `Result` is the reject, with the dangerous verdict intact.
+
+`cargo run -p ch48-team-skills --bin ch48-team-skills` runs the librarian accept. The exercise is `my-harness/tests/ch48.rs`: `skill_propose` enqueues, and workers do not wait.
+
+**In this chapter**
+
+- 48.1 `PROPOSAL_CAP`, `Layer`, `Trust`, `Skill`, and `Index`
+- 48.2 `Proposal`, `Propose`, `Reject`, and `Notice`
+- 48.3 `Library`, `load`, `notices`, and `render_team`
+- 48.4 `skill_propose`
+- 48.5 `allow_install`, `is_dangerous`, and chapter 25's scanner
+- 48.6 `swap_index`
+- 48.7 `FakeModel`, `librarian_accept`, and `demo`
+- 48.8 The manifest, the install policy, and this heading
 
 | Section | What it walks |
 |---|---|
@@ -843,7 +860,7 @@ Workers who keep the `Arc` from `load` do not see later accepts in that `Arc`. T
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
 **Skills guard (H1).** The catalog row is H1. The name is skills guard. Hermes scans a community skill and `force` cannot override a dangerous verdict on a community skill. `should_allow_install` at line 818 applies the same hard block to community and trusted sources. The blocked string ends `--force does not override a dangerous verdict.` This chapter refuses `Trust::Community` when `is_dangerous` finds `rm -rf /` or `ignore previous instructions`, and it refuses before `force` is read. It then calls chapter 25's `scan_text` and `should_allow_install`. `Decision::Allow` is the only yes. A dangerous community verdict from that scanner is a hard block. `force: true` does not install it.
 

@@ -2,9 +2,25 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 26 can build a reviewer fork. It does not decide that a skill has gone quiet. This chapter marks an agent-created skill stale after 14 days and archives it after 30. A pin, a cron mark, a bundled skill, and a hub skill stay where they are. The request path only enqueues the pass. Enqueue does not scan, snapshot, or move a directory. The pass snapshots the tree, then walks the records. An archive is a write, so the approval flag can hold it. An install calls chapter 25's `scan_text` and `should_allow_install`. That scan stays off the request path. Consolidate is off. There is no clock in the process and no scheduler thread.
+Chapter 26 can fork a reviewer that writes skills. If every correction becomes a new skill, the index fills with one-off notes named after today's bug. The agent then sees a noisy list, loads the wrong procedure, and the cache-stable index from chapter 24 becomes a catalog of accidents. This chapter is the job that moves agent-created skills from active to stale, and then to archived. It does not delete. It does not run on the request path. The crate is `steps/ch27-curation`, a copy of chapter 26 plus `curation`. The package is `ch27-curation`.
 
-The step crate is `steps/ch27-curation`. It is chapter 26's harness copied forward, plus `curation`. The package name is `ch27-curation`. The library name is `harness_core`. `lib.rs` adds `pub mod curation`. There is no path dependency on an earlier chapter package. `curation` calls `crate::skill_write::scan_text` and `crate::skill_write::should_allow_install`. The file is `steps/ch27-curation/crates/harness-core/src/curation.rs`. The crate depends on `flate2` and `tar` for the snapshot.
+`Curator` keeps the gate in a mutex, the same shape as chapter 25's writer. `enqueue` records that a pass was requested and does not write. That is the whole point of the milestone: enqueue is not a mutation. `due` compares the last pass with the interval. `pass` marks stale, then archives. Pinned skills are exempt. Bundled, hub, and team skills are not candidates. `install` calls chapter 25's scan and chapter 25's gate. It does not grow a second scanner, and the scan stays off the request path with the rest of this work. `snapshot` writes a gzip of the tree and keeps two, so a bad consolidation can be put back. The optional pass that merges skills into umbrella skills stays off unless configured.
+
+Curation is the part of self-improvement that is easy to skip and expensive to skip. Reflection without curation is a write-only store. Chapter 48's librarian is the team-shaped version of the same idea: workers propose, one writer applies, the index swaps. This chapter is the single-agent version, scheduled, local, and boring on purpose. Chapter 28 starts the team patterns. It does not curate. A pipeline that shares context still reads whatever skills the index currently lists, which is why the index has to be weeded by a job and not by the model in the middle of a turn.
+
+Rust, at the job: a mutex guards the gate so two passes cannot archive the same skill. The gzip snapshot is `flate2` over a tar of the tree, a byte buffer you can restore. `due` is a comparison of timestamps, and the test's clock is a value you pass in so the job does not sleep. `enqueue` returning before any write is the assertion the exercise wants.
+
+`cargo run --locked -p ch27-curation --bin ch27-curation` marks one skill stale. The exercise is `my-harness/tests/ch27.rs`: enqueue does not write.
+
+**In this chapter**
+
+- 27.1 The counts and the record
+- 27.2 `Curator` keeps the gate in a `Mutex`
+- 27.3 `enqueue` records the pass, and `due` is a comparison
+- 27.4 `pass` marks stale, then archives
+- 27.5 `install` calls chapter 25
+- 27.6 `snapshot` writes a gzip and keeps two
+- 27.7 `demo` marks one skill stale
 
 | Section | What it walks |
 |---|---|
@@ -569,7 +585,7 @@ The queue drops the oldest `curate` at 64. The entries are the same word. The le
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Curation sits on L8. It reuses H1 and A9 from chapter 25.
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Curation sits on L8. It reuses H1 and A9 from chapter 25.
 
 **A9.** `set_write_approval` starts false. `hold` is the gate on an archive and on an install. Off, the move and the write proceed. On, the label is staged and the directory stays. The scan is a different check. A dangerous install returns `Scan` before `hold`.
 

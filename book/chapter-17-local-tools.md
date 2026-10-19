@@ -2,9 +2,27 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 16 can look a page up. It still cannot read the workspace it is running in. This chapter adds that, on top of the same harness. The step crate is `steps/ch17-local-tools`. It is chapter 16's tree copied forward, plus `pub mod local_tools`. The module is not glob-reexported. Tests say `harness_core::local_tools::`.
+Chapter 16 can search and extract, behind a trait, with the URL checked first. The harness still cannot read a file in the workspace, patch one, run a terminal command through the approval floor, keep a todo list, or pause to ask the user a question. Those four are the everyday tools, and each one has a way to go wrong that a bare function would miss. This chapter adds them as one module, `local_tools`, on a copy of chapter 16. The crate is `steps/ch17-local-tools`. The package is `ch17-local-tools`. The library is `harness_core`.
 
-Four jobs live in that module. `read_file`, `write_file`, and `patch_file` stay inside one workspace root, and a write of a file this task has not read is refused. `run_terminal` asks chapter 11's `deny_tool` before it asks chapter 13's worker. `TodoStore` is a list in memory, not a file in the user's tree. `ClarifyTool` pauses one turn until a queued reply arrives. A child agent, `depth >= 1`, is refused before that queue is touched.
+`Workspace::resolve` canonicalizes a path and refuses one that does not start with the workspace root. Absolute paths are held to the same prefix. A relative `..` that leaves the root is an error. `read_file` records a stamp. `write_file` of a path that was never read, or whose mtime moved, is refused as a stale write, so the model cannot clobber a file it has not seen. `patch` is the edit that matches one occurrence and replaces it. The read is capped. The terminal routes through chapter 11's `deny_tool` and then chapter 13's worker. It does not grow a second approval pipeline. Output is truncated head and tail, and the foreground timeout is bounded. `TodoStore` is agent-owned state, one list, merged by id, with a revision so a stale write can be rejected. It is not a file in the user's repository. `clarify` pauses for a user, with a cap on questions and choices. A child agent may not call it. That block is the one chapter 29 will enforce again for a specialist: `clarify`, `delegate_task`, `memory`, `send_message`, and cron stay out of a child's hands. This chapter implements `clarify` and keeps the block.
+
+These tools are what a later skill actually does. A procedure that says "patch the file, then run the tests" is only real if patch and the terminal exist and are guarded. Chapter 25 will let the agent write that procedure down. Chapter 17 is why the procedure has something safe to call. The stale-write refusal matters for learning in particular: an agent that "fixes" a file it did not read will store a confident mistake, and reflection will then treat the mistake as experience.
+
+Rust, next to the path code: canonicalization is how `..` and symlinks stop being a string trick. A stamp is a struct you compare. `Result` is the refusal. The todo list is a `Vec` plus a revision counter, not a database. `clarify`'s pause is a future the test completes with a fake user reply.
+
+`cargo run -p ch17-local-tools --bin ch17-local-tools` runs the demo. The exercise is `my-harness/tests/ch17.rs`: a write without a prior read is refused.
+
+**In this chapter**
+
+- 17.1 The root is a canonical path
+- 17.2 A write needs a stamp from a read
+- 17.3 Read, write, and a patch that matches once
+- 17.4 The terminal asks, then it runs
+- 17.5 Truncation, in an order that matters
+- 17.6 The list is not a file
+- 17.7 Clarify is a pause inside `call`
+- 17.8 A child does not get to ask
+- 17.9 What the benches time
 
 | Section | Step | What it adds |
 |---|---|---|

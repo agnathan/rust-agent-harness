@@ -2,9 +2,31 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 48 shares a skill inside this process. The librarian and the workers are threads of one program. An agent that lives at a URL is a different problem. This chapter is that boundary. The trait is `ExternalAgent`. The peer is `RemotePeer`. The pool holds 8. A `local://` URL is `A2aError::InProcess`. MCP stays the path for tools this process owns.
+Chapter 48's team shares skills inside this process, on a bus the process owns. An agent that lives somewhere else — another product, another language, another trust boundary — is not a subscriber you can `try_send` to. MCP already covers tools, and agents, and skills this harness exposes. A second protocol for those would split the catalog. This chapter uses A2A only for agents outside the process. The crate is `steps/ch49-a2a`, a copy of chapter 48 plus `a2a`. The package is `ch49-a2a`.
 
-The step crate is `steps/ch49-a2a`. The book number is 49. The package is `ch49-a2a`. The library name is `harness_core`. This is the chapter 48 harness copied forward, plus `a2a`. `Cargo.toml` says "Chapter 49: the previous harness plus this chapter." Edition is 2021. `rust-version` is 1.88. There is no path dependency on `ch48-team-skills`. The sources are copied. `lib.rs` adds `pub mod a2a`. The file comment at the top of `lib.rs` still describes chapter 10's loop. The binary that prints this chapter is `src/bin/chapter_demo.rs`, named `ch49-a2a`. `examples/demo.rs` is the inherited eval runner. It prints `eval:` lines from `run_saved_evals`. It does not print the A2A line. `ch49-harness-cli` depends on `ch49-a2a` by path. `ch49-a2a` does not depend on the previous chapter package.
+`ExternalAgent` is the peer. `AgentCard` describes it. `Pool` and `HttpPool` record calls in memory. `record` appends the url and the body the test will read. Nothing opens a socket. `acquire` and `hold` bound how many outbound calls are in flight, `CALL_BOUND`. `RemotePeer::send` is the trait method the fake implements. `call` passes chapter 20's `redact_for_egress` into that send, so a key in the outbound body is scrubbed by the one egress function. The narrower scrub that used to live here is gone. `wrap_inbound` marks the reply as data, with `INBOUND_PREFIX`, because the other agent is an untrusted writer the way a web page is. `cancel` reaches an in-flight call. `wait_cancel` is the join the bench times. `demo` prints the round trip against the fake.
+
+Chapter 50 copies this harness and adds tracing, including a research team that learns across runs. The external call stays a call. It does not become a span by itself until that chapter wraps it. The MCP server is still the other program. Tools we own are listed and called over MCP. A2A is the path for a peer we do not own and should not pretend to supervise with chapter 36's heartbeat. Cancel is the control we do keep: an external call that ignores cancel would pin a permit until the peer felt like answering.
+
+The scrub and the wrapper are the learning constraint. A reply from outside can be fluent and wrong, and it can contain an instruction to write a skill. It enters the transcript as wrapped data. Reflection may still read it. The skill write still goes through chapter 25's scanner. The outbound scrub is why our memory and our keys do not become the other agent's training text.
+
+Rust, at the boundary: the peer is a trait, so the test supplies a fake that records bytes. The pool is a counter and a guard, the same permit shape as the tool scheduler. Cancel is an atomic flag the in-flight wait checks. `Result` is `A2aError`, and a scrubbed body is a `String` the send consumes.
+
+`cargo run -p ch49-a2a --bin ch49-a2a` runs the demo. The exercise is `my-harness/tests/ch49.rs`: cancel reaches an in-flight remote call.
+
+**In this chapter**
+
+- 49.1 The module note, `CALL_BOUND`, and `A2aError`
+- 49.2 `ExternalAgent`
+- 49.3 `HttpPool` and `record`
+- 49.4 `Pool`, `acquire`, and `hold`
+- 49.5 `FakeModel` and `RemotePeer::send`
+- 49.6 `INBOUND_PREFIX` and `wrap_inbound`
+- 49.7 `call` and `redact_for_egress`
+- 49.8 `cancel`
+- 49.9 `AgentCard` and `card`
+- 49.10 `demo`
+- 49.11 `wait_cancel`
 
 | Section | What it walks |
 |---|---|
@@ -592,7 +614,7 @@ The peer name is unused by `send`. The card name is `"harness"`. They are differ
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). E2 is the egress scrub. The catalog row says one stricter scrub for remote readers, also stripping Bearer residue, and it names `agent/redact.py` `redact_for_egress`. This chapter calls the crate's `redact_for_egress` on the way out of `call`.
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). E2 is the egress scrub. The catalog row says one stricter scrub for remote readers, also stripping Bearer residue, and it names `agent/redact.py` `redact_for_egress`. This chapter calls the crate's `redact_for_egress` on the way out of `call`.
 
 **E2 on the way out.** `call` passes `crate::redact::redact_for_egress(message)` into `send`. `a2a.rs` has no local redact function. The email substitution in Hermes `redact_outbound` is not in this file.
 
