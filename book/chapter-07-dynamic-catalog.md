@@ -2,9 +2,28 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 5 can list the tools it was given at startup. A gateway that only does that cannot pick up a plugin, or a second server's tools, without restarting the process. Chapter 6 already measured what a 10,000-tool list costs when the client holds it. This chapter moves the catalog into the server: native tools, plugin tools, and an in-memory upstream list, one BM25 index, and a reload that swaps an `Arc`.
+Chapter 5 can list the tools it was given at startup. A gateway that only does that cannot pick up a plugin, or a second server's tools, without a restart. Chapter 6 already measured what a 10,000-tool list costs when the client holds the index: the search is fast, and it still runs inside the agent. This chapter moves the catalog into the server. The step crate is `steps/ch07-catalog`, package `ch07-catalog`. It binds no socket. A live connection to an upstream MCP server waits until chapter 37.
 
-The step crate is `steps/ch07-catalog`. The package is `ch07-catalog`. It still binds no socket. A live connection to an upstream MCP server is chapter 37.
+`Gateway` holds a `Snapshot` behind `RwLock<Arc<Snapshot>>`. The snapshot is the merged list: native tools, a `PluginSet`, and an in-memory `Upstream`. `Origin` says which of those a card came from. `Bm25Index` ranks the way chapter 6 did, with the same k1 and b, and an exact name match ranks first. `Embedder` is the trait chapter 6 introduced, and `HashEmbedder` is the stand-in that does not call a network. `reload` builds a new index, then replaces the `Arc`. A caller that already cloned the old `Arc` keeps it. `call` clones the `Arc` before it reads the card, so a reload during the body does not change that call's tool. A duplicate name is `CatalogError`, and the previous snapshot stays.
+
+The server stays a separate program because the index is the catalog's job. The harness, in chapter 6, decides what may enter the prompt and keeps that prefix append-only. The gateway decides what the catalog contains and can search it without making every agent process carry 10,000 schemas. Hermes rebuilds a client-side catalog on every assembly, on purpose, so a session-keyed copy cannot drift from the live definitions. This server is the source of the list, so it can keep a snapshot and publish a new one by swapping an `Arc`. That is a deliberate difference, and it is why chapter 8 can key a session view: the server sends `list_changed` when the view changes, which is the notification chapter 4 already honors. Chapter 15 vendors this catalog into the limits crate so that step builds alone. Chapter 23, chapter 37, chapter 42, and chapter 51 vendor it forward again. `mcp-gateway` ultimately re-exports the chapter 51 gateway, not this crate, and still opens no port.
+
+This is also the first piece of a harness that can grow its tools without a restart. A plugin load is a new snapshot. The in-flight call keeps the old one. Later, when skills and learned tools exist, the same idea applies: publish the new offer, do not mutate the offer a running call already captured.
+
+Rust, for a new reader: `Arc` is a shared pointer with a count. Cloning it is cheap and does not clone the index. `RwLock` lets many readers hold the current `Arc` while one writer swaps it. A trait object is the embedder. BM25 is a ranking function over term frequency, explained next to the scorer rather than assumed.
+
+`cargo run -p ch07-catalog` runs the demo. Nothing listens.
+
+**In this chapter**
+
+- What this chapter decides
+- Reload
+- Tests
+- Build, run, and benchmark
+- Pitfalls
+- Guardrails in this chapter
+- Chapter summary
+- What's next
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -104,7 +123,7 @@ Exact-name ranking uses the trimmed query as the whole name. A query of `rename 
 
 ## Guardrails in this chapter
 
-The catalog boundary is still not a security boundary. [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
+The catalog boundary is still not a security boundary. The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
 **Duplicate names fail closed.** A second `echo` does not overwrite. The previous `Arc` stays. Hermes overwrites a same-toolset duplicate (`tools/registry.py`). This chapter refuses.
 

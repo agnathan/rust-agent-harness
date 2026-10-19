@@ -2,9 +2,27 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 43 claims a job that nobody is watching. An editor is watching. This chapter is the Agent Client Protocol, ACP, as a small adapter: one update becomes one inbox message, a finished turn and a cancelled turn are different stop reasons, the JSON-RPC line is stdout, a log line is stderr, and an unknown permission denies. The inbox holds 64 messages. The 65th is refused.
+Chapter 43 can claim a scheduled job and submit the next one to the inbox. An editor is a different client. It speaks the Agent Client Protocol: a stream of updates, permission requests, and a place to write the result. Teaching the editor about the turn table, the approval floor, and the memory files would duplicate the harness inside the editor. This chapter translates one ACP update into one submit on the session inbox. The crate is `steps/ch44-acp`, a copy of chapter 43 plus `acp`. The package is `ch44-acp`.
 
-The step crate is `steps/ch44-acp`. The book number is 44. The package is `ch44-acp`. The library name is `harness_core`. This is the chapter 43 harness copied forward, including `cron` and `vision`, plus `acp`. `Cargo.toml` says "the previous harness plus this chapter." Edition is 2021. `rust-version` is 1.88. There is no path dependency on `ch43-cron`. The sources are copied. `lib.rs` adds `pub mod acp`. The file comment at the top of `lib.rs` still describes chapter 10's loop. `acp.rs` itself still says book chapter 42. The book number is 44. The binary that prints this chapter is `src/bin/chapter_demo.rs`, named `ch44-acp`. `examples/demo.rs` is the inherited eval runner. It does not print the ACP line.
+`Update` is what the editor sent. `Mail` is what the inbox already understands, the turn, steer, and interrupt from chapter 35. `translate` is the function between them. `Approval` and `map_permission` turn an editor permission into the approval vocabulary chapter 11 already returns, so the editor does not grow a second allow or deny. `Submit` and `Inbox` are the queue, still capped at 64. `Streams` writes the result and a log line back. `stop_reason` maps the harness outcome onto the reason the editor shows. `FakeModel` completes one turn. The demo runs that path. The chapter looks at what a Copilot-style client sends and at the adapter this repo does not vendor. The behavior under test is the inbox, not a live editor session.
+
+Chapter 45 copies this harness and adds a blackboard. The editor stays a client of the inbox the way the chat gateway is a client of the inbox. Two front doors, one mailbox, one agent task. That is why a steer from the editor and a steer from chat cannot fill two queues and race. The MCP server remains the other program. An editor that wants tools connects as an MCP client, or it asks the harness, which already is one. This adapter does not register tools.
+
+The connection to learning is the same as the chat gateway's. A correction typed in the editor is a steer in the mailbox. Reflection sees the turn after it finishes. The adapter's job is to deliver the update once and not to call the model on the translation path. A translate that invoked the provider would hide a model call inside a protocol function, and the turn table would never record it.
+
+Rust, at the translate: the update and the mail are enums, and the mapping is a match that is exhaustive for the updates this chapter handles. The inbox submit is the bounded send from chapter 35. A stream is a writer the test replaces with a buffer.
+
+`cargo run -p ch44-acp --bin ch44-acp` runs the demo. The exercise is `my-harness/tests/ch44.rs`: one ACP update becomes one inbox submit.
+
+**In this chapter**
+
+- 44.1 `INBOX_CAP`, `StopReason`, and `stop_reason`
+- 44.2 `Approval` and `map_permission`
+- 44.3 `Update`, `Mail`, and `translate`
+- 44.4 `Submit` and `Inbox`
+- 44.5 `Streams`, `write_result`, and `log_line`
+- 44.6 `FakeModel` and `demo`
+- 44.7 The Copilot client, the missing adapter, and this inbox
 
 | Section | What it walks |
 |---|---|
@@ -462,7 +480,7 @@ The Copilot client joins many `session/update` chunks into one prompt result. Ca
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). The catalog has no ACP row. I did not find an ACP guardrail id to attach this adapter to. The behaviors below are the ones this file actually implements.
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). It has no ACP row. I did not find an ACP guardrail id to attach this adapter to. The behaviors below are the ones this file actually implements.
 
 **Permission bridge.** `allow_once`, `allow_session`, and `allow_always` keep their three outcomes. `deny` and `deny_always` deny. An option id the function does not name denies. The `acp_adapter` package that might have held this table is not in the Hermes tree I checked. `agent/copilot_acp_client.py` answers `session/request_permission` with `cancelled`.
 

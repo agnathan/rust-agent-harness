@@ -2,9 +2,28 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 24 can load a skill and render an index. It cannot create one, patch one, or delete one. This chapter writes `SKILL.md`, patches one unique span, writes a supporting file, and deletes a directory. Every write is scanned first. The approval gate is off until something turns it on. A reviewer that has not loaded the current file cannot patch it. A write the model did not ask for is a queue entry. The queue does not create a file.
+Chapter 24 can list skills and view one. It cannot create a skill, patch one, or refuse a dangerous one. An agent that only reads procedures never closes the loop Hermes is built around: notice a correction, write it down as a skill, and have it there next time. Writing is also how a poisoned page becomes a permanent instruction, so the write has a scanner and a gate. This chapter adds both. The crate is `steps/ch25-skill-writing`, a copy of chapter 24 plus `skill_write`. The package is `ch25-skill-writing`.
 
-The step crate is `steps/ch25-skill-writing`. It is chapter 24's harness copied forward, plus `skill_write`. The package name is `ch25-skill-writing`. The library name is `harness_core`. `lib.rs` adds `pub mod skill_write` beside `pub mod skills`. There is no path dependency on chapter 24. `skill_write` calls `crate::skills::skill_view`. The file is `steps/ch25-skill-writing/crates/harness-core/src/skill_write.rs`.
+`Writer` holds the gate in a mutex. `create` and `install` share `write_skill`. The policy table is five rules and then the full match: who is asking, where the skill came from, whether it is pinned, whether the scan said dangerous. A community skill that scans as dangerous is blocked, and `force` does not override that. Caution can be overridden. That is the pattern half of the plugin rule chapter 12 left for here. The structural caps stayed in chapter 12. `scan_text` is the function chapter 48's team library will call. It does not grow a second scanner.
+
+`patch` and `write_file` are the reviewer path. The reviewer has to have viewed the file, and the patch matches the hash it viewed, which is read-before-write. `delete` refuses a pinned skill and, by default, a skill the agent did not create. Supporting files stay inside the allowed directories. The write itself is a temp file and a rename. The approval gate from the write-approval design is off unless configured, so a normal run does not stop for a person on every patch, and a configured run can. The background queue is how a write the model did not ask for stays off the request.
+
+Chapter 26's forked reviewer gets only the skill and memory tools, and this chapter is why those tools can mutate. Chapter 27's curator calls this scan and this gate. It does not reimplement them. Chapter 21's memory writes share the worry and the pattern idea. A skill is the procedure. Memory is the fact. Both are durable, and both are scanned before they land. The self-improving loop is not "let the model edit its prompt." It is "let the model propose a procedure, scan it, and store it where chapter 24's index can show it next session."
+
+Rust, at the policy: the actor, the origin, and the verdict are enums, and the policy is a match, so a new combination is a compiler error or an explicit arm. The mutex is the gate. The hash is a string you compare before `rename`. `Result` is the block, with the reason in the error so the model can read why force did not work.
+
+`cargo run --locked -p ch25-skill-writing --bin ch25-skill-writing` runs the safe demo. The exercise is `my-harness/tests/ch25.rs`: a dangerous community skill is blocked even with force.
+
+**In this chapter**
+
+- 25.1 The enums the policy matches on
+- 25.2 `Writer` holds the gate in a `Mutex`
+- 25.3 Pin, the background queue, and `view`
+- 25.4 `create` and `install` share `write_skill`
+- 25.5 Five rules, then the full policy table
+- 25.6 Patch and `write_file` are the reviewer path
+- 25.7 `delete` checks the pin and the origin
+- 25.8 The write is a temp file, and the demo is `safe`
 
 | Section | What it walks |
 |---|---|
@@ -722,7 +741,7 @@ The five rules are a subset of `THREAT_PATTERNS`. A pattern that exists only in 
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). This chapter is H1 and A9, on layer L8.
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). This chapter is H1 and A9, on layer L8.
 
 **A9.** `write_approval` starts false, which is `skills.write_approval` off unless configured. `evaluate_gate` is this flag. When the flag is true, create, install, patch, write, and delete stage a label and leave the disk alone. `stage_write` in Hermes persists a pending record. This crate keeps the label in the `staged` vec.
 

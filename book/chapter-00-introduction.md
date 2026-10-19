@@ -2,11 +2,25 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-I'm learning Rust. Instead of working through the language one feature at a time and building toy examples, I'm going to learn it by building something I actually want: a fast, reliable harness for running *teams* of AI agents that work together.
+I'm learning Rust by building the thing I actually want: a harness that can run teams of agents, and that can get better at a kind of task the longer it runs. A tutorial that introduces `struct` and then stops would teach the syntax and leave the design untested. A harness has to keep a conversation, call tools, refuse a bad call, remember a fact, and hand work to another agent. Each of those problems forces a language feature at the moment it is needed, which is the pace this book uses.
+
+An agent, stripped of the product language, is a loop. You send the messages so far and a list of tools to a model. If the model answers with text, the turn is over. If it asks for a tool, you run the tool, append the result, and ask again. The loop is short. The harness is everything that makes the loop trustworthy: which provider you called, which tools the model was allowed to see, how long it may run, what happens when a call fails, where the session is stored, and how a second agent receives only the part of the work it should see. Hermes Agent, the open-source system this book learns from, already has a version of that harness, including the closed loop in which an agent writes skills, keeps memory, searches its own sessions, and curates what it learned. This book rebuilds the ideas that matter in Rust, one chapter at a time, with tests.
+
+The book grows two programs, and it keeps them apart on purpose. The harness decides what enters a prompt. The MCP gateway is a separate server the harness talks to as a client. The server holds a large catalog and, later, limits, a learned offer, pools, and a service front. Merging them would make every agent carry every tool. Chapters 5, 7, 8, 15, 23, 37, 42, and 51 are that server. They bind no socket. The other chapters copy the previous harness forward and add one module.
+
+By the last chapter the harness has a turn table, approvals, a sandbox, sessions, memory, recall, skills, a reflection fork, curation, a supervisor and the other team patterns, a bounded inbox, a chat gateway, browser and vision tools behind traits, cron, an editor inbox, a blackboard, a kanban board, a bus, a team skill library, an external-agent call, tracing, and an eval suite that re-runs the early saved tasks. The server side ends in a token comparison of three ways to offer tools. You will be able to run each chapter's demo offline. The reader's exercises live in `my-harness/tests/`, and the finished reference lives in `steps/`.
+
+Rust shows up in sidebars when the design needs it: a struct for a message, an enum for an event, a trait for a tool, ownership for a conversation you do not want aliased by accident, `async` for overlapping reads, and `Arc` for a snapshot many tasks share. Nothing here assumes you have written Rust before. If you already have, the sidebars are short and the design is the point.
+
+**In this chapter**
+
+- What is an "agent harness"?
+- The reference: Hermes Agent
+- Why rebuild ideas from it in Rust?
+- The plan
+- How to read this book
 
 [personal note: what got me interested in AI agents and in Rust in the first place, and what I do day to day]
-
-This book is my learning log. Each chapter takes one problem that every agent system has to solve, looks at how an existing open-source agent solves it, and then builds a Rust version from scratch, with tests, one small step at a time. I'm writing it as I go, which means you'll see where I struggled as well as where things clicked.
 
 ## What is an "agent harness"?
 

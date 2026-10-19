@@ -2,9 +2,25 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 10 will not refuse a tool. A turn can sit in `Dispatching` and the loop will run whatever name it repaired. This chapter is chapter 10's harness copied forward, plus `approval`. The check runs before the dispatcher takes a permit: a command is either allowed, denied, or handed to one human prompt. The prompt is the only place concurrent calls wait, and that wait does not hold a tool-concurrency permit.
+Chapter 10's loop will call whatever tool the model names, as long as the name resolves and the scheduler has a permit. That is the right default for `echo`. It is the wrong default for a shell. This chapter puts a decision in front of dispatch. The crate is `steps/ch11-approvals`, a copy of chapter 10's harness plus an `approval` module. The package is `ch11-approvals`, the library is `harness_core`, and the demo binary is `ch11-approvals`. The loop calls `approval::deny_tool` before `dispatcher.run_raced`. A denial is pushed as the tool result, and the tool body does not run.
 
-The step crate is `steps/ch11-approvals`. The package name stays `ch11-approvals` so `cargo bench -p ch11-approvals --bench decision` still matches the dashboard. The library name is `harness_core`. The module is `approval`, not a glob re-export, because `run_script` already exists on the turn table.
+`check` is the single entry. The order is the floor, then YOLO or mode off, then the allowlist, then unattended mode, then a smart check, then ask. Hardline patterns — `rm -rf /`, `mkfs`, a raw `dd`, a fork bomb, `kill -1`, shutdown — are denied with `hardline: true`, and YOLO does not move that branch. Dangerous commands are a wider class. They are normalized, stripping wrappers such as `sudo` and `env NAME=value`, and an interactive session asks while cron denies them. Only `terminal` and `execute_code` are gated. `echo` and `delegate` are unchanged. An inherited chapter 9 test that expects `echo` to run must still pass. If a new guard would deny `echo`, the guard is wrong.
+
+The human wait is the part that has to be careful about the chapter 3 bound. `Ask` with no prompt installed becomes a denial, so a headless run cannot block forever. When a prompt is installed, concurrent calls share one prompt, and the wait does not hold a tool-concurrency permit. `run_call` drops the permit before it waits. A person thinking must not pin one of the eight slots. The denial text tells the model the user has not consented, which is the brake on a model that would otherwise rephrase the same command until one variant slipped through.
+
+Later chapters reuse this floor rather than growing a second one. Chapter 13 calls it for `execute_code` and adds the script gate. Chapter 14 adds two more floor checks, before YOLO: deleting the running binary, and a git mutation of this crate's own tree. Chapter 17's terminal goes through `deny_tool` before the sandbox worker. Chapter 25's skill-write gate is a different question, and it stays off unless configured. The self-improving loop depends on this chapter in a blunt way. An agent that can write a skill, remember a fact, or patch its own procedure is an agent that can also be talked into a destructive command. Learning does not get to bypass the floor.
+
+Rust, next to the code: the verdict is an enum, so allow, ask, and deny do not collapse into a boolean with a side channel. A mutex is the one prompt. A permit guard is dropped before the `.await`, which is the pattern you want whenever a human, a socket, or a child process might take a while.
+
+`cargo run -p ch11-approvals` prints the denial. The exercise is `my-harness/tests/ch11.rs`: a hardline `terminal` command is denied, and the tool body does not run.
+
+**In this chapter**
+
+- 11.1 Labels, policy, and the verdict
+- 11.2 `check`, in the order the branches return
+- 11.3 Masking, wrappers, hardline, and dangerous
+- 11.4 One prompt, and the permit it does not hold
+- 11.5 `deny_tool` before `run_raced`
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -906,7 +922,7 @@ The breaker reads the tally after this denial has been counted. Threshold 3 mean
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Layer L5.
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Layer L5.
 
 **A1, the pipeline.** `check` is the single entry. The order is the floor, then YOLO or mode off, then the allowlist, then unattended mode, then smart, then ask.
 

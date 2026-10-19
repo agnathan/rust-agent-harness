@@ -2,13 +2,26 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-*(server)*
+Chapter 36 can restart a child that stopped making progress. That child may be waiting on a tool that lives on another MCP server, and the gateway still treats every backend for a tool as one call. If three upstreams offer `search`, the gateway should pick one that is not already busy, and it should not open a connection to all of them while it decides. This chapter adds the pool and the federation map. It is the server line, not the harness line. The crate is `steps/ch37-balancing`. It vendors chapter 23, library name `balancing`, new module `federation`. It binds no socket. Chapter 38 copies chapter 36. It does not copy this directory.
 
-Chapter 36 restarts a child in the harness. This chapter is the other lineage. It is the server crate. The package vendors chapter 23, which already vendors the catalog, the session gateway, and the limits from earlier server chapters, and it adds one new module: `federation`. A tool can have several upstreams. `pick` chooses a backend by reading counters. `LeastOutstanding` chooses the smallest outstanding count. `PowerOfTwo` chooses the quieter of two indexes. `discover` lets at most four connects sit inside the gate at once. `call` formats a scripted reply. Nothing in the module opens a socket.
+`Policy` is least-outstanding or power-of-two choices. `Backend` is one upstream in the pool. `pick` chooses without opening a connection, which is the property the bench locks. `call` formats a string and puts the counter back, so a finished call decrements the outstanding count the next pick will see. `federate` and `pool_for` group one tool name to the server names that provide it. `discover` counts overlap and connects at most 4, the discovery concurrency Hermes uses. `0` as "unlimited" stays unimplemented. A live socket to those upstreams stays unimplemented too. The pool is in memory.
 
-The step crate is `steps/ch37-balancing`. The package is `ch37-balancing`. The library name is `balancing`. That is not `harness_core`. `Cargo.toml` says the description is chapter 23 vendored, plus a per-tool backend pool. `[lib] name = "balancing"`. The only binary is `ch37-balancing`, from `src/main.rs`. `edition` is 2021 and `rust-version` is 1.85. There is no path dependency on the harness. The dependencies are `serde_json`, `thiserror`, and `tokio`. `criterion` is a dev-dependency, for the bench. None of those crates is what `pick` uses to open a socket, and `pick` does not open one.
+The server stays a separate program because the pool is a property of the upstreams, and every harness client should share it. If each agent balanced for itself, two agents would both pick the same idle backend and then both discover it was busy. The gateway is the place that can see every in-flight call. The harness remains the client: it asks for a tool by name, and the server chooses the backend. Chapter 42 vendors this crate and adds routing, drain, and quotas. Chapter 15's breaker still sits under the call. A pool that ignores an open breaker would send traffic at a backend the limits chapter already decided to leave alone.
 
-`src/main.rs` is three lines. It imports `balancing::federation::demo` and prints it. The learned-tools `demo` in `src/lib.rs` returns a pair of strings and is not what the binary prints. The crate README still describes the chapter 23 prediction path. The binary follows `main.rs`.
+Nothing here learns a skill. The connection to the self-improving harness is indirect and real: a team of agents calling tools only works if the catalog stays up. Federation is how the catalog grows to include tools the gateway does not contain, which is the same split chapter 4 drew for a single server, now with more than one upstream and a cap on how many you ask at once.
+
+Rust, at the pick: the outstanding count is an integer you increment and decrement. Power of two is "sample two, take the quieter one," a few lines, not a load-balancer framework. The discovery cap is a semaphore of 4. `Result` is a pool that has no backend for that name.
+
+`cargo run -p ch37-balancing --offline` prints the demo line. The exercise is `my-harness/tests/ch37.rs`: a least-outstanding pick does not open a connection.
+
+**In this chapter**
+
+- 37.1 The crate around the new module
+- 37.2 `Policy`, `Backend`, and `pick`
+- 37.3 `call` formats a string and puts the counter back
+- 37.4 `federate` and `pool_for` group one tool
+- 37.5 `discover` counts overlap, capped at 4
+- 37.6 `FakeModel` and the demo line
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -474,7 +487,7 @@ Hermes treats `discovery_concurrency: 0` as unlimited, by skipping the semaphore
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
 **Pick.** Least outstanding, or the quieter of two indexes. The choice loads atomics. It does not call an upstream. It does not open a socket. That is the milestone.
 

@@ -2,9 +2,25 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 20 stores the messages and queues their ids. It cannot search them. This chapter builds an FTS5 trigram index on that file and adds `session_search`. The tool returns rows from the database. It does not call a model. A subagent session stays out of the results. A cron session sorts after the user's own sessions.
+Chapter 21 can remember a fact that is true every session. It cannot answer "what did we decide last Tuesday?" The transcript is in the chapter 20 store, and the full-text rows were left for this chapter. When the user refers to a past conversation, the agent should search before it asks them to repeat it. This chapter is that search. The crate is `steps/ch22-recall`, a copy of chapter 21 plus `recall`. The package is `ch22-recall`. The search calls `crate::wal`. It does not take a dependency on a separate sessions crate, and it does not call a model.
 
-The step crate is `steps/ch22-recall`. It is chapter 21's harness copied forward, plus `recall`. The package name stays `ch22-recall`. `recall` calls `crate::wal::Store`. There is no path dependency on chapter 20.
+`session_search` picks one shape from the arguments. A query is discover: BM25 hits, one row per session lineage, with the matching text on the top hit. A session id plus `around` is scroll, a window of messages. A session id alone is read, the session or its head and tail, with compaction summaries kept out of that view. No arguments is browse, the recent sessions. Subagent sessions are hidden. Automation sessions, cron and workers, are demoted so their repeated vocabulary does not push the user's own sessions out of the results. `insert_message` writes the rows the index rebuilds from. The virtual table is FTS5, created on purpose, with a trigram tokenizer, kept in sync by the insert path.
+
+Discover over a large store has to stay off the hot path except when the model calls the tool. The index update is the background work chapter 20 queued. A turn that always searched would spend the request on recall. A turn that cannot search will ask the user to paste the same context again, and the pasted text will then be what reflection tries to learn from.
+
+Chapter 23, on the server, will use usage and this kind of history to predict which tools to offer. It does not call `session_search`. The prediction stays a catalog decision. Chapter 24's skills are the other store: a procedure for a kind of task, loaded on demand, not a past message. Chapter 26's reviewer reads the current conversation, trimmed, and may look things up only through the tools it is given. Recall is the read path. It is not a write, and it is not a place a poisoned page gets to rewrite memory. That write stays in chapter 21, behind the scan.
+
+Rust, beside the query: FTS5 is a SQLite virtual table, which is a schema you create rather than a search service. The mode is a match on which arguments were present, so an illegal combination is an error instead of a guess. `rusqlite` is the binding, with the bundled SQLite so the tokenizer is the one the tests expect.
+
+`cargo run -p ch22-recall` runs the demo. The exercise is `my-harness/tests/ch22.rs`: discover hides a subagent session and demotes cron.
+
+**In this chapter**
+
+- 22.1 The virtual table is built on purpose
+- 22.2 `session_search` picks one shape
+- 22.3 Discover walks the index and keeps three sessions
+- 22.4 Scroll, read, browse, and a hidden source
+- 22.5 `insert_message` writes the rows the index rebuilds from
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -515,7 +531,7 @@ Trigram `MATCH` wants at least three characters. A one-letter query is the wrong
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Recall is persistence, layer L8, and it is not a write.
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Recall is persistence, layer L8, and it is not a write.
 
 **What landed.** Search reads the session file. It does not call a model. Subagent, kanban, and tool sessions are hidden, which is `_HIDDEN_SESSION_SOURCES`. Cron and worker sessions sort after the others so a repeated automation log does not take the first row when the user's session also matched.
 

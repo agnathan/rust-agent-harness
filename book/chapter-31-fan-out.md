@@ -2,9 +2,26 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 29 runs a handful of specialists and joins their replies in spawn order. It does not accept a hundred tasks, and it does not sort by `task_index`. This chapter's board queues up to 100 tasks and returns `FanError::Full` on the next `schedule`. `gather` drains the queue, runs the tasks under the supervisor pool, and joins the replies in `task_index` order. `tool_trace` is on the task. It is not in the summary. Heartbeats are not this chapter.
+Chapter 29 can run eight specialists at once. Chapter 30 can hand a task to one next owner. Neither of them is the question "what if there are a hundred independent tasks, and I need their replies in order?" A fan-out that allocates without a cap will start a hundred tasks and then a hundred more. This chapter adds the queue, the refusal, and the gather. The crate is `steps/ch31-fan-out`, a copy of chapter 30 plus `fanout`. The package is `ch31-fan-out`. Heartbeats are not this chapter. They were deferred by chapter 29 and they stay deferred until chapter 36.
 
-The step crate is `steps/ch31-fan-out`. The package is `ch31-fan-out`. The library name is `harness_core`. It is chapter 30's harness copied forward, plus `fanout`. `lib.rs` adds `pub mod fanout`. `fanout` uses `crate::supervisor::{Pool, WORKER_BOUND}`. The supervisor module in this crate is the chapter 29 file, copied forward. There is no path dependency on the `ch29-supervisor` package.
+A task is an index, a reply, and a trace. `schedule` accepts up to 100 and rejects the 101st. The cap is this book's, not a Hermes config key. Hermes's concurrent-children cap is a different number, and the harness queue of 100 is the one the tests lock. `gather` sorts replies and leaves the trace behind. The sort is by `task_index`, so a reply that finishes first is not the reply that prints first. The demo schedules out of order and prints sorted lines. The bench fills the queue and does not gather, which is how you measure scheduling without measuring the joins. The permit `gather` takes is still chapter 29's pool. Fan-out does not invent a second bound for the work it actually runs. The queue of 100 is how many tasks may be waiting. The pool of 8 is how many run.
+
+Chapter 32's critic reads the summary this gather produces. It does not do the hundred tasks. Chapter 33 refuses a nested fan-out whose width would exceed the pool, before any task starts. Chapter 35 will put each agent on its own mailbox, which is a different bound, 64, on turns rather than on tasks. Keeping those numbers apart is the design. One global "max concurrency" would make a full inbox and a full fan-out the same failure.
+
+Learning stays off the gather. A hundred task results are not a hundred skills. The parent, or chapter 26's reviewer after the parent finishes, decides what was a repeated procedure and what was a one-off. Writing a skill per task index is how the index chapter 27 exists to clean up. This chapter returns ordered replies and stops.
+
+Rust, at the queue: the cap is a length check before `push`. The index is an integer the sort key uses, so completion order and result order are different `Vec`s. `Result` is the refusal of the 101st. The pool permit is the guard from chapter 29, taken when the work runs rather than when it is queued.
+
+`cargo run --locked -p ch31-fan-out --bin ch31-fan-out` prints the sorted lines. The exercise is `my-harness/tests/ch31.rs`: the 101st task is refused.
+
+**In this chapter**
+
+- 31.1 The task is an index, a reply, and a trace
+- 31.2 `schedule` rejects the 101st
+- 31.3 `gather` sorts replies and leaves the trace behind
+- 31.4 The demo schedules out of order and prints sorted lines
+- 31.5 `schedule_100` fills the queue and does not gather
+- 31.6 The permit `gather` takes is still chapter 29's
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -467,7 +484,7 @@ Heartbeats are not hiding in `thread::sleep`. The sleep is the test hold. `gathe
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
 **Bound.** `gather` takes permits from `Pool` with `WORKER_BOUND` of 8. Sixteen holders peaked at `max_seen` 8. M5 and M6 still live on `child_call` in the copied supervisor. This chapter does not add a second permit count.
 

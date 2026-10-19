@@ -2,9 +2,30 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-The loop can call `echo`. It cannot look anything up. This chapter adds `web_search` and `web_extract` to the harness that chapter 14 finished. Chapter 15 is the server, so this step copies chapter 14 and skips it. The cap of 50 stays in chapter 15. The tool is named `web_search` so that cap already applies. This chapter does not keep a second counter.
+The loop can call a tool, the approval floor can refuse a shell command, and the server can cap a tool named `web_search` at 50 calls. The harness still has no web search of its own. Asking the model to "look it up" only works if some tool actually looks it up, and if the page it reads cannot be a cloud metadata address or a URL with a secret in it. This chapter adds those two tools. The crate is `steps/ch16-web-tools`, a copy of chapter 14's harness. It is not a copy of chapter 15. Chapter 15 is the server, and the harness does not absorb it. The new module is `web`. The package is `ch16-web-tools`. The library is `harness_core`.
 
-The step crate is `steps/ch16-web-tools`. The package name is `ch16-web-tools`. The new code is `pub mod web`. It is not glob-reexported. Tests say `harness_core::web::`.
+`SearchBackend` is the trait. `FakeSearch` is what the tests and the benches call, so CI never needs a key and never dials. `EnvSearch` reads `WEB_SEARCH_API_KEY` and does not dial unless `WEB_SEARCH_ALLOW_NETWORK=1`. The tool names are `web_search` and `web_extract`. The search name is deliberate: chapter 15's cap is keyed by that string, and a second counter here would let a turn blow past 50 by calling a differently named twin. Search results are metadata: title, url, description, position. `limit` is clamped. Extract text is truncated, about three quarters head and one quarter tail, with a stored ceiling, and an inline base64 image becomes a placeholder rather than page text.
+
+The gate order on extract is the order that matters. A URL that looks like it contains a secret is refused first. Then the SSRF floor: private, loopback, link-local, reserved, and CGNAT addresses are blocked, and the cloud metadata addresses stay blocked even when private URLs are allowed. Then the backend runs. A cache hit, if one existed, would not skip those gates. The result is wrapped as untrusted once it is long enough, with any embedded closer neutralized, so a page cannot end the wrapper early and continue as instructions. That wrapper is the same idea chapter 34 and chapter 40 reuse for other untrusted text.
+
+Search is how an agent gets past its own weights. It is also how a poisoned page enters the conversation. The self-improving chapters will want the agent to learn from what it read. They can only do that safely if the page was wrapped as data, and if the URL was checked before the request. Memory, in chapter 21, scans what gets written down. This chapter scans what gets fetched. The two checks are different stores and the same worry.
+
+Rust, at the moment the trait appears: `async` is the extract call. The trait is why a test passes a fake and never a socket. Pattern matching on an address is the SSRF floor, written as ordinary Rust rather than a firewall rule you cannot test.
+
+`cargo run -p ch16-web-tools --bin ch16-web-tools` runs the fake. The exercise is `my-harness/tests/ch16.rs`: a metadata address is not a safe extract URL.
+
+**In this chapter**
+
+- 16.1 One trait, so the test never needs a key
+- 16.2 The clamp, and the JSON the model sees
+- 16.3 The env backend does not dial
+- 16.4 A secret in the URL blocks the extract
+- 16.5 The SSRF floor
+- 16.6 Images, the stored cap, and the head and the tail
+- 16.7 The wrapper
+- 16.8 Gate order
+- 16.9 The tools, and the loop
+- 16.10 What the benches time
 
 | Section | Step | What it adds |
 |---|---|---|

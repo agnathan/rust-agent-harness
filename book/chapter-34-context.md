@@ -2,13 +2,26 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 33 can fan out on one pool, stay or move, and loop the critic. The reply it judges is a scripted line. Nothing in that loop reads `AGENTS.md`, cuts a long file down to a head and a tail, or wraps a page that came back from the web. A transcript that has grown past the cap is still the full vec on the next call. The snapshot of the rules, if a caller has one, is not yet the value the hot path clones.
+Chapter 33 can compose a team on one shared context. A long run still appends every note, and chapter 2's crude trim — drop the oldest exchange — is not good enough once skills, memory, and tool results are in the transcript. Providers also cache the prefix, so the compression has to be the one allowed rewrite, and it has to leave a marker where it dropped something the agent may need to reload. This chapter is that rewrite. The crate is `steps/ch34-context`, a copy of chapter 33 plus `context`. The package is `ch34-context`.
 
-This chapter loads a context file through a scan and a truncation. A project file with a hit is replaced by a `BLOCKED` line. A user-authored file keeps its text and records the finding. A file over 20,000 characters keeps a head and a tail. Tool output named `web_extract`, `web_search`, `browser_…`, or `mcp_…` is wrapped once it is at least 32 characters, and an embedded `untrusted_tool_result` token is rewritten with hyphens. `preflight` calls the side model only when the messages are over the cap. Under the cap, and over it, the snapshot `Arc` is cloned. `share` is that clone. The bench times `share`.
+Four patterns are compiled once. `scan_context` reads project files such as `AGENTS.md` and blocks a match, replacing it with a short refusal. A user file is kept. Load truncates only what was not blocked, keeping a head and a tail under the size cap. Untrusted tool output is wrapped, and an embedded closer is neutralized so the page cannot end the wrapper and continue as instructions. That is the wrapper chapter 16 already uses for extract text, now in the harness module later chapters share. `preflight` compresses only when the transcript is over the cap, which is the compression chapter 9 deferred. The hot path sends the `Arc` snapshot. Compression and the memory flush run before that send, or between turns. The flush calls chapter 21's memory path so a fact that would otherwise be cut still has a chance to land in the file. A loaded skill that compression drops leaves a `[SKILL_PRUNED]` marker. The agent reloads with `skill_view` if it still needs the skill. The system-prompt index from chapter 24 is rebuilt at this compaction, not in the middle of the session.
 
-Actors are next. Chapter 35 puts one task on a mailbox of 64. This chapter does not start those tasks. It does not restart a child. Chapter 36 still owns supervision.
+`Message` here is a role and a text. `FakeModel` counts calls, so a test can see that the side model from chapter 18 was asked for a summary and the user-facing model was not asked twice by accident. `share` clones the `Arc`.
 
-The step crate is `steps/ch34-context`. The package is `ch34-context`. The library name is `harness_core`. This crate is chapter 33's harness copied forward, plus `context`. `lib.rs` adds `pub mod context` and still has `pub mod composition`. The top comment in `lib.rs` still says chapter 10. `Cargo.toml` describes the package as the previous harness plus this chapter. The `[dependencies]` table does not list `ch33-composition`. There is no path dependency on the previous crate. `composition`, `critic`, `fanout`, `handoffs`, and `supervisor` in this tree are the copies.
+Context is where self-improvement can accidentally destroy itself. If compression drops a skill body and leaves no marker, the agent repeats the work and reflection writes a duplicate skill. If compression rewrites the prefix on every turn, the cache savings from chapter 2 disappear exactly when the conversation gets expensive. The snapshot is the contract: one frozen view, shared, with the learning stores updated beside it rather than inside it.
+
+Rust, at the slice: a `Vec` of messages is split into a head you keep, a middle you summarize, and a tail you keep. The summary is a new message. `Arc` is the clone `share` returns. The scanner is a `Regex` set built once. Character-aware truncation is the same boundary check chapter 32 used.
+
+`cargo run -p ch34-context --bin ch34-context --offline` runs the preflight. The exercise is `my-harness/tests/ch34.rs`: the hot path sends the `Arc` snapshot.
+
+**In this chapter**
+
+- 34.1 The caps, and four patterns compiled once
+- 34.2 `scan_context` blocks a project file and keeps a user file
+- 34.3 Load truncates only what was not blocked
+- 34.4 Untrusted output is wrapped, and the closer is neutralized
+- 34.5 `Message` is a role and a text, and `FakeModel` counts calls
+- 34.6 `preflight` compresses only over the cap, and `share` clones the `Arc`
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -537,7 +550,7 @@ The regexes see `window`. Bytes past 65,536 are not searched. A hit inside the w
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
 **F2.** Context-file scan. `scan_context` strips a leading BOM, matches the four patterns on a window of at most `MAX_SCAN_CHARS` bytes, and replaces a project hit with `[BLOCKED: … Content not loaded.]`. `user_authored` keeps the text and records the finding. The catalog points at `agent/prompt_builder.py` `_scan_context_content` and `agent/context_file_sources.py`. The patterns come from `tools/threat_patterns.py`, which this file narrows to four ids.
 

@@ -2,9 +2,26 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 18 builds a request and waits for a whole reply. A stream arrives as deltas. This chapter folds those deltas into the same reply string, strips think blocks as the chunks arrive, and lets a read-only tool start before the stream finishes. A write waits until `finish`. Nothing here opens a socket.
+Chapter 18 can choose an adapter and a route. The reply it handles is still buffered: the whole message arrives, then the harness looks at it. A user watching a long answer, and a loop that could overlap a safe tool with the rest of the reply, both want the tokens as they come. They also want a thinking block, split across chunks, not to leak into the text the user sees or the transcript the next turn sends. This chapter folds a stream into the `Event` values chapter 1 already defined. The module is `stream`, on a copy of chapter 18. The crate is `steps/ch19-streaming`. The package is `ch19-streaming`. `drive_loop` does not call it yet. The tests do.
 
-The step crate is `steps/ch19-streaming`. It is chapter 18's harness copied forward, plus `stream`. The package name stays `ch19-streaming`.
+`Delta` is one chunk. `Assembler` folds chunks into the text and the tool calls. `ThinkScrubber` has `feed`, `flush`, and `reset`. It watches for the think tags, and a tag that arrives split across two chunks stays buffered until the scrubber can see the whole token. A partial tag is not emitted as text. Folding plain chunks matches joining them in a buffer, which is the test that the scrubber is a filter and not a rewriter of ordinary prose. The nine tags are the vocabulary the scrubber recognizes. The demo folds a scripted stream. Overlap with a safe tool is the shape chapter 9 described and left for here: a read can run while later chunks arrive. A write still waits.
+
+Chapter 39's chat gateway folds these same events into one platform message, skipping tool chunks so a chat user does not see the raw call. Chapter 41's caption and chapter 40's page text are different untrusted streams. They do not go through this scrubber. What this chapter protects is the model stream itself. A self-improving agent that stores a session, which chapter 20 is about to do, must store the text the user was meant to see. A leaked think block becomes a memory, and then a skill, and then a lesson. Scrubbing on the way through the folder is cheaper than trying to scrub history later.
+
+Rust, at the fold: a stream is an iterator of deltas you do not have to collect first. The scrubber is a small state machine, which is an enum plus the leftover bytes. Matching on a tag is the same exhaustive `match` chapter 10 used for phases, applied to a handful of markers instead of a turn.
+
+`cargo run -p ch19-streaming` runs the fold. The exercise is `my-harness/tests/ch19.rs`: a split think tag does not leak, and folding plain chunks matches a buffer.
+
+**In this chapter**
+
+- 19.1 `stream` is not in `drive_loop`
+- 19.2 The nine tags
+- 19.3 `ThinkScrubber`: `feed`, `flush`, and `reset`
+- 19.4 The four searches, and why a partial token waits
+- 19.5 `Delta` and `Assembler`
+- 19.6 Folding, joining, and the demo
+- 19.7 What each test locks
+- 19.8 What the two benches time
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -582,7 +599,7 @@ A write recorded during the stream does not run. `finish` only moves the name on
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Layer L3.
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Layer L3.
 
 **K5.** `ThinkScrubber` strips the nine tags in `agent/think_scrubber.py`, including a tag split across deltas. An unterminated block is dropped on flush.
 

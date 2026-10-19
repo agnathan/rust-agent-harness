@@ -2,9 +2,28 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 4 can talk to an MCP server. It cannot be one. The harness decides what enters a prompt. Something else has to hold the tool list and run the call. This chapter is that process, in the smallest form that is still a server: a fixed list, a session view of that list, and a gate on how many calls may be inside.
+Chapter 4 can talk to an MCP server. It cannot be one. The harness decides what enters a prompt: the task, the budget, the cached prefix. Something else has to hold the tool list and run the call. This chapter is that other program, in the smallest form that is still a server. The step crate is `steps/ch05-minimal-server`, package `ch05-minimal-server`. The types are `Gateway`, `ToolCard`, `SessionView`, `CallGate`, and `GatewayError`.
 
-The step crate is `steps/ch05-minimal-server`. The package is `ch05-minimal-server`. It binds no socket. Streamable HTTP, replicas, and OAuth are chapter 42. The catalog search is chapter 7.
+`Gateway::new` starts empty. `register` appends a name and a description, and a second registration of the same name is `GatewayError::Duplicate`, which is the rule chapter 3 already uses. `session_tools` returns that list, in registration order, for every session id. There is no per-session filter yet. `call` looks up the name before it takes a permit, so an unknown name does not occupy a slot. `echo` reads the string field `text` and returns it. Any other registered name returns its description. A missing `text` on `echo` is `BadArgs`.
+
+The gate is two semaphores. `ACCEPT_BOUND` is 32. `EXECUTE_BOUND` is 8. `CallGate::run` tries to take an accept permit and refuses when none are free, then waits for an execute permit. The accept permit is held through that wait and through the tool body, so the 33rd call fails instead of joining a longer queue. Eight running at once is the same bound chapter 3 uses for in-flight tool work. Thirty-two is how many calls may be accepted into that gate.
+
+The server stays a separate program, and this chapter is where that split becomes a crate rather than a sentence. The harness from chapter 4 is the client. It lists and calls. This process owns the list. Folding the gateway into the harness would mean every agent binary is also the catalog, and a change to admission policy would be a change to the prompt builder. Hermes's own `mcp_serve.py` is a small stdio server with a fixed list, separate from the agent loop that calls other servers. This chapter keeps the fixed list and the registration order, and it stays in-process: it binds no socket. Streamable HTTP, replicas, and a bearer check are chapter 42. Search over a changing catalog is chapter 7. A session-sized view is chapter 8. Limits, retries, and a breaker wrap this gate in chapter 15. The process crate `mcp-gateway` will re-export the finished server, not this first slice, and it will still bind no socket.
+
+Rust for a new reader: a second crate is a separate compilation unit with its own public types. A struct owns the list. An enum is the error. A semaphore permit is an RAII value: dropping it releases the slot, including when the body returns `BadArgs`. `async` is the wait for an execute permit.
+
+`cargo run -p ch05-minimal-server` runs the demo. Nothing listens on a port.
+
+**In this chapter**
+
+- What this chapter decides
+- The gate
+- Tests
+- Build, run, and benchmark
+- Pitfalls
+- Guardrails in this chapter
+- Chapter summary
+- What's next
 
 | Section | Step | What it adds |
 |---|---|---|

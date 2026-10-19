@@ -2,9 +2,27 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 44 ends a turn. One update becomes one mail, and the mail sits on that process's inbox. A second agent cannot read it. This chapter is the blackboard. Facts and waiters live on one `Board`. `tick` claims under the lock. `answer` runs `FakeModel` only after that lock is free.
+Chapter 44's agents still talk by calling each other or by sharing a context pointer the parent owns. A team that should not know who else is on the team needs a board: someone posts a fact, someone else waits until the fact they need appears, and a thin scheduler wakes the waiter. This chapter adds that board. The crate is `steps/ch45-blackboard`, a copy of chapter 44 plus `blackboard`. The package is `ch45-blackboard`. The lock is not held across a model call. Holding it there would stall every other agent for the length of a completion.
 
-The step crate is `steps/ch45-blackboard`. The book number is 45. The package is `ch45-blackboard`. The library name is `harness_core`. This is the chapter 44 harness copied forward, including `acp`, plus `blackboard`. `Cargo.toml` says "Chapter 45: the previous harness plus this chapter." Edition is 2021. `rust-version` is 1.88. There is no path dependency on `ch44-acp`. The sources are copied. `lib.rs` adds `pub mod blackboard`. The file comment at the top of `lib.rs` still describes chapter 10's loop: chapter 9's agent loop, plus the turn table that `run_loop` drives. `blackboard.rs` itself says book chapter 45. The binary that prints this chapter is `src/bin/chapter_demo.rs`, named `ch45-blackboard`. The package also builds `ch45_mcp_fixture` and `sandbox-worker`. `examples/demo.rs` is the inherited eval runner. It calls `run_saved_evals` and `run_stress_evals`. It does not print the blackboard line. `ch45-harness-cli` depends on `ch45-blackboard` by path. The bench target is `blackboard`, with `harness = false`.
+`Board` holds the posts. `post` adds one. `claim_one` takes one claim. `Waiter` is the condition a poster signals. `MAX_WAKES` caps how many times a waiter is kicked, so a noisy board cannot spin a task. `Shared` is the handle the tasks clone. `tick` is the scheduler's one pass. `is_injection` recognizes the four phrases the threat list cares about, and a post that matches is not treated as a fact the team should act on. `Threat` and `Claim` are the outcomes. Pause is a flag. The demo answers from `FakeModel` outside the lock: the model runs, then the result is posted. The bench is 100 waiters and one claim.
+
+The module does not call the catalog's threat scanner or the emergency-stop flag by those names. The behaviors it implements are the ones in `blackboard.rs`: a phrase check on the way in, and a pause flag the tick obeys. Chapter 46 puts a durable board beside this one, with a compare-and-swap claim two processes can lose. This chapter's board is in memory, which is the right first step, and the wrong place to store a task that must survive a crash. Chapter 47's bus is a third way to couple agents, by topic, with backpressure. The blackboard stays the "write a fact, wait for a fact" pattern.
+
+A learning team can use the board to publish a result without publishing its scratch. Reflection still belongs to the parent, or to the reviewer with the skill tools. A fact on the board is not a skill. If it were, every post would be a write to chapter 25, and the scanner would be on the hot path. The board holds the working state. Curation and reflection decide what is worth keeping, after the tick.
+
+Rust, at the wait: a mutex guards the posts, and a condition variable is what `claim_one` waits on. The lock guard is dropped before `FakeModel` runs. `Arc` is `Shared`. A poisoned post is an enum variant, not a panic.
+
+`cargo run -p ch45-blackboard --bin ch45-blackboard` runs the demo. The exercise is `my-harness/tests/ch45.rs`: 100 waiters, one claim.
+
+**In this chapter**
+
+- 45.1 `MAX_WAKES` and `Waiter`
+- 45.2 `Threat` and `Claim`
+- 45.3 `Board`, pause, and `post`
+- 45.4 `claim_one`
+- 45.5 `Shared`, `tick`, and `is_injection`
+- 45.6 `FakeModel`, `answer`, and `demo`
+- 45.7 The dispatcher tick, the ESTOP, and the four phrases
 
 | Section | What it walks |
 |---|---|
@@ -576,7 +594,7 @@ The board is a `HashMap` in a `Mutex`. A crash drops it. Two processes do not sh
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). The catalog row for the shared threat patterns is F1, `tools/threat_patterns.py`. The catalog row for the emergency stop is N2, `agent/estop.py`. This module does not call `scan_for_threats` or `is_engaged`. The behaviors below are the ones `blackboard.rs` implements.
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). The catalog row for the shared threat patterns is F1, `tools/threat_patterns.py`. The catalog row for the emergency stop is N2, `agent/estop.py`. This module does not call `scan_for_threats` or `is_engaged`. The behaviors below are the ones `blackboard.rs` implements.
 
 **Injection refusal at post.** `is_injection` matches four exact phrases, case-insensitive. `Board::post` returns `Err(Threat)` and does not `insert`. The test `an_injection_is_not_posted` checks the `IGNORE previous` sentence and the `ignore all instructions` post.
 

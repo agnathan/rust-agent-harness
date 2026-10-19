@@ -2,9 +2,28 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 22 can search the session file. Chapter 23 can install an offered tool set. Neither one can load a procedure from a folder. This chapter walks a directory of `SKILL.md` files, renders them once into an `<available_skills>` block, and stores that block in an `Arc`. A skill added after the render becomes a note. The `Arc` bytes stay. `skill_view` reads one whole file when something asks for it.
+Chapter 22's harness can remember a fact and search a session. It cannot yet carry a procedure for a kind of task: the steps, the pitfalls, the files you always open. Stuffing that procedure into `MEMORY.md` would mix instructions with facts, and stuffing it into the system prompt would bust the cache every time a skill changed. This chapter adds skills as something you read. Writing them is chapter 25. The crate is `steps/ch24-skills`, a copy of chapter 22 — chapter 23 is the server and is not on this line — plus a `skills` module. The package is `ch24-skills`.
 
-The step crate is `steps/ch24-skills`. It is chapter 22's harness copied forward, plus `skills`. The package name is `ch24-skills`. The library name is `harness_core`. `lib.rs` adds `pub mod skills`. There is no path dependency on chapter 22. The file is `steps/ch24-skills/crates/harness-core/src/skills.rs`.
+A skill is a folder, category then name, with `SKILL.md` at the top: YAML frontmatter and a markdown body. The caps match Hermes: the name at most 64 characters, the description that appears in the index at most 60, the body at most 100,000 characters. `load_tree` walks categories, then skill folders. `parse_skill` reads the keys this chapter needs. `SkillSession` stores the rendered index in an `Arc`. `render_index` writes one `<available_skills>` block, category then name, fixed formatting. The block is computed once and left untouched for the rest of the session, so loading 500 skills does not change the index bytes when one is viewed. `skills_list` filters by category. `skill_view` reads one file, the whole of it, with no offset. `change_note` compares names so a later message can say what appeared or disappeared without rewriting the system prompt.
+
+That index is the harness's half of self-improvement. The agent can see which procedures exist. It loads the one it needs, as a tool result or as a user message, which is where chapter 2 said new text has to go. The system prompt stays put. Chapter 25 adds create, patch, and delete, with a scanner. Chapter 26's reviewer is allowed to call `skill_view` and, once writes exist, to patch. Chapter 34 leaves a `[SKILL_PRUNED]` marker if compression drops a loaded skill, and the agent reloads with `skill_view` if it still needs it. Chapter 48 shares a team library on top of this shape. None of those work if viewing a skill reshuffles the prompt prefix.
+
+Rust, beside the loader: the directory walk is `std::fs`, and the frontmatter parse is a small pull of a few keys rather than a general YAML lesson. `Arc<str>` or an `Arc` of the rendered block is how five hundred skills become one cheap clone. Byte-stability is an assertion on the bytes, which is the test you want for a cache.
+
+`cargo run --locked -p ch24-skills --bin ch24-skills` writes one skill and views it. The exercise is `my-harness/tests/ch24.rs`: loading 500 skills does not change the index bytes when one is viewed.
+
+**In this chapter**
+
+- 24.1 The caps and the two types
+- 24.2 `ScriptedModel` replies with a stored line
+- 24.3 `SkillSession` stores the index in an `Arc`
+- 24.4 `load_tree` walks categories, then skill folders
+- 24.5 `parse_skill` reads three keys
+- 24.6 `render_index` writes the block
+- 24.7 `skills_list` filters by category
+- 24.8 `skill_view` reads one file
+- 24.9 `change_note` compares names
+- 24.10 `demo` writes one skill and views it
 
 | Section | What it walks |
 |---|---|
@@ -680,7 +699,7 @@ One file over the body cap, or one name over 64 characters, fails `load_tree` fo
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Skills sit on L6 and L8 once they can be written. This chapter only reads.
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Skills sit on L6 and L8 once they can be written. This chapter only reads.
 
 **Path.** `support_path` refuses `..`, an absolute path, and a first component outside `references`, `templates`, `scripts`, and `assets`. That is the read side of the path check.
 

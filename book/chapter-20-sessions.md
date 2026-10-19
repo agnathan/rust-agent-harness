@@ -2,9 +2,24 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-The turns so far live in memory. A new process starts from nothing. This chapter appends a turn to SQLite in WAL mode and can read it back. The search index is a queue of row ids. The virtual table is chapter 22. The chapter 9 eval set runs again, on the mock, and it still passes.
+Chapter 2 can save a conversation as one JSON file, and chapter 19 can fold a stream into text worth keeping. Neither of those is a session you can resume, search, or trust with a secret that passed through the transcript. A learning agent that forgets every session can only learn inside one sitting. This chapter puts the session on disk, and it scrubs the text on the way in. The crate is `steps/ch20-sessions`, a copy of chapter 19 plus `wal` and `redact`. The package is `ch20-sessions`. The library is `harness_core`. `lib.rs` re-exports the redaction functions from here on, so later chapters call `crate::redact` instead of growing a second scrub.
 
-The step crate is `steps/ch20-sessions`. It is chapter 19's harness copied forward, plus `wal` and `redact`. The package name stays `ch20-sessions`. The module is `wal` because `session.rs` is already the MCP session.
+`Store` is a SQLite connection in WAL mode. Two tables hold the session and its messages. `append_turn` runs both strings through `redact_sensitive_text` before the insert, so a turn that contains a key is stored without the secret. The mask keeps the prefix through the first `-` or `_`, then stars. The patterns cover the prefix families, environment assignments, `Authorization` headers, and PEM blocks. `redact_for_egress` is that scrub plus a sweep that turns a bare bearer token into `Bearer [redacted]`. A background queue does the write. Full-text search is not built here. The ids are queued. Chapter 22 builds the search on this store.
+
+The scrub is the one later chapters are allowed to call. Chapter 21's memory writes go through it when a secret would otherwise land in the file. Chapter 39's outbound chat, chapter 47's bus delivery, and chapter 49's external-agent call all call `redact_for_egress`. They do not invent a narrower one. Chapter 52's red-team case for persistence calls this module. That is the point of copying the harness forward: the function is still there, under the same name, on the later crate.
+
+This is the start of the learning half of the book. Memory, recall, skills, reflection, and curation all assume a session exists and that a secret in the transcript did not become part of the lesson. Hermes keeps sessions in SQLite and scrubs before text leaves or lands. The same split is here, with JSON from chapter 2 left behind as the export format rather than the store.
+
+Rust, beside the connection: SQLite is a library linked into the process, WAL is the mode that lets a reader proceed while a writer appends, and a prepared statement is the insert. `redact` is plain string replacement driven by a regex set compiled once. `Result` is a disk error, which is different from a model error and should stay that way.
+
+`cargo run -p ch20-sessions` runs the demo. The exercise is `my-harness/tests/ch20.rs`: a turn that contains an `sk-` token and `OPENAI_API_KEY=` is stored without the secret, and egress strips a bare bearer.
+
+**In this chapter**
+
+- 20.1 A file, a connection, and two tables
+- 20.2 One transaction, then the queue
+- 20.3 The prefix patterns, compiled once
+- 20.4 Env assignments, the auth header, and egress
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -526,7 +541,7 @@ The eval test does not touch this store. A green eval run means the chapter 9 lo
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Layer L8 is persistence. The memory and skill gates are not this chapter.
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Layer L8 is persistence. The memory and skill gates are not this chapter.
 
 **E1 and E2 are this chapter.** `redact_sensitive_text` and `redacting_formatter` scrub stored and logged text. `redact_for_egress` does that scrub and then replaces a leftover `Bearer <token>` with `Bearer [redacted]`. `append_turn` stores the E1 scrub of both strings. The patterns are the prefix families read from `agent/redact.py` `_PREFIX_PATTERNS` (OpenAI-style `sk-`, GitHub `ghp_` / `github_pat_` / `gho_` / `ghu_` / `ghs_` / `ghr_`, Slack `xox[baprs]-`, Google `AIza`, AWS `AKIA`, Stripe `sk_live_` / `sk_test_`, Hugging Face `hf_`, npm `npm_`, GitLab `glpat-`), plus an env assignment whose name contains `API_KEY`, `TOKEN`, `SECRET`, `PASSWORD`, `PASSWD`, or `CREDENTIAL`, an `Authorization` header, and a PEM block. Plugin-registered patterns and the vault are not copied. The mask keeps the prefix through the first `-` or `_` and then writes `***`, so a second pass does not see a new key. Chapters 39, 47, and 49 call `redact_for_egress` instead of writing a narrower scrub.
 

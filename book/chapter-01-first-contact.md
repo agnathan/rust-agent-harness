@@ -2,11 +2,24 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Every agent framework I've looked at comes down to one repeated act: send a list of messages to a language model and get a message back. This chapter builds that act in four small steps. Each step compiles, has its own tests, and has a criterion benchmark. Later steps copy the earlier code forward, so section 1.1 still builds after 1.4 exists.
+Every agent framework I have looked at reduces to one act, repeated: send a list of messages to a language model and get a message back. Before this chapter the repository has no such act. There is no type for a message, no interface for a provider, and no command you can run. This chapter builds that act in four copies under `steps/ch01-1-messages`, `steps/ch01-2-provider`, `steps/ch01-3-cli`, and `steps/ch01-4-errors`. Each copy compiles, has its own tests, and keeps the earlier code, so section 1.1 still builds after 1.4 exists.
+
+The types are small and they stay. `Message` and `Role` serialize to the OpenAI JSON shape, which is the shape the rest of the harness will store and resend. `Provider` is the trait every later caller uses, so the loop never learns which company answered. `Event` is one enum — text, a tool call, usage, done, or an error — and both the mock and the real client emit it. The mock can sleep, which is how a test sees latency without a network. The client speaks HTTP to OpenRouter by default, so a model id such as `openai/gpt-4o-mini` is a flag. Usage and a dollar cost are recorded only when the server sent them. Section 1.4 puts one timeout on the whole request and spells out what a buffered reply may omit.
+
+That single round trip is the seed of the harness. Chapter 2 will resend a list of these messages. Chapter 3 will attach tools. Chapter 9 will call `Provider` in a loop until the model stops asking for tools. Chapter 18 will put other adapters behind the same trait. Chapter 19 will fold a stream into the same `Event` values. None of that works if this chapter leaks provider details, invents a cost the server did not send, or retries a timeout on its own. Hermes puts each provider behind one profile and lets the loop call that profile. The same split is why a self-improving agent can later swap a cheaper model in for a summary without rewriting memory, skills, or the team code. Those stores do not exist yet. They will call this trait.
+
+If you are new to Rust, this chapter is where the language becomes concrete. A struct holds the message fields. An enum is the role and, later, the event, so a forgotten case is a compiler error rather than a silent branch. A trait is the provider. `serde` turns the struct into JSON and back. `tokio` runs the async client, and `reqwest` is the HTTP stack, created once so connections can be pooled. The sidebars sit next to the code that needs each idea.
+
+At the end of section 1.4 you can run `cargo run -p ch01-4-harness-cli -- --mock ask "Say hello"` and see the events. The same binary without `--mock` fails before any request when `OPENROUTER_API_KEY` is unset. I did not invent a live transcript. The exercises for the four sections are `my-harness/tests/ch01_1.rs` through `ch01_4.rs`.
+
+**In this chapter**
+
+- 1.1 Messages
+- 1.2 Provider
+- 1.3 OpenRouter, the client, and `harness ask`
+- 1.4 Timeouts and what the reply may omit
 
 [personal note: where I was with Rust when I started this chapter]
-
-The code lives in four directories:
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -14,8 +27,6 @@ The code lives in four directories:
 | 1.2 | `steps/ch01-2-provider` | `Provider`, one `Event` enum, and a latency-configurable mock |
 | 1.3 | `steps/ch01-3-cli` | OpenRouter by default, the same events, usage and cost |
 | 1.4 | `steps/ch01-4-errors` | a request timeout, and the edges of a buffered reply |
-
-I'm copying three ideas from Hermes Agent (Nous Research): OpenAI-style messages are the internal format, "talk to a model" sits behind one interface, and the rest of the harness never needs to know which provider it is talking to. The client speaks that one JSON shape, and OpenRouter is the default server, so a model id such as `openai/gpt-4o-mini` or `anthropic/claude-3.5-sonnet` is a flag, not a new adapter. Native Anthropic and Bedrock adapters, OpenRouter routing, and key rotation wait until the providers chapter. Streaming folds the events this chapter already emits.
 
 > **How Hermes does it**
 >

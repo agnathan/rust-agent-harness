@@ -2,15 +2,27 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-The section headings below stay 6.1–6.5. They match the `steps/ch06-*` crates. This is book chapter 6, the client half of the catalog.
+Chapter 3 can hold a few dozen tools, and the model was shown every schema that passed its gate. That stops working when the catalog is the size of a real MCP workspace: several servers, each with its own list, easily a thousand tools and sometimes ten thousand. Three costs arrive together. The prompt grows by the schema text, so the provider bills more input tokens. The model has more near-matches to choose from, so it calls the wrong tool more often. And every turn pays that cost even when the user asked for one rename.
 
-Chapter 3 can hold a few dozen tools. A registry lookup in that map was 13.96 ns, and the model was shown every schema that passed its gate. That stops working when the catalog is the size of a real MCP workspace: several servers, each with its own list, easily a thousand tools and sometimes ten thousand. Three things get worse together. The prompt grows by the schema text, so the provider bills more input tokens. The model has more near-matches to choose from, so it calls the wrong tool more often. And every turn pays that cost even when the user asked for one rename.
+This chapter is the client half of the catalog. It keeps the chapter 3 shape — a name, a description, a JSON Schema — and it does not open an MCP connection. Chapter 4 is the client that does. Chapter 5 is the separate server that will hold the list. The benches here still need a catalog of 1,000 and 10,000 tools, so a deterministic generator fills it. The five copies are `steps/ch06-1-schema-cost`, `ch06-2-tool-index`, `ch06-3-search-tool`, `ch06-4-routing`, and `ch06-5-lazy-list`. Section numbers stay 6.1 through 6.5 so they match those crates.
 
-This chapter keeps the chapter 3 shape (a name, a description, a JSON Schema) and does not open an MCP connection. Chapter 4 is the client that does. The benches here still need a catalog of 1,000 and 10,000 tools, so a deterministic generator fills that catalog. `SyntheticSource::list` is the stand-in those benches call. `ListCache::notify_list_changed` is the stand-in for the dirty flag. A real list from chapter 4 enters the same cache through `cards_from_listed`, `ListCache::from_cards`, and `replace_cards`, in section 6.5. The cache, the per-agent filter, the index, and the chapter 3 dispatcher stay.
+`SyntheticSource::list` is the stand-in the benches call. Section 6.1 counts schema bytes and reuses chapter 2's token estimate. Section 6.2 builds a BM25 index over names and descriptions, and an `Embedder` trait for a later vector. Section 6.3 adds `search_tools`: a hit is revealed on the next turn, the prompt prefix is append-only so a cached prefix stays valid, and a cap bounds how many schemas appear. Section 6.4 routes by server, then trims names and descriptions so the model is not told about a tool it cannot call. Section 6.5 caches `tools/list`, drops the cache on `list_changed`, filters to one agent's servers, and feeds a real chapter 4 list through `cards_from_listed`, `ListCache::from_cards`, and `replace_cards`. The chapter 3 dispatcher stays.
+
+The server track exists so this work does not have to live inside the agent forever. Chapter 7 moves the BM25 index into the gateway, where a 10,000-tool search is not riding along in the harness process. This chapter keeps the part the harness must own: what is allowed into the prompt, in an order that does not rewrite the prefix. That rule is the same one chapter 2 locked for the system prompt. A self-improving agent that searches for a tool every turn, and rewrites the front of the prompt when it finds one, pays the cache again on every lesson. Revealing append-only, and evicting at a checkpoint, is how the harness stays cheap while the catalog grows. Learned prediction of which tools a task tends to use is chapter 23, on the server, and it changes the offered set rather than the middle of a request.
+
+Rust, as it shows up: an inverted index is a map from token to postings. A trait hides the embedder so the tests use a hash. Append-only is a `Vec` you only push to. The cache is an ordinary struct you replace.
+
+The runnable demo is offline. `cargo run -p ch06-5-harness-cli -- --mock ask "rename a file"` is the end state. A live OpenRouter call is optional on that CLI and was not run for this chapter. The missing-key error is a real run with the key unset.
+
+**In this chapter**
+
+- 6.1 Why many tools hurt
+- 6.2 A searchable index
+- 6.3 search_tools and lazy loading
+- 6.4 Route, then shrink
+- 6.5 The registry at scale
 
 [personal note: the first time a tool list was too long to read]
-
-The code lives in five directories:
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -19,8 +31,6 @@ The code lives in five directories:
 | 6.3 | `steps/ch06-3-search-tool` | `search_tools`, reveal on the next turn, an append-only prefix, a cap |
 | 6.4 | `steps/ch06-4-routing` | route by server, then trim names and descriptions |
 | 6.5 | `steps/ch06-5-lazy-list` | a cached list, invalidation, a per-agent toolset, and `ask` |
-
-Each step is its own copy, the way chapter 1 was. Section 6.1 still builds after 6.5 exists. The runnable demo is offline. A live OpenRouter call is optional on the 6.5 CLI, uses the same key rules as chapter 1, and was not run for this chapter. The missing-key error below is a real run with the key unset.
 
 > **How Hermes does it**
 >

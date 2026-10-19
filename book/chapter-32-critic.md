@@ -2,9 +2,25 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 31 can gather a summary. It does not decide whether that summary is finished. This chapter is the critic. `judge` takes one permit from the supervisor pool, locks the notes, and does not push. `accepted` is true only when the verdict is `Verdict::Done`. A reply with no verdict word is `Verdict::Reject`. `as_tool` and `final_gate` both call `judge`. The timeout constant is 30 seconds. The function does not sleep.
+Chapter 31 can gather a hundred replies into an ordered summary. Somebody still has to say whether the summary is good enough to stop. If the same agent that did the work also grades it, the grade tends to agree with the work. This chapter adds a critic that reads the summary and does not do the task. The crate is `steps/ch32-critic`, a copy of chapter 31 plus `critic`. The package is `ch32-critic`.
 
-The step crate is `steps/ch32-critic`. The package is `ch32-critic`. The library name is `harness_core`. It is chapter 31's harness copied forward, plus `critic`. `lib.rs` adds `pub mod critic`. The module imports `crate::supervisor::Pool`. `fanout`, `handoffs`, `pipeline`, and `supervisor` are still in the crate. There is no path dependency on the `ch29-supervisor` package. The pool in this crate is the chapter 29 pool, copied forward.
+The critic is a tool, the same trait as every specialist, and it takes one permit from the chapter 29 pool. It does not take eight. A judge that ran wide would starve the workers it is judging. `parse_verdict` scans the reply for one word, so a chatty model still yields a single decision. The snippet the critic sees is cut on a character boundary, which matters in Rust because a string slice must not land in the middle of a UTF-8 sequence. `judge` takes the permit, reads, and does not push a new task onto the fan-out. The demo accepts. The bench times one permit.
+
+Chapter 33 will loop on this verdict: a judge continuation, a `wait` target, and the quality-gate shell commands deferred from chapter 30. Those stay out of this file so a single judgment is testable without a state machine. The critic also must not write a skill. A bad grade is information for the parent. Turning every rejection into a new procedure is how curation gets a pile of "do not do the thing we just did" skills. Chapter 26 can review the run afterward, with the skill tools, off the hot path.
+
+The pattern is the small version of a rule the whole team half keeps repeating. Workers do the work. A different role looks at the result. The look takes a bounded resource so the look cannot become the work. That is true of the critic's one permit, of the reviewer's tool slice, and of the curator's enqueue.
+
+Rust, at the snippet: indexing a `&str` is by byte, and `is_char_boundary` is the check before you slice. The verdict parser is a scan, not a JSON schema, because the model returns a sentence. The permit is the same guard type as chapter 29, so the pool's accounting stays one type.
+
+`cargo run --locked -p ch32-critic --bin ch32-critic` runs the accept path. The exercise is `my-harness/tests/ch32.rs`: the critic reads the summary and does not do the work.
+
+**In this chapter**
+
+- 32.1 The constants are named, and two of them are not looped
+- 32.2 `parse_verdict` scans for one word
+- 32.3 The snippet stops on a character boundary
+- 32.4 `judge` takes one permit and does not push
+- 32.5 The demo accepts, and the bench times one permit
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -414,7 +430,7 @@ The notes lock is held across the parse and the snippet allocation. It is not he
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
 **Gate.** `accepted` is true only for `Verdict::Done`. `final_gate` returns `Ok` only then. `Blocked`, `Wait`, `Continue`, and `Reject` are `Err`. A missing verdict word is `Reject`.
 

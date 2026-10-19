@@ -2,9 +2,32 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 38 can resolve a persona. It still lets any caller push a turn. This chapter is the chat gateway. A user is on the allowlist, already paired, or denied. A pairing code is eight characters and lasts an hour. Twenty bot messages in five minutes start a ten-minute cooldown. A sentinel pauses the process, and a stat error pauses it too. A platform message is a push onto an inbox of 64. Streaming text folds into one string. A shell command that would restart, stop, or uninstall this gateway is refused while the process is supervised. Outbound text goes through chapter 20's egress scrub. This is the chat gateway. The MCP server is chapter 42.
+Chapter 38 can resolve a persona and keep a secret out of the prompt. The only way to start a turn is still the CLI. A messaging platform, a second bot, or a user who types while a turn is running needs a front door into the session inbox from chapter 2, which chapter 35 made the agent's mailbox. This chapter is that door. It is the chat gateway. It is not the MCP server. The MCP server is chapters 5, 7, 8, 15, 23, 37, 42, and 51, and it stays a separate program. The crate is `steps/ch39-gateway`, a copy of chapter 38 plus `gateway`. The package is `ch39-gateway`.
 
-The step crate is `steps/ch39-gateway`. It is chapter 38's harness copied forward, plus `gateway`. The package is `ch39-gateway`. The library name is `harness_core`. `lib.rs` adds `pub mod gateway` and does not re-export the module at the crate root. Tests say `harness_core::gateway::`. `Cargo.toml` does not depend on the `ch38-profiles` package. `profiles`, `actors`, `supervisor`, and the rest of the copied crate stay where chapter 38 left them.
+Authorization is default-deny after an allowlist and a pairing check. A pairing code is stored, and five failures lock the caller out. Twenty bot messages trip a cooldown so two bots cannot talk forever. A stat error on the pause sentinel fails safe: the gateway treats the emergency stop as engaged. The inbox is a `VecDeque` of 64, the same cap as chapter 35. A platform enqueue is not a model call. Folding keeps text and skips tool chunks, using chapter 19's events so a chat user sees one message. A running session refuses a re-bind. Chapter 30 deferred that re-bind to here. Outbound text calls chapter 20's `redact_for_egress`.
+
+B4 is the shell guard. A supervised command that would restart, stop, or uninstall this gateway is denied. Unsupervised returns none. The patterns live in this module. Chapter 43's lifecycle check is the same idea applied to a cron prompt, and it stays in chapter 43. Moving it here would make a scheduled job's prompt and an interactive shell the same function, and they see different text.
+
+The chat gateway is how a running harness meets a person who is not at the terminal. Corrections arrive as steers. Interrupts skip a turn. Both land in the mailbox reflection already knows how to read after the fact. A gateway that called the model itself would bypass the inbox, the approval floor, and the turn table. Enqueue, then let the agent task run, is the whole integration.
+
+Rust, at the inbox: the deque is the bounded queue, and enqueue is a `push_back` that refuses at 64. Pairing state is a struct with a counter and a deadline. The bot guard is a count. `send_out` is a function that calls the scrub and returns the cleaned string. None of it binds the MCP port. This process is the chat front, in-process in the tests.
+
+`cargo run --locked -p ch39-gateway --bin ch39-gateway` queues, folds, and denies. The exercise is `my-harness/tests/ch39.rs`: a gateway restart command is blocked, and a platform enqueue is not a model call.
+
+**In this chapter**
+
+- 39.1 The constants are the Hermes numbers
+- 39.2 A request stores the code in a Vec
+- 39.3 Approve pairs, or counts a miss
+- 39.4 Authorize is allowlist, then paired, then deny
+- 39.5 Twenty bot messages, then ten minutes of quiet
+- 39.6 A stat error pauses
+- 39.7 The inbox is a VecDeque of 64
+- 39.8 Fold keeps text and skips tool chunks
+- 39.9 A running session refuses the re-bind
+- 39.10 The demo queues, folds, and denies
+- 39.11 B4 is four patterns, and only when supervised
+- 39.12 admit_shell is a Result, and send_out is chapter 20
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -602,7 +625,7 @@ The pairing code is plaintext in the `Vec`. A log of `pending` is a log of the c
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
 **Authorization (L1a).** Allowlist, then an already-paired caller, then deny. An empty allowlist and an unpaired caller do not get in. The longer Hermes chain stays deferred.
 

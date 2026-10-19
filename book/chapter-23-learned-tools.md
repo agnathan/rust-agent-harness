@@ -2,13 +2,26 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-*(server)*
+Chapter 22 can search past sessions from the harness. The gateway still offers whatever the session's starter set and searches revealed. It does not yet notice that this kind of task always ends up calling the same handful of tools, or that three tools are really one procedure. This chapter is that offer, and it lives on the server. The harness decides what may enter the prompt. The server decides which names the session is shown. Putting the score inside the model call would make every request wait on a ranking. The score changes the offered set beforehand.
 
-Chapter 8 can reveal a tool after `search_tools` or `set_task`. Chapter 15 can refuse the 51st `web_search` and the 51st `delegate_task`. Neither chapter remembers which names a task used last time. The offered set is whatever the session gateway last revealed. This chapter installs a prediction before the request. `session_tools` reads that set. It does not score anything while it reads.
+The crate is `steps/ch23-learned-tools`. The library is `gw_learned`. It vendors chapter 15 the way chapter 15 vendored chapters 7 and 8: `catalog`, `session`, and `limits` are modules, and there is no path dependency on `ch15-limits`. `LearnedGateway` is the type. It binds no socket. `mcp-gateway` will re-export a later copy of this gateway, from chapter 51, under the name `Gateway`.
 
-A composite and a macro are names that expand to steps. They do not run the steps. Code mode runs a short script of `call tool json` lines, and only against tools the session was offered and that sit on a fixed allowlist.
+The score is a plain function over usage rows and tool names. The gateway stores the chosen offer in an `Arc`. `session_tools` reads that offer and does not call the scorer, which is the test that prediction stayed off the request path. A composite or macro name expands to steps. Code mode runs a line script against the sandbox allowlist, capped at 50 calls, and the new limit sits on the tool the script is allowed to call. The offered set can change before the request. It does not change in the middle of `session_tools`.
 
-This is the server track. The step crate is `steps/ch23-learned-tools`. The package is `ch23-learned-tools`. The lib name stays `gw_learned`. `mcp-gateway` re-exports `LearnedGateway` as `Gateway`. The crate vendors chapter 15 instead of path-depending on it. It still binds no socket.
+The server stays a separate program because a learned catalog is still a catalog. Two agents should be able to share the usage score and the macro definitions without each of them embedding the index. The harness keeps chapter 6's append-only reveal: once the server says which names this session gets, the harness does not rewrite the prefix to insert one more. Chapter 37 vendors this gateway and adds pools and federation. Chapter 42 and chapter 51 vendor it again. Chapter 24, back on the harness, starts skills. A skill is a procedure the agent reads. A macro tool is a procedure the server can run. They are easy to confuse, and they stay in different crates so a skill file is not an alias for a gateway composite.
+
+Rust, at the offer: `Arc` is the installed set, swapped the way chapter 7 swaps a snapshot. The score is a function you can call in a bench without a session. A name that expands to steps is a `Vec`, and code mode is a filter on names before any call.
+
+`cargo run --locked -p ch23-learned-tools` runs the demo in-process. The exercise is `my-harness/tests/ch23.rs`: `session_tools` reads the predicted set and does not call the scorer.
+
+**In this chapter**
+
+- 23.1 The crate vendors chapter 15
+- 23.2 The score is a plain function
+- 23.3 The gateway stores an Arc
+- 23.4 `session_tools` reads and does not score
+- 23.5 A name expands to steps
+- 23.6 Code mode filters names, then calls
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -536,7 +549,7 @@ The two caps of 50 are easy to mix up. `CODE_MODE_MAX_CALLS` stops a script. Cha
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). The new limit sits on the tool the script is allowed to call.
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). The new limit sits on the tool the script is allowed to call.
 
 **Allowlist.** `SANDBOX_ALLOWED` is the seven names from `SANDBOX_ALLOWED_TOOLS`. `memory` is `NotAllowed` before the backend runs.
 

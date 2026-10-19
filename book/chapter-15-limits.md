@@ -2,11 +2,52 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-*(server)*
+The harness can now classify a failure and refuse a destructive command. Those are decisions about one agent. A gateway that fronts many tools has a different problem: one tool can be slow, one tool can be called fifty times in a turn, and a backend that is already failing should not be called again while it recovers. This chapter is the server's answer. It is a copy of the gateway, not of the harness. Chapter 16 will copy chapter 14. It will not copy this crate.
 
-Chapter 14 names a failure and decides retry or fallback inside the harness. The tool call still arrives at a backend with no limit of its own. This chapter is the gateway. Each tool accepts 32 calls and runs 8. A retry, and a hedge, run only when that tool is marked idempotent. Three failures open a breaker, and the next call does not reach the backend. `web_search` and `delegate_task` stop at 50 for the turn.
+The package is `ch15-limits`, the library is `gw_limits`, and the bench is `limits`. Chapter 7's catalog and chapter 8's session gateway are vendored under `src/catalog/` and `src/session.rs`, so this step builds alone. There is no path dependency on `ch07-catalog` or `ch08-session-toolsets`. The public names chapter 23 already calls stay: `Catalog`, `LimitedGateway` (`new`, `catalog`, `open_session`, `session_tools`), and `SessionView`. The crate binds no socket.
 
-The step crate is `steps/ch15-limits`. The package stays `ch15-limits` and the lib stays `gw_limits`. This directory vendors chapter 7 (`catalog`) and chapter 8 (`session`) so it builds alone. `Catalog`, `LimitedGateway` (`new`, `catalog`, `open_session`, `session_tools`), and `SessionView` are the names chapter 23 already calls. A new gateway still has an empty catalog. The harness lineage does not copy this crate: chapter 16 copies chapter 14.
+`LimitedGateway` wraps the session view with a per-tool gate. `ACCEPT_BOUND` and `EXECUTE_BOUND` are the chapter 5 numbers, now per tool rather than process-wide only. `ToolGate` hands out permits. `Breaker` opens after repeated failures and `breaker_open` stops a new call from reaching the backend. `set_idempotent` marks the tools a retry is allowed to run again. A tool that is not marked idempotent is not retried. Timeouts release the permit. `CallError::Cap` is what the 51st `web_search` receives, and the same cap of 50 applies to a subagent tool. `MAX_WEB_SEARCHES` is that number. Hedging and 429/503 backpressure sit on the same gate. `dispatch` is the path that checks the breaker, the cap, the permit, and the timeout in one order.
+
+The server stays a separate program because these limits protect the backends the gateway fronts, and the other sessions sharing them. The harness already has a bound of 8 on its own dispatcher. That bound does not know that `web_search` has been called fifty times, or that one upstream is down. Putting the cap, the breaker, and the idempotent retry on the server means every client inherits them, including a later harness that only knows the tool name. Chapter 16 will name its search tool `web_search` so this cap applies, and it will not add a second counter. Chapter 23 vendors this crate the same way this crate vendored chapters 7 and 8. Learned tools sit on top of the limit. They do not replace it.
+
+A self-improving agent that can call search, or spawn a subagent, on every reflection will spend the turn on the tool instead of the lesson. The cap is the boring reason the learning loop stays a loop.
+
+Rust, beside the types: a permit is an owned guard, and releasing it is a drop, including on timeout. The breaker is an enum you match on, open or closed. `Result` is `CallError`, and `Cap` is its own variant so a caller can tell a policy refusal from a backend failure.
+
+`cargo run -p ch15-limits` runs the demo in-process. The exercise is `my-harness/tests/ch15.rs`: the 51st `web_search` is the cap error, and an open breaker does not call the backend.
+
+**In this chapter**
+
+- 15.1 One flat package, and the names chapter 23 already calls
+- 15.2 `ACCEPT_BOUND`, `EXECUTE_BOUND`, and the cap of 50
+- 15.3 `FailureKind`
+- 15.4 `Outcome`
+- 15.5 `CallOpts`
+- 15.6 `CallError`
+- 15.7 `Backend`
+- 15.8 `Script`
+- 15.9 `ToolGate`
+- 15.10 `Breaker`
+- 15.11 `LimitedGateway` and `new`
+- 15.12 `catalog`, `open_session`, and `session_tools`
+- 15.13 `set_idempotent`
+- 15.14 `is_idempotent`
+- 15.15 `breaker_open`
+- 15.16 `accept_available` and `execute_available`
+- 15.17 `roundtrip_execute`
+- 15.18 `hold_accept`
+- 15.19 `dispatch`
+- 15.20 `retriable`
+- 15.21 `block_cap`
+- 15.22 `note_cap`
+- 15.23 `spawn_count`
+- 15.24 `note_failure`
+- 15.25 `note_success`
+- 15.26 `gate`
+- 15.27 `try_accept` and `try_execute`
+- 15.28 `run_with_timeout`
+- 15.29 `Default` for `LimitedGateway`
+- 15.30 `open_breaker` and `permit_release`
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -869,7 +910,7 @@ The queue is the accept bound of 32. The 33rd call is refused. Nothing parks pas
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Layer L4.
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Layer L4.
 
 **I3.** `web_search` stops at 50. `delegate_task` stops at 50. A batch counts as `len(tasks)`. `list`, `steer`, and `stop` do not count and still run. The block strings are the ones in `agent/tool_guardrails.py`.
 

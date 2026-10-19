@@ -2,15 +2,26 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 34 can scan a context file, cut it to a head and a tail, wrap an untrusted page, and clone the snapshot `Arc`. The work is a function call on the caller's thread. Nothing in `preflight` or `share` owns a mailbox, accepts a steer while a turn is queued, or refuses the 65th message. A hundred agents would be a hundred calls the caller starts and joins by hand.
+Chapter 34 can share a snapshot across a composed team. The parent still drives every stage in one task. A harness that runs many agents needs each agent to be its own task, with a mailbox, so a slow specialist cannot stop the parent from receiving the next turn. Chapter 2 already built that mailbox for one session, with a capacity of 64. This chapter makes it the mailbox of an agent task. The crate is `steps/ch35-actors`, a copy of chapter 34 plus `actors`. The package is `ch35-actors`.
 
-This chapter gives each agent a mailbox. `Inbox` holds `Mail` in a `VecDeque` and stops at `INBOX_CAP`, which is 64. The next `try_submit` returns `InboxError::Full` and the length stays 64. `submit` does the same check on a bounded `mpsc` channel of that capacity: `TrySendError::Full` becomes `InboxError::Full`, and `TrySendError::Closed` becomes `InboxError::Closed`. `step` applies one queued value. A steer is stored until a turn. An interrupt marks the next turn, and that turn returns `interrupted` without calling the model. `fan` spawns one tokio task per agent. `serve` reads the channel until the sender is dropped. `demo` returns `agent: ok`.
+The cap is `INBOX_CAP`, 64. The three mails are a turn, a steer, and an interrupt. `try_submit` refuses the 65th message and does not grow the queue. `submit` is the async form, `try_send` on a bounded channel, with two error arms: full, and closed. `step` applies one mail. A steer is stored and appended on the next turn that actually calls the model. An interrupt skips that turn and clears the steer. `serve` drains one channel. `fan` starts `n` tasks. The demo answers. The bench submits one turn. `FakeModel` ignores the prompt and returns the scripted line, so the test is about the mailbox rather than the model.
 
-Restart is still ahead. A task that panics fails `join_next`. This chapter does not record a boot, does not trip a breaker, and does not start the child again. Chapter 36 is supervision.
+Backpressure is the point. An unbounded inbox looks fine until a talkative platform, or a fan-out of results, fills memory with turns nobody is running. Chapter 39's chat gateway submits here. Chapter 43's cron chains a job by submitting to the same inbox. Chapter 44's editor protocol translates one update into one submit. Chapter 47's bus has its own bound and delivers into this one. They share the number 64 so "the agent is busy" means the same thing at every front door. Chapter 36 will restart a child that stops making progress. A restarted child gets a new task. It does not inherit an unbounded queue of stale mail.
 
-The step crate is `steps/ch35-actors`. The package is `ch35-actors`. The library name is `harness_core`. This crate is chapter 34's harness copied forward, plus `actors`. `lib.rs` adds `pub mod actors` and still has `pub mod context` and `pub mod composition`. The top comment in `lib.rs` still says chapter 10. `Cargo.toml` describes the package as the previous harness plus this chapter. The `[dependencies]` table does not list `ch34-context`. There is no path dependency on the previous crate. `context` and `composition` in this tree are the copies.
+The learning loop fits this shape cleanly. Reflection is a child task with a cancellation token, already spawned in chapter 26. Steering is how a user corrects a running agent without waiting for the turn to finish, and a correction is the kind of signal reflection should see. The mailbox stores the steer. It does not itself write a skill.
 
-The copied `inbox` module is still here. `SessionInbox` and `INBOX_BOUND` live in `inbox.rs`. `lib.rs` re-exports `inbox::InboxError` and `SessionInbox`. The new mailbox is `actors::Inbox`, `actors::Mail`, and `actors::InboxError`. The tests import those names from `harness_core::actors`. The two inboxes are different types.
+Rust, at the channel: `tokio::sync::mpsc` with a bound of 64 is the queue, and `try_send` is the non-blocking refusal. `VecDeque` is the in-process form the unit test fills by hand. A mail enum is the three messages, so a turn and an interrupt cannot be confused. `select` or a straight `recv` is how `serve` waits.
+
+`cargo run -p ch35-actors --bin ch35-actors --offline` prints the answer. The exercise is `my-harness/tests/ch35.rs`: a full inbox does not grow.
+
+**In this chapter**
+
+- 35.1 The cap, the three mails, and a model that ignores the prompt
+- 35.2 `try_submit` refuses the 65th message
+- 35.3 `step` applies one mail
+- 35.4 `submit` is `try_send` with two error arms
+- 35.5 `serve` drains one channel, and `fan` starts `n` tasks
+- 35.6 The demo answers, and the bench submits one turn
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -443,7 +454,7 @@ Hermes's turn executor has no queue and no cap. Copying that shape would accept 
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
 **Inbox backpressure.** `INBOX_CAP` is 64. `Inbox::try_submit` returns `InboxError::Full` when `queue.len()` is 64 and does not `push_back`. The test's length is 64 before the extra submit and 64 after it. `submit` returns `InboxError::Full` when the `mpsc` buffer of `INBOX_CAP` is full. The 65th `try_send` does not enter the channel. `InboxError::Closed` is the arm for a dropped receiver.
 

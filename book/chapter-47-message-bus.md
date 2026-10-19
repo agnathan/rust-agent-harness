@@ -2,9 +2,27 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 46 keeps a card in a JSON file. A second process can claim it, and the loser does not become the owner. Peers that are alive at the same time need a different shape. One of them publishes. The others receive. A slow receiver must not grow a queue without a limit. This chapter is that bus.
+Chapter 46's processes can claim a card. They cannot publish a sentence to whoever is listening. A peer that wants to say "the build failed" without knowing the subscriber's inbox needs a bus: a topic, a bounded channel per subscriber, and a rule for what happens when one subscriber is slow. This chapter adds that bus. The crate is `steps/ch47-message-bus`, a copy of chapter 46 plus `bus`. The package is `ch47-message-bus`.
 
-The step crate is `steps/ch47-message-bus`. The book number is 47. The package is `ch47-message-bus`. The library name is `harness_core`. This is the chapter 46 harness copied forward, including `kanban`, plus `bus`. `Cargo.toml` says "Chapter 47: the previous harness plus this chapter." Edition is 2021. `rust-version` is 1.88. There is no path dependency on `ch46-kanban`. The sources are copied. `lib.rs` adds `pub mod bus`. The file comment at the top of `lib.rs` still describes chapter 10's loop. `bus.rs` itself says book chapter 47. `kanban.rs` still says book chapter 46. The binary that prints this chapter is `src/bin/chapter_demo.rs`, named `ch47-message-bus`. `examples/demo.rs` is the inherited eval runner. It does not print the bus line.
+`Envelope` is the message. `Sub` is a subscriber. `Bus` holds them. `subscribe` registers a name on a topic. The channel bound is `BUS_CAP`, 64, the same number as the agent inbox, so "slow" means the same thing in both places. `publish` fans the envelope out. `deliver` calls chapter 20's `redact_for_egress` before `try_send`. The narrow scrubber that used to sit beside the bus is gone. There is one egress function, and this chapter calls it. A published envelope that contains a key is scrubbed. `send_to` is the direct path and does not scrub, which the chapter treats as a hole you have to know about: publishers use `publish`. `publish_bot` counts toward the bot-loop guard, 20 delivered events and then `Cooldown`. There is no clock. Ordinary `publish` does not count. A full channel returns `Slow` instead of allocating a 65th slot. A different topic returns `Delivered(0)`.
+
+Chapter 48's workers call `skill_propose`, which publishes on this bus. They do not write the team store themselves. Chapter 49's external call is not this bus. It is a call to an agent outside the process, and it uses the same egress scrub on the way out. Keeping the scrub in one function is why a new channel cannot forget it. Forgetting it is how a key in a tool result becomes a key on the wire.
+
+The bus is also how a learning team stays loosely coupled. An agent finishes a task and publishes the outcome. The librarian, when it exists, is a subscriber. The workers do not wait for the librarian, and a slow librarian hits the bound instead of stalling the publisher forever. Backpressure is the difference between a bus and a log you append to without limit.
+
+Rust, at the fan-out: each subscriber has an `mpsc` sender, `try_send` is the non-blocking publish, and `Full` stops the loop. The envelope is cloned per subscriber, so one slow receiver does not share a buffer with a fast one. The scrub returns a new string. The cooldown is an enum the publisher matches on.
+
+`cargo run -p ch47-message-bus --bin ch47-message-bus` runs the demo. The exercise is `my-harness/tests/ch47.rs`: a published envelope that contains a key is scrubbed, and a slow subscriber hits the bound.
+
+**In this chapter**
+
+- 47.1 `BUS_CAP`, `MAX_BOT_EVENTS`, `Envelope`, and `Sub`
+- 47.2 `Bus`, `subscribe`, `bot_events`, and `Default`
+- 47.3 `Publish`, `publish`, and `publish_bot`
+- 47.4 `deliver` and the chapter 20 scrub
+- 47.5 `send_to` and `submit`
+- 47.6 `FakeModel` and `demo`
+- 47.7 The notify cursor, the bot-loop guard, and the one egress scrub
 
 | Section | What it walks |
 |---|---|
@@ -647,7 +665,7 @@ The Rust egress function does not return `"[redaction-unavailable]"`. Hermes's d
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
 **Egress scrub (E2).** The catalog row is E2. The name is egress scrub. One stricter scrub for remote readers, and it also strips a bearer residue. The Hermes function is `agent/redact.py` `redact_for_egress`. This chapter calls the chapter 20 Rust function of that name, from `deliver`, before `try_send`. The narrow scrubber that used to live beside it is gone. `bus.rs` does not define one. The header `Authorization: Bearer sk-live-0123456789abcdef now` becomes a line that contains `Authorization: ***` and does not contain `sk-live`, and it does not become `Bearer [redacted]`, because the header replace consumes the scheme before the residue sweep. A bare `Bearer` plus 32 opaque characters does become `Bearer [redacted]`.
 

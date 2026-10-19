@@ -2,9 +2,29 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 42 routes a live call. A cron job is not a live call. It is due, or it is not, and two owners must not both run it. This chapter claims a job for one owner. A crash may release that claim once. The second crash leaves it held. The prompt is scanned before the claim. A job that would restart or stop the gateway is blocked by `check_lifecycle`, and that function stays in this module. Scanning a thousand due jobs does not tick the watchdog and does not chain the next job. Unattended denial of the wider dangerous-command list stays chapter 11.
+Chapter 41's harness can see an image and wrap the caption. It still runs only when something calls it. A job that should run at a time, survive a crash, and chain the next job has nowhere to live. This chapter adds that claim. The crate is `steps/ch43-cron`, a copy of chapter 41. Chapter 42 is the MCP server and is not copied. The new module is `cron`. The package is `ch43-cron`. The chat gateway's lifecycle guard stays in chapter 39. This chapter has its own check for a job prompt, and the two are not merged.
 
-The step crate is `steps/ch43-cron`. The book number is 43. The package is `ch43-cron`. The library name is `harness_core`. This is the chapter 41 harness copied forward, including `vision`, plus `cron`. `Cargo.toml` says "the previous harness plus this chapter." Edition is 2021. `rust-version` is 1.88. There is no path dependency on chapter 41 or on chapter 42. The sources are copied. `lib.rs` adds `pub mod cron` beside `pub mod vision`. The file comment at the top of `lib.rs` still describes chapter 10's loop. The cron file itself still says book chapter 41. The book number is 43. The binary that prints this chapter is `src/bin/chapter_demo.rs`, named `ch43-cron`. The example `examples/demo.rs` is the inherited eval runner. It is not the line this chapter prints.
+`Job` is the record. `claim` takes it, and a second claim loses. `crash` releases the claim once, so a retry happens at most once. A second crash keeps the claim. `Store` holds the jobs. `scan_due` returns the ones that are due and unclaimed. `watchdog` and `chain` are separate from the scan: the watchdog notices a stuck claim, and `chain` submits the next job to the same inbox chapter 35 already bounds. A chained job is not a direct model call. `scan_prompt` runs before `claim`. The patterns cover injection, a hidden instruction, a system-prompt override, secret reads, and a destructive command. `check_lifecycle` blocks a prompt that would restart, stop, or uninstall the gateway, or kill its process. `start` is allowed. `unattended_denies` matches the dangerous command chapter 11 already denies when nobody is there. `run_job` is the path that scans, checks, claims, and calls `FakeModel`.
+
+The jobs file, the 300 second TTL, and the invisible-unicode scan stay out. A claim in this process lasts until `crash` or until the `Job` is dropped. That is enough to lock the at-most-once retry. Durability across a real restart is the shape of the claim, with an in-memory store the tests can crash on purpose.
+
+Cron is how a self-improving harness does work when the user is away: curation is a scheduled pass, a digest is a scheduled read. It is also how an unattended agent is most dangerous, because nobody is sitting at the approval prompt. The scan and the lifecycle check are why a job the model wrote yesterday cannot, this morning, restart the gateway or teach itself a new instruction from its own prompt. Chapter 27's curator stays off the request path. This chapter is the clock it can sit on. The curator's write still goes through chapter 25.
+
+Rust, at the claim: the owner is an `Option` in the job, and compare-and-set is the test that two claimers do not both win. `RunError` is an enum so a threat, a lifecycle block, and a lost claim are different arms. The inbox submit is the chain, a value pushed onto the chapter 35 queue.
+
+`cargo run -p ch43-cron --bin ch43-cron` runs the demo. The exercise is `my-harness/tests/ch43.rs`: a claimed job retries at most once, and a lifecycle command in the job is blocked.
+
+**In this chapter**
+
+- 43.1 `RunError` and `Job`
+- 43.2 `claim` and `crash`
+- 43.3 `Store`, `scan_due`, `watchdog`, and `chain`
+- 43.4 `scan_prompt`
+- 43.5 `check_lifecycle`
+- 43.6 `unattended_denies`
+- 43.7 `run_job`
+- 43.8 `FakeModel` and `demo`
+- 43.9 The Hermes create path, and one claim walked in order
 
 | Section | What it walks |
 |---|---|
@@ -588,7 +608,7 @@ Hermes's 300 second TTL is not read. A claim in this process lasts until `crash`
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
 **Prompt scan (M1).** `scan_prompt` runs before `claim`. The ids in this file are `prompt_injection`, `deception_hide`, `sys_prompt_override`, `disregard_rules`, `read_secrets`, `ssh_backdoor`, `sudoers_mod`, `destructive_root_rm`, and `exfil_curl_url`. Hermes's `_scan_cron_prompt` is the source. Invisible unicode, the GitHub exemption, and the other exfil shapes stay in `tools/cronjob_prompt_scan.py`. The cron tool calls `_scan_cron_prompt` from `_action_create` and `_update_core_fields`.
 

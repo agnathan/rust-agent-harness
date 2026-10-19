@@ -2,9 +2,26 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 49 calls out of the process. The demo line is `a2a: ok`. That line does not say which events ran, and it does not say how many spans were opened. This chapter records the names. A turn span, then a span per event. The field is a safe name. The prompt is not a span field. A research team of mock agents writes one shared `Memory` across two runs.
+Chapter 49 can call an external agent and cancel the call. When a team run goes wrong, the transcript says what the model said. It does not say which span was open, which field was safe to log, or whether the hundred agents in a research team finished. This chapter adds spans on the events the harness already emits, and it adds the research team that uses them. The crate is `steps/ch50-tracing`, a copy of chapter 49 plus `spans`. The package is `ch50-tracing`. Chapter 51 is not this team. Chapter 51 is the server's load and token comparison. Chapter 52 copies this harness, not chapter 51.
 
-The step crate is `steps/ch50-tracing`. The book number is 50. The package is `ch50-tracing`. The library name is `harness_core`. This is the chapter 49 harness copied forward, plus `spans`. `Cargo.toml` says "Chapter 50: the previous harness plus this chapter." Edition is 2021. `rust-version` is 1.88. The dependency line is `tracing = "0.1"`. Chapter 49's `Cargo.toml` does not list `tracing`. There is no path dependency on `ch49-a2a`. The sources are copied. `lib.rs` adds `pub mod spans` and still has `pub mod a2a`. The file comment at the top of `lib.rs` still describes chapter 10's loop. `spans.rs` itself says book chapter 50. The binary that prints this chapter is `src/bin/chapter_demo.rs`, named `ch50-tracing`. `examples/demo.rs` is the inherited eval runner. It prints `eval:` lines. It does not print the trace line. `ch50-harness-cli` depends on `ch50-tracing` by path.
+`CountingSubscriber` counts the spans a test opened, so the bench can compare a turn with tracing and a turn without it. `safe_field` decides what may be attached to a span. A secret is not a span field. `emit` records one event. `mock_turn` runs the scripted model under that subscriber. `Memory` is the small store the research team reads across runs, the harness memory, not a new database. `research_team` runs 100 mock agents and then one more. `demo` prints the team. A span per event still finishes the mock turn, which is the requirement: tracing is not allowed to change the outcome, and it is not allowed to blow the chapter 1 budget of a millisecond of overhead once the model is excluded.
+
+The research team is the place the book shows the pieces working as one harness. Sessions, memory, skills, and the team patterns are already modules in this copy, because every harness chapter copied the previous one. The team runs them under spans so a later reader can see a run. It does not replace chapter 26's reviewer or chapter 48's librarian. Learning stays those modules. Tracing watches them. A span that included the raw prompt would undo chapter 20's scrub by writing the secret to a collector. `safe_field` is that refusal.
+
+Chapter 52 re-runs chapter 9's saved evals on this copy of `run_loop`, with the spans still in the crate. The evals do not require a trace to pass. They require the loop to still return the outcomes chapter 9 named. Tracing that changed a verdict would make the suite measure the tracer.
+
+Rust, at the subscriber: the `tracing` crate's subscriber is a trait you implement, and the counting one is a few atomics. A field is a key and a value you filter before it is recorded. The team is a loop of tasks, the same fan the earlier chapters bounded, now with a span entered and exited around the mock turn.
+
+`cargo run -p ch50-tracing --bin ch50-tracing` runs the demo. The exercise is `my-harness/tests/ch50.rs`: a span per event still finishes the mock turn.
+
+**In this chapter**
+
+- 50.1 `CountingSubscriber`
+- 50.2 `safe_field` and `emit`
+- 50.3 `FakeModel` and `mock_turn`
+- 50.4 `Memory`
+- 50.5 `research_team`
+- 50.6 `demo`
 
 | Section | What it walks |
 |---|---|
@@ -497,7 +514,7 @@ The bench is one `complete` and one `mock_turn`. `research_team(100)` is the tes
 
 ## Guardrails in this chapter
 
-[`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
 **The prompt is not a span field.** `safe_field` returns `"request"`. The turn span uses that return as `event`. `emit` stores `"request"`, `"response"`, and `"gateway"` in the sink. The test prompt `sk-live-0123456789abcdef` is passed to `mock_turn` and does not appear in `format!("{sink:?}")`.
 
