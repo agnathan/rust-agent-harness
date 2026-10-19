@@ -4,7 +4,7 @@
 
 Chapter 32 can accept or reject one reply. It does not run the next turn, and it does not decide whether the work was a tool call or a change of owner. This chapter nests the patterns. The outer loop is a supervisor. An inner fan-out uses that same pool. A handoff runs only when ownership should move. The critic loops, a wait names a target, and a quality gate can pause the loop before the judge is asked.
 
-The step crate is `steps/ch33-composition`. The book number is 31. The package is `ch33-composition`. It depends on `ch29-supervisor`, `ch30-handoffs`, `ch31-fan-out`, and `ch32-critic`.
+The step crate is `steps/ch33-composition`. The package is `ch33-composition`. It depends on `ch32-critic` only. That crate's library is `harness_core`, and the copied modules `supervisor`, `handoffs`, `fanout`, and `critic` are already in it. Four path dependencies would be four crates with the same library name.
 
 | Section | Step | What it adds |
 |---|---|---|

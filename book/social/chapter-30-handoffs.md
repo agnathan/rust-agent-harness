@@ -4,21 +4,21 @@
 1/
 Chapter 30 is up: Handoffs.
 
-Ownership moves to the next agent after scratch messages are removed. A turn can do that four times. The fifth is refused, and the owner stays. 🧵
+A handoff is a recorded transfer, not a model call. The next owner sees the transcript with role scratch removed. The fifth transfer is refused, and the owner stays. 🧵
 
 2/
-Hermes Agent's handoff.request in tui_gateway/methods_session.py is a platform transfer. It writes pending, and a watcher re-binds the session. It does not count handoffs, and it does not filter a transcript.
+Hermes Agent's handoff.request in tui_gateway/methods_session.py only writes pending. The gateway watcher claims and re-binds. If the session is running, the error is 4009. platform is required.
 
 3/
-MAX_HANDOFFS is 4. That number is this harness. It is not a Hermes constant. The filter drops role scratch and keeps order. An empty result does not move the owner and does not burn a count.
+This board filters before it counts. MAX_HANDOFFS is 4, and that cap is this harness, not a Hermes constant. An empty filtered transcript is HandoffError::Empty and does not move the owner. Platform re-bind stays chapter 39.
 
 4/
-Filtering 100 messages measured 2.664 µs. The demo is "draft sees 2". No key.
+The mean for filter_100 is 2.13 µs, mean.point_estimate from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589). The demo prints "draft sees 2". No key.
 
 [personal note]
 
 5/
-Next is fan-out and gather: a queue of 100, the same bound of eight, and replies joined in order.
+Next is fan-out: a queue of 100, gather on the pool of 8, replies in task_index order. Heartbeats stay chapter 36.
 
 Read Chapter 30: [link]
 
@@ -27,12 +27,12 @@ Read Chapter 30: [link]
 ## LinkedIn
 Chapter 30 is out: Handoffs.
 
-Giving the next agent the whole transcript hands over the scratch too. Hermes Agent's handoff.request is a platform transfer: it queues pending work and a watcher re-binds the session. It does not cap how many times that happens, and it does not filter messages. I added both. Scratch is dropped before the owner changes, and the fifth handoff in a turn is refused.
+The next agent should receive a filtered transcript. Hermes Agent's handoff.request writes a pending transfer for a watcher to claim and re-bind. A running session is error 4009, and platform is required. I kept the idea that a handoff is a recorded transfer, not a model call. This board drops role scratch first, then allows four transfers. The fifth is Limit, and the owner string stays.
 
-Filtering 100 messages measured 2.664 µs. Four is the harness cap, not a number I found in Hermes.
+The mean for filter_100 is 2.13 µs.
 
-[personal note: one takeaway from writing this chapter]
+[personal note]
 
-Next: scheduling a hundred subagents without an unbounded queue. Read Chapter 30: [link]
+Next: a queue of 100 tasks that refuses the 101st. Read Chapter 30: [link]
 
 #Rust #AIAgents #LearningInPublic #SoftwareEngineering

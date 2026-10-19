@@ -44,7 +44,7 @@ ch05-minimal-server
 
 Chapter 15 no longer path-depends on `ch07-catalog` or `ch08-session-toolsets`. Their sources live in `steps/ch15-limits/src/catalog/` and `src/session.rs`. The public names chapter 23 already calls are unchanged: `Catalog` (the chapter 7 `Gateway`), `LimitedGateway` (`new`, `catalog`, `open_session`, `session_tools`), `SessionView`. The lib name stays `gw_limits`. The package stays `ch15-limits`. The bench stays `limits`.
 
-Chapter 23 still path-depends on chapter 15. The batch that reworks chapter 23 vendors chapter 15's sources into `ch23-learned-tools` the same way, and keeps lib name `gw_learned` plus every type `mcp-gateway` imports (`LearnedGateway`). Chapters 35, 38, and 47 are standalone today. Their batches copy the previous server crate in as modules and add the new behavior on top, so a reader who opens only that step still has the catalog, the session view, the limits, and the learned offer. Keep each chapter's existing package name, lib name, and `[[bench]]` name. Those are what `.github/workflows/benchmarks.yml` passes to `cargo bench -p`.
+Chapter 23 vendors chapter 15's sources into `ch23-learned-tools` the same way chapter 15 vendored chapters 7 and 8. The lib name stays `gw_learned`. `mcp-gateway` still imports `LearnedGateway`. There is no path dependency on `ch15-limits`. Chapters 35, 38, and 47 are standalone today. Their batches copy the previous server crate in as modules and add the new behavior on top, so a reader who opens only that step still has the catalog, the session view, the limits, and the learned offer. Keep each chapter's existing package name, lib name, and `[[bench]]` name. Those are what `.github/workflows/benchmarks.yml` passes to `cargo bench -p`.
 
 `mcp-gateway/` stays the process crate. It re-exports the latest server step. After chapter 23 it re-exports `LearnedGateway`. After chapter 49 it re-exports the capstone. Do not bind a socket in any of these steps.
 
@@ -299,3 +299,11 @@ Hermes, for the batch that writes them, starts at `tools/browser_tool.py`, `tool
 - Chapters 11–14 and 16–22 are copies. Do not replace them with the old standalone crates.
 - Chapter 15 vendors chapter 7 and chapter 8 and still builds `ch23-learned-tools`.
 - Redaction, the plugin shape check, the execute_code gate, and the two command floors are in the modules named above. Later chapters call them. They do not reimplement a smaller version.
+
+## What batch 2 changed that later batches must not undo
+
+- Chapter 23 vendors chapter 15. It does not path-depend on `ch15-limits`. `catalog`, `session`, and `limits` are modules in that crate. `LearnedGateway` is still the type `mcp-gateway` re-exports.
+- Chapters 24–32 are copies of the previous harness. Chapter 24 copies chapter 22. Do not replace them with the old standalone crates. The new modules are `skills`, `skill_write`, `reflection`, `curation`, `pipeline`, `supervisor`, `handoffs`, `fanout`, and `critic`. `lib.rs` does not glob-reexport them.
+- Chapter 33 still compiles by depending on chapter 32's harness and calling `harness_core::supervisor`, `handoffs`, `fanout`, and `critic`. Its batch copies chapter 32 instead of path-depending on four crates.
+- H1, the skills-guard install policy and the pattern scan, and A9, the write-approval gate that stays off unless set, live in chapter 25. Chapter 27 calls those functions. It does not grow a second scanner.
+- Heartbeats stay chapter 36. Chapter 31 does not start them. Hermes `_get_max_async_children` now ignores `delegation.max_async_children` and returns the concurrent-children cap. The harness queue of 100 is this book's cap, not that key.

@@ -14,10 +14,7 @@ name = "ch33-composition"
 path = "src/main.rs"
 
 [dependencies]
-ch29-supervisor = { path = "../ch29-supervisor" }
-ch30-handoffs = { path = "../ch30-handoffs" }
-ch31-fan-out = { path = "../ch31-fan-out" }
-ch32-critic = { path = "../ch32-critic" }
+ch32-critic = { path = "../ch32-critic/crates/harness-core" }
 
 [dev-dependencies]
 criterion = "0.5"

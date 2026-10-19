@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 rust-version = "1.85"
 publish = false
-description = "Chapter 23: learned tool prediction, composite and macro tools, and a code-mode tool."
+description = "Chapter 23: chapter 15's gateway, vendored, plus a predicted offer, composite and macro tools, and code mode."
 
 [lib]
 name = "gw_learned"
@@ -14,8 +14,9 @@ name = "ch23-learned-tools"
 path = "src/main.rs"
 
 [dependencies]
-ch15-limits = { path = "../ch15-limits" }
 serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync", "time"] }
 
 [dev-dependencies]
 criterion = "0.5"

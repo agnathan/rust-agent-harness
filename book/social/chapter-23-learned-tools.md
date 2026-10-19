@@ -2,23 +2,23 @@
 
 ## X thread
 1/
-Chapter 23 is up: Learned Tools.
+Chapter 23 is up: Learned Tools. Server track.
 
-This one is the server. A score over past uses and memory installs the offered set before the request. session_tools only reads that set. 🧵
+The offered tool list is installed before the request. session_tools reads it. The score does not run on that read. 🧵
 
 2/
-Hermes Agent does not rank tools from memory. It does have composite toolsets (toolsets.py, is_composite) and a code_execution toolset. SANDBOX_ALLOWED_TOOLS is seven names. DEFAULT_MAX_TOOL_CALLS is 50 (tools/code_execution_tool.py).
+Hermes Agent's code_execution toolset runs Python that calls tools (toolsets.py). SANDBOX_ALLOWED_TOOLS is seven names. DEFAULT_MAX_TOOL_CALLS is 50 (tools/code_execution_tool.py). This chapter's script is lines of `call tool json`, not Python.
 
 3/
-A composite and a macro expand to steps. They do not run them. Code mode here is lines of "call tool json", not Python. A tool outside the allowlist or the offer never reaches the backend.
+A memory mention is worth 3. A past use that shares a task token is worth 1. A zero stays out. Composite and macro names expand to steps. They do not run the steps.
 
 4/
-Applying a 32-name offer measured 79.01 ns. Scoring 1,000 usage rows measured 153.1 µs, and session_tools does not call it. The demo offers read_file. No key. No socket.
+Copying 32 names measured 76.1 ns. Scoring 1,000 rows measured 149.64 µs. The demo offer is read_file. No key. No socket.
 
 [personal note]
 
 5/
-Next is skills: a directory of SKILL.md and an index that stays put for the session.
+That is chapter 23. The next harness chapter is skills: a cache-stable index of SKILL.md files.
 
 Read Chapter 23: [link]
 
@@ -27,12 +27,14 @@ Read Chapter 23: [link]
 ## LinkedIn
 Chapter 23 is out: Learned Tools.
 
-The session toolset could already reveal a name after a search. It did not remember which tools a task tends to use. The gateway now scores a usage log plus memory and a session note, stores the names, and lets the request path copy that list. The score itself stays off session_tools.
+This is the server crate. It vendors the chapter 15 gateway instead of path-depending on it, then installs a predicted tool list before the request. session_tools copies that list. It does not score memory or the usage log on the read.
 
-Hermes Agent's closest pieces are composite toolsets and the code_execution tool, which only stubs an allowlist of seven tools and stops a script at 50 calls. I kept both limits. The script is a line of "call tool json" rather than a Python sandbox. Applying 32 names measured 79.01 ns.
+Hermes Agent allows seven tools inside code execution and stops a script at 50 calls. The Rust script is `call tool json` lines, checked against that allowlist and against the offer. A composite or a macro is a saved name. Expanding it does not run the steps.
+
+Copying 32 names measured 76.1 ns. Scoring 1,000 rows measured 149.64 µs. The demo prints read_file and ok. No key.
 
 [personal note: one takeaway from writing this chapter]
 
-Next: using skills. Read Chapter 23: [link]
+Next: skills, on the harness. Read Chapter 23: [link]
 
 #Rust #AIAgents #LearningInPublic #SoftwareEngineering

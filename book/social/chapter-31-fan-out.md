@@ -4,21 +4,21 @@
 1/
 Chapter 31 is up: Fan-out and Gather.
 
-A board takes 100 tasks and refuses the 101st. Gather runs them eight at a time and joins the replies in task_index order. The parent does not see the child tool trace. 🧵
+The board accepts 100 tasks. The 101st schedule returns FanError::Full. gather runs them on the supervisor pool and joins replies in task_index order. tool_trace stays off that string. 🧵
 
 2/
-Hermes Agent sorts that batch in tools/delegate_tool_dispatch.py (_run_children_parallel). The parent sees the summary, not the child's tool calls (tools/delegate_tool.py). At the concurrency cap, a new async dispatch is rejected rather than queued.
+Hermes Agent runs children in parallel in tools/delegate_tool_dispatch.py (_run_children_parallel). _get_max_async_children sets the background cap to delegation.max_concurrent_children. A leftover delegation.max_async_children key is ignored with a one-time warning. At capacity a new async dispatch is rejected, not queued.
 
 3/
-This queue holds 100, then returns Full. The worker bound stays 8, from the supervisor pool. Those are two different caps.
+QUEUE_CAP here is 100, not the concurrent-children number. The pool that runs the tasks is still WORKER_BOUND of 8. Heartbeats are not this chapter. They stay in chapter 36.
 
 4/
-Scheduling 100 tasks onto a fresh board measured 4.285 µs. The demo prints a, then b, then c, from indexes 2, 0, 1. No key.
+The mean for schedule_100 is 4.12 µs, mean.point_estimate from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589). The demo prints three lines: a, b, c. No key.
 
 [personal note]
 
 5/
-Next is the critic: one permit from the same pool, a verdict, and a missing verdict is a reject.
+Next is the critic: one permit from the same pool, accept only on Verdict::Done, and a missing verdict word is Reject.
 
 Read Chapter 31: [link]
 
@@ -27,12 +27,12 @@ Read Chapter 31: [link]
 ## LinkedIn
 Chapter 31 is out: Fan-out and Gather.
 
-A hundred subagents need a queue with an end. Hermes Agent runs children in parallel, sorts the results by task_index, and shows the parent the summary rather than the child's tool calls. When the concurrency cap is hit, a new async dispatch is rejected instead of queued. I queued up to 100 and then refused, and gather still takes permits from the pool of eight.
+Parallel children need a stop. Hermes Agent runs them together, and a new async dispatch at the concurrency cap is rejected rather than queued. The background cap equals delegation.max_concurrent_children. I queued up to 100 and then returned FanError::Full, and gather still takes permits from the pool of 8. Replies come back sorted by task_index. The tool trace is not in the summary.
 
-Scheduling those 100 tasks measured 4.285 µs. The tool trace stayed on the task. It did not appear in the summary.
+The mean for schedule_100 is 4.12 µs.
 
-[personal note: one takeaway from writing this chapter]
+[personal note]
 
-Next: a critic that accepts or rejects, and does not do the work itself. Read Chapter 31: [link]
+Next: a critic that takes one permit and does not write the answer. Read Chapter 31: [link]
 
 #Rust #AIAgents #LearningInPublic #SoftwareEngineering
