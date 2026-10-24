@@ -2,7 +2,7 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 28 can run four stages in order on one context. A lot of work is not a sequence. A manager names specialists, they run, and only a summary comes back. That is the default team in this book. The crate is `steps/ch29-supervisor`, a copy of chapter 28 plus `supervisor`. The package is `ch29-supervisor`. Specialists are tools. They use the same `Tool` shape chapter 3 defined, so the loop does not learn a second way to call an agent.
+Chapter 28 can run four stages in order on one context. A lot of work is not a sequence. A manager names specialists, they run, and only a summary comes back. That is the default team in this book. The crate is `steps/ch29-supervisor`, a copy of chapter 28 plus `supervisor`. The package is `ch29-supervisor`. `Job` is the specialist: a name, a scripted reply, and an optional hold. It is not the `Tool` trait from chapter 3. The pool runs jobs. The tool trait stays the way the loop calls a tool.
 
 The bound is 8. Hermes caps concurrent children higher, at 10, and that default stays in the comments as Hermes's number. The harness measurement, and the pool, is eight, the same bound the dispatcher has used since chapter 3. `acquire` waits for a permit, and `Drop` wakes one waiter, so a finished specialist releases the slot even when the caller forgets. `thread::scope` runs the jobs and joins them, which keeps the borrows honest: a specialist cannot outlive the scope that lent it the context. `child_call` is a `Result`. The blocked tools are the ones a child must not have: `delegate_task`, `clarify`, `memory`, `send_message`, and cron. Depth is 1. A child does not spawn another supervisor. The worktree is a marker, opt-in, not a git operation this chapter performs. The reflection note is a string you enqueue. It does not run chapter 26's reviewer on the team turn.
 
@@ -546,7 +546,7 @@ The binary runs two scripted specialists and enqueues a reflection note that is 
 
 `enqueue_reflection` excludes `Pool::new`. The timed work is the lock and the push. `max_seen` stays 0 across that call. The queue cap inside the function is 64.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `29`. The ids are `29/schedule_eight` and `29/enqueue_reflection`. The old ids `27/schedule_eight` and `27/enqueue_reflection` are aliases in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The printed Criterion `time:` line is the slope, not the mean.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `29`. The ids are `29/schedule_eight` and `29/enqueue_reflection`. The old ids `27/schedule_eight` and `27/enqueue_reflection` are aliases in `benchmarks/descriptions.json`. The printed Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 

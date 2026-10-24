@@ -391,7 +391,7 @@ Sampling and elicitation limits (M7, `tools/mcp_tool_sampling.py`) are not in th
 
 ## What's next
 
-Chapter 5 is a minimal MCP server, a separate process from this client. The skeleton is `mcp-gateway/`. It offers an empty catalog and binds no socket. The chapter is not written yet. That process is where the catalog will live.
+Chapter 5 is a minimal MCP server, a separate process from this client. The skeleton is `mcp-gateway/`. The step crate offers a fixed list, `echo`, and a 32/8 gate, and it binds no socket. That process is where the catalog lives.
 
 Chapter 6 already measured what happens when the list is thousands of tools long. The generator stays. A session from this chapter can feed that cache through `cards_from_listed`. That chapter is the client half: it decides what enters the prompt.
 

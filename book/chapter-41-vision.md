@@ -418,7 +418,7 @@ The binary sniffs the canned PNG and prints the mime family. No download. No key
 |---|---|---|---|
 | `sniff_png` | 11.2 ns | sniff a 1×1 PNG under 1 ms | magic bytes, the length caps, the IHDR product |
 
-The mean is `11.2 ns`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `41`. The id is `41/sniff_png`. The alias list is empty. This id is new. It is not an alias of `40/fake_navigate`. I did not rewrite gh-pages history. The Criterion `time:` line is the slope, not the mean.
+The mean is `11.2 ns`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `41`. The id is `41/sniff_png`. The alias list is empty. This id is new. It is not an alias of `40/fake_navigate`. The Criterion `time:` line is the slope, not the mean.
 
 ```rust
 fn sniff_png(c: &mut Criterion) {

@@ -80,7 +80,7 @@ Starting 3 tests across 3 binaries
      Summary [   0.129s] 3 tests run: 3 passed, 0 skipped
 ```
 
-The three tests are the empty gateway, echo plus the duplicate, and the 34/8 gate. The gate test is the slow one, about 128 ms, because the tasks sleep.
+The three tests are the empty gateway, echo plus the duplicate, and the 32/8 gate. The gate test is the slow one, about 128 ms, because the tasks sleep.
 
 ```bash
 cargo run -p ch05-minimal-server
@@ -137,4 +137,4 @@ This process does not authenticate a caller. Default-deny and pairing are chapte
 
 ## What's next
 
-Chapter 6 is already written. It is the client half: schema cost, BM25, and a lazy prompt. Chapter 7 puts that index in this process and reloads it by swapping an `Arc`.
+Chapter 6 is the client half: schema cost, BM25, and a lazy prompt. Chapter 7 puts that index in this process and reloads it by swapping an `Arc`.

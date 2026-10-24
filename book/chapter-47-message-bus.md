@@ -4,7 +4,7 @@
 
 Chapter 46's processes can claim a card. They cannot publish a sentence to whoever is listening. A peer that wants to say "the build failed" without knowing the subscriber's inbox needs a bus: a topic, a bounded channel per subscriber, and a rule for what happens when one subscriber is slow. This chapter adds that bus. The crate is `steps/ch47-message-bus`, a copy of chapter 46 plus `bus`. The package is `ch47-message-bus`.
 
-`Envelope` is the message. `Sub` is a subscriber. `Bus` holds them. `subscribe` registers a name on a topic. The channel bound is `BUS_CAP`, 64, the same number as the agent inbox, so "slow" means the same thing in both places. `publish` fans the envelope out. `deliver` calls chapter 20's `redact_for_egress` before `try_send`. The narrow scrubber that used to sit beside the bus is gone. There is one egress function, and this chapter calls it. A published envelope that contains a key is scrubbed. `send_to` is the direct path and does not scrub, which the chapter treats as a hole you have to know about: publishers use `publish`. `publish_bot` counts toward the bot-loop guard, 20 delivered events and then `Cooldown`. There is no clock. Ordinary `publish` does not count. A full channel returns `Slow` instead of allocating a 65th slot. A different topic returns `Delivered(0)`.
+`Envelope` is the message. `Sub` is a subscriber. `Bus` holds them. `subscribe` registers a name on a topic. The channel bound is `BUS_CAP`, 64, the same number as the agent inbox, so "slow" means the same thing in both places. `publish` fans the envelope out. `deliver` calls chapter 20's `redact_for_egress` before `try_send`. `bus.rs` does not define its own scrubber. A published envelope that contains a key is scrubbed. `send_to` is the direct path and does not scrub, which the chapter treats as a hole you have to know about: publishers use `publish`. `publish_bot` counts toward the bot-loop guard, 20 delivered events and then `Cooldown`. There is no clock. Ordinary `publish` does not count. A full channel returns `Slow` instead of allocating a 65th slot. A different topic returns `Delivered(0)`.
 
 Chapter 48's workers call `skill_propose`, which publishes on this bus. They do not write the team store themselves. Chapter 49's external call is not this bus. It is a call to an agent outside the process, and it uses the same egress scrub on the way out. Keeping the scrub in one function is why a new channel cannot forget it. Forgetting it is how a key in a tool result becomes a key on the wire.
 
@@ -44,7 +44,7 @@ Rust, at the fan-out: each subscriber has an `mpsc` sender, `try_send` is the no
 >
 > `redact_for_egress` at line 1164 is the one scrub for text leaving the process. The docstring names chat platforms, A2A peers, and telemetry. The body calls `redact_sensitive_text(text, force=True)`, then, if `"earer"` remains in the text, replaces `_BEARER_RESIDUE_RE` with `Bearer [redacted]`. The regex wants a bracket token or 20 or more opaque characters. The comment above it says the 20-character floor is there so the English word "bearer" does not turn "the bearer of bad news" into `Bearer [redacted]`. The function fails closed. An exception returns `"[redaction-unavailable]"` and never the raw text.
 >
-> `bus.rs` does not define a function named `redact_for_egress`. I looked. `deliver` calls `crate::redact::redact_for_egress` before `try_send`. That is the chapter 20 function in `redact.rs`, re-exported from `lib.rs`. An earlier draft of this chapter described a second, narrower scrubber that only knew a bearer residue and an `sk-` token. That scrubber is gone. This file does not keep one.
+> `bus.rs` does not define a function named `redact_for_egress`. `deliver` calls `crate::redact::redact_for_egress` before `try_send`. That is the chapter 20 function in `redact.rs`, re-exported from `lib.rs`.
 >
 > **Adopted.** A bounded `sync_channel` of 64. The 21st bot publish is `Cooldown` and is not sent. Every body that `publish` and `publish_bot` hand to `deliver` goes through the real egress function before `try_send`.
 >
@@ -52,7 +52,7 @@ Rust, at the fan-out: each subscriber has an `mpsc` sender, `try_send` is the no
 >
 > **Deferred.** The 300 second window and the notify cursor. A real socket is not this file. Chapter 49 is the call that leaves the process.
 
-> **Guardrails.** E2 is called here. The name in the catalog is egress scrub. The narrow scrubber is gone. The full box is [Guardrails in this chapter](#guardrails-in-this-chapter).
+> **Guardrails.** E2 is called here. The name in the catalog is egress scrub. The full box is [Guardrails in this chapter](#guardrails-in-this-chapter).
 
 [personal note: a full channel that had to say slow]
 
@@ -639,7 +639,7 @@ fn publish_to_agents(c: &mut Criterion) {
 
 `iter_batched` runs the setup closure outside the timer. That closure builds a `Bus`, subscribes `a0` through `a99` on topic `work`, and keeps the 100 receivers. It is not timed. The timed routine calls `publish` with the envelope passed through `black_box`, then `black_box` of the result and the receivers. `redact_for_egress` of the body `ping` runs inside `deliver` before the 100 clones and the 100 `try_send` calls. `publish_bot` and `FakeModel` are not called. The `Slow` path is not taken. Every channel is empty, so the result is `Delivered(100)`. The bot-event counter stays 0. The descriptions file says the budget is under a millisecond, and that a number that fills 64 first would be the slow-subscriber test.
 
-The mean is 47.98 µs. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196), section `47`. The id is `47/publish_to_agents`. The old ids `45/publish_to_agents` and `43/publish_to_agents` are aliases in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. `.github/scripts/run_bench_section.sh` runs `cargo bench -p ch47-message-bus --bench bus --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10` for that section. The same flags are in `steps/ch47-message-bus/README.md`. The Criterion `time:` line is the slope, not the mean.
+The mean is 47.98 µs. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196), section `47`. The id is `47/publish_to_agents`. The old ids `45/publish_to_agents` and `43/publish_to_agents` are aliases in `benchmarks/descriptions.json`. `.github/scripts/run_bench_section.sh` runs `cargo bench -p ch47-message-bus --bench bus --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10` for that section. The same flags are in `steps/ch47-message-bus/README.md`. The Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 
@@ -667,7 +667,7 @@ The Rust egress function does not return `"[redaction-unavailable]"`. Hermes's d
 
 The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
-**Egress scrub (E2).** The catalog row is E2. The name is egress scrub. One stricter scrub for remote readers, and it also strips a bearer residue. The Hermes function is `agent/redact.py` `redact_for_egress`. This chapter calls the chapter 20 Rust function of that name, from `deliver`, before `try_send`. The narrow scrubber that used to live beside it is gone. `bus.rs` does not define one. The header `Authorization: Bearer sk-live-0123456789abcdef now` becomes a line that contains `Authorization: ***` and does not contain `sk-live`, and it does not become `Bearer [redacted]`, because the header replace consumes the scheme before the residue sweep. A bare `Bearer` plus 32 opaque characters does become `Bearer [redacted]`.
+**Egress scrub (E2).** The catalog row is E2. The name is egress scrub. One stricter scrub for remote readers, and it also strips a bearer residue. The Hermes function is `agent/redact.py` `redact_for_egress`. This chapter calls the chapter 20 Rust function of that name, from `deliver`, before `try_send`. `bus.rs` does not define its own scrubber. The header `Authorization: Bearer sk-live-0123456789abcdef now` becomes a line that contains `Authorization: ***` and does not contain `sk-live`, and it does not become `Bearer [redacted]`, because the header replace consumes the scheme before the residue sweep. A bare `Bearer` plus 32 opaque characters does become `Bearer [redacted]`.
 
 **Bot loop (J5).** The catalog row is J5, the gateway bot-loop guard. Hermes counts 20 bot messages in 300 seconds and then cools down for 600 seconds. `admit` returns `"tripped"` on the call that fills the window and `"cooldown"` while that deadline still holds. This crate counts 20 delivered `publish_bot` results and then returns `Cooldown`. There is no clock. Ordinary `publish` does not count.
 

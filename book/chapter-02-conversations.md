@@ -477,7 +477,7 @@ The inbox is a `Mutex<VecDeque<String>>`. Push and pop are the whole critical se
 > - `std::sync::Mutex` is the right lock when the section is a couple of pointer writes. Holding it across an `.await` would be the bug. This `submit` returns before any `.await`.
 > - `VecDeque` is a ring buffer. `push_back` plus `pop_front` is a queue. A `Vec` would also work, and would make "drop the oldest" shift every element.
 
-Chapters 29 and 32–34 reuse this inbox. Actors, the gateway, cron, and the editor submit turns here. This chapter only has the REPL, and the REPL still goes through the queue so those later callers do not need a second type.
+Chapters 35, 39, 43, and 44 reuse this inbox. Actors, the gateway, cron, and the editor submit turns here. This chapter only has the REPL, and the REPL still goes through the queue so those later callers do not need a second type.
 
 A plain mock reply has no usage, so `usage.calls` stays 0. When a test attaches a scripted `Usage` with `cost: Some(0.25)`, `ask` records it on `session.usage`. `0.25` is a test constant. It is not a bill from OpenRouter.
 

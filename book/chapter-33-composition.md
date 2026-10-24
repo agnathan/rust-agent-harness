@@ -34,7 +34,7 @@ Rust, at the refusal: the route is an enum, so "move" and "stay" are not boolean
 
 > **How Hermes does it**
 >
-> I read `hermes_cli/goals.py` (`DEFAULT_MAX_TURNS`, `DEFAULT_JUDGE_TIMEOUT`, `DEFAULT_GATE_TIMEOUT_SECONDS`, `DEFAULT_GATE_MAX_RETRIES`, `_parse_judge_response`) and `tools/delegate_tool_config.py` (`MAX_DEPTH`, `_DEFAULT_MAX_CONCURRENT_CHILDREN`, `_get_max_concurrent_children`, `_get_max_async_children`) on Hermes `main` at `9e01b44`.
+> I read `hermes_cli/goals.py` (`DEFAULT_MAX_TURNS`, `DEFAULT_JUDGE_TIMEOUT`, `DEFAULT_GATE_TIMEOUT_SECONDS`, `DEFAULT_GATE_MAX_RETRIES`, `_parse_judge_response`) and `tools/delegate_tool_config.py` (`MAX_DEPTH`, `_DEFAULT_MAX_CONCURRENT_CHILDREN`, `_get_max_concurrent_children`, `_get_max_async_children`) on Hermes `main` at `9e01b44`. Chapters 23 through 32 cite `ab3fe9dffb0a`. From here the citations are `9e01b44`, a later commit of the same tree.
 >
 > `DEFAULT_MAX_TURNS` is 20. `DEFAULT_JUDGE_TIMEOUT` is 30.0. `DEFAULT_GATE_TIMEOUT_SECONDS` is 300. `DEFAULT_GATE_MAX_RETRIES` is 3. The comment above the gate constants says a failed gate short-circuits the judge. `_parse_judge_response` prefers a session, then a pid, then seconds. The session keys it reads are `wait_on_session`, then `session_id`, then `wait_session`. The pid keys are `wait_on_pid`, `pid`, `wait_pid`. The seconds keys are `wait_for_seconds`, `seconds`, `wait_seconds`. A `wait` with none of those returns `"continue"`. `MAX_DEPTH` is 1. `_DEFAULT_MAX_CONCURRENT_CHILDREN` is 10. `_get_max_concurrent_children` reads `delegation.max_concurrent_children`, then the env var `DELEGATION_MAX_CONCURRENT_CHILDREN`, then 10. The floor is 1. The docstring says there is no ceiling. `_get_max_async_children` uses that same cap, and its docstring says a new async dispatch at capacity is rejected.
 >
@@ -520,7 +520,7 @@ The binary fans out two children, stays with the supervisor, and judges one scri
 |---|---|---|---|
 | `nested_eight` | 271.87 µs | eight children on the pool of 8 | `nested_fanout` with held 0 and width 8 |
 
-The pool is built before `b.iter`. The timed closure schedules eight `n{index}` tasks and gathers them on that pool with a zero hold. Width 9 is not in the sample. The mean is `271.87 µs`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `33`. The id is `33/nested_eight`. The old id `31/nested_eight` is an alias in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The printed Criterion `time:` line is the slope, not the mean.
+The pool is built before `b.iter`. The timed closure schedules eight `n{index}` tasks and gathers them on that pool with a zero hold. Width 9 is not in the sample. The mean is `271.87 µs`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `33`. The id is `33/nested_eight`. The old id `31/nested_eight` is an alias in `benchmarks/descriptions.json`. The printed Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 

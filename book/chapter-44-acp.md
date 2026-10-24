@@ -46,7 +46,7 @@ Rust, at the translate: the update and the mail are enums, and the mapping is a 
 >
 > **Adapted.** One `Update` becomes one `Mail` through `translate`, then one `Inbox::submit`. The Copilot client appends every chunk into a list and joins them after `session/prompt`. Stop reasons here are `end_turn` and `cancelled`. The permission map is `allow_once`, `allow_session`, `allow_always`, `deny`, and `deny_always`, written in this file because the adapter package is not in the checkout. `FakeModel` sees the update text. The bench translates one update onto an empty inbox and does not encode JSON.
 >
-> **Deferred.** A real editor session, the `acp_adapter` process, usage tokens on the response, and the permission prompt UI. Wiring `Mail` into `SessionInbox` is not this file. E1 and E2 are still absent.
+> **Deferred.** A real editor session, the `acp_adapter` process, usage tokens on the response, and the permission prompt UI. Wiring `Mail` into `SessionInbox` is not this file. E1 and E2 are chapter 20. This file does not call them.
 
 > **Guardrails.** The catalog has no ACP row. The permission map fails closed. The full box is [Guardrails in this chapter](#guardrails-in-this-chapter).
 
@@ -454,7 +454,7 @@ fn translate_update(c: &mut Criterion) {
 
 The `Update` is built before the bench, with text `hello` and `cancelled` false. `iter_batched` runs the setup closure outside the timer. That closure calls `Inbox::new(64)` and is not timed. The timed routine calls `translate` with the update passed through `black_box`, then `submit` of the mail, then `black_box` of the `Submit` value. The string clone and the push are inside the sample. The inbox is empty at the start of each sample, so the result is `Accepted`. `write_result`, `log_line`, `map_permission`, and `FakeModel` are not called. The `Full` path is not taken. The descriptions file says the budget is under a millisecond. The mean cell is the measurement.
 
-The mean is `132.4 ns`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `44`. The id is `44/translate_update`. The old ids `42/translate_update` and `40/translate_update` are aliases in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. `.github/scripts/run_bench_section.sh` runs `cargo bench -p ch44-acp --bench acp --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10` for that section. The same flags are in `steps/ch44-acp/README.md`. The Criterion `time:` line is the slope, not the mean.
+The mean is `132.4 ns`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `44`. The id is `44/translate_update`. The old ids `42/translate_update` and `40/translate_update` are aliases in `benchmarks/descriptions.json`. `.github/scripts/run_bench_section.sh` runs `cargo bench -p ch44-acp --bench acp --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10` for that section. The same flags are in `steps/ch44-acp/README.md`. The Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 
@@ -490,7 +490,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). It h
 
 **Inbox.** `INBOX_CAP` is 64, the same number as `INBOX_BOUND`. One `translate` plus one `submit` is one update. The next submit past the cap is `Full`.
 
-**Left for later.** The editor process, the missing `acp_adapter` directory, and redaction of a secret inside an update. E1 and E2 are still absent. `Mail` is not passed through `redact_for_egress`.
+**Left for later.** The editor process, the missing `acp_adapter` directory, and redaction of a secret inside an update. E1 and E2 are chapter 20. `Mail` is not passed through `redact_for_egress`.
 
 ## What you implement
 

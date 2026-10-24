@@ -832,7 +832,7 @@ fn index_swap(c: &mut Criterion) {
 
 Echo's body in this setup is `Say it back.`, the test's body, not `demo`'s `Say the line back.` Cite's body is `Name the file.`, the propose bench's body, not `Name the file you read.` The layer on the next skill is `Team`. Version is 2. `team_md` is the literal the descriptions `inputs` field quotes. `Index::bundled` in the setup does render echo's heading, and that render is outside the timer. The timed `swap_index` does not call `render_team`.
 
-The mean for `skill_propose` is 80.1 ns. The mean for `index_swap` is 200.3 ns. Each is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196), section `48`. The ids are `48/skill_propose` and `48/index_swap`. I did not rewrite gh-pages history. `.github/scripts/run_bench_section.sh` runs `cargo bench -p ch48-team-skills --bench skills --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10` for that section. The same flags are in `steps/ch48-team-skills/README.md`. The Criterion `time:` line is the slope, not the mean.
+The mean for `skill_propose` is 80.1 ns. The mean for `index_swap` is 200.3 ns. Each is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196), section `48`. The ids are `48/skill_propose` and `48/index_swap`. `.github/scripts/run_bench_section.sh` runs `cargo bench -p ch48-team-skills --bench skills --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10` for that section. The same flags are in `steps/ch48-team-skills/README.md`. The Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 

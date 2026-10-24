@@ -706,7 +706,7 @@ cargo bench -p ch52-evals --bench evals --locked -- --warm-up-time 1 --measureme
 | `append_event` | `82.2 ns` | one JSON object pushed onto an empty vec | `append_event` of `echo-hello` |
 | `saved_set` | `21.26 ms` | the three saved tasks, including the 20 ms sleep | `run_saved_evals` on a runtime built outside the loop |
 
-The ids are `52/append_event` and `52/saved_set`. The old ids `50/append_event` and `48/append_event` alias the first. The old ids `50/saved_set` and `48/saved_set` alias the second. They are the `aliases` arrays in `benchmarks/descriptions.json`. I did not rewrite gh-pages history.
+The ids are `52/append_event` and `52/saved_set`. The old ids `50/append_event` and `48/append_event` alias the first. The old ids `50/saved_set` and `48/saved_set` alias the second. They are the `aliases` arrays in `benchmarks/descriptions.json`.
 
 ```rust
 fn append_one(c: &mut Criterion) {

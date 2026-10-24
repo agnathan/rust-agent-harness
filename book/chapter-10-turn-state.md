@@ -33,7 +33,7 @@ Rust, for a new reader: an enum is the phase and the event. `match` is exhaustiv
 >
 > **Adopted.** A turn has a phase, and a finished turn is not the same slot as a running one. Soft stop and a budget wrap-up both pass through a wrap-up, and they do not end as the same phase. That split matches chapter 9: soft stop returns a cancel-shaped outcome, and a spent budget returns `Budget` or `Partial`. `run_loop` now records each of those observations on a `Driver`.
 >
-> **Adapted.** The table is exhaustive. Every `(Phase, TurnEvent)` pair is either `Ok(next)` or `Illegal`. Hermes stores the fields and lets the loop decide. I did not port `_LoopState`'s fields. Three events are new because the live loop has moves the first table did not name: `NoDone`, `BudgetAbort`, and `SoftWrapIgnoredTools`. Compression attempts, provider overflow, and verification holds stay in the chapters that own them (32 and 14).
+> **Adapted.** The table is exhaustive. Every `(Phase, TurnEvent)` pair is either `Ok(next)` or `Illegal`. Hermes stores the fields and lets the loop decide. I did not port `_LoopState`'s fields. Three events are new because the live loop has moves the first table did not name: `NoDone`, `BudgetAbort`, and `SoftWrapIgnoredTools`. Compression attempts are chapter 34. Provider overflow stays with the failure path in chapter 14. Verification holds are not a row in this table.
 >
 > **Deferred.** `run_script` is still a fake model: a list of `ScriptStep` values, no HTTP, no key. Empty-response retries and the repetition guard stay in chapter 14. They are not new phases here.
 
@@ -878,12 +878,7 @@ The binary runs `[Tools, Tools, Text]`. No key.
 
 `turn_transition` is `step` and `black_box` of the next phase. Building the enums is the arguments, which are `Copy`. `scripted_turn` runs `run_script` on a three-element slice inside the sample. There is no runtime, no sleep, and no provider.
 
-Those two means are `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `10`, on this pull request's tree. The ids and the function names stay, which is what keeps the dashboard history continuous. Do not paste a local `cargo bench`. The printed Criterion `time:` line is the slope, not this mean.
-
-<!-- PR-BENCH
-10/turn_transition
-10/scripted_turn
--->
+Those two means are `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `10`. The printed Criterion `time:` line is the slope, not this mean.
 
 ### Milestone demo
 

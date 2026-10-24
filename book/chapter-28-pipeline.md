@@ -461,7 +461,7 @@ The binary builds one context, runs outline, draft, critique, and revise, and pr
 
 `copy_transcript` uses the same context. The timed closure clones `messages`. `run` does not call this. `hand_off` does not call this.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `28`. The ids are `28/arc_pass` and `28/copy_transcript`. The old ids `26/arc_pass` and `26/copy_transcript` are aliases in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The printed Criterion `time:` line is the slope, not the mean.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `28`. The ids are `28/arc_pass` and `28/copy_transcript`. The old ids `26/arc_pass` and `26/copy_transcript` are aliases in `benchmarks/descriptions.json`. The printed Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 

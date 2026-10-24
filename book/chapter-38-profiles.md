@@ -409,7 +409,7 @@ cargo bench -p ch38-profiles --bench profiles --locked -- --warm-up-time 1 --mea
 
 `resolve_profile` is `benches/profiles.rs`. It builds the multiplex store, the `writer` profile, and the scope before the bench. The timed closure is `b.iter`. Inside: `resolve` of `writer` and `API_KEY`, both passed through `black_box`, then `black_box` of the `Resolved`. The `HashMap` lookup, the secret clone, and the `Arc` clone are inside the sample. Building the profile is outside it. `FakeModel` is not constructed. The fail-closed path is not taken. `secret_leaked_into_prompt` is not called. The sample is the scoped hit.
 
-The mean is `96.7 ns`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `38`. The id is `38/resolve_profile`. The old id `36/resolve_profile` is an alias in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The Criterion `time:` line is the slope, not the mean.
+The mean is `96.7 ns`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `38`. The id is `38/resolve_profile`. The old id `36/resolve_profile` is an alias in `benchmarks/descriptions.json`. The Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 

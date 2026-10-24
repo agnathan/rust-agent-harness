@@ -513,7 +513,7 @@ The binary is one temp database. A child session and a user session both contain
 
 `discover_10k` opens a temp database, migrates, and inserts 10,000 messages into session `desk` before the bench. Message 5,000 contains `zephyrtoken`. The other 9,999 are `note N`. `install_fts` rebuilds the trigram index before the bench. The timed closure is `b.iter`. Inside: `session_search` with the query `zephyrtoken`, no session id, and no anchor, both the store and the query passed through `black_box`. The inserts and the rebuild are excluded. No model is called. The result is one hit in `desk`.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `20`.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `22`.
 
 ### Milestone demo
 
@@ -537,7 +537,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Reca
 
 **What did not.** The index is not updated on every insert. The full trigger set in `FTS_TRIGRAM_SQL` is not ported. Cron is not excluded from the trigram table the way `FTS_TRIGRAM_EXCLUDED_SOURCES` excludes it.
 
-**Left for later.** Secret redaction (E1, E2) is still absent. A poisoned memory file is chapter 21's scan, not this search.
+**Left for later.** A poisoned memory file is chapter 21's scan, not this search. Transcript redaction (E1, E2) is chapter 20: `append_turn` scrubs before the insert. This search does not scrub again.
 
 ## Chapter summary
 

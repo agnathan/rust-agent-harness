@@ -523,7 +523,7 @@ The binary is one fake reply in a temp database. The file is removed when the pr
 
 `wal_append` opens a temp database and runs `migrate` before the bench. The timed closure is `b.iter`. Inside: `append_turn` of session `bench`, user `hi`, assistant `pong`, with each argument passed through `black_box`. The sample is the transaction and the queue push. Opening the file and creating the tables are excluded. No FTS insert runs. The queue is capped at 64, so later samples drop the oldest id instead of growing without a bound.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `18`.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `20`.
 
 ### Milestone demo
 
@@ -549,7 +549,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Laye
 
 **What did not.** Subagent sessions are stored if you pass that source. Hiding them is chapter 22. Memory writes and the approval gate (A9) are chapter 21 and chapter 25. This chapter does not scan message text.
 
-**Left for later.** Secret redaction (E1, E2) is still absent.
+**Left for later.** Plugin-registered patterns and the vault. `append_turn` stores the E1 scrub and does not call `redact_for_egress`.
 
 ## Chapter summary
 

@@ -504,7 +504,7 @@ The binary opens the canned page and prints the title. No browser process. No ke
 |---|---|---|---|
 | `fake_navigate` | 1.97 µs | a canned navigation under 1 ms | secret check, SSRF check, map lookup, clip, wrap, JSON |
 
-The mean is `1.97 µs`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `40`. The id is `40/fake_navigate`. `descriptions.json` records `"aliases": []`. This id is new. It is not another name for `39/enqueue_platform` or for a chapter 16 web bench. I did not rewrite gh-pages history. The Criterion `time:` line is the slope, not the mean.
+The mean is `1.97 µs`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `40`. The id is `40/fake_navigate`. `descriptions.json` records `"aliases": []`. This id is new. It is not another name for `39/enqueue_platform` or for a chapter 16 web bench. The Criterion `time:` line is the slope, not the mean.
 
 ```rust
 fn fake_navigate(c: &mut Criterion) {

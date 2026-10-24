@@ -2,7 +2,7 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 29's supervisor calls specialists and gets summaries back. The parent still owns the task. Sometimes ownership should move: a router decides that a different agent continues, and the first agent is done. If that transfer copied the whole transcript, the next agent would see scratch it should not see, and if the transfer rewrote the system prompt, chapter 2's cache rule would break. This chapter filters the transcript and then moves a pointer. The crate is `steps/ch30-handoffs`, a copy of chapter 29 plus `handoffs`. The package is `ch30-handoffs`.
+Chapter 29's supervisor calls specialists and gets summaries back. The parent still owns the task. Sometimes ownership should move: a router decides that a different agent continues, and the first agent is done. If that transfer copied the whole transcript, the next agent would see scratch it should not see. This chapter filters the transcript and then moves the owner. It does not rewrite the system prompt. Chapter 2's cache rule is why that prefix has to stay put. The code's job is the filter, not a prompt edit. The crate is `steps/ch30-handoffs`, a copy of chapter 29 plus `handoffs`. The package is `ch30-handoffs`.
 
 The board is a count and an owner. `filter_transcript` drops scratch and keeps order. `handoff` filters, then counts, then writes the owner. A max-handoff limit stops a task from bouncing forever. The demo shows the next owner and the filtered length. The bench times the filter on 100 messages, which is the copy the next owner receives, not the full transcript. Platform re-bind, the part where a chat session starts talking to the new owner, stays in chapter 39. This chapter changes the owner field. It does not talk to Telegram.
 
@@ -441,7 +441,7 @@ The binary filters one scratch line and moves the owner from `outline` to `draft
 
 `filter_100` builds the vec before `b.iter`. The timed closure is `filter_transcript` and `black_box` of the new vec. No board. No model.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `30`. The id is `30/filter_100`. The old id `28/filter_100` is an alias in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The printed Criterion `time:` line is the slope, not the mean.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `30`. The id is `30/filter_100`. The old id `28/filter_100` is an alias in `benchmarks/descriptions.json`. The printed Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 

@@ -144,4 +144,4 @@ Secret redaction (E1, E2) is still not in this process. Rate limits and the per-
 
 ## What's next
 
-Chapter 9, the agent loop, is already written. It does not call this gateway. The loop's `search_tools` is the client-side one from chapter 6. Wiring the loop to this session view comes after both exist. Chapter 10 is the transition table around the loop's exits.
+Chapter 9 is the agent loop. It does not call this gateway. The loop's `search_tools` is the client-side one from chapter 6. Wiring the loop to this session view comes after both exist. Chapter 10 is the transition table around the loop's exits.

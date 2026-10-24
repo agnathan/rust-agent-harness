@@ -94,7 +94,7 @@ pub use limits::{Catalog, LimitedGateway, SessionError, SessionView};
 
 `catalog` is the chapter 7 gateway: native tools, plugin tools, an in-memory upstream list, and BM25 search. `session` is the chapter 8 view. `limits` is the chapter 15 wrapper: permits, an idempotent retry, a breaker, and the caps of 50. The root of `lib.rs` is the chapter 23 learned gateway: `predict`, `LearnedGateway`, composites, macros, and `run_code_mode`, with `SANDBOX_ALLOWED` and `CODE_MODE_MAX_CALLS` of 50. `federation` is chapter 37: `Policy`, `Pool::pick`, `pool_for`, and `discover` with `DISCOVERY_CONCURRENCY` of 4. Those functions were walked in those chapters. This chapter does not reimplement them and does not call them from `service`.
 
-`service.rs` opens with a comment that still says book chapter 40. The book number is 42. The module is `gwservice::service`. `main.rs` is three lines:
+The module is `gwservice::service`. `main.rs` is three lines:
 
 ```rust
 use gwservice::service::demo;
@@ -611,7 +611,7 @@ The binary places one session on the first replica. No key.
 |---|---|---|---|
 | `route_session` | 19.7 ns | a session id picks a replica | one map lookup after 64 placements |
 
-The function name is `route_session`. The bench id is `42/route_session`. The old ids `40/route_session` and `38/route_session` are aliases in `benchmarks/descriptions.json`. The function name did not change when the id moved. I did not rewrite gh-pages history.
+The function name is `route_session`. The bench id is `42/route_session`. The old ids `40/route_session` and `38/route_session` are aliases in `benchmarks/descriptions.json`. The function name did not change when the id moved.
 
 ```rust
 fn route_session(c: &mut Criterion) {
@@ -668,7 +668,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
 **Drain.** Accepted calls finish through `finish`. New calls get `Draining`. The marker file in `gateway/drain_control.py` is the messaging gateway. This bool does not read it.
 
-**Left for later.** Token issuance, a real trace exporter, Redis, a listener, the OSV HTTP call, `pipx`, and path basenames. E1 and E2 are still absent. oha is not measured, because this step does not bind a socket.
+**Left for later.** Token issuance, a real trace exporter, Redis, a listener, the OSV HTTP call, `pipx`, and path basenames. E1 and E2 live on the harness in chapter 20. This server crate does not call them. oha is not measured, because this step does not bind a socket.
 
 ## What you implement
 

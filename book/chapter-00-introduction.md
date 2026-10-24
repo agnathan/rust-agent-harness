@@ -24,13 +24,7 @@ Rust shows up in sidebars when the design needs it: a struct for a message, an e
 
 ## What is an "agent harness"?
 
-Strip away the hype and an AI agent is a loop:
-
-1. Send the conversation so far, plus a list of available tools, to a language model.
-2. If the model answers with text, you're done.
-3. If the model asks to call tools ("read this file", "search the web", "run this command"), run them, append the results to the conversation, and go back to step 1.
-
-The *harness* is everything around that loop that turns it from a demo into something you can trust:
+An agent is the loop from the opening: send the conversation and the tools, stop when the model answers with text, or run a tool and ask again. The *harness* is everything around that loop that turns it from a demo into something you can trust:
 - talking to different model providers
 - defining and running tools safely
 - enforcing budgets so the agent can't loop forever
@@ -90,6 +84,6 @@ If you're new to Rust like me, read the chapters in order and do the exercises. 
 
 [personal note: first impressions of Rust after the setup chapter]
 
-If you already know Rust and are here for the agent architecture, skim to Chapter 9 (the loop), Chapter 10 (the turn state machine), and Chapters 27 and 33–34 (the supervisor, actors, and supervision). Each has a "How Hermes does it" section with file paths, so you can read the Python next to the Rust.
+If you already know Rust and are here for the agent architecture, skim to Chapter 9 (the loop), Chapter 10 (the turn state machine), and Chapters 29, 35, and 36 (the supervisor, actors, and supervision). Each has a "How Hermes does it" section with file paths, so you can read the Python next to the Rust.
 
 Let's start with `cargo new`.

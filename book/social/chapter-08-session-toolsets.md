@@ -27,7 +27,7 @@ The dynamic arm measured 5.687 ms. Revealing every tool measured 8.355 ms. Those
 [personal note]
 
 6/
-The agent loop is already written. It does not call this gateway yet. Chapter 10 is the transition table around the loop's exits.
+Chapter 9 is the agent loop. It does not call this gateway. Chapter 10 is the transition table around the loop's exits.
 
 Read Chapter 8: [link]
 

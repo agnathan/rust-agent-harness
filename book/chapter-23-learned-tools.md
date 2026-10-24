@@ -34,7 +34,7 @@ Rust, at the offer: `Arc` is the installed set, swapped the way chapter 7 swaps 
 
 > **How Hermes does it**
 >
-> I read `toolsets.py` (the `code_execution` toolset entry, `create_custom_toolset`, `get_toolset_info`) and `tools/code_execution_tool.py` (`SANDBOX_ALLOWED_TOOLS`, `DEFAULT_MAX_TOOL_CALLS`, `generate_hermes_tools_module`, `MAX_STDOUT_BYTES`) on Hermes `main` at `ab3fe9dffb0a`.
+> I read `toolsets.py` (the `code_execution` toolset entry, `create_custom_toolset`, `get_toolset_info`) and `tools/code_execution_tool.py` (`SANDBOX_ALLOWED_TOOLS`, `DEFAULT_MAX_TOOL_CALLS`, `generate_hermes_tools_module`, `MAX_STDOUT_BYTES`) on Hermes `main` at `ab3fe9dffb0a`. Chapters 11 through 22 cite `cf71b1aa`. This chapter cites `ab3fe9dffb0a`, a later commit of the same repository.
 >
 > `code_execution` is a toolset entry whose description is "Run Python scripts that call tools programmatically (reduces LLM round trips)". Its tool list is `execute_code`. `debugging` includes `web` and `file`, so `get_toolset_info` sets `is_composite` when `includes` is non-empty. `create_custom_toolset` registers a runtime toolset from a name, a description, and lists of tools and includes.
 >
@@ -98,7 +98,7 @@ pub fn session_tools(&self, session_id: &str) -> Option<SessionView> {
 
 `pub mod catalog` makes the module visible to other crates as `gw_learned::catalog`. `mod catalog` without `pub` would keep it private to this crate. I made `catalog`, `limits`, and `session` public so a reader of this step can open the vendored code, and so `pub` items inside them are not dead-code warnings. `pub use limits::SessionView` puts `SessionView` at the crate root. Callers write `gw_learned::SessionView`. They do not have to know it was defined in `session.rs` and re-exported through `limits.rs`.
 
-A path dependency would have been `ch15-limits = { path = "../ch15-limits" }` and `use gw_limits::LimitedGateway`. That compiles, and it is what the previous draft of this chapter did. It also means the step is not a snapshot. Vendoring is the rule for the server line from chapter 15 on.
+A path dependency would have been `ch15-limits = { path = "../ch15-limits" }` and `use gw_limits::LimitedGateway`. That compiles, and it means the step is not a snapshot: a later edit to chapter 15 would change this chapter's tree. Vendoring is the rule for the server line from chapter 15 on.
 
 ## 23.2 The score is a plain function
 
@@ -523,7 +523,7 @@ The binary opens one session, refreshes from one usage row and a memory sentence
 
 `predict_offline` builds 64 names and 1,000 usage rows before the bench. The timed closure is `b.iter`. Inside: `predict` with the input passed through `black_box`. No gateway, no session, no model.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589). The printed Criterion `time:` line is the slope, not the mean. The ids stay `23/apply_offered` and `23/predict_offline`. The old ids `21/apply_offered` and `21/predict_offline` are aliases in `benchmarks/descriptions.json`. I did not rewrite gh-pages history.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `23`. The printed Criterion `time:` line is the slope, not the mean. The ids stay `23/apply_offered` and `23/predict_offline`. The old ids `21/apply_offered` and `21/predict_offline` are aliases in `benchmarks/descriptions.json`.
 
 ### Milestone demo
 

@@ -2,7 +2,7 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 8 defined three ways to offer tools for one fake task and counted schema tokens, call tokens, and result tokens. Chapter 50's research team is a harness story. It does not answer the catalog question: how many tokens does the dynamic offer cost, does the task still succeed, and what does a hundred in-process dispatches cost? This chapter answers that on the server. The crate is `steps/ch51-capstone`. It copies chapter 42, library name `gwservice`, new module `capstone`. It is not on the harness copy chain. It binds no socket. `oha` is not run, because there is no listener to point it at. `mcp-gateway` re-exports `LearnedGateway` from this crate as `Gateway`, and it re-exports chapter 8's session types beside it.
+Chapter 8 defined three ways to offer tools for one fake task and counted schema tokens, call tokens, and result tokens. Chapter 50's research team is a harness story. It does not answer the catalog question: how many tokens does the dynamic offer cost, does the task still succeed, and what does a hundred in-process dispatches cost? This chapter answers that on a sample of 32 cards. Each schema is `{"name":"tool_NN"}`, 18 bytes. `approx_tokens` is `div_ceil` of that length by 4, so one card is 5 tokens and the three arms are 160, 40, and 5. That is the arithmetic of this sample, not a tokenizer and not chapter 6's 10,000-tool list. The crate is `steps/ch51-capstone`. It copies chapter 42, library name `gwservice`, new module `capstone`. It is not on the harness copy chain. It binds no socket. `oha` is not run, because there is no listener to point it at. `mcp-gateway` re-exports `LearnedGateway` from this crate as `Gateway`, and it re-exports chapter 8's session types beside it.
 
 `Card` is a tool in the sample catalog. `Arm` is dynamic, static, or every tool. `sample_catalog` builds the fixed set the three arms share. `approx_tokens` divides by four and rounds up with `div_ceil`, so the count is deterministic and does not call a tokenizer. `tokens_of` and `offers_needed` are the arithmetic. `compare` runs the three arms and reports tokens and task success for each. The dynamic arm offers the names the task needs. The static arm offers a fixed eight. The every-tool arm offers the whole sample. `task_arms` is the rename task, the same shape as chapter 8's fake task. `load` admits 100 in-memory dispatches. `p99` is the nearest-rank percentile inside that process, not a network percentile. `admit` is the gate the load passes through. `demo` prints the arms and the load line.
 
@@ -542,7 +542,7 @@ cargo bench -p ch51-capstone --bench capstone --locked -- --warm-up-time 1 --mea
 | `dynamic_tokens` | `264.8 ns` | the dynamic arm's token count, which is 5 | `compare` of `tool_07`, then `arms[2].tokens` |
 | `load_100` | `122.77 µs` | 100 in-memory calls, the sort, and `p99` | `load(100)` |
 
-The ids are `51/dynamic_tokens` and `51/load_100`. The old ids `49/dynamic_tokens` and `47/dynamic_tokens` alias the first. The old ids `49/load_100` and `47/load_100` alias the second. They are the `aliases` arrays in `benchmarks/descriptions.json`. I did not rewrite gh-pages history.
+The ids are `51/dynamic_tokens` and `51/load_100`. The old ids `49/dynamic_tokens` and `47/dynamic_tokens` alias the first. The old ids `49/load_100` and `47/load_100` alias the second. They are the `aliases` arrays in `benchmarks/descriptions.json`.
 
 ```rust
 fn dynamic_tokens(c: &mut Criterion) {

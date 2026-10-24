@@ -63,7 +63,7 @@ Rust, beside the types: a permit is an owned guard, and releasing it is a drop, 
 >
 > **Adopted.** Both caps at 50. The block happens before the backend call. A `tasks` array counts as its length. `list`, `steer`, and `stop` add nothing and still run. The two block sentences, with the count and the cap filled in.
 >
-> **Adapted.** The breaker, the 34/8 gate, the hedge, and 429/503 handling are this chapter's server policy. A transport error, or a status other than 429 or 503, retries once when the tool is idempotent. 429 and 503 do not retry. Three failed calls open the breaker. A success clears the failure count only while the breaker is still closed. A hedge starts a second call only for an idempotent tool and keeps the first success.
+> **Adapted.** The breaker, the 32/8 gate, the hedge, and 429/503 handling are this chapter's server policy. A transport error, or a status other than 429 or 503, retries once when the tool is idempotent. 429 and 503 do not retry. Three failed calls open the breaker. A success clears the failure count only while the breaker is still closed. A hedge starts a second call only for an idempotent tool and keeps the first success.
 >
 > **Deferred.** The 30-second cooldown that doubles to 10 minutes is not copied. A half-open breaker, shared rate-limit state, and the socket stay later (chapters 35 and 38). Chapter 9 still counts a tool named `delegate` against `max_subagent_iterations`. This chapter counts `delegate_task`.
 

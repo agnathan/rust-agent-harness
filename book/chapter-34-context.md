@@ -520,7 +520,7 @@ The binary loads `AGENTS.md` as the two words `Be direct.`, shares the snapshot,
 |---|---|---|---|
 | `share_snapshot` | 4.86 ns | one `Arc` of the rules text | `share`, which is `Arc::clone` |
 
-The string is built before `b.iter`. The timed closure clones the `Arc`. It does not scan and it does not compress. The mean is `4.86 ns`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `34`. The id is `34/share_snapshot`. The old id `32/share_snapshot` is an alias in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The printed Criterion `time:` line is the slope, not the mean.
+The string is built before `b.iter`. The timed closure clones the `Arc`. It does not scan and it does not compress. The mean is `4.86 ns`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `34`. The id is `34/share_snapshot`. The old id `32/share_snapshot` is an alias in `benchmarks/descriptions.json`. The printed Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 

@@ -2,7 +2,7 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 35 can run an agent as a task with a bounded inbox. A task that panics, or that sits inside a tool and never returns, stays dead or stays stuck. Chapter 9 can cancel a call. It does not restart the child, and it does not decide that "no progress" has gone on long enough. This chapter does both. The crate is `steps/ch36-supervision`, a copy of chapter 35 plus `supervision`. The package is `ch36-supervision`. Heartbeats, deferred by chapter 29 and chapter 31, land here.
+Chapter 35 can run an agent as a task with a bounded inbox. A task that panics, or that sits inside a tool and never returns, stays dead or stays stuck. Chapter 9 can cancel a call. It does not retry the child, and it does not decide that "no progress" has gone on long enough. This chapter's `restart_child` calls `complete` a second time after `record`. That is one retry of one completion, with bookkeeping, not a new task and not a restart of chapter 35's actor. The crate is `steps/ch36-supervision`, a copy of chapter 35 plus `supervision`. The package is `ch36-supervision`. Heartbeats, deferred by chapter 29 and chapter 31, land here.
 
 `Supervisor::record` is the chain of what the child has done. `restart_child` retries once, and the demo prints the retry. The cancellation token and the budget stay the ones chapter 9 put on the call. `Pulse` and `is_stale` are the heartbeat. The interval is 30 seconds. Idle stale is 15 cycles, 450 seconds. A child that is inside a tool uses 40 cycles, 1,200 seconds. Progress is a new iteration, a different tool, or a newer `last_activity_ts`. An in-flight model wait refreshes that timestamp, so a slow model is not idle. `is_stale` does not sleep and does not start a thread. The caller asks, and the caller decides to restart. That keeps the clock out of the function the bench times.
 
@@ -29,7 +29,6 @@ Rust, at the pulse: the timestamps are integers, and the comparison is pure, whi
 | 36.3 | `steps/ch36-supervision` | `Supervisor`, `record`, `fail_io` |
 | 36.4 | `steps/ch36-supervision` | `restart_child` and `demo` |
 | 36.5 | `steps/ch36-supervision` | heartbeat constants, `Pulse`, `is_stale` |
-| 36.6 | `steps/ch36-supervision` | the tests in `tests/supervision.rs` |
 
 > **How Hermes does it**
 >
@@ -450,7 +449,7 @@ cargo bench -p ch36-supervision --bench supervision --locked -- --warm-up-time 1
 
 `restart_bookkeeping` is `benches/supervision.rs`. It uses `iter_batched`. The setup closure calls `Supervisor::new` and is not timed. The timed routine calls `record(0)` with the timestamp passed through `black_box`, then `black_box` of the bool. `BatchSize::SmallInput` builds a new supervisor for each sample. The chain length is 1, so the breaker does not trip. `FakeModel` is not constructed. `restart_child` is not called. `is_stale` is not called. No sleep runs. The 300 second gap is a comparison against the argument `0` on an empty vec, not a wait.
 
-The mean is `29.8 ns`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `36`. The id is `36/restart_bookkeeping`. The old id `34/restart_bookkeeping` is an alias in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The Criterion `time:` line is the slope, not the mean.
+The mean is `29.8 ns`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `36`. The id is `36/restart_bookkeeping`. The old id `34/restart_bookkeeping` is an alias in `benchmarks/descriptions.json`. The Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 

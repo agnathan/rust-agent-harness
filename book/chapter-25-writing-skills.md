@@ -717,7 +717,7 @@ The binary writes one skill under a temp directory and prints the verdict. No ke
 
 `enqueue_unsolicited` opens a `Writer` on a temp directory before the bench. The timed closure is `b.iter`. Inside it: `enqueue_background` of `create notes`, passed through `black_box`. The queue drops the oldest job at 64. No skill directory is created.
 
-The Mean cells are `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `25`. The ids are `25/scan_one_skill` and `25/enqueue_unsolicited`. The old ids `23/scan_one_skill` and `23/enqueue_unsolicited` are aliases in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. Criterion also prints a `time:` line. That line is the slope. It is not the mean.
+The Mean cells are `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `25`. The ids are `25/scan_one_skill` and `25/enqueue_unsolicited`. The old ids `23/scan_one_skill` and `23/enqueue_unsolicited` are aliases in `benchmarks/descriptions.json`. Criterion also prints a `time:` line. That line is the slope. It is not the mean.
 
 ### Milestone demo
 
@@ -755,7 +755,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). This
 
 **Off the request path.** `enqueue_background` does not scan and does not create a skill. The scan of a real write runs at the write.
 
-**Left for later.** `.skillignore` is deferred. `_guard_agent_created_enabled` defaults off in Hermes. This crate calls `scan_text` on create, patch, write, and install. E1 and E2 are still absent. Chapter 27 calls `scan_text` and `should_allow_install` from the curator, and that call stays off the request path.
+**Left for later.** `.skillignore` is deferred. `_guard_agent_created_enabled` defaults off in Hermes. This crate calls `scan_text` on create, patch, write, and install. E1 and E2 are chapter 20, already in this crate. This chapter's scan is `scan_text`, not that redactor. Chapter 27 calls `scan_text` and `should_allow_install` from the curator, and that call stays off the request path.
 
 ## Chapter summary
 

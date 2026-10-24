@@ -559,7 +559,7 @@ The binary writes one skill, ages it 14 days, and runs the pass. No key. The enq
 
 `enqueue_curation` opens a `Curator` on a temp directory before the bench. The timed closure is `b.iter`. Inside it: `enqueue`, then `queue_len` passed through `black_box`. No snapshot is built. No skill is scanned or moved. The queue drops the oldest job at 64.
 
-The Mean cell is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `27`. The id is `27/enqueue_curation`. The old id `25/enqueue_curation` is an alias in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. Criterion also prints a `time:` line. That line is the slope. It is not the mean.
+The Mean cell is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `27`. The id is `27/enqueue_curation`. The old id `25/enqueue_curation` is an alias in `benchmarks/descriptions.json`. Criterion also prints a `time:` line. That line is the slope. It is not the mean.
 
 ### Milestone demo
 
@@ -597,7 +597,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Cura
 
 **Consolidate.** `CONSOLIDATE` is false. The true branch sets `consolidated` to 0 and does not call a model.
 
-**Left for later.** A real clock is deferred. A scheduler thread is deferred. E1 and E2 are still absent. `drive_loop` still does not run the chapter 26 reviewer, and it does not call `enqueue`.
+**Left for later.** A real clock is deferred. A scheduler thread is deferred. E1 and E2 are chapter 20, already in this crate. The curator does not call them. `drive_loop` still does not run the chapter 26 reviewer, and it does not call `enqueue`.
 
 ## Chapter summary
 

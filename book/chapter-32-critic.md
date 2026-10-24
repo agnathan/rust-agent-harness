@@ -4,11 +4,11 @@
 
 Chapter 31 can gather a hundred replies into an ordered summary. Somebody still has to say whether the summary is good enough to stop. If the same agent that did the work also grades it, the grade tends to agree with the work. This chapter adds a critic that reads the summary and does not do the task. The crate is `steps/ch32-critic`, a copy of chapter 31 plus `critic`. The package is `ch32-critic`.
 
-The critic is a tool, the same trait as every specialist, and it takes one permit from the chapter 29 pool. It does not take eight. A judge that ran wide would starve the workers it is judging. `parse_verdict` scans the reply for one word, so a chatty model still yields a single decision. The snippet the critic sees is cut on a character boundary, which matters in Rust because a string slice must not land in the middle of a UTF-8 sequence. `judge` takes the permit, reads, and does not push a new task onto the fan-out. The demo accepts. The bench times one permit.
+`judge` is a function, not the `Tool` trait and not chapter 29's `Job`. It takes one permit from the chapter 29 pool. It does not take eight. A judge that ran wide would starve the workers it is judging. `parse_verdict` scans the reply for one word, so a chatty model still yields a single decision. The snippet the critic sees is cut on a character boundary, which matters in Rust because a string slice must not land in the middle of a UTF-8 sequence. `judge` takes the permit, reads, and does not push a new task onto the fan-out. The demo accepts. The bench times one permit.
 
 Chapter 33 will loop on this verdict: a judge continuation, a `wait` target, and the quality-gate shell commands deferred from chapter 30. Those stay out of this file so a single judgment is testable without a state machine. The critic also must not write a skill. A bad grade is information for the parent. Turning every rejection into a new procedure is how curation gets a pile of "do not do the thing we just did" skills. Chapter 26 can review the run afterward, with the skill tools, off the hot path.
 
-The pattern is the small version of a rule the whole team half keeps repeating. Workers do the work. A different role looks at the result. The look takes a bounded resource so the look cannot become the work. That is true of the critic's one permit, of the reviewer's tool slice, and of the curator's enqueue.
+The pattern is the small version of the rule this part keeps: workers work, and someone else checks. Workers do the work. A different role looks at the result. The look takes a bounded resource so the look cannot become the work. That is true of the critic's one permit, of the reviewer's tool slice, and of the curator's enqueue.
 
 Rust, at the snippet: indexing a `&str` is by byte, and `is_char_boundary` is the check before you slice. The verdict parser is a scan, not a JSON schema, because the model returns a sentence. The permit is the same guard type as chapter 29, so the pool's accounting stays one type.
 
@@ -404,7 +404,7 @@ The binary judges one scripted reply. No key.
 
 `judge_one_permit` builds the pool before `b.iter`. The timed closure acquires one permit, locks the notes, parses, copies the short snippet, and drops the permit. The 30 second constant is not a sleep in that closure.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `32`. The id is `32/judge_one_permit`. The old id `30/judge_one_permit` is an alias in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The printed Criterion `time:` line is the slope, not the mean.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `32`. The id is `32/judge_one_permit`. The old id `30/judge_one_permit` is an alias in `benchmarks/descriptions.json`. The printed Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 

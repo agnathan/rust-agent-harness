@@ -463,7 +463,7 @@ async fn drive_loop(
 ) -> TurnOutcome {
 ```
 
-`drive_loop` checks `cancel.is_cancelled()` on the turn's `CancelFlag`. That flag is the chapter 15 cancel, the one that stops the user turn. It is not `Fork::cancel`. The body of `drive_loop` does not name `reflection`, `finalize`, or `spawn_reviewer`. I looked for those names in `agent.rs`. The only hit in that file is the `drive_loop` definition itself, and the calls that reach it. The reviewer stays outside the user turn.
+`drive_loop` checks `cancel.is_cancelled()` on the turn's `CancelFlag`. That flag is the chapter 9 `CancelFlag`, the token that stops the user turn. Chapter 15 is the server's limit gate, not this flag. It is not `Fork::cancel`. The body of `drive_loop` does not name `reflection`, `finalize`, or `spawn_reviewer`. I looked for those names in `agent.rs`. The only hit in that file is the `drive_loop` definition itself, and the calls that reach it. The reviewer stays outside the user turn.
 
 `CancelFlag` and `Fork`'s `AtomicBool` are different types. Stopping the user turn does not by itself cancel a fork, because nothing in `drive_loop` holds a fork. Starting a fork does not by itself stop the user turn. The schedule and the turn are two objects.
 
@@ -528,7 +528,7 @@ The binary counts ten user turns, forks, and runs the scripted memory line. No k
 
 `cancel_review` uses `iter_batched` with `BatchSize::SmallInput`. The setup closure is `ReviewRun::spawn_spinner`. The timed closure is `cancel_and_join`. The worker sleeps 1 millisecond between flag checks, so the join waits out at most one of those sleeps.
 
-The Mean cells are `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `26`. The ids are `26/spawn_reviewer` and `26/cancel_review`. The old ids `24/spawn_reviewer` and `24/cancel_review` are aliases in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. Criterion also prints a `time:` line. That line is the slope. It is not the mean.
+The Mean cells are `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `26`. The ids are `26/spawn_reviewer` and `26/cancel_review`. The old ids `24/spawn_reviewer` and `24/cancel_review` are aliases in `benchmarks/descriptions.json`. Criterion also prints a `time:` line. That line is the slope. It is not the mean.
 
 ### Milestone demo
 
@@ -564,7 +564,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). The 
 
 **Prompt cache.** The advertised list in Hermes stays the parent's. This harness does not advertise a schema. The fork only has its tool slice. The skill-index `Arc` from chapter 24 is still the index. A later skill is still a note.
 
-**Left for later.** Running the reviewer inside `drive_loop` is deferred. E1 and E2 are still absent. Chapter 27 archives skills off the request path. It does not start this fork.
+**Left for later.** Running the reviewer inside `drive_loop` is deferred. E1 and E2 are chapter 20, already in this crate. The reviewer does not call them. Chapter 27 archives skills off the request path. It does not start this fork.
 
 ## Chapter summary
 

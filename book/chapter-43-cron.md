@@ -2,13 +2,13 @@
 
 *Draft. Bracketed notes like [personal note] are where my own story goes.*
 
-Chapter 41's harness can see an image and wrap the caption. It still runs only when something calls it. A job that should run at a time, survive a crash, and chain the next job has nowhere to live. This chapter adds that claim. The crate is `steps/ch43-cron`, a copy of chapter 41. Chapter 42 is the MCP server and is not copied. The new module is `cron`. The package is `ch43-cron`. The chat gateway's lifecycle guard stays in chapter 39. This chapter has its own check for a job prompt, and the two are not merged.
+Chapter 41's harness can see an image and wrap the caption. It still runs only when something calls it. This chapter is about who is allowed to run a job and what the job may say. There is no cron expression and no clock. `scan_due` returns jobs the test has already marked due. The store is in memory. The crate is `steps/ch43-cron`, a copy of chapter 41. Chapter 42 is the MCP server and is not copied. The new module is `cron`. The package is `ch43-cron`. The chat gateway's lifecycle guard stays in chapter 39. This chapter has its own check for a job prompt, and the two are not merged.
 
 `Job` is the record. `claim` takes it, and a second claim loses. `crash` releases the claim once, so a retry happens at most once. A second crash keeps the claim. `Store` holds the jobs. `scan_due` returns the ones that are due and unclaimed. `watchdog` and `chain` are separate from the scan: the watchdog notices a stuck claim, and `chain` submits the next job to the same inbox chapter 35 already bounds. A chained job is not a direct model call. `scan_prompt` runs before `claim`. The patterns cover injection, a hidden instruction, a system-prompt override, secret reads, and a destructive command. `check_lifecycle` blocks a prompt that would restart, stop, or uninstall the gateway, or kill its process. `start` is allowed. `unattended_denies` matches the dangerous command chapter 11 already denies when nobody is there. `run_job` is the path that scans, checks, claims, and calls `FakeModel`.
 
 The jobs file, the 300 second TTL, and the invisible-unicode scan stay out. A claim in this process lasts until `crash` or until the `Job` is dropped. That is enough to lock the at-most-once retry. Durability across a real restart is the shape of the claim, with an in-memory store the tests can crash on purpose.
 
-Cron is how a self-improving harness does work when the user is away: curation is a scheduled pass, a digest is a scheduled read. It is also how an unattended agent is most dangerous, because nobody is sitting at the approval prompt. The scan and the lifecycle check are why a job the model wrote yesterday cannot, this morning, restart the gateway or teach itself a new instruction from its own prompt. Chapter 27's curator stays off the request path. This chapter is the clock it can sit on. The curator's write still goes through chapter 25.
+Cron is how a self-improving harness does work when the user is away: curation is a scheduled pass, a digest is a scheduled read. It is also how an unattended agent is most dangerous, because nobody is sitting at the approval prompt. The scan and the lifecycle check are why a job the model wrote yesterday cannot, this morning, restart the gateway or teach itself a new instruction from its own prompt. Chapter 27's curator stays off the request path. This chapter is the claim a later clock could sit on. The clock is not in this file. The curator's write still goes through chapter 25.
 
 Rust, at the claim: the owner is an `Option` in the job, and compare-and-set is the test that two claimers do not both win. `RunError` is an enum so a threat, a lifecycle block, and a lost claim are different arms. The inbox submit is the chain, a value pushed onto the chapter 35 queue.
 
@@ -582,7 +582,7 @@ fn scan_thousand(c: &mut Criterion) {
 
 The thousand `Job::new` calls happen before `b.iter`. Each id is `j0` through `j999`, due at 0, prompt `summarize`. The timed closure calls `scan_due` with timestamp 0 passed through `black_box`, then `black_box` of the index vec. The walk and the allocation of 1,000 indexes are inside the sample. Building the jobs is not. `scan_prompt`, `check_lifecycle`, `watchdog`, `chain`, and `FakeModel` are not called. No sleep runs. The descriptions file says every job is due, unclaimed, and not blocked, and the result is 1,000 indexes. The budget in the outline is that this scan stays under 10 milliseconds. The mean cell is the measurement, not that budget sentence.
 
-The mean is `1.75 µs`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `43`. The id is `43/scan_thousand`. The old ids `41/scan_thousand` and `39/scan_thousand` are aliases in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. `.github/scripts/run_bench_section.sh` runs `cargo bench -p ch43-cron --bench cron --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10` for that section. The same flags are in `steps/ch43-cron/README.md`. The Criterion `time:` line is the slope, not the mean.
+The mean is `1.75 µs`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `43`. The id is `43/scan_thousand`. The old ids `41/scan_thousand` and `39/scan_thousand` are aliases in `benchmarks/descriptions.json`. `.github/scripts/run_bench_section.sh` runs `cargo bench -p ch43-cron --bench cron --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10` for that section. The same flags are in `steps/ch43-cron/README.md`. The Criterion `time:` line is the slope, not the mean.
 
 ### Milestone demo
 
@@ -618,7 +618,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
 **Off the scan.** `watchdog` and `chain` are not called by `scan_due` or by `run_job`.
 
-**Left for later.** The jobs file, the 300 second TTL, invisible unicode, and the GitHub curl exemption. E1 and E2 are still absent.
+**Left for later.** The jobs file, the 300 second TTL, invisible unicode, and the GitHub curl exemption. E1 and E2 are chapter 20, already in this crate. `cron.rs` does not call them.
 
 ## What you implement
 
