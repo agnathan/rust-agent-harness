@@ -12,19 +12,6 @@ Rust, at the route table: a map from session id to replica id, an `Arc` swapped 
 
 `cargo run -p ch42-service` runs the demo in-process. The exercise is `my-harness/tests/ch42.rs`: killing the route record fails the next lookup over to the other replica id.
 
-**In this chapter**
-
-- 42.1 The crate vendors chapter 37
-- 42.2 The constants, `Config`, `Reject`, and `Service::new`
-- 42.3 `route`, `place`, and `kill`
-- 42.4 `config` and `reload`
-- 42.5 `accept`, `finish`, and the drain
-- 42.6 `bearer_ok`
-- 42.7 `Sampler`
-- 42.8 `elicit`
-- 42.9 `OsvCache`
-- 42.10 `FakeModel` and `demo`
-
 | Section | What it walks |
 |---|---|
 | 42.1 | the vendored modules, and `service` beside them |
@@ -102,11 +89,11 @@ fn main() {
 
 The learned `demo` at the bottom of `lib.rs` returns a `(String, String)` pair from code mode. The federation `demo` returns `pick: echo via alpha`. Neither is the binary. The binary calls `service::demo`.
 
-### Rust: `pub mod` and a copied crate
-
-`pub mod service` makes the module visible as `gwservice::service`. A private `mod service` would hide `Service` from the integration tests, which write `use gwservice::service::Service`. `pub use` puts `Catalog`, `LimitedGateway`, `SessionError`, and `SessionView` at the crate root so the copied learned tests can keep their imports. Vendoring means those types are compiled into `ch42-service`. A path dependency would have compiled them in `ch37-balancing` and linked them. The step would not be a snapshot.
-
-The package depends on `serde_json`, `thiserror`, and `tokio`. `service.rs` uses none of them. The copied catalog and the session gateway do. Criterion is a dev-dependency. The bench target is `service`, `harness = false`.
+> **Rust sidebar: `pub mod` and a copied crate**
+>
+> `pub mod service` makes the module visible as `gwservice::service`. A private `mod service` would hide `Service` from the integration tests, which write `use gwservice::service::Service`. `pub use` puts `Catalog`, `LimitedGateway`, `SessionError`, and `SessionView` at the crate root so the copied learned tests can keep their imports. Vendoring means those types are compiled into `ch42-service`. A path dependency would have compiled them in `ch37-balancing` and linked them. The step would not be a snapshot.
+>
+> The package depends on `serde_json`, `thiserror`, and `tokio`. `service.rs` uses none of them. The copied catalog and the session gateway do. Criterion is a dev-dependency. The bench target is `service`, `harness = false`.
 
 ## 42.2 The constants, `Config`, `Reject`, and `Service::new`
 
@@ -180,11 +167,11 @@ pub fn new(names: &[&str], quota: u32) -> Self {
 
 The replica `Vec` keeps construction order. `place` later walks it from the front. `HashMap` does not keep that order, which is why the live replica is not stored as a map of names.
 
-### Rust: an enum as the error, and a tuple in a `Vec`
-
-`Reject` is four units with no payload. `accept` returns `Result<u64, Reject>`. The `u64` is the call id. Matching on `Reject::Quota` is exhaustive only if every variant is named. `PartialEq` is why a test can write `Err(Reject::Quota)` and compare.
-
-`Vec<(String, bool)>` is a list of pairs. The `bool` is liveness. A struct with named fields would read more clearly at the call site. The pair is what `new` builds, and `alive` matches on it. The session map is a separate `HashMap<String, String>`: session id to replica name. The replica list is the source of who is alive. The map is only the assignment.
+> **Rust sidebar: an enum as the error, and a tuple in a `Vec`**
+>
+> `Reject` is four units with no payload. `accept` returns `Result<u64, Reject>`. The `u64` is the call id. Matching on `Reject::Quota` is exhaustive only if every variant is named. `PartialEq` is why a test can write `Err(Reject::Quota)` and compare.
+>
+> `Vec<(String, bool)>` is a list of pairs. The `bool` is liveness. A struct with named fields would read more clearly at the call site. The pair is what `new` builds, and `alive` matches on it. The session map is a separate `HashMap<String, String>`: session id to replica name. The replica list is the source of who is alive. The map is only the assignment.
 
 ## 42.3 `route`, `place`, and `kill`
 
@@ -251,13 +238,13 @@ pub fn healthy(&self) -> bool {
 }
 ```
 
-### Rust: `Option`, `?`, and collecting before mutate
-
-`find` returns `Option<&(String, bool)>`. The `?` on that option turns "no live replica" into `None` from `place`. The `.0.clone()` runs only when a pair was found. `route` uses `map(String::as_str)` so the caller borrows the `String` inside the map. The borrow cannot outlive the `&self` borrow. `place` returns an owned `String` because the caller, and `kill`, need the name after further mutation.
-
-The `sessions` vector owns the keys. After `collect`, the immutable borrow of `routes` has ended. `remove` and `place` can take `&mut self`. Skipping the vector would be a borrow-checker error, not a style choice.
-
-`HashMap` iteration order is not the replica order. With one session the order does not matter. With several sessions on a dead replica, each is placed onto the same first live name. They do not fan out across the remaining replicas.
+> **Rust sidebar: `Option`, `?`, and collecting before mutate**
+>
+> `find` returns `Option<&(String, bool)>`. The `?` on that option turns "no live replica" into `None` from `place`. The `.0.clone()` runs only when a pair was found. `route` uses `map(String::as_str)` so the caller borrows the `String` inside the map. The borrow cannot outlive the `&self` borrow. `place` returns an owned `String` because the caller, and `kill`, need the name after further mutation.
+>
+> The `sessions` vector owns the keys. After `collect`, the immutable borrow of `routes` has ended. `remove` and `place` can take `&mut self`. Skipping the vector would be a borrow-checker error, not a style choice.
+>
+> `HashMap` iteration order is not the replica order. With one session the order does not matter. With several sessions on a dead replica, each is placed onto the same first live name. They do not fan out across the remaining replicas.
 
 ## 42.4 `config` and `reload`
 
@@ -276,9 +263,9 @@ pub fn reload(&mut self, generation: u64) -> Arc<Config> {
 
 Readers of the old `Arc` do not see the new generation. There is no lock around the swap. `reload` takes `&mut self`, so in this type the swap is exclusive. The `Arc` matters for the caller who already cloned, not for two threads calling `reload`. `Service` is not shared behind a mutex in this file.
 
-### Rust: `Arc` is the snapshot
-
-`Arc::clone` clones the pointer, not the `Config`. `Arc::new` allocates a fresh one. After `reload`, the two pointers are not equal as allocations, and their `generation` fields differ. Dropping the service drops the new pointer. The caller's old pointer still reads generation 1 until the caller drops it. That is the same shape as the catalog reload in chapter 7: the in-flight reader keeps the snapshot it loaded.
+> **Rust sidebar: `Arc` is the snapshot**
+>
+> `Arc::clone` clones the pointer, not the `Config`. `Arc::new` allocates a fresh one. After `reload`, the two pointers are not equal as allocations, and their `generation` fields differ. Dropping the service drops the new pointer. The caller's old pointer still reads generation 1 until the caller drops it. That is the same shape as the catalog reload in chapter 7: the in-flight reader keeps the snapshot it loaded.
 
 ## 42.5 `accept`, `finish`, and the drain
 
@@ -368,13 +355,13 @@ pub fn spans(&self) -> &[String] {
 
 `start_drain` does not finish calls and does not clear the map. `drained` is false while a call is still in the vec, and it is also false before `start_drain` even when the vec is empty. The test accepts one call, starts the drain, sees `ready` false, sees a new accept return `Draining`, sees `drained` false, finishes the id, and then sees `drained` true and `inflight` 0. The finished call is allowed to complete. The new call is not accepted. That is the drain. It is a bool, not `.drain_request.json`, and it does not consult `DRAIN_REQUEST_MAX_AGE_SECONDS`.
 
-### Rust: `entry`, `let`/`else`, and `saturating_add`
-
-`entry` returns a handle to the occupied or vacant slot. `or_insert(0)` writes zero only when the key is new, then yields `&mut u32`. The `*` copies the number out so the later `insert` can borrow the map again. Holding the `Entry` across the `insert` would keep the map borrowed.
-
-`let Some(index) = ... else { return false }` is a let-else. The `None` path leaves the function. The `Some` path binds `index` for the remove. `position` walks the vec from the front and returns the first matching id.
-
-`saturating_add(1)` and `saturating_sub(1)` stop at the ends of `u32`. A zero counter does not wrap to `u32::MAX` if `finish` runs once too often. A counter at `u32::MAX` does not wrap to zero on another accept. The quota test uses 1, so the saturate path is not what that test shows. The methods still use it.
+> **Rust sidebar: `entry`, `let`/`else`, and `saturating_add`**
+>
+> `entry` returns a handle to the occupied or vacant slot. `or_insert(0)` writes zero only when the key is new, then yields `&mut u32`. The `*` copies the number out so the later `insert` can borrow the map again. Holding the `Entry` across the `insert` would keep the map borrowed.
+>
+> `let Some(index) = ... else { return false }` is a let-else. The `None` path leaves the function. The `Some` path binds `index` for the remove. `position` walks the vec from the front and returns the first matching id.
+>
+> `saturating_add(1)` and `saturating_sub(1)` stop at the ends of `u32`. A zero counter does not wrap to `u32::MAX` if `finish` runs once too often. A counter at `u32::MAX` does not wrap to zero on another accept. The quota test uses 1, so the saturate path is not what that test shows. The methods still use it.
 
 ## 42.6 `bearer_ok`
 
@@ -389,9 +376,9 @@ pub fn bearer_ok(header: &str) -> bool {
 
 The prefix is the six letters, the space, and nothing else. `Bearer token` passes. `token` fails. `Bearer ` fails because the remainder is empty. `Bearer token extra` fails because the remainder contains a space. The function does not split on more than that space check, does not decode base64, and does not verify a signature. `accept` calls it first. Issuing the token is not this crate. `tools/mcp_oauth.py` is the Hermes client that would talk to an authorization server. This service does not call it.
 
-### Rust: `strip_prefix`
-
-`strip_prefix` returns `Option<&str>` borrowing the tail of `header`. The pattern is not a regex. `Bearer` without the trailing space does not match. Case matters. `bearer token` fails the prefix and `accept` returns `BadToken`.
+> **Rust sidebar: `strip_prefix`**
+>
+> `strip_prefix` returns `Option<&str>` borrowing the tail of `header`. The pattern is not a regex. `Bearer` without the trailing space does not match. Case matters. `bearer token` fails the prefix and `accept` returns `BadToken`.
 
 ## 42.7 `Sampler`
 
@@ -428,9 +415,9 @@ The sampler is not inside `Service`. `accept` does not call `allow`. A caller wh
 
 The function does not sleep, and it does not read `SamplingHandler.timeout`. The 30 second sampling budget is Hermes's `asyncio.wait_for` around the LLM call. This `allow` returns a bool.
 
-### Rust: `VecDeque` and `retain`
-
-`VecDeque` is a ring buffer. `push_back` adds at the end. `retain` keeps elements for which the closure returns true and drops the rest, preserving order. A `Vec` would do the same job at this length. The deque matches a window that drops from the old side. The length check uses `>= SAMPLING_MAX_RPM`, so the cap is ten stored stamps, not eleven.
+> **Rust sidebar: `VecDeque` and `retain`**
+>
+> `VecDeque` is a ring buffer. `push_back` adds at the end. `retain` keeps elements for which the closure returns true and drops the rest, preserving order. A `Vec` would do the same job at this length. The deque matches a window that drops from the old side. The length check uses `>= SAMPLING_MAX_RPM`, so the cap is ten stored stamps, not eleven.
 
 ## 42.8 `elicit`
 
@@ -456,9 +443,9 @@ pub fn elicit(url_mode: bool) -> Elicit {
 
 `Copy` is derived because both variants are a bool's worth of data plus a `u64`. A test compares the approval with `==`.
 
-### Rust: a struct-like variant
-
-`Elicit::Approval { timeout_seconds }` is a variant with a field. Matching it binds the number. `Elicit::Declined` has no field. Putting the timeout on the approval variant means a declined result cannot be read as 300 seconds by mistake. The number is still the constant. The function does not take a caller-supplied timeout.
+> **Rust sidebar: a struct-like variant**
+>
+> `Elicit::Approval { timeout_seconds }` is a variant with a field. Matching it binds the number. `Elicit::Declined` has no field. Putting the timeout on the approval variant means a declined result cannot be read as 300 seconds by mistake. The number is still the constant. The function does not take a caller-supplied timeout.
 
 ## 42.9 `OsvCache`
 
@@ -530,9 +517,9 @@ A miss with `network_ok` false returns `FailOpen` and does not insert. The test 
 
 `find` stops at the first id that starts with `MAL-`. A list of only `CVE-2020-1` stores `None` and returns `Clean`. Hermes's `_query_osv` already drops non-`MAL-` rows before the caller sees them. This function filters again so a mixed slice still blocks on the malware id.
 
-### Rust: `impl AsRef<str>` in the slice
-
-`ids: &[impl AsRef<str>]` accepts `&[&str]` and `&[String]`. `as_ref` borrows each id as `&str`, and the map owns a `String` only for the `MAL-*` hit it keeps. The cache clones that `String` into the verdict on the way out, so the map and the caller each own their copy. `saturating_add` on the expiry avoids a wrap if `now` is near `u64::MAX`. The tests use small timestamps.
+> **Rust sidebar: `impl AsRef<str>` in the slice**
+>
+> `ids: &[impl AsRef<str>]` accepts `&[&str]` and `&[String]`. `as_ref` borrows each id as `&str`, and the map owns a `String` only for the `MAL-*` hit it keeps. The cache clones that `String` into the verdict on the way out, so the map and the caller each own their copy. `saturating_add` on the expiry avoids a wrap if `now` is near `u64::MAX`. The tests use small timestamps.
 
 ## 42.10 `FakeModel` and `demo`
 
@@ -560,9 +547,9 @@ pub fn demo() -> String {
 
 `federation::FakeModel` is a different type. Its `complete` takes no prompt. `ScriptedModel` in `lib.rs` counts calls for the learned gateway. The binary does not construct those.
 
-### Rust: `expect` and a discarded binding
-
-`Option::expect` turns `None` into a panic with the message `"a live replica"`. `let _ =` drops the `String` from `complete`. The format string uses the route, not the model reply. That is why the printed line is `route: a` even though the model was asked.
+> **Rust sidebar: `expect` and a discarded binding**
+>
+> `Option::expect` turns `None` into a panic with the message `"a live replica"`. `let _ =` drops the `String` from `complete`. The format string uses the route, not the model reply. That is why the printed line is `route: a` even though the model was asked.
 
 ## Tests
 
@@ -607,8 +594,6 @@ The binary places one session on the first replica. No key.
 |---|---|---|---|
 | `route_session` | 19.7 ns | a session id picks a replica | one map lookup after 64 placements |
 
-The function name is `route_session`. The bench id is `42/route_session`. The old ids `40/route_session` and `38/route_session` are aliases in `benchmarks/descriptions.json`. The function name did not change when the id moved.
-
 ```rust
 fn route_session(c: &mut Criterion) {
     let mut service = Service::new(&["a", "b", "c", "d"], 8);
@@ -624,13 +609,9 @@ fn route_session(c: &mut Criterion) {
 }
 ```
 
-`Service::new` builds replicas `a` through `d` with quota 8 before the timer. `place` runs for `s0` through `s63`. Each lands on `a`, the first live name. The timed closure is `b.iter`. Inside it, `route` of `s0` is passed through `black_box`, then the `Option` is passed through `black_box`. The `HashMap` get is the sample. `place`, `kill`, `accept`, `Sampler`, `OsvCache`, and `FakeModel` are not called. No socket is opened. oha is not this number. The descriptions file says the result is `Some(a)`.
+`Service::new` builds replicas `a` through `d` with quota 8 before the timer. `place` runs for `s0` through `s63`.
 
-The mean is `19.7 ns`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `42`. `.github/scripts/run_bench_section.sh` runs `cargo bench -p ch42-service --bench service --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10` for that section. The Criterion `time:` line is the slope, not the mean.
-
-### Milestone demo
-
-The `cargo run` above. The line is `route: a`.
+The means are `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `42`. Bench ids: `42/route_session`, `40/route_session`, `38/route_session`. Command: `cargo bench -p ch42-service --bench service --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -641,14 +622,6 @@ The bench is the lookup. Failover walks the sessions of a dead replica, clones t
 `drained` is false until `start_drain` has been called. An empty in-flight list on a service that is still accepting is not drained. `ready` goes false as soon as the flag is set, while the accepted call is still in the vec.
 
 The OSV cache returns the stored verdict when `expiry > now`, including when the new call passes different ids or says the network is down. A network error must not be stored. The `uvx` test would see `len` grow if `FailOpen` were inserted, and a later success would have to fight that entry. Hermes's `_cache_put` is also skipped in the `except` path of `check_package_for_malware`.
-
-`allow` refuses without pushing when the deque is already at 10. The refused stamp is not in the window. At age 60 the old stamps drop because the comparison is strict `<`.
-
-The bearer check does not validate a signature. An empty token and a missing `Bearer ` prefix fail closed. Issuing tokens is `tools/mcp_oauth.py` on the client side, and it is not this crate.
-
-`kill` collects keys because `place` mutates the map. `HashMap` order is not replica order. Every moved session goes to the first remaining live name.
-
-`command` is compared to `npx` and `uvx` only. A path or `pipx` is `Skipped` and is not a fail-open. Fail-open is the network flag after the command has matched.
 
 ## Guardrails in this chapter
 
@@ -691,7 +664,7 @@ pub fn chapter_42_route_after_kill(killed: &str, other: &str) -> Option<String> 
 }
 ```
 
-`todo!("chapter 42")` is the panic. The test wants the route, after `killed` is removed, to be `Some("b")` when the other replica is `b`. In the step crate that is `place`, then `kill`, then `route`. The stub stays `todo!`. Do not paste `Service` into `my-harness/`.
+`todo!("chapter 42")` is the panic. The test wants the route, after `killed` is removed, to be `Some("b")` when the other replica is `b`. In the step crate that is `place`, then `kill`, then `route`. The stub stays `todo!`. 
 
 ## Chapter summary
 
@@ -702,7 +675,7 @@ pub fn chapter_42_route_after_kill(killed: &str, other: &str) -> Option<String> 
 - **Bearer.** `Bearer ` plus a non-empty token with no space. Issuance stays deferred.
 - **Client checks.** Sampling at 10 per 60 seconds. Form elicitation at 300 seconds. URL mode declined. `MAL-*` cached for 3600 seconds. Network failure uncached.
 - **Model.** `FakeModel` answers `ok` and `demo` drops it. The line is `route: a`.
-- **Time.** `route_session` mean `19.7 ns`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The Criterion `time:` line is the slope.
+- **Time.** `route_session` mean `19.7 ns`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573).
 
 ## What's next
 

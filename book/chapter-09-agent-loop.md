@@ -4,24 +4,11 @@ The earlier chapters can each do one piece of a turn. Chapter 1 can ask a model.
 
 `run_loop` is the function. It calls the provider, dispatches the tool calls through chapter 3's scheduler, appends the results, and calls the provider again. A hard cancel aborts the in-flight model call or tool call and drops a pending steer. A soft stop lets the current work finish, then makes one model call and does not dispatch tools from that reply. Validation repairs a close unknown name, retries broken JSON, and leaves after three bad batches with the partial transcript. A stall is an identical call or a short cycle. An iteration warning fires at half the budget, and a wrap-up notice lands once the time budget is 80 percent spent. A tool result is capped. A steer from the session inbox is appended onto the newest tool result, so the cached prefix stays put. Tool-call arguments are sent as stable JSON. `TurnOutcome` is the enum every exit returns. A saved eval set and four stress tasks run on the mock.
 
-Chapter 10 will take this same loop and make it walk a table of legal moves, so a chapter 9 outcome the table cannot name fails a test instead of drifting. Chapter 11 puts an approval denial in front of dispatch. Chapter 14 picks up the empty-response retry, the length continuation, and the repetition guard this chapter defers. Chapter 19 is where a tool call can start before the buffered reply is finished. Chapter 34 is where preflight compression runs before the model call. Chapter 52 re-runs this chapter's saved tasks on a much later copy of `run_loop`. The loop is the thing those chapters grow. A self-improving agent is still this loop: the learning, the memory write, and the skill patch happen beside it, not instead of it. If the loop cannot say why it stopped, later reflection has nothing honest to review.
+Chapter 10 makes this same loop walk a table of legal moves. Empty-response retries, length continuation, and the repetition guard wait for chapter 14. A self-improving agent is still this loop: the learning, the memory write, and the skill patch happen beside it, not instead of it.
 
 Rust, beside the code: `TurnOutcome` and the scripted reply are enums, so every exit is named. `CancellationToken` is a flag you race against the call. `Arc<dyn Tool>` is how a native tool and an MCP tool share one dispatch path. The worker bound of 8 is the semaphore from chapter 3.
 
 `cargo run -p ch09-10-harness-core --example demo --locked --offline --quiet` runs the finished mock. `cargo run -p ch09-10-harness-cli --locked --offline --quiet -- evals` runs the saved set. `--live-evals` is the opt-in I am not treating as the default.
-
-**In this chapter**
-
-- 9.1 A live call, and the mock that stays the default
-- 9.2 Prompt cancellation
-- 9.3 Tool-call validation
-- 9.4 Stall detection
-- 9.5 Budget warnings and wrap-up
-- 9.6 A per-tool output cap
-- 9.7 Steering
-- 9.8 Stable request formatting
-- 9.9 A typed turn outcome
-- 9.10 Stronger evals
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -175,7 +162,7 @@ event: error missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 ```
 
-The `time:` lines are Criterion's slope. The means are `mean.point_estimate` from that run's `estimates.json`. Machine: 4 vCPU, sample size 10, warm-up 1 s, measurement 2 s.
+The means are `mean.point_estimate` from that run's `estimates.json`. Machine: [bench host](appendix-benchmark-method.md).
 
 ```text
 gate_check              time:   [2.7475 ns 2.8672 ns 2.9507 ns]
@@ -612,11 +599,7 @@ A final text reply returns `Finished` even when the token count is over the cap.
 
 A time cap that is already spent, with `usage.calls == 0`, returns `Budget` and does not call the provider. The wrap-up is only for a turn that has already spent a call.
 
-Eight identical reads in one batch do not stall. They share an iteration, and the cycle detector requires the window to span two iterations. A stall is the same call on the next model round.
-
 A steer submitted before any tool result stays in the inbox. `append_steers` does not pop until a tool message exists. Draining it early would drop the line.
-
-Canonical JSON is the send-path copy. The stored `raw_arguments` stay unsorted. A test that looks at the transcript and expects sorted keys is looking at the wrong string.
 
 The [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/) charts section 9.1 and section 9.10 separately. Seeded history for the shared names is the section 9.10 mean, 608.0 ns for `loop_iteration`, because those artifacts stored one row per function name under `6.10/loop_iteration`. Quoting the section 9.1 mean of 248.5 ns as the finished loop would hide the checks.
 

@@ -146,9 +146,10 @@ The tests call `Board::new()`. The default is the same empty deque.
 
 > **Rust sidebar: `Result`**
 >
-> - `Result<(), FanError>` uses `()` as the success payload. The task has already been moved into the deque on the `Ok` path. The caller does not get the task back. On `Err`, the `task` binding is dropped at the end of the function because `push_back` never took it. The queue does not contain it.
+> - `Result<(), FanError>` uses `()` as the success payload. On `Err`, the `task` binding is dropped at the end of the function because `push_back` never took it.
 > - The length check and the `push_back` share one guard. Another `schedule` cannot pass the length check until this guard drops. The cap holds for concurrent `schedule` calls because they serialize on this mutex.
-> - `return Err` happens while the guard is still alive. The guard drops during unwind of that return, which unlocks. The length is unchanged.
+> - `return Err` happens while the guard is still alive.
+> - `Option`, `Result`, enums, and `Arc` are taught in [chapter 1](chapter-01-first-contact.md).
 
 `QUEUE_CAP` is 100. Lengths 0 through 99 push. The call that observes length 100 returns `Full`. Hermes rejects a new async dispatch when the concurrency cap is hit, and it does not queue that dispatch. This board queues, and the rejection is the 101st `schedule`. The adaptation is the number and the place: a queue of 100, not the concurrent-children count. The concurrent limit is still the pool of 8, applied later in `gather`, not here.
 
@@ -349,7 +350,7 @@ criterion_main!(benches);
 
 `iter_batched` takes a setup closure, a timed closure, and a batch size. `Board::new` is the setup. It is not the timed work. The timed closure schedules indexes `0..100`, which is 0 through 99, one hundred tasks. Reply text is `reply {index}`. The trace is `secret-tool` again. `expect("schedule")` is safe inside this loop because the board starts empty and the loop stops at 100. `black_box(board.len())` keeps the pushes in the sample. `len` locks and returns 100.
 
-No `Pool` is built. No `thread::scope` runs. No `gather`. The mean is the cost of filling the queue, which is the rejection boundary the next `schedule` would hit. The mean is `4.12 µs`. It is `mean.point_estimate`. The printed Criterion `time:` line is the slope, not the mean.
+No `Pool` is built. No `thread::scope` runs. No `gather`. The mean is the cost of filling the queue, which is the rejection boundary the next `schedule` would hit. The mean is `4.12 µs`. It is `mean.point_estimate`.
 
 `BatchSize::SmallInput` is the Criterion batch size argument on this call. The setup produces a small board, an empty deque, and the routine fills it.
 
@@ -456,11 +457,9 @@ The binary schedules three tasks out of order and prints the gathered replies. N
 
 `schedule_100` does not include `Board::new` in the timed closure. It does not include `gather`. The tool trace is stored on the task and never formatted into the bench's `black_box` value, which is `len`.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `31`. The id is `31/schedule_100`. The old id `29/schedule_100` is an alias in `benchmarks/descriptions.json`. The printed Criterion `time:` line is the slope, not the mean.
+The lines are `a`, `b`, and `c`.
 
-### Milestone demo
-
-The `cargo run` above. The lines are `a`, `b`, and `c`.
+The means are `mean.point_estimate` from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `31`. Bench ids: `31/schedule_100`, `29/schedule_100`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -471,12 +470,6 @@ The queue cap and the permit cap are different numbers. `QUEUE_CAP` is 100. `WOR
 Sort uses `task_index`, not finish time. A fast task with a high index is still last after `sort_by_key`. Join order before the sort is spawn order. The string the caller sees is the sorted one.
 
 Hermes rejects a new async dispatch at the concurrency cap and does not queue it. This `schedule` queues until 100 and then returns `Full`. Both are a refusal at a cap. The cap in this file is the queue length. The cap in `acquire` is 8, and it waits instead of returning `Full`. A task already on the board is not rejected when the pool is busy. It waits for a permit.
-
-`drain` empties the board before the threads run. A `schedule` that arrives during `gather` lands on an empty deque and is not part of this gather. The test does not do that. It schedules, then gathers, then checks length 0.
-
-The reflection queue of 64 in `supervisor.rs` is not this queue. `enqueue_reflection` does not call `schedule`. `schedule` does not push a reflection string.
-
-Heartbeats are not hiding in `thread::sleep`. The sleep is the test hold. `gather` passes a zero duration and skips it. Chapter 36 is the heartbeat chapter.
 
 ## Guardrails in this chapter
 
@@ -496,7 +489,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 - **Bound.** `gather` uses the supervisor pool. `WORKER_BOUND` is 8. `max_seen` peaks at 8.
 - **Aggregator.** `sort_by_key` on `task_index`. The summary is the replies joined with newlines.
 - **Trace.** `tool_trace` is not in the summary. The demo's trace is `secret-tool` and the printed lines are `a`, `b`, `c`.
-- **Time.** `schedule_100` mean `4.12 µs`. That is `mean.point_estimate`. The Criterion `time:` line is the slope.
+- **Time.** `schedule_100` mean `4.12 µs`. That is `mean.point_estimate`.
 
 ## What you implement
 
@@ -521,7 +514,7 @@ pub fn chapter_31_refuses_overflow(already: usize) -> bool {
 }
 ```
 
-`todo!("chapter 31")` is the panic. The test wants `chapter_31_refuses_overflow(99)` to be false and `chapter_31_refuses_overflow(100)` to be true. The step crate is the reference. Do not copy it into `my-harness/`.
+`todo!("chapter 31")` is the panic. The test wants `chapter_31_refuses_overflow(99)` to be false and `chapter_31_refuses_overflow(100)` to be true. 
 
 ## What's next
 

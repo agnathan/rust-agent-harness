@@ -12,14 +12,6 @@ Rust, at the pool: a semaphore permit is a guard, and `Drop` is the release. `th
 
 `cargo run --locked -p ch29-supervisor --bin ch29-supervisor` runs the scripted specialists. The exercise is `my-harness/tests/ch29.rs`: eight specialists share one pool, and a reflection note does not run the reviewer.
 
-**In this chapter**
-
-- 29.1 The bound is 8, and the Hermes default stays 10
-- 29.2 `acquire` waits, and `Drop` wakes one thread
-- 29.3 `thread::scope` runs the jobs and joins them
-- 29.4 `child_call` is a `Result`
-- 29.5 The worktree is a marker, and the reflection is a string
-
 | Section | Step | What it adds |
 |---|---|---|
 | 29.1 | `steps/ch29-supervisor` | the bound, the blocked names, `Pool`, `Job` |
@@ -341,9 +333,10 @@ pub fn child_call(tool: &str, depth: u8) -> Result<(), TeamError> {
 
 > **Rust sidebar: `Result`**
 >
-> - `Result<(), TeamError>` has two sides. `Ok(())` is success with no payload. The unit value `()` means the call is allowed. `Err(TeamError::Blocked(...))` is the refusal. The string inside is an owned copy of the tool name, from `to_string()`, so the `Err` does not borrow the `&str` argument.
+> - `Result<(), TeamError>` has two sides. `Err(TeamError::Blocked(...))` is the refusal. The string inside is an owned copy of the tool name, from `to_string()`, so the `Err` does not borrow the `&str` argument.
 > - `return Err(...)` leaves the function immediately. The second `if` does not run when the first one matches. A caller uses `match` or `is_ok` or the `?` operator. The tests use `matches!`.
-> - This `Result` is not `rusqlite::Error` and it is not a lock poison. Lock poison in this file still panics through `expect`. The tool policy is the `Result`.
+> - This `Result` is not `rusqlite::Error` and it is not a lock poison. Lock poison in this file still panics through `expect`.
+> - `Option`, `Result`, enums, and `Arc` are taught in [chapter 1](chapter-01-first-contact.md).
 
 `MAX_DEPTH` is 1. Walk the three cases the test uses.
 
@@ -542,11 +535,9 @@ The binary runs two scripted specialists and enqueues a reflection note that is 
 
 `enqueue_reflection` excludes `Pool::new`. The timed work is the lock and the push. `max_seen` stays 0 across that call. The queue cap inside the function is 64.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `29`. The ids are `29/schedule_eight` and `29/enqueue_reflection`. The old ids `27/schedule_eight` and `27/enqueue_reflection` are aliases in `benchmarks/descriptions.json`. The printed Criterion `time:` line is the slope, not the mean.
+The two replies are `three steps` and `the draft`.
 
-### Milestone demo
-
-The `cargo run` above. The two replies are `three steps` and `the draft`.
+The means are `mean.point_estimate` from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `29`. Bench ids: `29/schedule_eight`, `29/enqueue_reflection`, `27/schedule_eight`, `27/enqueue_reflection`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -556,13 +547,7 @@ The `cargo run` above. The two replies are `three steps` and `the draft`.
 
 `worktree(true)` returns the static string `opt-in`. Two opted-in callers still share the process and the pool's `Arc`. The marker is the decision. The git worktree is not created.
 
-`enqueue_reflection` and `acquire` share one mutex. They do not share a meaning. A reflection push does not increment `inflight`. `max_seen` stays 0 when that is the only call. `spawn_reviewer` still exists in `reflection.rs` for chapter 26's nudge path. This queue does not call it.
-
 `schedule_eight` includes thread start and join. It is not the overlap test. The overlap test is the 40 ms hold and the assert against `hold * 7`. The bench sets `hold` to `None`.
-
-`QUEUE_CAP` of 64 here is the reflection deque. Chapter 31's `QUEUE_CAP` of 100 is a different const in `fanout.rs`. Mixing them up schedules the wrong refusal.
-
-The ninth job blocks inside `acquire`. It does not fail the `Result`. `run_specialists` returns `Vec<String>`, not `Result`. Every job that can eventually take a permit returns its reply. The bound shows up as `max_seen`, not as an error.
 
 ## Guardrails in this chapter
 
@@ -585,7 +570,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). This
 - **Child.** The five blocked tools at depth 1. Any tool at depth greater than 1. The parent at depth 0 may call `delegate_task`.
 - **Worktree.** `None` unless opt-in. The opt-in value is `opt-in`. No git worktree is created.
 - **Reflection.** A `push_back` on a deque of 64. `max_seen` stays 0. `spawn_reviewer` is not called.
-- **Time.** `schedule_eight` mean `149.22 µs`. `enqueue_reflection` mean `18.4 ns`. Both are `mean.point_estimate`. The Criterion `time:` line is the slope.
+- **Time.** `schedule_eight` mean `149.22 µs`. `enqueue_reflection` mean `18.4 ns`. Both are `mean.point_estimate`.
 
 ## What you implement
 
@@ -613,7 +598,7 @@ pub fn chapter_29_reflection_starts_reviewer() -> bool {
 }
 ```
 
-`todo!("chapter 29")` is the panic. The test wants the limit equal to 8, and it wants `chapter_29_reflection_starts_reviewer()` to be false. The step crate is the reference. Do not copy it into `my-harness/`.
+`todo!("chapter 29")` is the panic. The test wants the limit equal to 8, and it wants `chapter_29_reflection_starts_reviewer()` to be false. 
 
 ## What's next
 

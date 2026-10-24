@@ -12,15 +12,6 @@ Rust, at the slice: a `Vec` of messages is split into a head you keep, a middle 
 
 `cargo run -p ch34-context --bin ch34-context --offline` runs the preflight. The exercise is `my-harness/tests/ch34.rs`: the hot path sends the `Arc` snapshot.
 
-**In this chapter**
-
-- 34.1 The caps, and four patterns compiled once
-- 34.2 `scan_context` blocks a project file and keeps a user file
-- 34.3 Load truncates only what was not blocked
-- 34.4 Untrusted output is wrapped, and the closer is neutralized
-- 34.5 `Message` is a role and a text, and `FakeModel` counts calls
-- 34.6 `preflight` compresses only over the cap, and `share` clones the `Arc`
-
 | Section | Step | What it adds |
 |---|---|---|
 | 34.1 | `steps/ch34-context` | the caps, the filler, the four compiled patterns |
@@ -340,10 +331,10 @@ pub struct Prep {
 
 > **Rust sidebar: `Arc`**
 >
-> - `Arc<String>` is a pointer to a `String` on the heap, with a count of how many `Arc`s share it.
-> - `Arc::clone` increments that count and returns another pointer to the same allocation. It does not copy the characters.
+> - `Arc::clone` increments that count and returns another pointer to the same allocation.
 > - `Arc::ptr_eq(&a, &b)` is true when both pointers address that same allocation.
 > - `clone` on the `String` inside, or `Arc::new(snapshot.to_string())`, would be a different allocation. `ptr_eq` would be false. `preflight` and `share` call `Arc::clone`.
+> - `Option`, `Result`, enums, and `Arc` are taught in [chapter 1](chapter-01-first-contact.md).
 
 `snapshot` is the frozen text. `messages` is the transcript after the decision. `flushed` is empty under the cap, and over the cap it holds the latest user line when one exists. `Prep` derives `Clone`. Cloning a `Prep` clones the `Arc`, which shares the snapshot, and clones the two vecs.
 
@@ -516,11 +507,7 @@ The binary loads `AGENTS.md` as the two words `Be direct.`, shares the snapshot,
 |---|---|---|---|
 | `share_snapshot` | 4.86 ns | one `Arc` of the rules text | `share`, which is `Arc::clone` |
 
-The string is built before `b.iter`. The timed closure clones the `Arc`. It does not scan and it does not compress. The mean is `4.86 ns`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `34`. The id is `34/share_snapshot`. The old id `32/share_snapshot` is an alias in `benchmarks/descriptions.json`. The printed Criterion `time:` line is the slope, not the mean.
-
-### Milestone demo
-
-The `cargo run` above. The line is `shared: clean`.
+The means are `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `34`. Bench ids: `34/share_snapshot`, `32/share_snapshot`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -528,21 +515,9 @@ The scan cap is bytes. The file cap is characters. A long file of multibyte char
 
 `user_authored: true` keeps the body and sets `blocked` to false. `load_context_file` will still truncate that body when it is over 20,000 characters. The finding remains on `Scan`. A project file with a finding returns before truncation, so the `BLOCKED` line is the whole `text`.
 
-The regexes see `window`. Bytes past 65,536 are not searched. A hit inside the window blocks the whole project file, including the unscanned tail. A clean window loads the full BOM-stripped body into `text`, and truncation may then cut it.
-
-`findings.join` uses the ids in pattern order. A file that matches `prompt_injection` and `role_hijack` names both, separated by a comma and a space. The tests assert the one id they planted.
-
-`wrap_untrusted` neutralizes only after the length check. A short untrusted string keeps an embedded closer. The wrapper's own tags contain `untrusted_tool_result` by design. They are added after `neutralize_delimiters`, so the wrapper is not defanged. The body is.
-
-`char_len` ignores `role`. `compress` drops middle messages whose role is not `skill_view`. A middle user line that is not the last message disappears from `messages` and is also absent from `flushed`, because `flushed` keeps only the latest user line. The over-cap test puts the long user text last, so it is both flushed and kept as the tail.
-
-`compress` on a slice of length 0, 1, or 2 returns the slice unchanged. `preflight` still calls `complete` whenever `char_len` is over the cap, including that short slice. Under the cap, `complete` is not called, whatever the length.
-
 `share` and both `preflight` arms use `Arc::clone`. Assigning `snapshot.clone()` on an `Arc<String>` is the same method. Building `Arc::new(String::from(&**snapshot))` would be a new allocation, and `ptr_eq` would fail. The hot path the exercise asks for is the clone that passes `ptr_eq`.
 
 `demo` returns `blocked` when `ptr_eq` is false or the text contains `BLOCKED`. `Be direct.\n` takes the clean arm. A poisoned `AGENTS.md` passed through `load_context_file` with `user_authored` false would take `blocked` if `demo` loaded that string. `demo` does not. The unit test loads the poisoned string itself.
-
-`FakeModel` in `context.rs` returns `summary` when the script is empty and counts `calls`. `composition::FakeModel` returns `""` and does not count. They are different types in different modules. `preflight` takes the context one.
 
 ## Guardrails in this chapter
 
@@ -579,7 +554,7 @@ pub fn chapter_34_hot_path_returns_the_same_arc() -> bool {
 }
 ```
 
-`todo!("chapter 34")` is the panic. The test wants the function to return true when the hot path's returned `Arc` is `Arc::ptr_eq` to the snapshot it was given. The step crate is the reference. `share` is that path. Do not copy the crate into `my-harness/`.
+`todo!("chapter 34")` is the panic. The test wants the function to return true when the hot path's returned `Arc` is `Arc::ptr_eq` to the snapshot it was given. `share` is that path. 
 
 ## Chapter summary
 
@@ -589,7 +564,7 @@ pub fn chapter_34_hot_path_returns_the_same_arc() -> bool {
 - **Preflight.** Under the cap, no model call and no flush. Over the cap, one summary, a prune marker for a middle `skill_view`, and the latest user line in `flushed`.
 - **Snapshot.** Both paths, and `share`, clone the same `Arc`.
 - **Demo.** `shared: clean`.
-- **Time.** `share_snapshot` mean `4.86 ns`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The Criterion `time:` line is the slope.
+- **Time.** `share_snapshot` mean `4.86 ns`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573).
 
 ## What's next
 

@@ -12,14 +12,6 @@ Rust, as it shows up: an inverted index is a map from token to postings. A trait
 
 The runnable demo is offline. `cargo run -p ch06-5-harness-cli -- --mock ask "rename a file"` is the end state. A live OpenRouter call is optional on that CLI and was not run for this chapter. The missing-key error is a real run with the key unset.
 
-**In this chapter**
-
-- 6.1 Why many tools hurt
-- 6.2 A searchable index
-- 6.3 search_tools and lazy loading
-- 6.4 Route, then shrink
-- 6.5 The registry at scale
-
 | Section | Step | What it adds |
 |---|---|---|
 | 6.1 | `steps/ch06-1-schema-cost` | schema bytes and the chapter 2 token estimate for 1,000 and 10,000 tools |
@@ -85,10 +77,10 @@ schema_tokens_10000     time:   [21.036 ms 21.061 ms 21.084 ms]
 
 | Benchmark | Mean | Target | Machine |
 |---|---|---|---|
-| `schema_tokens_1000` | 923.1 µs | under the 10,000-tool budget | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0, sample size 10 |
+| `schema_tokens_1000` | 923.1 µs | under the 10,000-tool budget | [bench host](appendix-benchmark-method.md) |
 | `schema_tokens_10000` | 21.06 ms | < 50 ms | same |
 
-The `time:` line is the slope. The table is the mean point estimate. Counting the tokens is cheap next to sending half a million of them on every turn.
+ The table is the mean point estimate. Counting the tokens is cheap next to sending half a million of them on every turn.
 
 ### Milestone demo
 
@@ -417,7 +409,7 @@ agent_filter_10000      time:   [76.699 µs 76.885 µs 77.268 µs]
 | `cache_hit_10000` | 17.56 ns | < 1 µs | same |
 | `agent_filter_10000` | 77.00 µs | < 1 ms | same |
 
-CI runs these five steps on Ubuntu, macOS, and Windows. The benches run on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml). A push to `main` appends the medians to the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/).
+Where these numbers were taken is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ### Milestone demo
 

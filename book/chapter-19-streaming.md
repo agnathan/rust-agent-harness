@@ -496,15 +496,15 @@ fn main() {
 
 Five tests, all through the public functions.
 
-`a_closed_think_block_is_removed_and_a_split_tag_does_not_leak` feeds `"<think>secret</think>hello"`, flushes, and expects `"hello"`. On a second scrubber it feeds `"<thi"` and then `"nk>secret</think>ok"`, flushes, and expects `"ok"`. It also asserts `!out.contains("secret")`. The first call is a pair in one chunk. The second is the hold: the first `feed` contributes nothing visible, and the secret is gone after the close tag arrives.
+`a_closed_think_block_is_removed_and_a_split_tag_does_not_leak` feeds `"<think>secret</think>hello"`, flushes, and expects `"hello"`. On a second scrubber it feeds `"<thi"` and then `"nk>secret</think>ok"`, flushes, and expects `"ok"`.
 
-`cjk_tags_are_stripped_and_an_inline_mention_is_kept_until_it_closes` feeds `"<思考>秘密</思考>ok"`, flushes, and expects `"ok"`. It feeds `"see <think> later"`, flushes, and expects that same string back. It feeds `"\n<think>secret"`, ignores that return value, and expects `flush()` to be `""`. The function name says an inline mention is kept until it closes. The asserts cover an unclosed inline mention. A closed pair in the same buffer is removed wherever it sits, which is `find_closed_pair` running before the boundary check. This test does not feed `see <think>secret</think>ok`.
+`cjk_tags_are_stripped_and_an_inline_mention_is_kept_until_it_closes` feeds `"<思考>秘密</思考>ok"`, flushes, and expects `"ok"`. It feeds `"see <think> later"`, flushes, and expects that same string back.
 
-`a_read_starts_during_the_stream_and_a_write_waits` pushes `Text("hi")`, a read-only `echo`, and a write named `write`. Before `finish`, `started` must equal `["echo"]`. `finish` must return `"hi"`. After `finish`, `started` must equal `["echo", "write"]`. The write was stored on `deferred` and moved by `append`.
+`a_read_starts_during_the_stream_and_a_write_waits` pushes `Text("hi")`, a read-only `echo`, and a write named `write`. Before `finish`, `started` must equal `["echo"]`.
 
 `the_demo_drops_the_split_think_block` expects `demo_reply()` to be `("hello", ["echo"])`.
 
-`folding_plain_chunks_matches_a_buffer` builds `(0..100).map(|_| "hello ".into())`. The range is an iterator. `map` turns each integer into the same six-character string. The integer itself is unused, which is what `_` means. `collect` builds the `Vec`. `fold_text` and `buffer_join` must return equal strings. One hundred copies of `hello ` are 600 characters, no `<`, so every `feed` takes the fast path and `flush` adds nothing.
+`folding_plain_chunks_matches_a_buffer` builds `(0..100).map(|_| "hello ".into())`. The range is an iterator.
 
 ## 19.8 What the two benches time
 
@@ -577,11 +577,9 @@ The binary is the split think block plus one read-only tool. No key.
 
 The budget is the difference. Assembling the streamed reply should add less than 1 ms over the buffered join. Both numbers exclude model time. There is no SSE parser in the sample.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `19`.
+The reply is `hello`. `echo` started.
 
-### Milestone demo
-
-The `cargo run` above. The reply is `hello`. `echo` started.
+The means are `mean.point_estimate` from [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `19`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -612,7 +610,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Laye
 
 ## What you implement
 
-`my-harness/tests/ch19.rs` is the milestone. It compiles, then panics in `todo!("chapter 19")` until `chapter_19_fold_matches_buffer(&["hel", "lo"])` is true. Folding those two plain chunks has to produce the same text as joining them. The step crate is the reference. Do not copy it into `my-harness/`.
+`my-harness/tests/ch19.rs` is the milestone. It compiles, then panics in `todo!("chapter 19")` until `chapter_19_fold_matches_buffer(&["hel", "lo"])` is true. Folding those two plain chunks has to produce the same text as joining them. 
 
 ## What's next
 

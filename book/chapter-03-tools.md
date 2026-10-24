@@ -12,12 +12,6 @@ Rust, introduced where it is used: a trait is the tool. `serde_json` and a JSON 
 
 The demos are offline. `cargo run -p ch03-3-harness-core --example demo` is the dispatcher. `cargo run -p ch03-3-harness-cli -- --mock ask "Say hello"` still takes the chapter 1 path. There is no `my-harness` exercise file for this chapter yet. The tests live in the step crates.
 
-**In this chapter**
-
-- 3.1 A tool and a registry
-- 3.2 Toolsets
-- 3.3 Concurrent reads, exclusive writes
-
 | Section | Step | What it adds |
 |---|---|---|
 | 3.1 | `steps/ch03-1-registry` | the `Tool` trait, a JSON Schema, a registry |
@@ -213,10 +207,11 @@ pub fn schemas(&self) -> Vec<ToolSchema> {
 `register` reads the name from `schema()`, and refuses a second tool with the same name. The first one stays. Hermes does the same rejection so a plugin cannot overwrite a built-in. The name is owned twice: once as the map key, once inside the schema. That is deliberate. `get` borrows the key the caller passed and does not ask the tool for its schema again. `schemas` clones every schema, then sorts by name. HashMap iteration order is not the order the model should see, and a later chapter's prompt has to be stable. Name order is that stability. The lookup bench does not pay for the sort. It calls `get("tool-25")` and then `kind()` on a 50-tool map built before the timer starts. The names are `tool-00` through `tool-49`, zero-padded so name order and numeric order match.
 
 > **Rust sidebar: `Arc`**
-> - `Arc` is an atomic reference-counted pointer. `Arc::clone` bumps a counter. Dropping the last clone frees the tool.
-> - The registry, a toolset, and a spawned task can each hold a clone. They share one `EchoTool`.
+>
+> - `Arc::clone` bumps a counter.
+> - They share one `EchoTool`.
 > - `Arc<dyn Tool>` needs `Tool: Send + Sync`, which the trait already requires. A tool that kept a `RefCell` could not be in this map.
-> - The schema is returned by value, so a caller can drop the `Arc` and still hold the JSON. The tool itself stays shared.
+> - `Option`, `Result`, enums, and `Arc` are taught in [chapter 1](chapter-01-first-contact.md).
 
 ### The registry tests
 
@@ -261,7 +256,7 @@ echo: hello
      Summary [   0.054s] 28 tests run: 28 passed, 0 skipped
 ```
 
-The bench looks up `tool-25` in a registry of 50 tools. The `time:` line is the slope. The mean is the point estimate from `target/criterion/registry_lookup/new/estimates.json`.
+The bench looks up `tool-25` in a registry of 50 tools. The mean is the point estimate from `target/criterion/registry_lookup/new/estimates.json`.
 
 ```text
 registry_lookup         time:   [13.845 ns 13.901 ns 14.012 ns]
@@ -269,7 +264,7 @@ registry_lookup         time:   [13.845 ns 13.901 ns 14.012 ns]
 
 | Benchmark | Mean | Target | Machine |
 |---|---|---|---|
-| `registry_lookup` | 13.96 ns | < 1 µs | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0, sample size 10 |
+| `registry_lookup` | 13.96 ns | < 1 µs | [bench host](appendix-benchmark-method.md) |
 
 ### Milestone demo
 
@@ -383,7 +378,7 @@ available_tools_50      time:   [21.902 µs 21.945 µs 21.970 µs]
 
 | Benchmark | Mean | Target | Machine |
 |---|---|---|---|
-| `available_tools_50` | 21.89 µs | < 1 ms | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0, sample size 10 |
+| `available_tools_50` | 21.89 µs | < 1 ms | [bench host](appendix-benchmark-method.md) |
 
 ### Milestone demo
 
@@ -581,7 +576,7 @@ async fn call(&self, _arguments: Value) -> Result<ToolResult, ToolError> {
 
 The span includes the sleep. The lock does not. A zero delay, which this chapter's bench does not use, records a span and returns. The overlap test would be meaningless if the lock were held across the sleep: every call would queue on the mutex and the spans would never overlap, even when the dispatcher was correct.
 
-The criterion bench sleeps 1 ms per tool, not 20. `iter_batched` with `BatchSize::SmallInput` builds a fresh registry of eight `LatencyTool`s before each sample, so registration is outside the measurement and the tools are not reused across samples. The runtime is a multi-thread tokio runtime with 8 workers, created once. Sample size 10, warm-up 1 s, measurement 2 s. The `time:` line is the slope. The means are the point estimates.
+The criterion bench sleeps 1 ms per tool, not 20. `iter_batched` with `BatchSize::SmallInput` builds a fresh registry of eight `LatencyTool`s before each sample, so registration is outside the measurement and the tools are not reused across samples. The runtime is a multi-thread tokio runtime with 8 workers, created once. Sample size 10, warm-up 1 s, measurement 2 s. The means are the point estimates.
 
 ```text
 dispatch_8_reads_concurrent
@@ -592,12 +587,12 @@ dispatch_8_reads_sequential
 
 | Benchmark | Mean | Target | Machine |
 |---|---|---|---|
-| `dispatch_8_reads_concurrent` | 2.362 ms | about one 1 ms call, not eight | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0, sample size 10 |
+| `dispatch_8_reads_concurrent` | 2.362 ms | about one 1 ms call, not eight | [bench host](appendix-benchmark-method.md) |
 | `dispatch_8_reads_sequential` | 17.55 ms | about eight 1 ms calls | same |
 
 Tokio's 1 ms sleep is a bit more than 1 ms on this guest, so one wave measured 2.362 ms and eight in a row measured 17.55 ms. That is about 7.4 times, which is the "one call, not eight" budget. The 20 ms demo above is the same comparison with a sleep that dominates the overhead: 21.4 ms versus 170.0 ms.
 
-CI runs these three steps on Ubuntu, macOS, and Windows. The benches run on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml). A push to `main` appends the medians to the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/).
+Where these numbers were taken is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ### Milestone demo
 
@@ -647,11 +642,7 @@ error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 
 - **`required` is not validation.** A present key of the wrong JSON type passes `check_arguments`. Echo then turns a non-string `text` into `""`. `additionalProperties: false` is documentation until a real validator exists.
 - **The kind is a label.** A write tagged `Read` shares the pool. Hermes will also parallelize a name that sits in `_PARALLEL_SAFE_TOOLS` or in `_PATH_SCOPED_TOOLS` with a non-overlapping path. This dispatcher has no path set, so two writes to different files wait, and two reads of the same file do not.
-- **A missing name joins the read wave.** `is_write` is false when `get` returns none. The error is still per slot. It does not become a barrier.
-- **The bound is per `call_reads`.** It is not a global cap on MCP calls, and it is not the session inbox bound of 64 from chapter 2. A second batch gets its own eight permits.
 - **An empty env value hides the set, and so does a missing key.** `"0"` hides notes only because that set's check says so. Time would treat `"0"` as on.
-- **One duplicate fails `available`.** The sets that passed earlier in the vec are not returned as a partial registry.
-- **`schemas()` sorts and clones.** Lookup is the 13.96 ns number. Building the prompt list is the 21.89 µs number, and chapter 6 is what happens when that list is thousands of tools long.
 - **The permit outlives the wait, on purpose.** Holding it across `tool.call` is what caps in-flight work. Holding a `Mutex` across that same wait would pin a worker. `LatencyTool` locks only to push the span, before and after the sleep.
 
 ## Guardrails in this chapter

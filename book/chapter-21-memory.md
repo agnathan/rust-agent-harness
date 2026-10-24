@@ -548,11 +548,9 @@ The binary uses a temp directory. The file has the new entry. The snapshot taken
 
 `memory_enqueue` calls `MemoryFiles::open` on a temp directory before the bench. The timed closure is `b.iter`. Inside: `enqueue_turn` of user `hi` and assistant `ok`, with the record passed through `black_box`. The sample locks the queue, drops the oldest entry if 64 are already queued, formats one string, and pushes it. Opening the directory and reading the files are excluded. No file is written. The snapshot is not rebuilt.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `21`.
+The file says `likes tea`. The snapshot is `frozen`.
 
-### Milestone demo
-
-The `cargo run` above. The file says `likes tea`. The snapshot is `frozen`.
+The means are `mean.point_estimate` from [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `21`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -586,7 +584,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Laye
 
 ## What you implement
 
-`my-harness/tests/ch21.rs` is the milestone. It compiles, then panics in `todo!("chapter 21")` until `chapter_21_snapshot_changes_on_write` returns `false`. A write must not replace the `Arc` the caller already holds. The step crate is the reference. Do not copy it into `my-harness/`.
+`my-harness/tests/ch21.rs` is the milestone. It compiles, then panics in `todo!("chapter 21")` until `chapter_21_snapshot_changes_on_write` returns `false`. A write must not replace the `Arc` the caller already holds. 
 
 ## What's next
 

@@ -10,26 +10,6 @@ Rust, at the score: `Score` is a struct with a name and a pass bit. `block_on` r
 
 `cargo run -p ch52-evals --bin ch52-evals` prints the scores. The exercise is `my-harness/tests/ch52.rs`: the saved set still passes on the mock, and one appended trajectory event is ordered.
 
-**In this chapter**
-
-- 52.1 `FAIL_THRESHOLD`, `Score`, and the name lists
-- 52.2 `run_saved` and `run_stress`
-- 52.3 `unknown-tool-repair` and `repair_name`
-- 52.4 `run_red_team`
-- 52.5 L1 Entry/Gateway, `layer_entry`
-- 52.6 L2 Prompt/context, `layer_context`
-- 52.7 L3 Model I/O, `layer_model_io`
-- 52.8 L4 Agent loop, `layer_loop` and `usage`
-- 52.9 L5 Tool dispatch, `layer_dispatch` and `allows`
-- 52.10 L6 Individual tools, `layer_tools`
-- 52.11 L7 Execution env, `layer_env`
-- 52.12 L8 Persistence/learning, `layer_supply`
-- 52.13 L9 Scheduling/delegation, `layer_schedule`
-- 52.14 X Cross-cutting, `layer_cross`
-- 52.15 `append_event` and `record_saved`
-- 52.16 The permit, the peak, and `run_trajectories`
-- 52.17 `demo`
-
 | Section | What it walks |
 |---|---|
 | 52.1 | `FAIL_THRESHOLD`, `Score`, `block_on`, `score_of`, the name lists |
@@ -174,9 +154,9 @@ pub fn stress_names() -> Vec<&'static str> {
 
 `saved_names` maps `evals::saved_evals`. That slice is `echo-hello`, `direct`, `eight-reads`, in that order. `stress_names` copies `stress_eval_names`: `tool-fails-then-recovers`, `hits-iteration-cap`, `unknown-tool-repair`, `stall`.
 
-### Rust: `pub use` of a constant
-
-`pub use crate::supervisor::WORKER_BOUND` re-exports the constant from this module's path. Callers can write `suite::WORKER_BOUND` without importing `supervisor`. The value is still the supervisor's 8. A second constant in `suite.rs` would be a different item. This line does not create one.
+> **Rust sidebar: `pub use` of a constant**
+>
+> `pub use crate::supervisor::WORKER_BOUND` re-exports the constant from this module's path. Callers can write `suite::WORKER_BOUND` without importing `supervisor`. The value is still the supervisor's 8. A second constant in `suite.rs` would be a different item. This line does not create one.
 
 ## 52.2 `run_saved` and `run_stress`
 
@@ -210,9 +190,9 @@ pub fn run_stress() -> Vec<Score> {
 
 `unknown_tool_repair` is the next section. It is a real `run_loop`, not a stub in this file.
 
-### Rust: a runtime per call
-
-`block_on` builds the runtime inside the function. Two calls to `run_saved` build two runtimes. The bench for `saved_set` builds one current-thread runtime before `bench_function` and calls `runtime.block_on(harness_core::run_saved_evals())` inside `b.iter`. Building the runtime is outside that sample. The scripted turns, the dispatcher, and the 20 millisecond sleep are inside it. `suite::run_saved` is not what the bench calls. The scores are the same function underneath, `run_saved_evals`.
+> **Rust sidebar: a runtime per call**
+>
+> `block_on` builds the runtime inside the function. Two calls to `run_saved` build two runtimes. The bench for `saved_set` builds one current-thread runtime before `bench_function` and calls `runtime.block_on(harness_core::run_saved_evals())` inside `b.iter`. Building the runtime is outside that sample. The scripted turns, the dispatcher, and the 20 millisecond sleep are inside it. `suite::run_saved` is not what the bench calls. The scores are the same function underneath, `run_saved_evals`.
 
 ## 52.3 `unknown-tool-repair` and `repair_name`
 
@@ -277,9 +257,9 @@ pub fn run_red_team() -> Vec<Score> {
 
 Ten scores, in the order the catalog's section 4 lists the layers. The names are the layer ids. The bools are the private functions below. `run_red_team` does not call `run_loop`. The saved set and the stress set are the loop. The red team is one predicate per layer, and each predicate calls the real module.
 
-### Rust: a vec of struct literals
-
-Each `Score` is built in place. `name` is a `'static` string so the vec can outlive the function without cloning. `passed` is the bool the layer function returned. A layer that returned false is still pushed. The test `one_red_team_case_per_layer_and_no_threshold` expects all ten to be true, and it expects `FAIL_THRESHOLD` to be `None`.
+> **Rust sidebar: a vec of struct literals**
+>
+> Each `Score` is built in place. `name` is a `'static` string so the vec can outlive the function without cloning. `passed` is the bool the layer function returned. A layer that returned false is still pushed. The test `one_red_team_case_per_layer_and_no_threshold` expects all ten to be true, and it expects `FAIL_THRESHOLD` to be `None`.
 
 ## 52.5 L1 Entry/Gateway, `layer_entry`
 
@@ -372,9 +352,9 @@ Section 4 calls this layer L4 Agent loop. I read `Budget::exceeded`. It returns 
 
 This case calls `check_gate` directly. The stress name `hits-iteration-cap` is the other budget check: it runs `run_loop` with `max_iterations` of 2 and wants the loop's own stop reason. Both are in the demo. They are not the same call.
 
-### Rust: struct update syntax
-
-`Budget { max_iterations: 2, ..Budget::default() }` sets one field and fills the rest from the default. The default `max_iterations` in this crate is 8. The update replaces it. The other limits stay whatever `Default` set. The case depends on calls being the field that trips, which is why `usage` zeroes the token counters.
+> **Rust sidebar: struct update syntax**
+>
+> `Budget { max_iterations: 2, ..Budget::default() }` sets one field and fills the rest from the default. The default `max_iterations` in this crate is 8. The update replaces it. The other limits stay whatever `Default` set. The case depends on calls being the field that trips, which is why `usage` zeroes the token counters.
 
 ## 52.9 L5 Tool dispatch, `layer_dispatch` and `allows`
 
@@ -532,9 +512,9 @@ pub fn record_saved(log: &mut Vec<String>) -> Vec<Score> {
 
 The bench `append_event` times one format and one push onto an empty vec. It does not call `record_saved`. It does not run the loop. That sample is the cheap one.
 
-### Rust: a raw format string for JSON
-
-The raw string keeps the backslashes out. `{{` and `}}` are still the format escapes, so the output has single braces. `{name}` and `{passed}` are the placeholders. The quotes around the name are literal. `passed` is not quoted, because a JSON bool is bare. A `String` passed into `{passed}` would print quoted. The bool does not.
+> **Rust sidebar: a raw format string for JSON**
+>
+> The raw string keeps the backslashes out. `{{` and `}}` are still the format escapes, so the output has single braces. `{name}` and `{passed}` are the placeholders. The quotes around the name are literal. `passed` is not quoted, because a JSON bool is bare. A `String` passed into `{passed}` would print quoted. The bool does not.
 
 ## 52.16 The permit, the peak, and `run_trajectories`
 
@@ -607,9 +587,9 @@ pub fn run_trajectories(n: usize) -> (usize, usize) {
 
 `run_trajectories` spawns `n` threads inside `thread::scope`. Each thread acquires and immediately releases. The scope joins them before the function reads the peak. The return is `(n, peak)`. For 100 threads the count is 100. The peak is whatever maximum the `fetch_max` observed. Threads that never overlap observe 1. Threads that pile up observe at most 8, because `acquire` will not increment past the bound. The test allows any peak that is greater than 0 and at most `WORKER_BOUND`. The demo does not print the peak. It prints whether that peak is inside the bound. A fast schedule can show a peak of 1 and still print `within_bound: true`. A busy schedule can show 8. Both pass. The ninth-permit proof is the other function, and it does not read the peak.
 
-### Rust: `compare_exchange` and `fetch_max`
-
-`compare_exchange` writes only if the current value is still `now`. Two threads that both read 3 will have one success and one failure. The failure loops and reads 4. `SeqCst` is the ordering on both the success and the failure path. `fetch_max` stores the greater of the current peak and the new count, and it does that in one atomic step. The peak never moves backward. Releasing with `fetch_sub` does not lower the peak. The peak is a high-water mark.
+> **Rust sidebar: `compare_exchange` and `fetch_max`**
+>
+> `compare_exchange` writes only if the current value is still `now`. Two threads that both read 3 will have one success and one failure. The failure loops and reads 4. `SeqCst` is the ordering on both the success and the failure path. `fetch_max` stores the greater of the current peak and the new count, and it does that in one atomic step. The peak never moves backward. Releasing with `fetch_sub` does not lower the peak. The peak is a high-water mark.
 
 ## 52.17 `demo`
 
@@ -648,9 +628,9 @@ fn main() {
 
 `examples/demo.rs` is a different binary. It awaits `run_saved_evals` and `run_stress_evals` and prints `eval:` lines for those seven names. It stops there.
 
-### Rust: `chain` on three iterators
-
-`into_iter().chain(...).chain(...)` is one iterator of `Score`. `run_saved` returns a vec, so the first iterator owns those three scores. `chain` appends the next vec's iterator. The loop does not care which function produced a score. The order is the order of the chains. Inserting a score between stress and red team would put it between `stall` and `L1` on the printout. The test looks for `echo-hello`, `unknown-tool-repair`, `L5`, and `X` as substrings, so those four names have to stay, and `threshold: None` and `trajectories: 100 within_bound: true` have to stay.
+> **Rust sidebar: `chain` on three iterators**
+>
+> `into_iter().chain(...).chain(...)` is one iterator of `Score`. `run_saved` returns a vec, so the first iterator owns those three scores. `chain` appends the next vec's iterator. The loop does not care which function produced a score. The order is the order of the chains. Inserting a score between stress and red team would put it between `stall` and `L1` on the printout. The test looks for `echo-hello`, `unknown-tool-repair`, `L5`, and `X` as substrings, so those four names have to stay, and `threshold: None` and `trajectories: 100 within_bound: true` have to stay.
 
 ## Tests
 
@@ -685,7 +665,7 @@ The test calls `run_saved` and compares the score names to `saved_names()`. Ever
 
 The test calls `demo` and looks for `eval: echo-hello pass`, `eval: unknown-tool-repair pass`, `eval: L5 pass`, `eval: X pass`, `threshold: None`, and `trajectories: 100 within_bound: true`. The function name says peak. The assertion looks at `within_bound`. The peak number is not in the expected text.
 
-The other binaries are the chapter 50 tree's tests, copied forward. `tests/sessions.rs` still has `chapter_9_saved_and_stress_evals_still_pass`, which runs the same eval functions from the sessions chapter's point of view. `suite` is the chapter that scores them next to the red team and prints the line. `tests/validate.rs` includes `an_unknown_name_repairs_to_the_close_tool`, which is the repair from the validate chapter. The suite's stress score is that repair inside `run_loop`, observed as a finished task.
+The other binaries are the earlier chapters' tests, copied forward. `tests/sessions.rs` still runs the saved set and the stress set.
 
 ## Build, run, and benchmark
 
@@ -695,14 +675,10 @@ The run command and the demo block are above. The bench command is the one the w
 cargo bench -p ch52-evals --bench evals --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
 ```
 
-`.github/scripts/run_bench_section.sh` runs that shape. The workflow calls it for section 52 with package `ch52-evals` and bench `evals`. The same flags are in `steps/ch52-evals/README.md`.
-
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
 | `append_event` | `82.2 ns` | one JSON object pushed onto an empty vec | `append_event` of `echo-hello` |
 | `saved_set` | `21.26 ms` | the three saved tasks, including the 20 ms sleep | `run_saved_evals` on a runtime built outside the loop |
-
-The ids are `52/append_event` and `52/saved_set`. The old ids `50/append_event` and `48/append_event` alias the first. The old ids `50/saved_set` and `48/saved_set` alias the second. They are the `aliases` arrays in `benchmarks/descriptions.json`.
 
 ```rust
 fn append_one(c: &mut Criterion) {
@@ -732,15 +708,11 @@ fn saved_set(c: &mut Criterion) {
 }
 ```
 
-`append_event` uses `iter_batched`. The setup closure is `Vec::new`, and it is not timed. The timed routine calls `append_event` with the vec and the name `echo-hello` passed through `black_box`, and `passed` true, then `black_box` of the vec. The format and the push are inside the sample. `run_saved`, `run_red_team`, `run_trajectories`, and the model are not called. The descriptions file says tens of nanoseconds is one format and one push, and a millisecond would mean the sample started a file lock or the 100-thread run. This is the cheap bench.
+The last three lines are `eval: X pass`, `trajectories: 100 within_bound: true`, and `threshold: None`.
 
-`saved_set` builds the current-thread runtime before the bench. That build is not timed. The timed closure is `b.iter`. Inside it: `block_on` of `run_saved_evals`, then `black_box` of the score vec. The scripted turns and the dispatcher are inside the sample. `eight-reads` sleeps 20 milliseconds inside each concurrent `delay_read`. That sleep is inside the sample. `run_stress_evals`, `run_red_team`, and `run_trajectories` are not called. `FAIL_THRESHOLD` is not read. The descriptions file says the floor is that 20 millisecond sleep, a number near the sleep is the concurrent fan-out, and seconds would mean the eight reads ran one after another. There is no fail threshold, so a slower mean does not fail CI. Do not read this sample as a few tens of nanoseconds. That description belongs to `append_event`.
+`append_event` uses `iter_batched`. The setup closure is `Vec::new`, and it is not timed.
 
-The means are `82.2 ns` and `21.26 ms`. They are `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196), section `52`. The Criterion `time:` line is the slope, not the mean.
-
-### Milestone demo
-
-The `cargo run` above. The last three lines are `eval: X pass`, `trajectories: 100 within_bound: true`, and `threshold: None`.
+The means are `mean.point_estimate` from [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196), section `52`. Bench ids: `52/append_event`, `52/saved_set`, `50/append_event`, `48/append_event`, `50/saved_set`, `48/saved_set`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -751,16 +723,6 @@ The peak is a high-water mark, and the demo prints a bool. Quoting a peak from o
 `eight-reads` sleeps. A bench note that called `saved_set` a nanosecond sample would be describing `append_event`. The sleep is 20 milliseconds, eight ways, under a dispatcher bound of 8, so the reads overlap. The sample is at least that sleep.
 
 `unknown-tool-repair` looks for the name `echo` on the transcript after `run_loop`. A helper in `suite.rs` that returned `echo` without reading `eco` would not be this eval. There is no such helper. The prefix rule in `repair_name` is what turns `eco` into `echo` when `echo` is the unique match. A second tool named `ecko` would make the prefix ambiguous, and `repair_name` would return `None`. The stress registry registers only `echo`.
-
-`FAIL_THRESHOLD` is `None`. Adding a number and exiting the process would be a different program. The demo prints the option and returns the string. `record_saved` appends the bools either way.
-
-`examples/demo.rs` prints seven `eval:` lines and stops. The chapter binary prints seventeen `eval:` lines, the trajectory line, and the threshold. Running the example and expecting `eval: L1 pass` will not find it.
-
-L4's `check_gate` and the stress task `hits-iteration-cap` both use `max_iterations` of 2. One calls the gate with a constructed `AgentUsage`. The other runs the loop. A change to `exceeded` moves both. They are still two scores.
-
-`layer_dispatch` denies four commands under yolo, and it allows `ls`. The hardline runs before the yolo short-circuit. A command that never reaches `hardline_text` is what yolo allows.
-
-The red-team functions are private. The test reaches them through `run_red_team`. Calling `layer_entry` from the integration test would not compile. The score names are the public surface.
 
 ## Guardrails in this chapter
 
@@ -814,7 +776,7 @@ pub fn chapter_52_saved_passed(name: &str) -> bool {
 }
 ```
 
-`todo!("chapter 52")` is the panic. The test asks about `echo-hello`, `direct`, and `eight-reads`, and it wants `true` for each. In the step crate that is `run_saved`: three scores, all passed, from `run_saved_evals` on this copy of the loop. The stub stays `todo!`. Do not paste `suite.rs` into `my-harness/`.
+`todo!("chapter 52")` is the panic. The test asks about `echo-hello`, `direct`, and `eight-reads`, and it wants `true` for each. In the step crate that is `run_saved`: three scores, all passed, from `run_saved_evals` on this copy of the loop. The stub stays `todo!`. 
 
 ## Chapter summary
 
@@ -822,7 +784,7 @@ pub fn chapter_52_saved_passed(name: &str) -> bool {
 - **Stress.** The four names pass, including `unknown-tool-repair`, which is `repair_name` inside `run_loop` turning `eco` into `echo`.
 - **Layers.** L1 through L9 and X each call the real module. `FAIL_THRESHOLD` is `None`.
 - **Trajectories.** One append is one JSON object. One hundred tasks stay within the worker bound of 8. The ninth permit is refused. The peak is not printed.
-- **Time.** `append_event` mean `82.2 ns`. `saved_set` mean `21.26 ms`. Both are `mean.point_estimate`. The Criterion `time:` line is the slope. The saved-set sample includes the sleep.
+- **Time.** `append_event` mean `82.2 ns`. `saved_set` mean `21.26 ms`. Both are `mean.point_estimate`. The saved-set sample includes the sleep.
 
 ## What's next
 

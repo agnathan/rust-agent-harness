@@ -55,9 +55,9 @@ let _execute = self.execute.clone().acquire_owned().await.expect("execute semaph
 Ok(body().await)
 ```
 
-### Rust: a permit is a value
-
-A `Semaphore` starts with N permits. `acquire_owned` returns a permit value. Dropping that value gives the permit back. Holding it across an `.await` is what caps the overlap. You do not increment a counter by hand, and you do not hold a `Mutex` across the tool body. The mutex would pin a worker. The permit does not.
+> **Rust sidebar: a permit is a value**
+>
+> A `Semaphore` starts with N permits. `acquire_owned` returns a permit value. Dropping that value gives the permit back. Holding it across an `.await` is what caps the overlap. You do not increment a counter by hand, and you do not hold a `Mutex` across the tool body. The mutex would pin a worker. The permit does not.
 
 ## Tests
 
@@ -90,8 +90,6 @@ accept_bound: 32
 
 There is no model in this process, so there is no API key and no `--mock` flag. The binary registers `echo` and calls it.
 
-The bench is `benches/gate.rs`. Criterion warm-up is 1 second, measurement is 2 seconds, and the sample size is 10. The mean is `estimates.json` `mean.point_estimate`.
-
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
 | `echo_through_gate` | 45.53 ns | the permit round trip | one `CallGate::run` that returns `hello`, no sleep |
@@ -99,11 +97,9 @@ The bench is `benches/gate.rs`. Criterion warm-up is 1 second, measurement is 2 
 
 `echo_through_gate` builds the runtime (4 workers) and the gate outside the sample. The timed closure takes one accept permit, waits for an execute permit, and returns the string `hello`. `eight_concurrent_sleeps` spawns eight tasks inside the sample. Each sleeps 1 ms while holding an execute permit. Setup of the runtime is excluded. Nothing is a model. The 2.129 ms number is one wave of eight 1 ms sleeps plus scheduling.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38863938100](https://github.com/agnathan/rust-agent-harness/actions/runs/38863938100), section `5` (recorded as `gw5`).
+I did not open a socket and I did not call OpenRouter.
 
-### Milestone demo
-
-The `cargo run` above is the demo. I did not open a socket and I did not call OpenRouter.
+The means are `mean.point_estimate` from [run 38863938100](https://github.com/agnathan/rust-agent-harness/actions/runs/38863938100), section `5`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 

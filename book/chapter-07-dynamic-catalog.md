@@ -59,9 +59,9 @@ pub fn reload(&self, load: Load) -> Result<(), CatalogError> {
 
 `Snapshot::build` runs before the write lock is taken. The lock is held only for the pointer store. A `call` that already holds an `Arc` does not take that lock again.
 
-### Rust: cloning an `Arc` is not cloning the index
-
-`Arc::clone` increments a count and copies a pointer. The index stays where it is. Two calls can hold two different snapshots after a reload. The old index is freed when the last `Arc` drops. You do not lock the index for the whole search. You lock long enough to clone the pointer, then search the clone.
+> **Rust sidebar: cloning an `Arc` is not cloning the index**
+>
+> `Arc::clone` increments a count and copies a pointer. The index stays where it is. Two calls can hold two different snapshots after a reload. The old index is freed when the last `Arc` drops. You do not lock the index for the whole search. You lock long enough to clone the pointer, then search the clone.
 
 ## Tests
 
@@ -101,11 +101,7 @@ The binary loads one native tool and one upstream tool and searches `rename a fi
 
 `catalog_search_10k` builds the gateway and the 10,000-card index outside the sample. The timed closure is `search("rename a file", 8)` and `black_box` of the hits. No embedder is installed. `catalog_reload_10k` clones the 10,000 cards and rebuilds the index inside the sample. That clone is part of the reload the caller pays. `catalog_arc_swap` times a reload of one card while an `Arc` from before the reload is still held. The search number is the server. Chapter 6's client search of 10,000 tools was 146.8 µs. This server search measured 299.0 µs on the Benchmarks runner. They are different crates and different machines.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38863938100](https://github.com/agnathan/rust-agent-harness/actions/runs/38863938100), section `7` (recorded as `gw7`).
-
-### Milestone demo
-
-The `cargo run` above is the demo.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38863938100](https://github.com/agnathan/rust-agent-harness/actions/runs/38863938100), section `7` (recorded as `gw7`). How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 

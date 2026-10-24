@@ -12,14 +12,6 @@ Rust, at the pulse: the timestamps are integers, and the comparison is pure, whi
 
 `cargo run -p ch36-supervision --bin ch36-supervision --offline` prints the retry. The exercise is `my-harness/tests/ch36.rs`: a child with no progress for the idle threshold is stale, and one that is inside a tool uses the longer threshold.
 
-**In this chapter**
-
-- 36.1 The restart constants and the two error types
-- 36.2 `FakeModel` scripts a child, and `Call` holds the flag and the budget
-- 36.3 `Supervisor::record` is the chain
-- 36.4 `restart_child` retries once, and `demo` prints the retry
-- 36.5 `Pulse` and `is_stale` are the heartbeat
-
 | Section | Step | What it adds |
 |---|---|---|
 | 36.1 | `steps/ch36-supervision` | `RestartError`, `ChildFailed`, the three restart constants |
@@ -34,7 +26,9 @@ Rust, at the pulse: the timestamps are integers, and the comparison is pure, whi
 >
 > The heartbeat constants sit together in `tools/delegate_tool.py`:
 >
-> ```text
+> 
+
+```text
 > 105  DEFAULT_MAX_ITERATIONS = 250
 > 106  _HEARTBEAT_INTERVAL = 30  # seconds between parent activity heartbeats during delegation
 > 107  # Stale-heartbeat thresholds (cycles of _HEARTBEAT_INTERVAL with no progress). Progress = iteration, current_tool OR
@@ -44,14 +38,18 @@ Rust, at the pulse: the timestamps are integers, and the comparison is pure, whi
 > 111  _HEARTBEAT_STALE_CYCLES_IDLE = 15  # 450s idle between turns → stale
 > 112  _HEARTBEAT_STALE_CYCLES_IN_TOOL = 40  # 1200s stuck on same tool → stale
 > ```
+
 >
 > `_start_heartbeat` is defined in `tools/delegate_tool_child_run.py` and imported back into `delegate_tool.py` (the import is at lines 27–29). `_run_single_child` calls it at line 363. The comment above that call says the heartbeat keeps the parent's activity timestamp moving, and once the child looks stale it also ends the wait. `_Heartbeat.tick` is where the cycle count is chosen:
 >
-> ```text
+> 
+
+```text
 > 321  last_seen["stale"] += 1
 > 322  stale_cycles = _HEARTBEAT_STALE_CYCLES_IN_TOOL if child_tool else _HEARTBEAT_STALE_CYCLES_IDLE
 > 323  if last_seen["stale"] >= stale_cycles:
 > ```
+
 >
 > `child_tool` is `current_tool` from the child's activity summary. A tool name selects 40. No tool name selects 15. Progress, a few lines above, is `child_iter > last_seen["iter"]`, or `child_tool != last_seen["tool"]`, or `last_activity_ts` advancing. On progress the stale counter goes back to 0. `_Heartbeat.start` schedules `tick` every `_HEARTBEAT_INTERVAL` through `agent.periodic_scheduler`. The class docstring says this is not one daemon thread per child.
 >
@@ -443,13 +441,9 @@ cargo bench -p ch36-supervision --bench supervision --locked -- --warm-up-time 1
 |---|---|---|---|
 | `restart_bookkeeping` | 29.8 ns | the record, excluding the child's work | one `record(0)` on an empty supervisor |
 
-`restart_bookkeeping` is `benches/supervision.rs`. It uses `iter_batched`. The setup closure calls `Supervisor::new` and is not timed. The timed routine calls `record(0)` with the timestamp passed through `black_box`, then `black_box` of the bool. `BatchSize::SmallInput` builds a new supervisor for each sample. The chain length is 1, so the breaker does not trip. `FakeModel` is not constructed. `restart_child` is not called. `is_stale` is not called. No sleep runs. The 300 second gap is a comparison against the argument `0` on an empty vec, not a wait.
+`restart_bookkeeping` is `benches/supervision.rs`. It uses `iter_batched`.
 
-The mean is `29.8 ns`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `36`. The id is `36/restart_bookkeeping`. The old id `34/restart_bookkeeping` is an alias in `benchmarks/descriptions.json`. The Criterion `time:` line is the slope, not the mean.
-
-### Milestone demo
-
-The `cargo run` above. The line is `restarted: ok`.
+The means are `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `36`. Bench ids: `36/restart_bookkeeping`, `34/restart_bookkeeping`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -460,12 +454,6 @@ The bench is the bookkeeping. A number that includes `complete`, or includes `is
 The cap follows `previous.in_tool`, not the `tool` argument. The argument is the progress check. Hermes picks 40 when `current_tool` on this tick is set. A pulse with `in_tool: false` and a tool name of `terminal` still uses 15 cycles here. The in-tool test sets the flag.
 
 `record` on one supervisor is the chain. The counter is not the chain. A wide gap leaves `restarts()` at 2 while the vec holds one stamp and the bool is false.
-
-Fail-open is a flag. This crate has no disk. Hermes does not trip when the read fails, and `fail_io` does not trip either.
-
-The second `complete` runs only when the breaker did not trip and the flag is still clear. On the third failure the success script is never popped. The budget is not decremented, so a budget of 1 still allows the retry. The thing that stops a sequence of failures is the chain, not a hidden third try, and not a budget that counts down.
-
-`is_stale` and `restart_child` are neighbors in one file. A stale bool does not, by itself, append a boot.
 
 ## Guardrails in this chapter
 
@@ -483,7 +471,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
 ## What you implement
 
-`my-harness/tests/ch36.rs` is the milestone. The step crate is the reference. The stub stays `todo!`.
+`my-harness/tests/ch36.rs` is the milestone. The stub stays `todo!`.
 
 ```rust
 use my_harness::chapter_36_idle_is_stale;

@@ -516,13 +516,11 @@ The binary is one fake reply in a temp database. The file is removed when the pr
 |---|---|---|---|
 | `wal_append` | 139.2 µs | under 1 ms | one transaction, two message rows |
 
-`wal_append` opens a temp database and runs `migrate` before the bench. The timed closure is `b.iter`. Inside: `append_turn` of session `bench`, user `hi`, assistant `pong`, with each argument passed through `black_box`. The sample is the transaction and the queue push. Opening the file and creating the tables are excluded. No FTS insert runs. The queue is capped at 64, so later samples drop the oldest id instead of growing without a bound.
+The reply is `pong`. Two rows. The journal is `wal`.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `20`.
+`wal_append` opens a temp database and runs `migrate` before the bench. The timed closure is `b.iter`.
 
-### Milestone demo
-
-The `cargo run` above. The reply is `pong`. Two rows. The journal is `wal`.
+The means are `mean.point_estimate` from [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `20`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -556,7 +554,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Laye
 
 ## What you implement
 
-`my-harness/tests/ch20.rs` is the milestone. It compiles, then panics in `todo!("chapter 20")` until `chapter_20_stored_line("sk-abcdefghijklmnopqrstuvwxyz")` contains `sk-***` and does not contain the rest of that key. The store redacts before the insert. The step crate is the reference. Do not copy it into `my-harness/`.
+`my-harness/tests/ch20.rs` is the milestone. It compiles, then panics in `todo!("chapter 20")` until `chapter_20_stored_line("sk-abcdefghijklmnopqrstuvwxyz")` contains `sk-***` and does not contain the rest of that key. The store redacts before the insert. 
 
 ## What's next
 

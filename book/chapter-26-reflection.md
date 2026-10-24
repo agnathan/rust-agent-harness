@@ -12,17 +12,6 @@ Rust, beside the fork: a child is a thread the cancel bench can join. The tool s
 
 `cargo run --locked -p ch26-reflection --bin ch26-reflection` forks after ten user turns. The exercise is `my-harness/tests/ch26.rs`: spawning the reviewer does not run it on the user turn.
 
-**In this chapter**
-
-- 26.1 Two intervals, one timeout, two slices
-- 26.2 `Loop` counts, and the flags are the nudge
-- 26.3 `finalize` returns the fork and clears the flags
-- 26.4 `spawn_reviewer` builds the slice and zeroes the intervals
-- 26.5 `execute` runs the script, one tool at a time
-- 26.6 `ReviewRun` is the thread the cancel bench joins
-- 26.7 `demo` forks after ten user turns
-- 26.8 The skill index is still a note
-
 | Section | What it walks |
 |---|---|
 | 26.1 | The intervals, the timeout, the two tool slices |
@@ -524,11 +513,9 @@ The binary counts ten user turns, forks, and runs the scripted memory line. No k
 
 `cancel_review` uses `iter_batched` with `BatchSize::SmallInput`. The setup closure is `ReviewRun::spawn_spinner`. The timed closure is `cancel_and_join`. The worker sleeps 1 millisecond between flag checks, so the join waits out at most one of those sleeps.
 
-The Mean cells are `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `26`. The ids are `26/spawn_reviewer` and `26/cancel_review`. The old ids `24/spawn_reviewer` and `24/cancel_review` are aliases in `benchmarks/descriptions.json`. Criterion also prints a `time:` line. That line is the slope. It is not the mean.
+The note is `prefer short notes`. The fork line says `after 10 user turns`.
 
-### Milestone demo
-
-The `cargo run` above. The note is `prefer short notes`. The fork line says `after 10 user turns`.
+The means are `mean.point_estimate` from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `26`. Bench ids: `26/spawn_reviewer`, `26/cancel_review`, `24/spawn_reviewer`, `24/cancel_review`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -539,12 +526,6 @@ A memory nudge and a skill nudge on the same `finalize` produce one fork, and th
 `execute` consumes a scripted line before it checks cancel. A cancelled fork returns `Cancelled` and does not push a note. The model's `calls` counter has moved.
 
 `HERMES_CANCEL_TIMEOUT` is two seconds. `cancel_and_join` does not sleep that long. A worker that never loads the flag would not come back. The spinner loads it every millisecond.
-
-`skill_manage` on the slice returns the formatted line. It does not write `SKILL.md`. A patch is still `Writer::patch`, and a reviewer there still has to `view`.
-
-The note vec is a `Vec<String>` in the caller. It is not `MEMORY.md`. Chapter 21's scan does not run on it.
-
-`run_loop` will not notice that you built a `Loop`. The counters move only when something calls `note_user_turn` and `note_tool_iter`.
 
 ## Guardrails in this chapter
 
@@ -575,7 +556,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). The 
 
 `my-harness/tests/ch26.rs` is the milestone. The test is `spawning_the_reviewer_does_not_run_it_on_the_user_turn`. It asserts `chapter_26_review_runs_on_user_turn()` is false. Spawning the reviewer does not run it on the user turn.
 
-The function in `my-harness` is a stub. It ends in `todo!("chapter 26")` and panics until the assertion can pass. The step crate is the reference. Do not copy it into `my-harness/`.
+The function in `my-harness` is a stub. It ends in `todo!("chapter 26")` and panics until the assertion can pass. 
 
 ## What's next
 

@@ -69,9 +69,9 @@ dynamic: success=true schema_tokens=135 call_tokens=4 result_tokens=15
 
 All three succeed. Dynamic sends fewer schema tokens than the static set, and the static set sends fewer than every tool. Call tokens are the JSON arguments. Result tokens are the description `call` returns. These are character estimates, not a tokenizer and not a bill.
 
-### Rust: drop the mutex guard before the tool runs
-
-`call` locks the session map, checks that the name is revealed, and drops the guard before `catalog.call`. The tool body must not run while the map is locked. A body that tried to `search_tools` on the same gateway would deadlock if the guard were still held. The lock is for the session record. It is not for the tool.
+> **Rust sidebar: drop the mutex guard before the tool runs**
+>
+> `call` locks the session map, checks that the name is revealed, and drops the guard before `catalog.call`. The tool body must not run while the map is locked. A body that tried to `search_tools` on the same gateway would deadlock if the guard were still held. The lock is for the session record. It is not for the tool.
 
 ## Tests
 
@@ -101,11 +101,9 @@ The output is the three lines in the fake-task section. No API key.
 
 Both benches call `run_rename_task` inside the sample, including catalog build. The 2,000-tool `synthetic` vec is built inside the timed closure. There is no model and no sleep. The dynamic arm measured 5.687 ms and the every-tool arm measured 8.355 ms. The demo, not the bench, records 135 schema tokens against 45,104 for every tool, on the same 2,000-tool catalog. The bench is the time. The demo is the token count.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38863938100](https://github.com/agnathan/rust-agent-harness/actions/runs/38863938100), section `8` (recorded as `gw8`).
+Success is true on all three arms.
 
-### Milestone demo
-
-The `cargo run` above. Success is true on all three arms.
+The means are `mean.point_estimate` from [run 38863938100](https://github.com/agnathan/rust-agent-harness/actions/runs/38863938100), section `8`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 

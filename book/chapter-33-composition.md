@@ -10,16 +10,6 @@ Rust, at the refusal: the route is an enum, so "move" and "stay" are not boolean
 
 `cargo run -p ch33-composition --bin ch33-composition --offline` stays inside the limits. The exercise is `my-harness/tests/ch33.rs`: nested width 9 is refused before any task starts.
 
-**In this chapter**
-
-- 33.1 Four constants, and the enums that carry a stop
-- 33.2 `Gate` records exits, and `FakeModel` pops a line
-- 33.3 `nested_fanout` refuses before `schedule`
-- 33.4 `dispatch` moves ownership only for `Route::Move`
-- 33.5 `wait_target` reads a session, then a pid, then seconds
-- 33.6 The loop runs the gates, then the critic
-- 33.7 `limits` returns the four numbers, and the demo stays
-
 | Section | Step | What it adds |
 |---|---|---|
 | 33.1 | `steps/ch33-composition` | the four constants, `ComposeError`, `Route`, `WaitTarget`, `LoopStop` |
@@ -213,7 +203,8 @@ pub fn nested_fanout_holding(
 > - `Result<String, ComposeError>` is either `Ok(summary)` or `Err(ComposeError)`.
 > - `return Err(...)` leaves the function immediately. The lines after the `if` do not run.
 > - The tests use `unwrap_err()` on a refusal and `unwrap()` on a width that fits. `unwrap` panics on `Err`. `unwrap_err` panics on `Ok`.
-> - `?` is not used here. The `schedule` call uses `expect`, which panics with that string if the queue returns `FanError::Full`.
+> - The `schedule` call uses `expect`, which panics with that string if the queue returns `FanError::Full`.
+> - `Option`, `Result`, enums, and `Arc` are taught in [chapter 1](chapter-01-first-contact.md).
 
 > **Rust sidebar: `saturating_add`**
 >
@@ -302,9 +293,10 @@ pub fn wait_target(raw: &str) -> Option<WaitTarget> {
 > **Rust sidebar: `Option`**
 >
 > - `Option<&str>` is `Some(slice)` or `None`. `split_once` returns `None` when the needle is absent, and `?` then returns `None` from `field`.
-> - `if let Some(session) = ...` runs the block only when the value is present. A missing session falls through to the pid check.
-> - `and_then` chains another `Option`. `text.parse().ok()` is `Some(number)` when the slice parses as the inferred integer type, and `None` when it does not. A failed parse skips that arm.
+> - `if let Some(session) = ...` runs the block only when the value is present.
+> - `and_then` chains another `Option`. `text.parse().ok()` is `Some(number)` when the slice parses as the inferred integer type, and `None` when it does not.
 > - The lifetime `'a` on `field` means the returned `&str` points into `raw`. `wait_target` calls `session.to_string()` before returning, so `WaitTarget::Session` owns its id after `raw` is gone.
+> - `Option`, `Result`, enums, and `Arc` are taught in [chapter 1](chapter-01-first-contact.md).
 
 The needle is a quoted key: `"wait_on_session"`, with the quote characters included. `split_once` splits on the first match. The suffix is trimmed of leading whitespace, then of a prefix made of `:`, space, `"`, and `=`. The value ends at the next `"`, comma, `}`, or whitespace. An empty slice becomes `None`.
 
@@ -516,11 +508,7 @@ The binary fans out two children, stays with the supervisor, and judges one scri
 |---|---|---|---|
 | `nested_eight` | 271.87 µs | eight children on the pool of 8 | `nested_fanout` with held 0 and width 8 |
 
-The pool is built before `b.iter`. The timed closure schedules eight `n{index}` tasks and gathers them on that pool with a zero hold. Width 9 is not in the sample. The mean is `271.87 µs`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `33`. The id is `33/nested_eight`. The old id `31/nested_eight` is an alias in `benchmarks/descriptions.json`. The printed Criterion `time:` line is the slope, not the mean.
-
-### Milestone demo
-
-The `cargo run` above. The line is `fan n0 | n1; owner supervisor; done`.
+The means are `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `33`. Bench ids: `33/nested_eight`, `31/nested_eight`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -529,16 +517,6 @@ The `cargo run` above. The line is `fan n0 | n1; owner supervisor; done`.
 `saturating_add` compares the sum with `pool.limit()`. A pool built with `WORKER_BOUND` has limit 8. `WORKER_BOUND + 1` is the width 9 the refusal test asks for. `Pool::new` can be given another limit. The check uses whatever `limit()` returns.
 
 `schedule`'s `expect` panics if the fan-out queue is already at 100. The bound check does not know `QUEUE_CAP`. It knows `pool.limit()`. The tests stay at 8.
-
-`Route::Stay` returns `Ok(None)`. A reader who treats `None` as a failure will mis-read a successful stay. `Err` is `HandoffError`, and `Stay` does not produce it. `Move` can produce `Empty` or `Limit` from the copied board.
-
-`wait_target` returns on the first session hit. A later pid in the same string is not parsed. The alias keys in `_parse_judge_response` are not needles in `field`. A zero pid fails `pid > 0` and the function continues to seconds.
-
-A red gate consumes the model line and skips `as_tool`. The line can say `verdict: done` and still be ignored. `attempts` resets to 0 on a later exit code of 0, so the field after a recovered gate is 0, not the number of earlier failures. Pause happens when `attempts` becomes 4, because the comparison is `>` 3. Three failures return `Retry`.
-
-`LoopStop::Turns` is decided at the top of the loop. The twentieth `Continue` is judged. The next iteration returns before another `complete`. `Parked` does not increment `turns`. A `Wait` that parks still called `as_tool` when the gates were clear, so that path takes one permit. The pause path does not.
-
-`DEFAULT_JUDGE_TIMEOUT_SECS` and `DEFAULT_GATE_TIMEOUT_SECONDS` are returned by `limits`. `thread::sleep` is not called with them in `run_continuation`. The 40 millisecond hold in the overlap test is an argument to `nested_fanout_holding`, and the sleep is in the copied `gather_holding`.
 
 `demo` uses `assert!` on the stay result. A `Stay` that returned `Some` would panic inside `demo` before the string was built. The test expects the string, which is only built when that assertion passes.
 
@@ -577,7 +555,7 @@ pub fn chapter_33_refuses_width_nine_before_tasks_start() -> bool {
 }
 ```
 
-`todo!("chapter 33")` is the panic. The test wants the function to return true only when a nested fan-out of width 9 against a pool whose limit is 8 is refused before any task is scheduled. The step crate is the reference. Do not copy it into `my-harness/`.
+`todo!("chapter 33")` is the panic. The test wants the function to return true only when a nested fan-out of width 9 against a pool whose limit is 8 is refused before any task is scheduled. 
 
 ## Chapter summary
 
@@ -588,7 +566,7 @@ pub fn chapter_33_refuses_width_nine_before_tasks_start() -> bool {
 - **Gates.** A failing gate does not call `as_tool`. Three retries, then `GatePaused`. The timeouts 30 and 300 are stored and are not slept in the loop.
 - **Cap.** Twenty turns return `LoopStop::Turns`.
 - **Demo.** `fan n0 | n1; owner supervisor; done`.
-- **Time.** `nested_eight` mean `271.87 µs`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The Criterion `time:` line is the slope.
+- **Time.** `nested_eight` mean `271.87 µs`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573).
 
 ## What's next
 

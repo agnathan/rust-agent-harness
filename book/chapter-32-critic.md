@@ -12,14 +12,6 @@ Rust, at the snippet: indexing a `&str` is by byte, and `is_char_boundary` is th
 
 `cargo run --locked -p ch32-critic --bin ch32-critic` runs the accept path. The exercise is `my-harness/tests/ch32.rs`: the critic reads the summary and does not do the work.
 
-**In this chapter**
-
-- 32.1 The constants are named, and two of them are not looped
-- 32.2 `parse_verdict` scans for one word
-- 32.3 The snippet stops on a character boundary
-- 32.4 `judge` takes one permit and does not push
-- 32.5 The demo accepts, and the bench times one permit
-
 | Section | Step | What it adds |
 |---|---|---|
 | 32.1 | `steps/ch32-critic` | the constants, `Verdict`, `Outcome` |
@@ -255,9 +247,10 @@ pub fn final_gate(pool: &Pool, raw: &str) -> Result<String, Verdict> {
 
 > **Rust sidebar: `Result`**
 >
-> - `as_tool` returns `Outcome`. It does not return `Result`. The caller reads `accepted`, `verdict`, and `snippet`.
-> - `final_gate` returns `Result<String, Verdict>`. `Ok` is the snippet string. `Err` is the verdict that was not `Done`. `Verdict` does not have to implement `std::error::Error` for this signature. `Err` only requires the type you name.
+> - `as_tool` returns `Outcome`. The caller reads `accepted`, `verdict`, and `snippet`.
+> - `final_gate` returns `Result<String, Verdict>`. `Err` is the verdict that was not `Done`. `Verdict` does not have to implement `std::error::Error` for this signature.
 > - Both functions call `judge`, so both take a permit. Calling `as_tool` and then `final_gate` takes two permits in series. `max_seen` stays 1 because the first `Drop` runs before the second `acquire`.
+> - `Option`, `Result`, enums, and `Arc` are taught in [chapter 1](chapter-01-first-contact.md).
 
 The test covers both doors.
 
@@ -345,7 +338,7 @@ criterion_main!(benches);
 
 The pool and the raw string are built before `b.iter`. The timed closure calls `as_tool`, which calls `judge`: one `acquire`, one context clone, one notes lock, one parse, one snippet of a short string, one `Drop` of the permit. `black_box` keeps the pool borrow, the reply, and the `Outcome` in the sample. No model is called. The 30 second timeout is not slept. The notes vec is not appended. Each iteration's permit is released before the next iteration, so the bench does not queue eight critics. It takes one permit, over and over.
 
-The mean is `278.9 ns`. It is `mean.point_estimate`. The printed Criterion `time:` line is the slope, not the mean.
+The mean is `278.9 ns`. It is `mean.point_estimate`.
 
 The bench imports `as_tool` from `harness_core::critic` and `Pool`, `WORKER_BOUND` from `harness_core::supervisor`. `final_gate` is not in the sample. The unit test is where both entry points run.
 
@@ -400,11 +393,7 @@ The binary judges one scripted reply. No key.
 
 `judge_one_permit` builds the pool before `b.iter`. The timed closure acquires one permit, locks the notes, parses, copies the short snippet, and drops the permit. The 30 second constant is not a sleep in that closure.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `32`. The id is `32/judge_one_permit`. The old id `30/judge_one_permit` is an alias in `benchmarks/descriptions.json`. The printed Criterion `time:` line is the slope, not the mean.
-
-### Milestone demo
-
-The `cargo run` above. The line is `accepted: done`.
+The means are `mean.point_estimate` from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `32`. Bench ids: `32/judge_one_permit`, `30/judge_one_permit`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -412,15 +401,7 @@ The `cargo run` above. The line is `accepted: done`.
 
 `find("verdict")` searches for the substring. A reply that does not contain it is `Reject`, including the empty string and `looks fine`. The scan lowercases first, so `Verdict: Done` folds before the search.
 
-`Wait` is a parsed verdict and `accepted` is false. `judge` does not read a wait target and does not sleep. Chapter 33 is the loop that can park. This function returns.
-
 `final_gate` and `as_tool` each call `judge`. Two calls take two permits one after another. `max_seen` stays 1. Calling them from two threads on one pool would share the eight permits. The tests call them on one thread.
-
-The snippet is the front of `raw`, up to 4,000 bytes, pulled back onto a character boundary. It includes the verdict line when that line is within the cut. It is not a summary the critic composed. `demo` does not print the snippet. It prints `accepted: done` when `accepted` is true.
-
-`DEFAULT_JUDGE_TIMEOUT_SECS` is 30. `thread::sleep` is not called with it. A reader who treats the const as a deadline inside `judge` will not find that sleep. `limits` returns the number so a later loop can hold it.
-
-The notes lock is held across the parse and the snippet allocation. It is not held across a model call, because there is no model call. The guard drops before the permit drops, at the end of `judge`.
 
 `Reject` on a missing word is this parser. I am not describing a second parser's default. `_parse_judge_response` is the Hermes function. The body this chapter runs is `parse_verdict`.
 
@@ -445,7 +426,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 - **Notes.** The critic locks them and does not push.
 - **Snippet.** At most 4,000 bytes of `raw`, on a character boundary.
 - **Constants.** 20 turns and 30 seconds, returned by `limits`. The 30 seconds are not slept.
-- **Time.** `judge_one_permit` mean `278.9 ns`. That is `mean.point_estimate`. The Criterion `time:` line is the slope.
+- **Time.** `judge_one_permit` mean `278.9 ns`. That is `mean.point_estimate`.
 
 ## What you implement
 
@@ -468,7 +449,7 @@ pub fn chapter_32_critic_does_the_work() -> bool {
 }
 ```
 
-`todo!("chapter 32")` is the panic. The test wants `chapter_32_critic_does_the_work()` to be false. The step crate is the reference. Do not copy it into `my-harness/`.
+`todo!("chapter 32")` is the panic. The test wants `chapter_32_critic_does_the_work()` to be false. 
 
 ## What's next
 

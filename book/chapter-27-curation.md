@@ -10,16 +10,6 @@ Rust, at the job: a mutex guards the gate so two passes cannot archive the same 
 
 `cargo run --locked -p ch27-curation --bin ch27-curation` marks one skill stale. The exercise is `my-harness/tests/ch27.rs`: enqueue does not write.
 
-**In this chapter**
-
-- 27.1 The counts and the record
-- 27.2 `Curator` keeps the gate in a `Mutex`
-- 27.3 `enqueue` records the pass, and `due` is a comparison
-- 27.4 `pass` marks stale, then archives
-- 27.5 `install` calls chapter 25
-- 27.6 `snapshot` writes a gzip and keeps two
-- 27.7 `demo` marks one skill stale
-
 | Section | What it walks |
 |---|---|
 | 27.1 | The day counts, the idle interval, `Skill`, `Counts` |
@@ -555,11 +545,7 @@ The binary writes one skill, ages it 14 days, and runs the pass. No key. The enq
 
 `enqueue_curation` opens a `Curator` on a temp directory before the bench. The timed closure is `b.iter`. Inside it: `enqueue`, then `queue_len` passed through `black_box`. No snapshot is built. No skill is scanned or moved. The queue drops the oldest job at 64.
 
-The Mean cell is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `27`. The id is `27/enqueue_curation`. The old id `25/enqueue_curation` is an alias in `benchmarks/descriptions.json`. Criterion also prints a `time:` line. That line is the slope. It is not the mean.
-
-### Milestone demo
-
-The `cargo run` above. The line is `stale: 1`.
+The means are `mean.point_estimate` from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `27`. Bench ids: `27/enqueue_curation`, `25/enqueue_curation`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -570,14 +556,6 @@ The `cargo run` above. The line is `stale: 1`.
 The age is the `i64` on the record. A record that says 30 archives a skill the directory's mtime would still call fresh. This crate has no clock to disagree with the record. The deferred clock is that disagreement, and it is not here.
 
 `PRUNE_BUILTINS` is a constant. `set_consolidate` can turn consolidate on, and the count stays 0. There is no setter that turns prune on. A bundled skill stays skipped.
-
-`Curator::install` treats `Ask` as `Scan`. Chapter 25's `Writer` treats agent-created `Ask` as `Staged`. The same `should_allow_install` decision meets two matches. A curator install of a dangerous agent-created skill does not push the ask label. It returns `Scan`.
-
-`install` writes `<name>/SKILL.md` at the root. `pass` archives `root.join(name)`. A skill that chapter 24 stored at `<category>/<name>/SKILL.md` is a different layout. The curator's `archive_dir` looks for the name as a direct child of the root.
-
-`fs::write` on install is not `atomic_write`. The snapshot path is the one that goes through a gzip file and a prune.
-
-The queue drops the oldest `curate` at 64. The entries are the same word. The length is what a caller can see. The pass still runs only when something calls `pass`.
 
 ## Guardrails in this chapter
 
@@ -608,7 +586,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Cura
 
 `my-harness/tests/ch27.rs` is the milestone. The test is `enqueue_does_not_write`. It asserts `chapter_27_enqueue_writes_skill()` is false. Enqueue does not write a skill.
 
-The function in `my-harness` is a stub. It ends in `todo!("chapter 27")` and panics until the assertion can pass. The step crate is the reference. Do not copy it into `my-harness/`.
+The function in `my-harness` is a stub. It ends in `todo!("chapter 27")` and panics until the assertion can pass. 
 
 ## What's next
 

@@ -50,7 +50,7 @@ pub trait SearchBackend: Send + Sync {
 }
 ```
 
-> **Rust, just in time.** A trait is a list of methods a type promises to have. `SearchBackend` is that list. `FakeSearch` and `EnvSearch` each write `impl SearchBackend for ...`. A function that takes `&dyn SearchBackend` can call either one. `dyn` means "some type that implements this, decided at run time." `Send + Sync` means the value can move to another thread and be shared behind a reference. The tool stores `Arc<dyn SearchBackend>`, and `Arc` requires those two bounds.
+> **Rust sidebar.** A trait is a list of methods a type promises to have. `SearchBackend` is that list. `FakeSearch` and `EnvSearch` each write `impl SearchBackend for ...`. A function that takes `&dyn SearchBackend` can call either one. `dyn` means "some type that implements this, decided at run time." `Send + Sync` means the value can move to another thread and be shared behind a reference. The tool stores `Arc<dyn SearchBackend>`, and `Arc` requires those two bounds.
 
 `SearchHit` is the metadata row. `position` is 1-based, matching Hermes.
 
@@ -67,7 +67,7 @@ pub struct SearchHit {
 
 `FakeSearch` holds a `Vec` of hits and a `HashMap` from URL to page text. `example` builds five hits on `example.com`. `search` ignores the query and returns the first `limit` hits. `extract` looks up the URL and errors if it was never inserted. Nothing in that path reads the process environment.
 
-> **Rust, just in time.** `HashMap<String, String>` is a table from owned strings to owned strings. The key is owned because the map has to keep it after the caller returns. `cloned()` on a `&String` from `get` makes another `String` so the map can keep the original.
+> **Rust sidebar.** `HashMap<String, String>` is a table from owned strings to owned strings. The key is owned because the map has to keep it after the caller returns. `cloned()` on a `&String` from `get` makes another `String` so the map can keep the original.
 
 ## 16.2 The clamp, and the JSON the model sees
 
@@ -85,7 +85,7 @@ pub fn clamp_limit(limit: Option<u32>) -> u32 {
 
 `DEFAULT_SEARCH_LIMIT` is 5. `MAX_SEARCH_LIMIT` is 100.
 
-> **Rust, just in time.** `Option<u32>` is either `None` (the caller left `limit` out) or `Some(number)`. `match` names both shapes. `value.clamp(1, 100)` returns `value` if it is inside the range, and the nearer end if it is not. The `Some(0)` arm is above the clamp arm, so zero does not fall through to `clamp`, which would also turn it into 1. I wrote the zero arm so the reader can see the decision.
+> **Rust sidebar.** `Option<u32>` is either `None` (the caller left `limit` out) or `Some(number)`. `match` names both shapes. `value.clamp(1, 100)` returns `value` if it is inside the range, and the nearer end if it is not. The `Some(0)` arm is above the clamp arm, so zero does not fall through to `clamp`, which would also turn it into 1. I wrote the zero arm so the reader can see the decision.
 
 `search_result` calls the backend and builds the JSON object. The fields are `title`, `url`, `description`, and `position`. There is no `text` field. The page body is `web_extract`'s job.
 
@@ -112,7 +112,7 @@ pub fn search_result(
 }
 ```
 
-> **Rust, just in time.** `?` on a `Result` returns the error from this function if the call failed, and unwraps the `Ok` value if it did not. `into_iter` consumes the `Vec`, so the hits move into the JSON instead of being cloned again. `json!` is a serde macro. It builds a `Value`. `.to_string()` on that value is the compact JSON text.
+> **Rust sidebar.** `?` on a `Result` returns the error from this function if the call failed, and unwraps the `Ok` value if it did not. `into_iter` consumes the `Vec`, so the hits move into the JSON instead of being cloned again. `json!` is a serde macro. It builds a `Value`. `.to_string()` on that value is the compact JSON text.
 
 The unit test parses that text back and checks `success`, the length after a limit of 2, and that `text` is absent.
 
@@ -165,7 +165,7 @@ Then the host is checked before any toggle:
 
 `StdResolver` uses `ToSocketAddrs` for names. Tests do not call it for names. The metadata bench passes a literal IP, so the resolver returns that IP and does not ask DNS. `MapResolver` is a `HashMap` the tests fill. A missing name is `ResolveError`.
 
-> **Rust, just in time.** `Result<Vec<IpAddr>, ResolveError>` is success-with-addresses or a typed failure. Clippy rejects `Result<_, ()>` because `()` does not say what failed. `ResolveError` is an empty struct. It exists so the error has a name.
+> **Rust sidebar.** `Result<Vec<IpAddr>, ResolveError>` is success-with-addresses or a typed failure. Clippy rejects `Result<_, ()>` because `()` does not say what failed. `ResolveError` is an empty struct. It exists so the error has a name.
 
 Every address is checked. `block_reason` maps IPv4-mapped `::ffff:a.b.c.d` and IPv4-translated `::ffff:0:a.b.c.d` back to the inner IPv4, which is what Hermes `_embedded_ipv4` does.
 
@@ -227,7 +227,7 @@ pub fn is_safe_url(
 
 `parse_http_url` keeps `http` and `https` only. The host is lowercased, so `Metadata.Google.Internal` hits the same list as the lowercase form. A userinfo (`user:secret@host`) is dropped before the host is read. An IPv6 literal is the text inside the brackets.
 
-> **Rust, just in time.** `parsed.host.parse::<IpAddr>()` asks the standard library to read the host as an address. `Ok` means it already is an IP, so the function never calls DNS for `169.254.169.254`. `Err` means it is a name. `map_err` throws away `ResolveError` and builds the sentence the model will read. The `?` then returns that `WebError` from `is_safe_url`.
+> **Rust sidebar.** `parsed.host.parse::<IpAddr>()` asks the standard library to read the host as an address. `Ok` means it already is an IP, so the function never calls DNS for `169.254.169.254`. `Err` means it is a name. `map_err` throws away `ResolveError` and builds the sentence the model will read. The `?` then returns that `WebError` from `is_safe_url`.
 
 `block_reason` runs `embedded_v4` first. `Ipv6Addr::to_ipv4_mapped` reads `::ffff:a.b.c.d`. It does not read the IPv4-translated form `::ffff:0:a.b.c.d`, so the function checks the first five segments itself and rebuilds the IPv4 from octets 12 through 15. After that, `always_blocked` sees an IPv4 and can apply the metadata list and `169.254.0.0/16`.
 
@@ -243,7 +243,7 @@ pub fn is_safe_url(
 
 Before the display cut, `cap_stored` keeps at most `MAX_STORED_TEXT_CHARS` (2,000,000) and appends a stored-copy footer. The display cut then takes about 75% of the budget from the head and the rest from the tail. `cut_head` walks back to a newline when there is one. `cut_tail` walks forward to the next newline. The footer is `──────── [TRUNCATED] ────────`.
 
-> **Rust, just in time.** `chars().collect()` makes a `Vec<char>` so a cut is on characters, not bytes. A byte slice of a UTF-8 string panics if it lands in the middle of a character. The character vector cannot do that. It costs an allocation. The page is already in memory. The cut happens once per extract.
+> **Rust sidebar.** `chars().collect()` makes a `Vec<char>` so a cut is on characters, not bytes. A byte slice of a UTF-8 string panics if it lands in the middle of a character. The character vector cannot do that. It costs an allocation. The page is already in memory. The cut happens once per extract.
 
 A binary body is refused before any of this. The prefixes are PNG (`\x89PNG`), PDF (`%PDF`), GIF (`GIF8`), and JPEG (`\xff\xd8\xff`). The error is `binary body is not page text`. The model does not receive the bytes as if they were a paragraph.
 
@@ -306,7 +306,7 @@ async fn call(&self, arguments: Value) -> Result<ToolResult, ToolError> {
 
 `check_arguments` is chapter 3. A missing `query` fails here, before `search_result`. `limit` is optional, so a missing field stays `None` and `clamp_limit` supplies 5. `as_u64` rejects a JSON string, and that also becomes `None`, which is the same default. The cast to `u32` is safe for the values a model sends: `clamp_limit` then forces the number into 1…100 anyway.
 
-> **Rust, just in time.** `async fn` returns a future. The registry awaits it. `search_result` itself is synchronous. The `async` is there because `Tool::call` is async for every tool, including `echo`. A fake backend does not need `.await` inside the body. The function is still a future that is immediately ready.
+> **Rust sidebar.** `async fn` returns a future. The registry awaits it. `search_result` itself is synchronous. The `async` is there because `Tool::call` is async for every tool, including `echo`. A fake backend does not need `.await` inside the body. The function is still a future that is immediately ready.
 
 `self.backend.as_ref()` turns `Arc<dyn SearchBackend>` into `&dyn SearchBackend`, which is what `search_result` takes. The `Arc` stays owned by the tool. The call borrows it for the duration of the search.
 
@@ -314,7 +314,7 @@ The integration test registers `WebSearchTool` with `FakeSearch::example`, scrip
 
 The scripted provider never sees a network. `ScriptedReply::tool` names `web_search` and passes `{"query": ...}`. The registry looks the name up, `call` runs, and the next scripted reply is the text `done`, which ends the turn. If the tool name in the script did not match the schema, the loop would report an unknown tool and this test would fail before the wrapper check. The assertion on `example.com` is what proves the fake hit survived the JSON build and the wrap.
 
-> **Rust, just in time.** `Arc::new(tool) as Arc<dyn Tool>` is two steps. `Arc::new` puts the tool on the heap and counts references. The `as` cast turns that specific tool into the trait object the registry stores. The registry looks up a name. It does not match on which struct it got.
+> **Rust sidebar.** `Arc::new(tool) as Arc<dyn Tool>` is two steps. `Arc::new` puts the tool on the heap and counts references. The `as` cast turns that specific tool into the trait object the registry stores. The registry looks up a name. It does not match on which struct it got.
 
 `WebExtractTool` also holds `Arc<dyn HostResolver>` and `allow_private`. The default in tests is false. Passing true does not unlock metadata.
 
@@ -324,7 +324,7 @@ The scripted provider never sees a network. `ScriptedReply::tool` names `web_sea
 
 `ssrf_block` calls `is_safe_url` on `http://169.254.169.254/latest` with `allow_private` true. The host is a literal. The sample is the address check, not DNS.
 
-Both means below are `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39114427940](https://github.com/agnathan/rust-agent-harness/actions/runs/39114427940), section `16`. The Criterion `time:` line is the slope. I am not quoting it.
+Both means below are `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39114427940](https://github.com/agnathan/rust-agent-harness/actions/runs/39114427940), section `16`.
 
 | Bench | Mean |
 |---|---|
@@ -362,10 +362,7 @@ The first two lines are chapter 14's fallback demo, still in this binary. The se
 - Naming the tool anything but `web_search` silently steps around chapter 15's cap. The constant in this file is not a second counter. The name is the contract.
 - Checking SSRF after the backend has already fetched is too late. `extract_page` checks first.
 - Decoding the URL zero times lets `%73k-` through. Decoding forever can be a bomb. Once is the rule.
-- `allow_private` does not mean "allow link-local." `169.254.0.0/16` stays blocked. So does `metadata.google.internal`.
 - A resolver that returns `Ok` on DNS failure would turn a sandbox without DNS into an open proxy. `ResolveError` is a refusal.
-- Wrapping only the long strings matches Hermes. A 31-character payload is not wrapped. Do not "fix" that by wrapping everything and then comparing this harness to a trace that left the short ones bare.
-- `FakeSearch::search` ignores the query. A test that asserts the query was sent to a network is testing the wrong type.
 
 ## Guardrails
 

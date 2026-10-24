@@ -507,13 +507,11 @@ The binary is one temp database. A child session and a user session both contain
 |---|---|---|---|
 | `discover_10k` | 60.80 µs | under 20 ms | one trigram query over 10,000 messages |
 
-`discover_10k` opens a temp database, migrates, and inserts 10,000 messages into session `desk` before the bench. Message 5,000 contains `zephyrtoken`. The other 9,999 are `note N`. `install_fts` rebuilds the trigram index before the bench. The timed closure is `b.iter`. Inside: `session_search` with the query `zephyrtoken`, no session id, and no anchor, both the store and the query passed through `black_box`. The inserts and the rebuild are excluded. No model is called. The result is one hit in `desk`.
+The mode is `discover`. The hit is `desk`.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `22`.
+`discover_10k` opens a temp database, migrates, and inserts 10,000 messages into session `desk` before the bench. Message 5,000 contains `zephyrtoken`.
 
-### Milestone demo
-
-The `cargo run` above. The mode is `discover`. The hit is `desk`.
+The means are `mean.point_estimate` from [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `22`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -544,7 +542,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Reca
 
 ## What you implement
 
-`my-harness/tests/ch22.rs` is the milestone. It compiles, then panics in `todo!("chapter 22")` until `chapter_22_discover_hides_subagent("subagent")` is true and `chapter_22_discover_hides_subagent("user")` is false. Discover hides a subagent session and keeps a user session. The step crate is the reference. Do not copy it into `my-harness/`.
+`my-harness/tests/ch22.rs` is the milestone. It compiles, then panics in `todo!("chapter 22")` until `chapter_22_discover_hides_subagent("subagent")` is true and `chapter_22_discover_hides_subagent("user")` is false. Discover hides a subagent session and keeps a user session. 
 
 ## What's next
 

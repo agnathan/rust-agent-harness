@@ -12,18 +12,6 @@ Rust, at the claim: the owner is an `Option` in the job, and compare-and-set is 
 
 `cargo run -p ch43-cron --bin ch43-cron` runs the demo. The exercise is `my-harness/tests/ch43.rs`: a claimed job retries at most once, and a lifecycle command in the job is blocked.
 
-**In this chapter**
-
-- 43.1 `RunError` and `Job`
-- 43.2 `claim` and `crash`
-- 43.3 `Store`, `scan_due`, `watchdog`, and `chain`
-- 43.4 `scan_prompt`
-- 43.5 `check_lifecycle`
-- 43.6 `unattended_denies`
-- 43.7 `run_job`
-- 43.8 `FakeModel` and `demo`
-- 43.9 The Hermes create path, and one claim walked in order
-
 | Section | What it walks |
 |---|---|
 | 43.1 | `RunError` and `Job` |
@@ -120,11 +108,11 @@ impl Job {
 
 The fields are private. `new` starts unclaimed, with zero crash retries, not done, and not blocked. `id` borrows the stored string. `is_due` is four conditions, all required. A future `due` is not due. A held claim is not due. A blocked job is not due. `done` is part of the condition, and no method in this file sets `done` to true. A successful `run_job` leaves the job claimed, so `is_due` becomes false because `claim` is `Some`. The `done` flag stays false for the life of the value this file can build.
 
-### Rust: `impl Into<String>` and a private field
-
-`id: impl Into<String>` accepts `String` and `&str`. `into` does the conversion inside `new`. The caller does not have to write `.to_string()` at the call site. The test writes `Job::new("daily", 0, "summarize")`. The bench writes `format!("j{n}")`, which is already a `String`, and `Into` leaves it owned.
-
-Privacy matters because `crash_retries` is the retry budget. If the field were public, a test could set it back to 0 and claim a third time. The only writer is `crash`.
+> **Rust sidebar: `impl Into<String>` and a private field**
+>
+> `id: impl Into<String>` accepts `String` and `&str`. `into` does the conversion inside `new`. The caller does not have to write `.to_string()` at the call site. The test writes `Job::new("daily", 0, "summarize")`. The bench writes `format!("j{n}")`, which is already a `String`, and `Into` leaves it owned.
+>
+> Privacy matters because `crash_retries` is the retry budget. If the field were public, a test could set it back to 0 and claim a third time. The only writer is `crash`.
 
 ## 43.2 `claim` and `crash`
 
@@ -159,11 +147,11 @@ pub fn claimed_by(&self) -> Option<u32> {
 
 The test `a_crash_retries_the_claim_once` builds `Job::new("daily", 0, "summarize")`. `claim(1)` is true. `claim(2)` is false. `crash` is true. `claim(2)` is true. `crash` is false. `claimed_by` is `Some(2)`. `claim(1)` is false. Owner 2 still holds it. That is one retry. The milestone `chapter_43_retries_claimed(1)` asserts false: once a retry has already been used, another retry is not allowed. The stub does not implement that yet.
 
-### Rust: `Option<u32>` as the lock
-
-`None` means unclaimed. `Some(owner)` means that owner holds it. There is no mutex and no file. Two calls on the same `&mut Job` are ordered because the borrow is exclusive. Two threads would need a lock this type does not have. The Hermes claim is the file lock inside `claim_job_for_fire`. The `Option` is the single-process picture of "one winner."
-
-`u8` for `crash_retries` is enough because the only stored values are 0 and 1. The comparison is `>= 1`, so a hypothetical value above 1 would also refuse. Nothing in this file writes a value above 1.
+> **Rust sidebar: `Option<u32>` as the lock**
+>
+> `None` means unclaimed. `Some(owner)` means that owner holds it. There is no mutex and no file. Two calls on the same `&mut Job` are ordered because the borrow is exclusive. Two threads would need a lock this type does not have. The Hermes claim is the file lock inside `claim_job_for_fire`. The `Option` is the single-process picture of "one winner."
+>
+> `u8` for `crash_retries` is enough because the only stored values are 0 and 1. The comparison is `>= 1`, so a hypothetical value above 1 would also refuse. Nothing in this file writes a value above 1.
 
 ## 43.3 `Store`, `scan_due`, `watchdog`, and `chain`
 
@@ -230,11 +218,11 @@ The test `scan_due_skips_the_watchdog_and_a_chained_job` adds `due` at 0, `later
 
 `a_thousand_due_jobs_are_all_indexed` adds `j0` through `j999`, each due at 0 with prompt `summarize`, and expects `scan_due(0).len()` of 1000. That is the same shape the bench times.
 
-### Rust: indexes, not jobs
-
-Returning `Vec<usize>` lets the caller borrow a job later through `jobs_mut()[index]` without the scan holding a reference. If `scan_due` returned `&Job`, the caller could not mutably claim that job until the shared borrow ended. The index is a plain number. It goes stale if something removes a job in front of it. `Store` has no remove method, so the indexes from a scan still name the same slots until the store is dropped.
-
-`VecDeque` for the inbox is the same queue type chapter 2 used. `chain` only pushes the first id. It does not pop.
+> **Rust sidebar: indexes, not jobs**
+>
+> Returning `Vec<usize>` lets the caller borrow a job later through `jobs_mut()[index]` without the scan holding a reference. If `scan_due` returned `&Job`, the caller could not mutably claim that job until the shared borrow ended. The index is a plain number. It goes stale if something removes a job in front of it. `Store` has no remove method, so the indexes from a scan still name the same slots until the store is dropped.
+>
+> `VecDeque` for the inbox is the same queue type chapter 2 used. `chain` only pushes the first id. It does not pop.
 
 ## 43.4 `scan_prompt`
 
@@ -297,11 +285,11 @@ Hermes also strips invisible characters before the search, rewrites a GitHub tok
 
 `Regex::new(...).expect("pattern")` panics if a pattern fails to compile. The patterns are literals. A bad edit fails at the first call, not at the first match.
 
-### Rust: `OnceLock`
-
-`OnceLock` initializes once. `get_or_init` runs the closure on the first call and returns `&Vec<(Regex, &'static str)>` after that. The function signature returns `&'static [(Regex, &'static str)]`, and the `Vec` coerces to that slice. Compiling nine regexes on every `scan_prompt` would dominate a short prompt. The bench does not call `scan_prompt`, so the lock is not taken in that sample. The first test that calls `scan_prompt` pays the compile.
-
-The ids are `'static` because they are literals in the binary. `scan_prompt` can return them without allocating a `String`.
+> **Rust sidebar: `OnceLock`**
+>
+> `OnceLock` initializes once. `get_or_init` runs the closure on the first call and returns `&Vec<(Regex, &'static str)>` after that. The function signature returns `&'static [(Regex, &'static str)]`, and the `Vec` coerces to that slice. Compiling nine regexes on every `scan_prompt` would dominate a short prompt. The bench does not call `scan_prompt`, so the lock is not taken in that sample. The first test that calls `scan_prompt` pays the compile.
+>
+> The ids are `'static` because they are literals in the binary. `scan_prompt` can return them without allocating a `String`.
 
 ## 43.5 `check_lifecycle`
 
@@ -362,9 +350,9 @@ fn kill_gateway() -> &'static Regex {
 
 Chapter 39 owns B4, the shell guard `gateway_lifecycle_block` in `tools/terminal_tool_guards.py`, on the chat gateway. M2 is this function. A cron prompt does not travel through chapter 39 to be judged. `run_job` calls `check_lifecycle` on `job.prompt` in this module.
 
-### Rust: `Result<(), &'static str>`
-
-`Ok(())` is success with no value. `Err("systemctl")` is the reason, and the string is `'static` so the caller can compare it with `==` without freeing it. `RunError::Lifecycle` stores that same `&'static str`. A `String` error would allocate on every block. The three reasons are the three pattern functions, in order.
+> **Rust sidebar: `Result<(), &'static str>`**
+>
+> `Ok(())` is success with no value. `Err("systemctl")` is the reason, and the string is `'static` so the caller can compare it with `==` without freeing it. `RunError::Lifecycle` stores that same `&'static str`. A `String` error would allocate on every block. The three reasons are the three pattern functions, in order.
 
 ## 43.6 `unattended_denies`
 
@@ -384,9 +372,9 @@ The regex is the same text as `destructive_root_rm`. `unattended_denies("rm -rf 
 
 Because `run_job` calls `scan_prompt` first, that same string never reaches `unattended_denies` through `run_job`. The threat id comes back, the job is blocked, and `Denied` is not the error. `Denied` is still a `RunError` variant for a prompt that `unattended_denies` matches and the threat table does not. With these two patterns identical, a prompt cannot take that path today. The direct function remains, and the test calls it.
 
-### Rust: a bool beside a `Result`
-
-`unattended_denies` returns `bool`. `check_lifecycle` returns `Result`. `run_job` maps both into `RunError`. The bool is the smaller API: the caller does not learn which pattern fired, because there is one pattern. The lifecycle result names the branch. I kept them different because Hermes keeps the threat scan and the lifecycle guard as different functions, and chapter 11's deny is a third check.
+> **Rust sidebar: a bool beside a `Result`**
+>
+> `unattended_denies` returns `bool`. `check_lifecycle` returns `Result`. `run_job` maps both into `RunError`. The bool is the smaller API: the caller does not learn which pattern fired, because there is one pattern. The lifecycle result names the branch. I kept them different because Hermes keeps the threat scan and the lifecycle guard as different functions, and chapter 11's deny is a third check.
 
 ## 43.7 `run_job`
 
@@ -420,11 +408,11 @@ A lifecycle hit does the same with a different error. `Job::new("life", 0, "herm
 
 `Lost` is the fall-through when `claim` returns false after the three checks pass. A second `run_job` on a clean job that is already claimed returns `Lost` and does not set `blocked`. The first owner remains. A crash can still release that claim once, and a later `run_job` can claim it. `run_job` itself does not call `crash`. The retry is the caller's `crash`, then another claim. One release, then the claim sticks.
 
-### Rust: `&mut Job` and early return
-
-`run_job` needs `&mut` because it writes `blocked` or `claim`. A shared `&Job` could scan the prompt and could not record the block. The early returns skip `claim` on purpose. A blocked job must not show an owner. The test reads `claimed_by().is_none()` after the threat.
-
-`if let Some(id)` and `if let Err(reason)` are the two shapes of the checks. The threat scan's success is `Some`. The lifecycle check's failure is `Err`. Mixing them up would block a clean prompt or claim a bad one.
+> **Rust sidebar: `&mut Job` and early return**
+>
+> `run_job` needs `&mut` because it writes `blocked` or `claim`. A shared `&Job` could scan the prompt and could not record the block. The early returns skip `claim` on purpose. A blocked job must not show an owner. The test reads `claimed_by().is_none()` after the threat.
+>
+> `if let Some(id)` and `if let Err(reason)` are the two shapes of the checks. The threat scan's success is `Some`. The lifecycle check's failure is `Err`. Mixing them up would block a clean prompt or claim a bad one.
 
 ## 43.8 `FakeModel` and `demo`
 
@@ -464,9 +452,9 @@ fn main() {
 
 The package has other binaries: `ch43_mcp_fixture` and `sandbox-worker`. `cargo run` needs `--bin ch43-cron` so those are not selected. `examples/demo.rs` prints eval scores. It does not print `cron: claimed`.
 
-### Rust: indexing a slice
-
-`jobs_mut()[0]` panics if the store is empty. `demo` has just pushed one job, so index 0 is that job. The `&mut` from the index is a reborrow of the slice. `run_job` can claim it. After `run_job` returns, `demo` does not read `claimed_by`. The printed line is the literal, which matches the successful claim.
+> **Rust sidebar: indexing a slice**
+>
+> `jobs_mut()[0]` panics if the store is empty. `demo` has just pushed one job, so index 0 is that job. The `&mut` from the index is a reborrow of the slice. `run_job` can claim it. After `run_job` returns, `demo` does not read `claimed_by`. The printed line is the literal, which matches the successful claim.
 
 ## 43.9 The Hermes create path, and one claim walked in order
 
@@ -559,8 +547,6 @@ The binary claims one clean job. No key.
 |---|---|---|---|
 | `scan_thousand` | 1.75 µs | index 1,000 due jobs | `scan_due` at timestamp 0 |
 
-The function name is `scan_thousand`. The bench id is `43/scan_thousand`. The old ids `41/scan_thousand` and `39/scan_thousand` are aliases in `benchmarks/descriptions.json`. The function name did not change when the id moved.
-
 ```rust
 fn scan_thousand(c: &mut Criterion) {
     let mut store = Store::new();
@@ -576,13 +562,9 @@ fn scan_thousand(c: &mut Criterion) {
 }
 ```
 
-The thousand `Job::new` calls happen before `b.iter`. Each id is `j0` through `j999`, due at 0, prompt `summarize`. The timed closure calls `scan_due` with timestamp 0 passed through `black_box`, then `black_box` of the index vec. The walk and the allocation of 1,000 indexes are inside the sample. Building the jobs is not. `scan_prompt`, `check_lifecycle`, `watchdog`, `chain`, and `FakeModel` are not called. No sleep runs. The descriptions file says every job is due, unclaimed, and not blocked, and the result is 1,000 indexes. The budget in the outline is that this scan stays under 10 milliseconds. The mean cell is the measurement, not that budget sentence.
+The thousand `Job::new` calls happen before `b.iter`. Each id is `j0` through `j999`, due at 0, prompt `summarize`.
 
-The mean is `1.75 µs`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `43`. The id is `43/scan_thousand`. The old ids `41/scan_thousand` and `39/scan_thousand` are aliases in `benchmarks/descriptions.json`. `.github/scripts/run_bench_section.sh` runs `cargo bench -p ch43-cron --bench cron --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10` for that section. The same flags are in `steps/ch43-cron/README.md`. The Criterion `time:` line is the slope, not the mean.
-
-### Milestone demo
-
-The `cargo run` above. The line is `cron: claimed`.
+The means are `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `43`. Bench ids: `43/scan_thousand`, `41/scan_thousand`, `39/scan_thousand`. Command: `cargo bench -p ch43-cron --bench cron --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -593,14 +575,6 @@ One crash retry is `crash_retries >= 1`. Calling `crash` twice does not release 
 `scan_due` on a store whose jobs are all claimed returns an empty vec. That is a correct scan. It is not the bench, which leaves every job unclaimed. `chain` does not ask `is_due`. It pushes `jobs[0]` whenever the method is called and the vec is non-empty.
 
 `done` is never set. A finished run in this file is a held claim. Code that waits for `done` to become true will wait forever. `is_due` already treats a claim as not due.
-
-A prose sentence that contains `hermes gateway restart` as those tokens still matches. The path test is the one that must stay quiet, because the character before `hermes` is `/`. `hermes gateway start` is allowed. `systemctl start hermes-gateway` is not, because the systemctl class includes `start`.
-
-`rm -rf /` through `run_job` is `Threat`, not `Denied`. Both regexes match. The threat scan is first. `unattended_denies` is how a caller checks the chapter 11 shape without going through `run_job`.
-
-`Lost` does not set `blocked`. A second owner can still take the job after the one allowed `crash`. A threat does set `blocked`, and then `claim` cannot succeed.
-
-Hermes's 300 second TTL is not read. A claim in this process lasts until `crash` or until the `Job` is dropped. There is no jobs file to reload.
 
 ## Guardrails in this chapter
 
@@ -644,7 +618,7 @@ pub fn chapter_43_lifecycle_allowed(command: &str) -> bool {
 }
 ```
 
-`todo!("chapter 43")` is the panic. `chapter_43_retries_claimed(1)` has to be false: a job that has already used its one retry does not get another. In the step crate that is `crash` returning false once `crash_retries` is 1. `chapter_43_lifecycle_allowed("hermes gateway restart")` has to be false. In the step crate that string is `Err("hermes_gateway")` from `check_lifecycle`, and `run_job` returns `Lifecycle` without claiming. The stubs stay `todo!`. Do not paste `cron.rs` into `my-harness/`.
+`todo!("chapter 43")` is the panic. `chapter_43_retries_claimed(1)` has to be false: a job that has already used its one retry does not get another. In the step crate that is `crash` returning false once `crash_retries` is 1. `chapter_43_lifecycle_allowed("hermes gateway restart")` has to be false. In the step crate that string is `Err("hermes_gateway")` from `check_lifecycle`, and `run_job` returns `Lifecycle` without claiming. The stubs stay `todo!`. 
 
 ## Chapter summary
 
@@ -654,7 +628,7 @@ pub fn chapter_43_lifecycle_allowed(command: &str) -> bool {
 - **M2.** `check_lifecycle` stays in this module. Chapter 39 does not take it.
 - **Off the path.** `watchdog` and `chain` are separate calls. `scan_due` only returns indexes.
 - **Model.** `FakeModel` answers `ok`. The demo line is `cron: claimed`.
-- **Time.** `scan_thousand` mean `1.75 µs`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The Criterion `time:` line is the slope.
+- **Time.** `scan_thousand` mean `1.75 µs`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573).
 
 ## What's next
 

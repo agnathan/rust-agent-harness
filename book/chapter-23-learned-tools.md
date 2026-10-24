@@ -12,15 +12,6 @@ Rust, at the offer: `Arc` is the installed set, swapped the way chapter 7 swaps 
 
 `cargo run --locked -p ch23-learned-tools` runs the demo in-process. The exercise is `my-harness/tests/ch23.rs`: `session_tools` reads the predicted set and does not call the scorer.
 
-**In this chapter**
-
-- 23.1 The crate vendors chapter 15
-- 23.2 The score is a plain function
-- 23.3 The gateway stores an Arc
-- 23.4 `session_tools` reads and does not score
-- 23.5 A name expands to steps
-- 23.6 Code mode filters names, then calls
-
 | Section | Step | What it adds |
 |---|---|---|
 | 23.1 | `steps/ch23-learned-tools` | chapter 15's catalog, session, and limits, copied in |
@@ -90,11 +81,11 @@ pub fn session_tools(&self, session_id: &str) -> Option<SessionView> {
 
 `open_session` and `catalog` forward the same way. The learned layer calls those three. It does not reimplement the permit, the breaker, or the cap of 50. A code-mode script that names `web_search` still has to pass chapter 15's cap when something actually calls the tool. This chapter's cap of 50 is a different counter. It counts lines in one script. It does not increment `web_search`.
 
-### Rust: `pub use` and `pub mod`
-
-`pub mod catalog` makes the module visible to other crates as `gw_learned::catalog`. `mod catalog` without `pub` would keep it private to this crate. I made `catalog`, `limits`, and `session` public so a reader of this step can open the vendored code, and so `pub` items inside them are not dead-code warnings. `pub use limits::SessionView` puts `SessionView` at the crate root. Callers write `gw_learned::SessionView`. They do not have to know it was defined in `session.rs` and re-exported through `limits.rs`.
-
-A path dependency would have been `ch15-limits = { path = "../ch15-limits" }` and `use gw_limits::LimitedGateway`. That compiles, and it means the step is not a snapshot: a later edit to chapter 15 would change this chapter's tree. Vendoring is the rule for the server line from chapter 15 on.
+> **Rust sidebar: `pub use` and `pub mod`**
+>
+> `pub mod catalog` makes the module visible to other crates as `gw_learned::catalog`. `mod catalog` without `pub` would keep it private to this crate. I made `catalog`, `limits`, and `session` public so a reader of this step can open the vendored code, and so `pub` items inside them are not dead-code warnings. `pub use limits::SessionView` puts `SessionView` at the crate root. Callers write `gw_learned::SessionView`. They do not have to know it was defined in `session.rs` and re-exported through `limits.rs`.
+>
+> A path dependency would have been `ch15-limits = { path = "../ch15-limits" }` and `use gw_limits::LimitedGateway`. That compiles, and it means the step is not a snapshot: a later edit to chapter 15 would change this chapter's tree. Vendoring is the rule for the server line from chapter 15 on.
 
 ## 23.2 The score is a plain function
 
@@ -117,11 +108,11 @@ pub struct PredictInput<'a> {
 }
 ```
 
-### Rust: a lifetime on a struct
-
-`'a` is a name for "how long these references are valid." `PredictInput<'a>` cannot outlive the strings it points at. The caller builds the catalog `Vec` and the usage `Vec` in the test, then passes `&catalog` and `&usage`. When `predict` returns, the input is gone and the owned `Vec<String>` of names is what remains. I used borrows so the score does not clone the log before it has decided which names to keep.
-
-`predict` walks the catalog once.
+> **Rust sidebar: a lifetime on a struct**
+>
+> `'a` is a name for "how long these references are valid." `PredictInput<'a>` cannot outlive the strings it points at. The caller builds the catalog `Vec` and the usage `Vec` in the test, then passes `&catalog` and `&usage`. When `predict` returns, the input is gone and the owned `Vec<String>` of names is what remains. I used borrows so the score does not clone the log before it has decided which names to keep.
+>
+> `predict` walks the catalog once.
 
 ```rust
 pub fn predict(input: &PredictInput<'_>) -> Vec<String> {
@@ -224,15 +215,15 @@ pub fn new() -> Self {
 }
 ```
 
-### Rust: `Arc`, `Mutex`, and `AtomicU64`
-
-`Arc<Vec<String>>` is a pointer with a count. Cloning the `Arc` bumps the count. It does not clone the names. Dropping a clone decrements the count. The `Vec` is freed when the last clone goes away. I store the `Arc` inside a `Mutex` because a refresh replaces the pointer and a read clones it, and those can happen on different tasks. The mutex is held only for the swap or the clone. The score runs before the lock, in `predict`, which does not touch `self`.
-
-`AtomicU64` and `AtomicBool` are counters that do not need the mutex. `Ordering::SeqCst` is the strictest order. I used it so a test that reads `predict_calls` after `session_tools` sees the value the refresh stored, not a stale register. This crate is not chasing a weaker order.
-
-`BTreeMap` keeps composite names sorted. I do not iterate the map on the request path. `expand` is a lookup. The order matters when a test prints the keys, and it does not matter for `get`.
-
-`refresh_prediction` is the install.
+> **Rust sidebar: `Arc`, `Mutex`, and `AtomicU64`**
+>
+> `Arc<Vec<String>>` is a pointer with a count. Cloning the `Arc` bumps the count. It does not clone the names. Dropping a clone decrements the count. The `Vec` is freed when the last clone goes away. I store the `Arc` inside a `Mutex` because a refresh replaces the pointer and a read clones it, and those can happen on different tasks. The mutex is held only for the swap or the clone. The score runs before the lock, in `predict`, which does not touch `self`.
+>
+> `AtomicU64` and `AtomicBool` are counters that do not need the mutex. `Ordering::SeqCst` is the strictest order. I used it so a test that reads `predict_calls` after `session_tools` sees the value the refresh stored, not a stale register. This crate is not chasing a weaker order.
+>
+> `BTreeMap` keeps composite names sorted. I do not iterate the map on the request path. `expand` is a lookup. The order matters when a test prints the keys, and it does not matter for `get`.
+>
+> `refresh_prediction` is the install.
 
 ```rust
 pub fn refresh_prediction(&self, input: &PredictInput<'_>) -> Arc<Vec<String>> {
@@ -344,9 +335,9 @@ A composite is checked first. A macro is the fallback. The same name in both map
 
 The test saves `rename_flow` as `read_file` then `write_file`, and `morning` as `web_search` then `read_file`. `expand("missing")` is `None`. `Option` is the right type. An error would mean the name was illegal. A missing name is ordinary.
 
-### Rust: `Option` and `cloned`
-
-`get` returns `Option<&Vec<String>>`. `cloned` turns that into `Option<Vec<String>>` by cloning the vector when it is `Some`. The map keeps its own copy. The caller can push to the returned vector without changing the saved steps. I clone because the lock guard dies at the end of the statement, and a reference into the map would not be allowed to escape the lock.
+> **Rust sidebar: `Option` and `cloned`**
+>
+> `get` returns `Option<&Vec<String>>`. `cloned` turns that into `Option<Vec<String>>` by cloning the vector when it is `Some`. The map keeps its own copy. The caller can push to the returned vector without changing the saved steps. I clone because the lock guard dies at the end of the statement, and a reference into the map would not be allowed to escape the lock.
 
 ## 23.6 Code mode filters names, then calls
 
@@ -378,9 +369,9 @@ pub enum CodeError {
 }
 ```
 
-### Rust: `enum` and `Result`
-
-An `enum` is one value that is exactly one of its variants. `NotAllowed` carries the tool name. `TooManyCalls` carries nothing. `Result<Vec<String>, CodeError>` is either the bodies the backend returned or one of those variants. The `?` operator in `run_code_mode` returns the error from the function immediately. I used `?` on `ok_or_else` so a bad line does not keep parsing the rest of the script.
+> **Rust sidebar: `enum` and `Result`**
+>
+> An `enum` is one value that is exactly one of its variants. `NotAllowed` carries the tool name. `TooManyCalls` carries nothing. `Result<Vec<String>, CodeError>` is either the bodies the backend returned or one of those variants. The `?` operator in `run_code_mode` returns the error from the function immediately. I used `?` on `ok_or_else` so a bad line does not keep parsing the rest of the script.
 
 ```rust
 pub fn run_code_mode(
@@ -519,11 +510,9 @@ The binary opens one session, refreshes from one usage row and a memory sentence
 
 `predict_offline` builds 64 names and 1,000 usage rows before the bench. The timed closure is `b.iter`. Inside: `predict` with the input passed through `black_box`. No gateway, no session, no model.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `23`. The printed Criterion `time:` line is the slope, not the mean. The ids stay `23/apply_offered` and `23/predict_offline`. The old ids `21/apply_offered` and `21/predict_offline` are aliases in `benchmarks/descriptions.json`.
+The offer is `read_file`. The code-mode body is `ok`.
 
-### Milestone demo
-
-The `cargo run` above. The offer is `read_file`. The code-mode body is `ok`.
+The means are `mean.point_estimate` from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `23`. Bench ids: `23/apply_offered`, `23/predict_offline`, `21/apply_offered`, `21/predict_offline`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -533,15 +522,7 @@ A mention in memory is worth more than two past uses. The session note in the te
 
 An empty offer does not clear the chapter 8 list. If you refresh to an empty `Vec` on purpose, the next `session_tools` still returns whatever `search_tools` revealed. "No prediction yet" and "predict nothing" are the same empty `Arc` today. Install a sentinel only if a later chapter needs to tell them apart.
 
-Code mode is not a sandbox. The allowlist is a filter on names. The backend in the demo is a closure in this process. Chapter 13 is the boundary that runs code outside the harness. `MAX_STDOUT_BYTES` is not applied here. A closure that returns a megabyte of text will hand that string back.
-
-The underscore is part of the tool name. `read_file` matches as one name, not as the two words `read` and `file`. A memory sentence that says `read` does not award the 3 points to `read_file`.
-
 `contains_name` uses byte indexes after a lowercase conversion. The tool names in this crate are ASCII. A non-ASCII name would still be a byte search against the lowercased haystack. I am not adding Unicode word breaks in this chapter.
-
-The two caps of 50 are easy to mix up. `CODE_MODE_MAX_CALLS` stops a script. Chapter 15's `MAX_WEB_SEARCHES` stops a tool named `web_search`. Wiring the closure to the inner gateway without thinking about both will surprise you on the 50th line, or on the 51st real search, depending on which path you hit.
-
-`expand` does not check that the steps are on the allowlist. A composite can name `memory`. Code mode will still refuse `memory` if you later try to run that step as a `call` line. The maps are names. The filter is the script.
 
 ## Guardrails in this chapter
 

@@ -76,7 +76,7 @@ The root is canonicalized first, so a relative root and a symlink root become th
 
 A path that does not exist yet cannot be canonicalized. The file's parent is canonicalized instead, and the final component is joined back on. `inside/new.txt` works when `inside` exists. `../outside.txt` canonicalizes the parent to a directory above the root, `starts_with` fails, and the error contains `escapes`. That is the demo's first line.
 
-> **Rust, just in time.** `Path::is_absolute` is true for a path that starts at the filesystem root. `root.join(path)` on a relative path appends components. `starts_with` on `Path` compares components, not a string prefix, so `/workspace` does not count as a prefix of `/workspace-other`. `canonicalize` returns an error if the path is missing, which is why the new-file branch exists. `map_err(|err| err.to_string())` turns `std::io::Error` into the `String` this module uses for every refusal. The model reads that string. It does not read the `io::Error` type.
+> **Rust sidebar.** `Path::is_absolute` is true for a path that starts at the filesystem root. `root.join(path)` on a relative path appends components. `starts_with` on `Path` compares components, not a string prefix, so `/workspace` does not count as a prefix of `/workspace-other`. `canonicalize` returns an error if the path is missing, which is why the new-file branch exists. `map_err(|err| err.to_string())` turns `std::io::Error` into the `String` this module uses for every refusal. The model reads that string. It does not read the `io::Error` type.
 
 An absolute path skips the join. `/etc/passwd` does not start with the workspace root, so it is refused. An absolute path that does land inside the root is allowed. That is the adaptation of Hermes: absolute is not a free pass, and a relative escape is an error rather than a warning.
 
@@ -104,7 +104,7 @@ pub fn check_stale(&self, path: &Path) -> Result<(), String> {
 
 A path that does not exist yet has nothing to clobber. Creating it is allowed, and that is why the missing-file arm returns `Ok` before the map lookup. An existing file with no entry is `stale_write_blocked: file was not read in this task`. An entry whose mtime or length moved is `stale_write_blocked: file changed since it was read`.
 
-> **Rust, just in time.** `if let Some(seen) = ... else { return Err(...) }` is the form for "I need the value, and the other case is a return." `Stamp` derives `PartialEq`, so `current != *seen` compares both fields. `*seen` dereferences the reference `get` returned. `SystemTime` equality is the mtime compare. A length change with the same mtime still fails, because both fields are in the struct.
+> **Rust sidebar.** `if let Some(seen) = ... else { return Err(...) }` is the form for "I need the value, and the other case is a return." `Stamp` derives `PartialEq`, so `current != *seen` compares both fields. `*seen` dereferences the reference `get` returned. `SystemTime` equality is the mtime compare. A length change with the same mtime still fails, because both fields are in the struct.
 
 `stamp_of` reads `metadata`. A platform that cannot report mtime contributes `UNIX_EPOCH` rather than failing the read. Two such stamps still compare equal to each other, and a length change is still visible.
 
@@ -135,7 +135,7 @@ pub fn read_file(
 
 `patch_file` is the edit. An empty `old` is refused before any path work, because replacing the empty string would match every file in a way that is not an edit. The path is resolved, the stale check runs, and the file is read. `matches(old).count()` must be exactly one. Zero matches and two matches both return `patch expected one match, found N` and do not call `fs::write`. One match uses `replacen(old, new, 1)`, writes, and notes.
 
-> **Rust, just in time.** `str::matches` yields non-overlapping hits. `count` consumes that iterator. `replacen` stops after the first replacement, which matches the count we just required. The file is left untouched on the error path because `fs::write` is below the `if count != 1` return.
+> **Rust sidebar.** `str::matches` yields non-overlapping hits. `count` consumes that iterator. `replacen` stops after the first replacement, which matches the count we just required. The file is left untouched on the error path because `fs::write` is below the `if count != 1` return.
 
 These three functions are not `Tool` implementations. The registry in this chapter does not gain `read_file` as a name the model calls. The tests and the demo call the functions, the same way chapter 13's tests call the worker. `ClarifyTool` is the exception, because the pause has to sit inside `Tool::call` so `turn_from_inbox` waits on it. A later wrapper that registers the file functions would call these same functions. It would not grow a second path check.
 
@@ -177,7 +177,7 @@ The worker split is the adaptation. `sandbox::run_until` waits until the worker 
 - A command that starts with `sleep-ms ` uses `run_until`. That is the worker's slow job, and `run_until` kills the child when the timeout fires. `SandboxError::Timeout` becomes the text `timeout`.
 - Every other command spawns a `Worker`, calls `accept` with the line, then `quit`. `accept` reads one reply. `quit` tells the process to exit so the test does not leave it behind.
 
-> **Rust, just in time.** `Worker::spawn(worker).and_then(|mut child| { ... })` is "spawn, and if that succeeded, run this closure." `and_then` on `Result` does not run the closure on `Err`. `child.accept(command)?` returns the `Err` from the closure, which `and_then` then returns as the outer `Err`. `let _ = child.quit()` ignores a quit failure. The process has already given us the line. A failed quit is not a failed command.
+> **Rust sidebar.** `Worker::spawn(worker).and_then(|mut child| { ... })` is "spawn, and if that succeeded, run this closure." `and_then` on `Result` does not run the closure on `Err`. `child.accept(command)?` returns the `Err` from the closure, which `and_then` then returns as the outer `Err`. `let _ = child.quit()` ignores a quit failure. The process has already given us the line. A failed quit is not a failed command.
 
 The allowed-command test uses `env!("CARGO_BIN_EXE_sandbox-worker")`, the path Cargo sets when the integration test builds the bin. `echo hello` comes back containing `ok echo hello`, and `denied` is false. `sleep-ms 5000` with a 200 millisecond timeout comes back as the text `timeout`.
 
@@ -246,7 +246,7 @@ pub fn apply(
 
 `merge` false replaces the vector. `merge` true walks the incoming items. A matching `id` is overwritten in place. An unknown `id` is pushed. `clip_item` keeps at most 4,000 characters of `content`, counted with `chars()`, not bytes. After the merge or replace, a list longer than 256 items is `truncate`d. Items past the cap are dropped. Then `revision` becomes `saturating_add(1)`, so it cannot wrap to 0 on overflow.
 
-> **Rust, just in time.** `iter_mut().find` returns `Option<&mut TodoItem>`. `*existing = item` writes through that mutable reference and moves `item` in. The `else` branch pushes because `find` did not take ownership of `item` on the `None` path. `Vec::truncate` keeps the prefix and drops the tail. It does not allocate.
+> **Rust sidebar.** `iter_mut().find` returns `Option<&mut TodoItem>`. `*existing = item` writes through that mutable reference and moves `item` in. The `else` branch pushes because `find` did not take ownership of `item` on the `None` path. `Vec::truncate` keeps the prefix and drops the tail. It does not allocate.
 
 The unit test applies one item at revision 0 with `merge` false. The revision is now 1. A merge that still says `Some(0)` errors, and the content is still `first`. A merge that says `Some(store.revision())` updates that one id to `second` and leaves the length at 1. The revision is 2.
 
@@ -283,7 +283,7 @@ async fn call(&self, arguments: Value) -> Result<ToolResult, ToolError> {
 
 `Tool::call` takes `&self`. The registry holds `Arc<dyn Tool>`, so the tool cannot ask for `&mut self`. The queue has to move anyway. `Mutex` is that interior mutability. `pop_front` takes the oldest reply. An empty queue becomes the text `(no user reply)`, so a test that forgot to enqueue an answer still finishes the turn and the missing reply is visible in the tool message.
 
-> **Rust, just in time.** `Mutex<T>` lets many shared references take turns mutating `T`. `lock` returns a guard. The guard's destructor unlocks. `expect` on the lock turns a poisoned mutex into a panic. Poison means another thread panicked while holding the lock. This harness treats that as a bug. `AtomicUsize` is a counter that can be read with `&self` and no lock. `Ordering::SeqCst` is the strongest ordering. The counter is a test probe, not a hot statistic, and the strong ordering keeps the assertion boring. `VecDeque` is a queue. `pop_front` is O(1). A `Vec` would also work at this size. The deque matches "the next reply."
+> **Rust sidebar.** `Mutex<T>` lets many shared references take turns mutating `T`. `lock` returns a guard. The guard's destructor unlocks. `expect` on the lock turns a poisoned mutex into a panic. Poison means another thread panicked while holding the lock. This harness treats that as a bug. `AtomicUsize` is a counter that can be read with `&self` and no lock. `Ordering::SeqCst` is the strongest ordering. The counter is a test probe, not a hot statistic, and the strong ordering keeps the assertion boring. `VecDeque` is a queue. `pop_front` is O(1). A `Vec` would also work at this size. The deque matches "the next reply."
 
 `kind` is `ToolKind::Read`. Clarify does not write the workspace. The schema name is `clarify`, the required key is `questions`, and `additionalProperties` is false, so a stray field fails in `check_arguments` before the child check.
 
@@ -328,7 +328,7 @@ child: BLOCKED: a child agent may not call clarify
 
 `todo_merge` builds a store, applies one item at revision 0, then merges an update at revision 1. The store is built inside the sample so each iteration starts from an empty list. The merged content is `black_box`ed.
 
-Both means below are `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39114427940](https://github.com/agnathan/rust-agent-harness/actions/runs/39114427940), section `17`. The Criterion `time:` line is the slope. I am not quoting it.
+Both means below are `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39114427940](https://github.com/agnathan/rust-agent-harness/actions/runs/39114427940), section `17`.
 
 | Bench | Mean |
 |---|---|
@@ -366,13 +366,8 @@ child: BLOCKED: a child agent may not call clarify
 ## Pitfalls
 
 - Joining a relative path and then checking the string for `..` misses a symlink and misses an absolute path. `canonicalize` plus `starts_with` is the check. A warning that still returns the path is not this function. Hermes warns. This chapter refuses.
-- `check_stale` returns `Ok` when the file does not exist. A write of a new path is not a stale write. The refusal is for a file that is already there and was not read, or that moved after the read.
 - Patching on a count other than one, and writing anyway, would edit the wrong occurrence or invent a match. The `fs::write` stays below the count check.
-- Calling `run_until` for `echo hello` times out, because the worker waits for `quit`. The `sleep-ms ` prefix is the only command that wants the kill-on-timeout path.
-- Skipping `deny_tool`, or passing a tool name other than `terminal`, runs the body with no chapter 11 floor. The hardline lives in that function. A new terminal tool that "just spawns" walks around it.
-- Truncating bytes before lines makes a long single line report `bytes omitted`. The line-length cut is first so the 60,000-character fixture stays an ellipsis.
 - Bumping the todo revision before the equality check would let a stale writer advance the counter and then fail, and the next honest writer would have the wrong expected number. The check returns first.
-- Popping the clarify queue before `child_may_call` consumes the parent's reply on a child call. The test that asserts `pending() == 1` exists so that order stays visible.
 - Putting `depth` in the tool arguments would let the model claim to be the parent. The depth is fixed when the tool is constructed.
 
 ## Guardrails

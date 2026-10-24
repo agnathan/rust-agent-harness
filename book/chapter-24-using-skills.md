@@ -10,19 +10,6 @@ Rust, beside the loader: the directory walk is `std::fs`, and the frontmatter pa
 
 `cargo run --locked -p ch24-skills --bin ch24-skills` writes one skill and views it. The exercise is `my-harness/tests/ch24.rs`: loading 500 skills does not change the index bytes when one is viewed.
 
-**In this chapter**
-
-- 24.1 The caps and the two types
-- 24.2 `ScriptedModel` replies with a stored line
-- 24.3 `SkillSession` stores the index in an `Arc`
-- 24.4 `load_tree` walks categories, then skill folders
-- 24.5 `parse_skill` reads three keys
-- 24.6 `render_index` writes the block
-- 24.7 `skills_list` filters by category
-- 24.8 `skill_view` reads one file
-- 24.9 `change_note` compares names
-- 24.10 `demo` writes one skill and views it
-
 | Section | What it walks |
 |---|---|
 | 24.1 | `MAX_NAME_LENGTH`, `MAX_DESCRIPTION_LENGTH`, `MAX_BODY_CHARS`, `SkillMeta`, `SkillError` |
@@ -671,13 +658,11 @@ The binary writes one skill under a temp directory, renders the index, and views
 |---|---|---|
 | `load_render_500` | 4.15 ms | load 500 skills and render the index |
 
-`load_render_500` writes 500 `SKILL.md` files before the bench. Category is `cat` plus `n % 10`. Name is `skill` plus the index zero-padded to three digits, from `skill000` through `skill499`. The description is `Skill {n}`. The body is `Body {n}.` The timed closure is `b.iter`. Inside it: `load_tree` and `render_index`, the root and the slice and the connected list passed through `black_box`. The writes sit outside the timer. No model is called. The bench deletes the directory after the samples.
+The skill is `rename`. The body line is `Rename a file by its path.`
 
-The Mean cell is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `24`. The id is `24/load_render_500`. The old id `22/load_render_500` is an alias in `benchmarks/descriptions.json`. Criterion also prints a `time:` line. That line is the slope. It is not the mean.
+`load_render_500` writes 500 `SKILL.md` files before the bench. Category is `cat` plus `n % 10`.
 
-### Milestone demo
-
-The `cargo run` above. The skill is `rename`. The body line is `Rename a file by its path.`
+The means are `mean.point_estimate` from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `24`. Bench ids: `24/load_render_500`, `22/load_render_500`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -688,10 +673,6 @@ A second folder with the same frontmatter name is skipped by `load_tree` and ign
 One file over the body cap, or one name over 64 characters, fails `load_tree` for the whole root. Skills that parsed earlier in the walk are dropped with the `Err`.
 
 `support_path` treats `..` as a substring. A supporting file whose name contains those two characters is refused. The check is not a component-only check.
-
-`skill_view` reads the whole file. The 100_000 character cap is on `load_tree`. A file edited after `open` can come back larger than the cap. The index does not move.
-
-`render_index` does not sort. It emits a category header whenever the category changes. Pass it the vec `load_tree` returned.
 
 ## Guardrails in this chapter
 
@@ -718,7 +699,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Skil
 
 `my-harness/tests/ch24.rs` is the milestone. The test is `loading_skills_does_not_change_the_index_bytes_when_one_is_viewed`. It builds an index string and asserts `chapter_24_index_changes_when_viewed(index, index)` is false. The same bytes in and the same bytes out means viewing a skill did not change the index.
 
-The function in `my-harness` is a stub. It ends in `todo!("chapter 24")` and panics until the assertion can pass. The step crate is the reference. Do not copy it into `my-harness/`.
+The function in `my-harness` is a stub. It ends in `todo!("chapter 24")` and panics until the assertion can pass. 
 
 ## What's next
 

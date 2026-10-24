@@ -13,8 +13,7 @@ I read Hermes at 9e01b44. tools/skills_sync.py tracks an origin hash in .bundled
 tools/skills_guard.py should_allow_install lets force override every block except a dangerous verdict on a community or trusted source. The refusal ends "--force does not override a dangerous verdict." This crate also calls chapter 25's scanner. rm -rf / is a local check, because that scanner does not name the command.
 
 4/
-The demo prints "skills: v2 3". The bench id 48/skill_propose has aliases 46/skill_propose and 44/skill_propose. Its mean is 80.1 ns. The bench id 48/index_swap has aliases 46/index_swap and 44/index_swap. Its mean is 200.3 ns. Both are mean.point_estimate from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196). The Criterion time: line is the slope.
-
+The demo prints "skills: v2 3". The bench id 48/skill_propose has aliases 46/skill_propose and 44/skill_propose. Its mean is 80.1 ns. The bench id 48/index_swap has aliases 46/index_swap and 44/index_swap. Its mean is 200.3 ns. Both are mean.point_estimate from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196).
 5/
 Next is chapter 49, A2A for agents outside this process.
 

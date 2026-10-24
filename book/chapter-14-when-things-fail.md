@@ -2,38 +2,15 @@
 
 Chapter 9's loop can stop, stall, and wrap up. It still treats a failure as one outcome. An empty reply, a truncated reply, a repeated paragraph, a timeout, and a model that should have been the fallback all look different and need different next steps. Two dangerous commands also still sit outside the approval floor: deleting the binary that is running, and rewriting this crate's own git tree. This chapter classifies the failure and closes those two floor checks. The crate is `steps/ch14-when-things-fail`, a copy of chapter 13 plus a `failure` module. The package is `ch14-when-things-fail`. The library is `harness_core`.
 
-`Kind` is the classification. `retry_budget` and `EmptyAttempt` implement the empty-response rule chapter 9 deferred: three retries, or one if a single attempt costs more than a quarter dollar. `deterministic_empty` refuses to retry a reply that will be empty again for the same reason. `is_repetition_dominated` is the repetition guard: a run of the same text covering enough of the output stops the loop. `length_verdict` is the continuation decision when a reply was cut off. `run_models` walks a route, which is the seed of chapter 18's fallback. `call_with_timeout` cancels the in-flight call and releases its permit, so a stuck call does not pin one of the eight slots. `retry_in_bound` keeps the retries inside that same bound. `FakeMcp` is the stand-in for a server that crashes, times out, or needs a reconnect.
+`Kind` is the classification. An empty reply retries, a repetition stops the loop, a cut-off reply can continue, and a timeout releases its permit. `run_models` is the seed of chapter 18's fallback.
 
-`approval::check` calls `failure::command_deletes_runtime` and `failure::self_repo_git_mutation` before the fast path and before YOLO. Both denials are hardline. The runtime path is `std::env::current_exe()`. The source root is `CARGO_MANIFEST_DIR` of this step. The detectors cover `rm` and its Windows cousins, `find … -delete`, and `uv python uninstall` when the spec is the runtime. Overlap works in both directions, so deleting a parent of the binary is a hit. Alias lookup and heredocs are not parsed, matching the limit Hermes itself documents. A global `git -C` and the wrappers `sudo`, `command`, `time`, `nohup`, and `env` are stripped before the git check. YOLO still denies both.
+`approval::check` calls `command_deletes_runtime` and `self_repo_git_mutation` before the fast path and before YOLO. Both denials are hardline. Deleting a parent of the running binary is a hit. YOLO still denies both.
 
 Chapter 16 copies this harness, not chapter 15. Chapter 15 is the server. The failure types stay on the harness line because they classify the model's behavior and the shell the harness is about to run. A self-improving agent that retries an empty reply forever, or that can `git reset --hard` the tree it is learning inside, will destroy the session it was supposed to learn from. Chapter 52's stress set still includes the stall and the recovery. This chapter is where those failures become named kinds instead of one more stop.
 
 Rust, taught at the match: `Kind` and `Reply` are enums, and `OrderedF64` exists because floating-point cost does not implement the ordering you want in a `BTree` or a sort. `Result` is the floor's denial. Matching on the error is the whole design of the retry.
 
 `cargo run -p ch14-when-things-fail` runs the demo. The exercise is `my-harness/tests/ch14.rs`: YOLO still denies deleting the running binary and `git reset --hard` of this crate's manifest directory.
-
-**In this chapter**
-
-- 14.1 `Kind`
-- 14.2 `EmptyAttempt`
-- 14.3 `retry_budget`
-- 14.4 `deterministic_empty`
-- 14.5 `is_repetition_dominated`
-- 14.6 `length_verdict`
-- 14.7 `Reply` and `OrderedF64`
-- 14.8 `run_models`
-- 14.9 `run_one`
-- 14.10 `call_with_timeout`
-- 14.11 `retry_in_bound`
-- 14.12 `FakeMcp`
-- 14.13 The top of `check`
-- 14.14 `command_deletes_runtime`
-- 14.15 `path_hits`
-- 14.16 `uv_uninstalls_runtime`
-- 14.17 `strip_wrappers`
-- 14.18 `self_repo_git_mutation`
-- 14.19 `locate_git`
-- 14.20 `word_hits`
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -657,7 +634,7 @@ A quote, dollar, backtick, pipe, semicolon, redirect, parenthesis, or ampersand 
 
 `echo hello` still passes. No special bytes, and `echo` is not in `WORDS`, so `fast_safe` is true. The test sets `policy.yolo = true` and expects `Allow`. The floor returned `None`. The same policy denies `rm` of `current_exe` and `git -C <manifest> reset --hard` with `hardline: true`.
 
-The arms between the fast path and YOLO are the chapter 11 detectors. `hardline` denies a recursive `rm` of `/`, `/*`, `/.`, `/./`, or `//`, or of `/etc`, `/boot`, `/usr`, `~`, or `$home`, plus `mkfs`, `dd` onto `/dev/sd` or `/dev/nvme`, a fork bomb (`:(){` with `:|:&`), `kill -1`, and `shutdown`, `reboot`, `halt`, or `poweroff`. Quoted spans are blanked, and an `sh -c`, `bash -c`, or `eval` payload is checked too. `pipes_password_to_sudo` denies a masked command that contains `-S` and `sudo`. `deny_match` denies a user rule found in the masked, wrapper-stripped command. Those three return before YOLO. Past YOLO, a command that `dangerous` does not match is `Allow`. `dangerous` matches a recursive `rm`, a token under `/etc` or containing `/.ssh` or `/.env`, a `curl` upload, and `python`, `python3`, `perl`, `ruby`, or `node` with `-c` or `-e`. Unattended deny, smart review, and `Ask` run only when YOLO has not returned.
+Those arms are chapter 11's detectors, and they return before YOLO. Past YOLO, a command `dangerous` does not match is `Allow`. Unattended deny, smart review, and `Ask` run only when YOLO has not returned.
 
 `rm -rf /` misses the runtime detector. Section 14.15 shows why `/` fails `path_hits`. `fast_safe` returns false on the word `rm`, and `hardline` denies the command. `hardline_survives_yolo_and_mode_off` expects `recursive delete of root filesystem` in the message.
 
@@ -966,11 +943,9 @@ The binary runs two fake models. The first emits two empty replies at $0.30. The
 
 The timeout is not a bench. The test above is the measurement of the cancel: a 30 millisecond timeout against a 5 second sleep, permits back to 8, elapsed under 2 seconds. A bench that slept would measure the timer, not the permit.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `14`.
+The result is `hello`. One fallback.
 
-### Milestone demo
-
-The `cargo run` above. The result is `hello`. One fallback.
+The means are `mean.point_estimate` from [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `14`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -981,8 +956,6 @@ Two zero-output empties never reach a third reply on that model. If you wanted t
 A length reply under 400 characters is continued even if it is `"ok ok ok"`. The guard fails open on short text, which is what Hermes does. Do not point this function at a one-line stutter and expect a stop.
 
 `call_with_timeout` drops the permit when the timeout wins. The work future is dropped too, which is what cancels the sleep. A tool that has already started a side effect does not get undone. The permit is the only thing this function returns.
-
-`FakeMcp` stops reconnecting after three crashes. The test uses one.
 
 ## Guardrails in this chapter
 
@@ -1013,7 +986,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Laye
 
 ## What you implement
 
-`my-harness/tests/ch14.rs` compiles, then panics in `todo!("chapter 14")` until `chapter_14_yolo_allows` is false for `"rm-the-running-binary"` and `"git-reset-hard-of-this-checkout"`, and true for `"echo hello"`. The step crate is the reference. Do not copy it into `my-harness/`.
+`my-harness/tests/ch14.rs` compiles, then panics in `todo!("chapter 14")` until `chapter_14_yolo_allows` is false for `"rm-the-running-binary"` and `"git-reset-hard-of-this-checkout"`, and true for `"echo hello"`. 
 
 ## What's next
 

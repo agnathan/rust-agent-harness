@@ -13,8 +13,7 @@ I read Hermes at 9e01b44. hermes_cli/kanban_db_notify.py claim_unseen_events_for
 agent/redact.py redact_for_egress is the one scrub for text leaving the process. It runs redact_sensitive_text, then a Bearer residue of 20 or more opaque characters. An exception returns "[redaction-unavailable]" and never the raw text. This crate calls that chapter 20 function. bus.rs does not define a second scrubber.
 
 4/
-The demo prints "bus: ping ok". The bench id is 47/publish_to_agents. The old ids 45/publish_to_agents and 43/publish_to_agents are aliases. The mean is 47.98 µs, mean.point_estimate from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196). The Criterion time: line is the slope.
-
+The demo prints "bus: ping ok". The bench id is 47/publish_to_agents. The old ids 45/publish_to_agents and 43/publish_to_agents are aliases. The mean is 47.98 µs, mean.point_estimate from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196).
 5/
 Next is chapter 48, shared team skills. Workers enqueue. The librarian is the only writer.
 

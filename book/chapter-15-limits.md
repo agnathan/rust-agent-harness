@@ -4,48 +4,15 @@ The harness can now classify a failure and refuse a destructive command. Those a
 
 The package is `ch15-limits`, the library is `gw_limits`, and the bench is `limits`. Chapter 7's catalog and chapter 8's session gateway are vendored under `src/catalog/` and `src/session.rs`, so this step builds alone. There is no path dependency on `ch07-catalog` or `ch08-session-toolsets`. The public names chapter 23 already calls stay: `Catalog`, `LimitedGateway` (`new`, `catalog`, `open_session`, `session_tools`), and `SessionView`. The crate binds no socket.
 
-`LimitedGateway` wraps the session view with a per-tool gate. `ACCEPT_BOUND` and `EXECUTE_BOUND` are the chapter 5 numbers, now per tool rather than process-wide only. `ToolGate` hands out permits. `Breaker` opens after repeated failures and `breaker_open` stops a new call from reaching the backend. `set_idempotent` marks the tools a retry is allowed to run again. A tool that is not marked idempotent is not retried. Timeouts release the permit. `CallError::Cap` is what the 51st `web_search` receives, and the same cap of 50 applies to a subagent tool. `MAX_WEB_SEARCHES` is that number. Hedging and 429/503 backpressure sit on the same gate. `dispatch` is the path that checks the breaker, the cap, the permit, and the timeout in one order.
+`LimitedGateway` wraps the session view with a per-tool gate. `ACCEPT_BOUND` and `EXECUTE_BOUND` are the chapter 5 numbers, now per tool. A breaker stops a new call while a backend is failing. `CallError::Cap` is what the 51st `web_search` receives. `dispatch` checks the breaker, the cap, the permit, and the timeout in one order.
 
-The server stays a separate program because these limits protect the backends the gateway fronts, and the other sessions sharing them. The harness already has a bound of 8 on its own dispatcher. That bound does not know that `web_search` has been called fifty times, or that one upstream is down. Putting the cap, the breaker, and the idempotent retry on the server means every client inherits them, including a later harness that only knows the tool name. Chapter 16 will name its search tool `web_search` so this cap applies, and it will not add a second counter. Chapter 23 vendors this crate the same way this crate vendored chapters 7 and 8. Learned tools sit on top of the limit. They do not replace it.
+The server stays a separate program. The harness bound of 8 does not know that `web_search` has been called fifty times, or that one upstream is down. Chapter 16 names its search tool `web_search` so this cap applies. Chapter 23 vendors this crate. Learned tools sit on top of the limit.
 
 A self-improving agent that can call search, or spawn a subagent, on every reflection will spend the turn on the tool instead of the lesson. The cap is the boring reason the learning loop stays a loop.
 
 Rust, beside the types: a permit is an owned guard, and releasing it is a drop, including on timeout. The breaker is an enum you match on, open or closed. `Result` is `CallError`, and `Cap` is its own variant so a caller can tell a policy refusal from a backend failure.
 
 `cargo run -p ch15-limits` runs the demo in-process. The exercise is `my-harness/tests/ch15.rs`: the 51st `web_search` is the cap error, and an open breaker does not call the backend.
-
-**In this chapter**
-
-- 15.1 One flat package, and the names chapter 23 already calls
-- 15.2 `ACCEPT_BOUND`, `EXECUTE_BOUND`, and the cap of 50
-- 15.3 `FailureKind`
-- 15.4 `Outcome`
-- 15.5 `CallOpts`
-- 15.6 `CallError`
-- 15.7 `Backend`
-- 15.8 `Script`
-- 15.9 `ToolGate`
-- 15.10 `Breaker`
-- 15.11 `LimitedGateway` and `new`
-- 15.12 `catalog`, `open_session`, and `session_tools`
-- 15.13 `set_idempotent`
-- 15.14 `is_idempotent`
-- 15.15 `breaker_open`
-- 15.16 `accept_available` and `execute_available`
-- 15.17 `roundtrip_execute`
-- 15.18 `hold_accept`
-- 15.19 `dispatch`
-- 15.20 `retriable`
-- 15.21 `block_cap`
-- 15.22 `note_cap`
-- 15.23 `spawn_count`
-- 15.24 `note_failure`
-- 15.25 `note_success`
-- 15.26 `gate`
-- 15.27 `try_accept` and `try_execute`
-- 15.28 `run_with_timeout`
-- 15.29 `Default` for `LimitedGateway`
-- 15.30 `open_breaker` and `permit_release`
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -186,11 +153,13 @@ pub enum FailureKind {
 `Transport` carries no data. The empty script queue uses it, and the retry test uses it for a failure that may run again. `Status` holds a `u16`. The tests pass `429` and `503`. `retriable` has a separate arm for every other status, so `Status(500)` is a different answer from `Status(503)`.
 
 > **Rust sidebar: an enum is one variant**
-> - A struct always has the same fields. An enum is a choice. A `FailureKind` is either `Transport` or `Status(u16)`, and it is exactly one of those.
-> - You get the `u16` back by matching. `Transport` has nothing to get back.
-> - `Debug` is `{:?}`. The binary's panic prints `{other:?}`, which needs `Debug` on `CallError` and on the `FailureKind` inside `Failed`.
-> - `Copy` means a value is copied on assignment. Both variants are `Copy` because `u16` is `Copy`. `retriable` takes a `FailureKind` by value, and the caller still has its own.
-> - `PartialEq` and `Eq` are `==`. Tests compare `CallError::Failed(FailureKind::Transport)` by value.
+>
+> - A `FailureKind` is either `Transport` or `Status(u16)`, and it is exactly one of those.
+> - `Transport` has nothing to get back.
+> - The binary's panic prints `{other:?}`, which needs `Debug` on `CallError` and on the `FailureKind` inside `Failed`.
+> - `retriable` takes a `FailureKind` by value, and the caller still has its own.
+> - Tests compare `CallError::Failed(FailureKind::Transport)` by value.
+> - `Option`, `Result`, enums, and `Arc` are taught in [chapter 1](chapter-01-first-contact.md).
 
 ## 15.4 `Outcome`
 
@@ -240,10 +209,12 @@ pub enum CallError {
 ```
 
 > **Rust sidebar: `Result` and `?`**
-> - `Result<String, CallError>` has two variants. `Ok` holds the tool body. `Err` holds one `CallError`.
-> - `?` returns early on `Err`. `try_accept(tool)?` inside `run_with_timeout` either binds the permit or returns `Err(CallError::Saturated)`. The error type already matches, so `?` does not convert it.
-> - `#[derive(Error)]` comes from `thiserror`. `#[error("open")]` is the `Display` text for `OpenBreaker`. `Cap`'s `{0}` prints the `String`, which is the block sentence. `Failed` prints `failed`. The kind is not in that sentence. `assert_eq!` uses `PartialEq`, so tests still see `FailureKind::Status(429)`.
+>
+> - `Result<String, CallError>` has two variants. `Err` holds one `CallError`.
+> - `try_accept(tool)?` inside `run_with_timeout` either binds the permit or returns `Err(CallError::Saturated)`.
+> - `#[derive(Error)]` comes from `thiserror`. `#[error("open")]` is the `Display` text for `OpenBreaker`. `Cap`'s `{0}` prints the `String`, which is the block sentence. `Failed` prints `failed`. `assert_eq!` uses `PartialEq`, so tests still see `FailureKind::Status(429)`.
 > - `OpenBreaker`, `Saturated`, and `Timeout` carry no fields. `Cap` owns the message. `Failed` owns a `Copy` kind.
+> - `Option`, `Result`, enums, and `Arc` are taught in [chapter 1](chapter-01-first-contact.md).
 
 `dispatch` returns `OpenBreaker`, `Cap`, and `Failed`. The permit helpers return `Saturated` from `map_err`. `run_with_timeout` returns `Timeout` when the timer wins.
 
@@ -402,9 +373,11 @@ pub fn session_tools(&self, session_id: &str) -> Option<SessionView> {
 `session_tools` locks that map. `get` plus `?` returns `None` for an id that was never opened. `Some` copies `session_id`, clones `revealed` into `tools`, and copies `list_changed`.
 
 > **Rust sidebar: `Option`**
-> - `Option<SessionView>` is `Some(view)` or `None`. `get` is `None` when the id was never opened. `?` in a function that returns `Option` returns that `None`.
-> - `Some` clones the revealed names and copies `list_changed`. The view does not borrow the session. The lock ends when the function returns.
-> - The limits test opens `"session-1"` and expects `tools` to be empty. `revealed` is still empty. `SessionView`'s fields are `session_id`, `tools`, and `list_changed`. Chapter 23 reads `tools`. This layer returns the inner view unchanged.
+>
+> - `Option<SessionView>` is `Some(view)` or `None`. `get` is `None` when the id was never opened.
+> - `Some` clones the revealed names and copies `list_changed`.
+> - The limits test opens `"session-1"` and expects `tools` to be empty. `revealed` is still empty. `SessionView`'s fields are `session_id`, `tools`, and `list_changed`. Chapter 23 reads `tools`.
+> - `Option`, `Result`, enums, and `Arc` are taught in [chapter 1](chapter-01-first-contact.md).
 
 ## 15.13 `set_idempotent`
 
@@ -880,21 +853,11 @@ The binary is two fake calls. `echo` retries a transport error. `search` is not 
 | `open_breaker` | 31.97 ns | under 1 µs | a call that returns before the backend |
 | `permit_release` | 57.73 ns | under 1 µs | take one execute permit and drop it |
 
-`open_breaker` records three 503s before the bench. The timed closure is `b.iter`. Inside: `dispatch` of `search` with the tool name passed through `black_box`. The breaker is already open, so the script is not called. Building the gateway and opening the breaker are excluded.
+`open_breaker` times `dispatch` of `search` after three 503s, so the script is not called. `permit_release` takes one execute permit and drops it. Setup is outside the sample. The timeout stays a test: 30 milliseconds against a 5 second sleep.
 
-`permit_release` builds the gateway before the bench. Each sample calls `roundtrip_execute`, which `try_acquire_owned`s one permit from the execute semaphore of 8 and drops it. The accept semaphore is not taken. There is no sleep and no backend.
-
-The timeout is not a bench. The test above is the measurement of the cancel: 30 milliseconds against a 5 second sleep, both permit counts full, elapsed under 2 seconds.
-
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `15`.
-
-### Milestone demo
-
-The `cargo run` above. The result is `ok`. The breaker is open.
+The means are `mean.point_estimate` from [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `15`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
-
-A 429 on a tool you marked idempotent still does not retry. Idempotent means a transport error or a status other than 429 or 503 may run once more. It does not mean every failure is safe to repeat.
 
 The breaker stays open. This chapter has no half-open probe. The next call is refused until the process is new.
 
@@ -932,7 +895,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Laye
 
 ## What you implement
 
-`my-harness/tests/ch15.rs` is the milestone. It compiles, then panics in `todo!("chapter 15")` until `chapter_15_web_search_allowed(49)` is true and `chapter_15_web_search_allowed(50)` is false. The fiftieth search is the last one allowed. The step crate is the reference. Do not copy it into `my-harness/`.
+`my-harness/tests/ch15.rs` is the milestone. It compiles, then panics in `todo!("chapter 15")` until `chapter_15_web_search_allowed(49)` is true and `chapter_15_web_search_allowed(50)` is false. The fiftieth search is the last one allowed. 
 
 ## What's next
 

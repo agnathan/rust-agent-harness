@@ -12,21 +12,6 @@ Rust, at the inbox: the deque is the bounded queue, and enqueue is a `push_back`
 
 `cargo run --locked -p ch39-gateway --bin ch39-gateway` queues, folds, and denies. The exercise is `my-harness/tests/ch39.rs`: a gateway restart command is blocked, and a platform enqueue is not a model call.
 
-**In this chapter**
-
-- 39.1 The constants are the Hermes numbers
-- 39.2 A request stores the code in a Vec
-- 39.3 Approve pairs, or counts a miss
-- 39.4 Authorize is allowlist, then paired, then deny
-- 39.5 Twenty bot messages, then ten minutes of quiet
-- 39.6 A stat error pauses
-- 39.7 The inbox is a VecDeque of 64
-- 39.8 Fold keeps text and skips tool chunks
-- 39.9 A running session refuses the re-bind
-- 39.10 The demo queues, folds, and denies
-- 39.11 B4 is four patterns, and only when supervised
-- 39.12 admit_shell is a Result, and send_out is chapter 20
-
 | Section | Step | What it adds |
 |---|---|---|
 | 39.1 | `steps/ch39-gateway` | the pairing, bot, inbox, and error constants |
@@ -103,7 +88,7 @@ pub const UNKNOWN_PLATFORM: i32 = 4024;
 
 `SESSION_BUSY`, `PLATFORM_REQUIRED`, and `UNKNOWN_PLATFORM` are the integers `handoff_request` puts on its variants.
 
-> **Rust, just in time.** A `const` is a value the compiler inlines. The type is part of the declaration: `usize` for a length, `u64` for a timestamp in seconds, `u32` for a small counter, `i32` for an error code that can be compared with `==`. `ALPHABET` is `&str`, a borrowed string that lives for the whole program. The underscore in `3_600` is a digit separator. The value is 3600.
+> **Rust sidebar.** A `const` is a value the compiler inlines. The type is part of the declaration: `usize` for a length, `u64` for a timestamp in seconds, `u32` for a small counter, `i32` for an error code that can be compared with `==`. `ALPHABET` is `&str`, a borrowed string that lives for the whole program. The underscore in `3_600` is a digit separator. The value is 3600.
 
 ## 39.2 A request stores the code in a Vec
 
@@ -172,7 +157,7 @@ fn valid_code(code: &str) -> bool {
 
 `code.len()` is bytes. Every character in the alphabet is one ASCII byte, so a length of 8 is eight characters. `IIIIIIII` has length 8 and fails `ALPHABET.contains`, because `I` is not in the string. `abcd2345` fails too: `request` does not uppercase. `approve` does.
 
-> **Rust, just in time.** `Result<(), PairError>` is either `Ok(())` or `Err(one of those five)`. The unit value `()` means success carries no payload. `if let Some(last)` reads the `Option` only when a previous request exists. The first request has `last_request == None` and skips the gap check. `&mut self` means the method changes the struct. The caller cannot use the `Pairing` again until the call returns.
+> **Rust sidebar.** `Result<(), PairError>` is either `Ok(())` or `Err(one of those five)`. The unit value `()` means success carries no payload. `if let Some(last)` reads the `Option` only when a previous request exists. The first request has `last_request == None` and skips the gap check. `&mut self` means the method changes the struct. The caller cannot use the `Pairing` again until the call returns.
 
 ## 39.3 Approve pairs, or counts a miss
 
@@ -268,7 +253,7 @@ Cooldown is checked before the window is pruned. A timestamp inside the cooldown
 
 Hermes computes `cutoff = now - window_seconds` with floats and drops events `<= cutoff`. A clock at 0 would subtract 300 and drop those events. `checked_sub` keeps a fresh event that was recorded before the window width fits in the clock. `saturating_sub` would have turned that into zero and dropped every event at 0. The test `twenty_bot_messages_then_a_cooldown` is that sequence.
 
-> **Rust, just in time.** `VecDeque` pushes and pops at both ends in constant time. `front()` returns `Option<&u64>`. `copied()` turns that into `Option<u64>`. `is_some_and` runs the predicate only when there is a front element. `Copy` on `BotAdmit` means the enum is returned by copy. The three variants are the states Hermes names `ok`, `tripped`, and `cooldown`. Hermes also returns `disabled` when the guard is turned off in config. This struct has no enabled flag. It is always on.
+> **Rust sidebar.** `VecDeque` pushes and pops at both ends in constant time. `front()` returns `Option<&u64>`. `copied()` turns that into `Option<u64>`. `is_some_and` runs the predicate only when there is a front element. `Copy` on `BotAdmit` means the enum is returned by copy. The three variants are the states Hermes names `ok`, `tripped`, and `cooldown`. Hermes also returns `disabled` when the guard is turned off in config. This struct has no enabled flag. It is always on.
 
 ## 39.6 A stat error pauses
 
@@ -295,7 +280,7 @@ pub fn is_engaged(paths: &[Stat]) -> bool {
 
 `Present` returns immediately. A later `Error` is not required. `Error` then `Present` is true because of `Present`. `Absent` then `Error` finishes the loop and returns the flag. Two `Absent` values return false. Hermes `is_engaged` loops candidate paths, returns true on `path.exists()`, and sets the same flag on `OSError`. An empty slice here is false: there was no error and no sentinel. Hermes always has at least the process-home path. This function does not invent a path. The caller passes the stats it already took.
 
-> **Rust, just in time.** `match` names every variant. The empty arm `Stat::Absent => {}` is the branch that changes nothing. Forgetting that arm would be a compile error, because the match has to be complete. `saw_error` is a `bool` on the stack. It is not stored on a sentinel file.
+> **Rust sidebar.** `match` names every variant. The empty arm `Stat::Absent => {}` is the branch that changes nothing. Forgetting that arm would be a compile error, because the match has to be complete. `saw_error` is a `bool` on the stack. It is not stored on a sentinel file.
 
 ## 39.7 The inbox is a VecDeque of 64
 
@@ -334,7 +319,7 @@ A `Turn` and a `Steer` take the same slot. Chapter 35's mailbox distinguishes th
 
 The capacity test pushes one steer and then `INBOX_CAP - 1` turns. The length is 64. The next turn is `Full`. The steer is still `front`, because `push_back` did not pass it.
 
-> **Rust, just in time.** `Message` owns its `String`. `submit` takes the message by value, so the queue keeps it after the caller returns. `Submit` is `Copy` because it carries no string. `Full` does not say which message was dropped. The caller still holds nothing: the message was moved into the function and dropped on the `Full` path. Build the string again if you need to retry.
+> **Rust sidebar.** `Message` owns its `String`. `submit` takes the message by value, so the queue keeps it after the caller returns. `Submit` is `Copy` because it carries no string. `Full` does not say which message was dropped. The caller still holds nothing: the message was moved into the function and dropped on the `Full` path. Build the string again if you need to retry.
 
 ## 39.8 Fold keeps text and skips tool chunks
 
@@ -395,7 +380,7 @@ pub fn handoff_request(running: bool, platform: &str, enabled: &[&str]) -> Hando
 
 An idle session trims and lowercases. `"  "` becomes empty and returns `PlatformRequired { code: 4023 }`. `"slack"` with only `telegram` enabled returns `UnknownPlatform` carrying the lowercased name and code 4024. `" Telegram "` with `telegram` enabled returns `Pending { platform: "telegram" }`. There is no watcher and no pending row on disk. The variant is the decision. Chapter 30's `Board::handoff` filters a transcript and does not know whether a session is running. This function is the check that board deferred.
 
-> **Rust, just in time.** A struct-like enum variant holds fields. `Busy { code }` and `Pending { platform }` are different shapes, so a caller matches them instead of reading a nullable code. `platform.as_str()` borrows the local `String` long enough for `contains`. On the `UnknownPlatform` path the same `String` moves into the variant. It is not cloned twice.
+> **Rust sidebar.** A struct-like enum variant holds fields. `Busy { code }` and `Pending { platform }` are different shapes, so a caller matches them instead of reading a nullable code. `platform.as_str()` borrows the local `String` long enough for `contains`. On the `UnknownPlatform` path the same `String` moves into the variant. It is not cloned twice.
 
 ## 39.10 The demo queues, folds, and denies
 
@@ -506,7 +491,7 @@ fn kill_gateway() -> &'static Regex {
 
 `Regex::new(...).expect("pattern")` panics if the pattern does not compile. The patterns are fixed strings in the source. A panic there is a bug in the pattern, and it happens once, inside `get_or_init`.
 
-> **Rust, just in time.** `OnceLock<Regex>` builds the regex on the first call and returns the same `&Regex` after that. `get_or_init` runs the closure only when the cell is empty. `'static` means the reference lives for the rest of the process. The bench does not call this function, so the sample does not pay for the compile. `Option<&'static str>` is `None` when the command may run, and `Some` of one sentence when it may not. The sentence is a string literal, so it has no owner to free.
+> **Rust sidebar.** `OnceLock<Regex>` builds the regex on the first call and returns the same `&Regex` after that. `get_or_init` runs the closure only when the cell is empty. `'static` means the reference lives for the rest of the process. The bench does not call this function, so the sample does not pay for the compile. `Option<&'static str>` is `None` when the command may run, and `Some` of one sentence when it may not. The sentence is a string literal, so it has no owner to free.
 
 ## 39.12 admit_shell is a Result, and send_out is chapter 20
 
@@ -527,7 +512,7 @@ pub fn send_out(text: &str) -> String {
 
 `send_out` is one call. `redact_for_egress` in `redact.rs` runs `redact_sensitive_text` and then the Bearer residue sweep. The sensitive-text pass masks prefix families (`sk-`, `ghp_`, Slack, Google, AWS, and the rest of the list in that file), `NAME=value` assignments for names that look like secrets, and `Authorization` headers. The test passes `Authorization: Bearer sk-abcdefghijklmnopqrstuvwxyz`. After the prefix pass the `sk-` body is masked, and the header pass replaces the credential. The assertion is that the original secret substring is absent. There is no second table of patterns in `gateway.rs`.
 
-> **Rust, just in time.** `Result<(), &'static str>` uses the error string as the `Err` payload. `match` on `Option` has two arms, and both are written. `crate::redact::redact_for_egress` is a path into another module of this same crate. Chapter 20 put the function there. Calling it by that path is the whole of `send_out`.
+> **Rust sidebar.** `Result<(), &'static str>` uses the error string as the `Err` payload. `match` on `Option` has two arms, and both are written. `crate::redact::redact_for_egress` is a path into another module of this same crate. Chapter 20 put the function there. Calling it by that path is the whole of `send_out`.
 
 ## Tests
 
@@ -595,11 +580,7 @@ fn enqueue_platform(c: &mut Criterion) {
 
 The setup closure calls `Inbox::new(64)` and is not timed. The timed routine builds `hello`, calls `submit` with `Message::Turn`, and passes both the string and the `Submit` through `black_box`. The queue is empty, so the result is `Accepted`. Pairing, `authorize`, `fold`, `handoff_request`, `gateway_lifecycle_block`, `send_out`, and `FakeModel` are not called. The `Full` path is not taken.
 
-The mean is `152.0 ns`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `39`. The id is `39/enqueue_platform`. The old id `37/enqueue_platform` is an alias in `benchmarks/descriptions.json`. The Criterion `time:` line is the slope, not the mean. The flags are `--warm-up-time 1 --measurement-time 2 --sample-size 10`, from the chapter README and from `benchmarks/descriptions.json`.
-
-### Milestone demo
-
-The `cargo run` above. The line is `gateway: queued`.
+The means are `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `39`. Bench ids: `39/enqueue_platform`, `37/enqueue_platform`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -609,15 +590,7 @@ The bench is one push onto an empty inbox. A number that includes pairing, a loc
 
 The pairing code is plaintext in the `Vec`. A log of `pending` is a log of the code. Hermes refused that by storing a hash.
 
-`authorize` does not read `Pairing`. A test that approves a user and then forgets to pass `paired: true` will deny them. That is the function as written.
-
 `gateway_lifecycle_block` does not scan a script the command would execute. Hermes `scan_gateway_lifecycle` does, and it fails closed when the script cannot be read. A supervised `bash restart.sh` whose file contains `hermes gateway restart` is `Ok` here. Chapter 43's prompt scan is still the place a job's text is checked. Do not delete that scan because this function exists.
-
-`launchctl submit` and `pkill python` are outside these four patterns. The Hermes function blocks both when the process is supervised.
-
-`send_out` masks secrets. It does not decide who may speak. Call `authorize` before you enqueue, and call `send_out` on the way out.
-
-`demo` does call `FakeModel`. `submit` does not. Quoting the demo as proof that enqueue is free of a model call mixes the two.
 
 ## Guardrails in this chapter
 
@@ -664,7 +637,7 @@ pub fn chapter_39_enqueue_is_a_model_call() -> bool {
 }
 ```
 
-`todo!("chapter 39")` is the panic. The restart assertion wants true for `hermes gateway restart` under supervision. The enqueue assertion wants false: `Inbox::submit` of a `Message::Turn` does not call `FakeModel`. The step crate is the reference. Do not copy it into `my-harness/`.
+`todo!("chapter 39")` is the panic. The restart assertion wants true for `hermes gateway restart` under supervision. The enqueue assertion wants false: `Inbox::submit` of a `Message::Turn` does not call `FakeModel`. 
 
 ## Chapter summary
 
@@ -677,7 +650,7 @@ pub fn chapter_39_enqueue_is_a_model_call() -> bool {
 - **B4.** A supervised restart, stop, or uninstall is blocked. An unsupervised command is not.
 - **Egress.** `send_out` is `redact_for_egress`.
 - **Model.** `demo` calls `FakeModel` and prints `gateway: queued`. The bench does not call it.
-- **Time.** `enqueue_platform` mean `152.0 ns`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The Criterion `time:` line is the slope.
+- **Time.** `enqueue_platform` mean `152.0 ns`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573).
 
 ## What's next
 

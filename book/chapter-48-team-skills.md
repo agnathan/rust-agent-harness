@@ -2,24 +2,13 @@
 
 Chapter 27 can curate one agent's skills. A team that learns together needs a shared library, and it needs exactly one writer. If every worker patches the team store, two patches will tear a file, and a dangerous install will depend on which worker remembered the scanner. This chapter adds the library, the proposal, and the librarian. The crate is `steps/ch48-team-skills`, a copy of chapter 47 plus `team_skills`. The package is `ch48-team-skills`.
 
-`Library` has layers: team, agent-local, and bundled. `load` reads them. `render_team` writes the index the workers see. `Index` is stored in an `Arc`, and `swap_index` replaces that `Arc`. Workers do not wait on the swap. `skill_propose` enqueues a `Proposal` on the bus from chapter 47 and returns. `PROPOSAL_CAP` bounds that queue. `librarian_accept` is the single writer. It calls `allow_install`, which calls chapter 25's `scan_text` and `should_allow_install`. Community plus `force` does not override a dangerous body. A local check for `rm -rf /` stays, because that scanner does not name the command. `Notice` is what running agents hear on their next turn. Agents spawned after the swap get the new index. `TEAM.md` is the team fact file, and it is not this chapter's worker-writable skill body.
+`Library` has layers: team, agent-local, and bundled. `Index` is an `Arc`, and `swap_index` replaces it. Workers do not wait. `skill_propose` enqueues and returns. `librarian_accept` is the single writer, and it calls chapter 25's scanner. Community plus `force` does not override a dangerous body.
 
 This is the team half of the closed loop. Chapter 24 showed one agent a stable index. Chapter 25 let that agent write, behind a scan. Chapter 26 reflected. Chapter 27 curated. Here the workers propose and the librarian applies, which is the same "one writer" rule scaled to a team. A child still does not write the team store. What it learned comes back in the result, and the parent's reflection, or the librarian, decides what to keep. The index swap is how a running agent hears about a new skill without a rewritten system prompt in the middle of its turn. Chapter 2's cache rule still holds.
 
 Rust, at the swap: `Arc` is the index, and swapping it is one atomic store the readers clone. The proposal queue is a bounded channel, the same shape as the bus. The scanner call is an ordinary function call into `skill_write`, which is on this crate because the harness was copied forward. `Result` is the reject, with the dangerous verdict intact.
 
 `cargo run -p ch48-team-skills --bin ch48-team-skills` runs the librarian accept. The exercise is `my-harness/tests/ch48.rs`: `skill_propose` enqueues, and workers do not wait.
-
-**In this chapter**
-
-- 48.1 `PROPOSAL_CAP`, `Layer`, `Trust`, `Skill`, and `Index`
-- 48.2 `Proposal`, `Propose`, `Reject`, and `Notice`
-- 48.3 `Library`, `load`, `notices`, and `render_team`
-- 48.4 `skill_propose`
-- 48.5 `allow_install`, `is_dangerous`, and chapter 25's scanner
-- 48.6 `swap_index`
-- 48.7 `FakeModel`, `librarian_accept`, and `demo`
-- 48.8 The manifest, the install policy, and this heading
 
 | Section | What it walks |
 |---|---|
@@ -339,9 +328,9 @@ impl Index {
 
 `bundled` always sets `version` to 1. It does not look at the layers you passed. A vec that already contains `Layer::Team` still comes back as version 1, and `render_team` will still label those rows `team`. The tests pass a bundled echo, or an empty vec. `demo` passes echo. The rendered string is stored at construction so a later `load` does not have to rebuild it to print the list. `librarian_accept` builds the next index with `Index { ... }` directly, not with `bundled`, because the next version is `current.version + 1` and `bundled` would force it back to 1.
 
-### Rust: `Copy` on the two enums
-
-`Layer` and `Trust` are `Copy`. Matching them does not move the proposal. `allow_install` takes `&Proposal` and compares `proposal.trust == Trust::Community`. The proposal is still the caller's after the function returns. `Skill` is not `Copy`, because of the strings. Cloning a skill list clones every name and body. That clone happens in `librarian_accept`, outside the mutex, after `load` has returned.
+> **Rust sidebar: `Copy` on the two enums**
+>
+> `Layer` and `Trust` are `Copy`. Matching them does not move the proposal. `allow_install` takes `&Proposal` and compares `proposal.trust == Trust::Community`. The proposal is still the caller's after the function returns. `Skill` is not `Copy`, because of the strings. Cloning a skill list clones every name and body. That clone happens in `librarian_accept`, outside the mutex, after `load` has returned.
 
 ## 48.2 `Proposal`, `Propose`, `Reject`, and `Notice`
 
@@ -437,9 +426,9 @@ pub fn render_team(skills: &[Skill]) -> String {
 
 I did not find a Hermes file that writes `# TEAM`. The heading in this crate is `String::from("# TEAM\n")`.
 
-### Rust: the lock does not leave `load`
-
-`index.lock()` returns a `MutexGuard`. `Arc::clone` only needs a reference to the `Arc` inside it. The guard is a temporary. It drops at the semicolon. The returned `Arc` is not a guard. A worker can read `held.version` for as long as they want, and `librarian_accept` can lock the same mutex again. Holding `held` does not block the swap. That is the point of cloning the `Arc` instead of returning the guard.
+> **Rust sidebar: the lock does not leave `load`**
+>
+> `index.lock()` returns a `MutexGuard`. `Arc::clone` only needs a reference to the `Arc` inside it. The guard is a temporary. It drops at the semicolon. The returned `Arc` is not a guard. A worker can read `held.version` for as long as they want, and `librarian_accept` can lock the same mutex again. Holding `held` does not block the swap. That is the point of cloning the `Arc` instead of returning the guard.
 
 ## 48.4 `skill_propose`
 
@@ -459,9 +448,9 @@ At length 64 the next call returns `Full` and does not push. The 65th proposal i
 
 The bench starts from `VecDeque::new`, so the result is `Queued`. The `Full` path is not taken. `librarian_accept` is not called. A worker who only runs `skill_propose` does not wait on the model, because the model is not in this function. The milestone `chapter_48_propose_waits()` wants `false`. Enqueue does not wait.
 
-### Rust: `VecDeque` and a moved proposal
-
-`Proposal` is not `Copy`. `skill_propose` takes it by value. `push_back` moves it onto the deque. The `Full` return happens before the move onto the deque, so the value drops as the parameter goes out of scope. `with_capacity` is not called. `VecDeque::new` grows as it is pushed. The cap is a length check, not an allocation limit. The buffer may be larger than 64. The guard is `len`, the same shape as chapter 44's inbox.
+> **Rust sidebar: `VecDeque` and a moved proposal**
+>
+> `Proposal` is not `Copy`. `skill_propose` takes it by value. `push_back` moves it onto the deque. The `Full` return happens before the move onto the deque, so the value drops as the parameter goes out of scope. `with_capacity` is not called. `VecDeque::new` grows as it is pushed. The cap is a length check, not an allocation limit. The buffer may be larger than 64. The guard is `len`, the same shape as chapter 44's inbox.
 
 ## 48.5 `allow_install`, `is_dangerous`, and chapter 25's scanner
 
@@ -579,9 +568,9 @@ def should_allow_install(result: ScanResult, force: bool = False) -> tuple[bool,
 
 The blocked string ends `--force does not override a dangerous verdict.` when `hard_block` is true. Otherwise it ends `Use --force to override.` `skill_write::block_reason` in this crate builds the same dangerous tail. `allow_install` does not call `block_reason`. It only keeps the bool. `librarian_accept` turns a false into `Reject::Guard` and does not store the sentence.
 
-### Rust: `matches!` on `Decision::Allow`
-
-`matches!` is true only for `Allow`. `Block` and `Ask` are false. The function's return type is `bool`, so the caller cannot tell an empty body from a community `rm -rf /` from a scanner block. `librarian_accept` can tell empty from the rest, because it checks `trim` itself and returns `Reject::Empty` first. Every other false is `Guard`.
+> **Rust sidebar: `matches!` on `Decision::Allow`**
+>
+> `matches!` is true only for `Allow`. `Block` and `Ask` are false. The function's return type is `bool`, so the caller cannot tell an empty body from a community `rm -rf /` from a scanner block. `librarian_accept` can tell empty from the rest, because it checks `trim` itself and returns `Reject::Empty` first. Every other false is `Guard`.
 
 ## 48.6 `swap_index`
 
@@ -599,9 +588,9 @@ The doc comment says the caller builds `next` before taking the lock. `librarian
 
 The returned `Arc` is the old index. Callers who ignore it drop one strong count. `librarian_accept` ignores it. The test `a_worker_reads_without_the_librarian` keeps it. That test loads `seen`, builds a new `Arc` at version 9 with the same skills and the same `team_md`, and swaps. `previous.version` is 1. `seen.version` is still 1. `library.load().version` is 9. No `FakeModel`. No `librarian_accept`. The worker's `Arc` and the library's `Arc` are different allocations. The other test asserts `Arc::as_ptr` of the held index differs from `Arc::as_ptr` of the index loaded after accept.
 
-### Rust: `mem::replace` and `Arc`
-
-`*slot` is the `Arc<Index>` inside the mutex. `replace` needs a new value to put down, because the old `Arc` moves out. `std::mem::swap` would need a second `Arc` already stored in a local that ends up holding the old one. `replace` returns it. `Arc::new` happened before the lock. Workers who cloned the old `Arc` keep a strong count, so the old `Index` stays alive for them after the mutex points at the new one. Dropping the last old `Arc` drops the old vec. This file does not wait for that drop.
+> **Rust sidebar: `mem::replace` and `Arc`**
+>
+> `*slot` is the `Arc<Index>` inside the mutex. `replace` needs a new value to put down, because the old `Arc` moves out. `std::mem::swap` would need a second `Arc` already stored in a local that ends up holding the old one. `replace` returns it. `Arc::new` happened before the lock. Workers who cloned the old `Arc` keep a strong count, so the old `Index` stays alive for them after the mutex points at the new one. Dropping the last old `Arc` drops the old vec. This file does not wait for that drop.
 
 ## 48.7 `FakeModel`, `librarian_accept`, and `demo`
 
@@ -695,9 +684,9 @@ fn main() {
 
 `cargo run` needs `--bin ch48-team-skills`. The package also builds `ch48_mcp_fixture`, `sandbox-worker`, and `ch48_kanban_claim`. The example binary prints eval lines. No key is read. `skill_propose`'s result is ignored. A queue that was already at 64 would `pop_front` a `None` only if this propose had returned `Full` and the queue had been empty, which is not this demo. This queue had one item. The `Full` path is the test, not `demo`.
 
-### Rust: the format of the demo line
-
-`format!("skills: v{version} {}", index.team_md.lines().count())` is the whole return value. `v` is literal. `{version}` is the `u64` from `librarian_accept`. The space is literal. The second placeholder is the line count, not the rendered markdown. The test compares the full string. A change to echo's body does not change the count. A change that dropped the heading would. The library stays in scope until the format has cloned the count out of `team_md`. Then `demo` drops the library. The printed line is the only thing `main` keeps.
+> **Rust sidebar: the format of the demo line**
+>
+> `format!("skills: v{version} {}", index.team_md.lines().count())` is the whole return value. `v` is literal. `{version}` is the `u64` from `librarian_accept`. The space is literal. The second placeholder is the line count, not the rendered markdown. The test compares the full string. A change to echo's body does not change the count. A change that dropped the heading would. The library stays in scope until the format has cloned the count out of `team_md`. Then `demo` drops the library. The printed line is the only thing `main` keeps.
 
 ## 48.8 The manifest, the install policy, and this heading
 
@@ -728,15 +717,15 @@ I searched the Hermes tree at `9e01b44` for `TEAM.md` and did not find that stri
 
 The new tests are `steps/ch48-team-skills/crates/harness-core/tests/skills.rs`. The package also builds the copied harness tests. The nextest line below is the package run.
 
-`the_queue_holds_64_and_the_librarian_swaps_an_arc` fills `PROPOSAL_CAP` builtin proposals with body `"ok"` and expects `Queued`. The next `cite()` expects `Full`. It then builds a library with bundled echo, body `Say it back.`, and loads `held`. `librarian_accept` of `cite()` with `FakeModel { reply: "ok" }` returns 2. `held.version` is still 1. `held.skills.len()` is 1. The loaded current index has version 2. `current.team_md` contains `cite (team)`. `library.notices()[0].kind` is `skills.updated`. `Arc::as_ptr(&held)` is not `Arc::as_ptr(&current)`. The worker's pointer and the library's pointer differ. The old arc was not edited in place.
+`the_queue_holds_64_and_the_librarian_swaps_an_arc` fills the queue, refuses the next proposal, and leaves the worker's old `Arc` at version 1 after accept.
 
-`force_does_not_install_a_dangerous_community_skill` builds name `bad`, body `then rm -rf /`, `force` true, `Trust::Community`. `allow_install` is false. `librarian_accept` on an empty bundled index equals `Err(Reject::Guard)`. `notices()` is empty. `load().version` is 1. The model was not reached, because `Reject::Guard` returns before `complete`. The version did not become 2. The notice was not pushed.
+`force_does_not_install_a_dangerous_community_skill` expects `Reject::Guard` for `rm -rf /` with `force` set, and the model is not called.
 
-`a_builtin_dangerous_body_is_still_the_librarians_write` builds name `bundled-rm`, body `document rm -rf / as a thing not to run`, `force` false, `Trust::Builtin`. `allow_install` is true. The test does not call `librarian_accept`. The name of the test is the policy outcome: the local dangerous check does not refuse a builtin, and the scanner does not flag that command, so the librarian is allowed to write it. The function that would write it is `librarian_accept`, which this test does not call.
+`a_builtin_dangerous_body_is_still_the_librarians_write` allows a builtin body that mentions `rm -rf /`. The local check does not refuse it.
 
-`a_worker_reads_without_the_librarian` loads the bundled echo index, swaps in a version-9 `Arc` with the same skills and the same `team_md`, and checks three versions. The returned previous arc is 1. The worker's `seen` arc is 1. The library now loads 9. No model runs. The swap is the write.
+`a_worker_reads_without_the_librarian` swaps the index. The worker keeps the arc it already loaded.
 
-`demo_prints_the_new_version` expects `demo()` to equal `skills: v2 3`.
+`demo_prints_the_new_version` expects `skills: v2 3`.
 
 The helper `cite` is shared by the fill test and the accept inside the first test. Body `Name the file you read.` is the demo's body. The bench uses a shorter body, `Name the file.`, and does not call this helper.
 
@@ -766,10 +755,6 @@ The binary proposes one skill, accepts it, and prints the line. No key.
 | `skill_propose` | 80.1 ns | enqueue one proposal under 1 ms | length check and `push_back` on an empty deque |
 | `index_swap` | 200.3 ns | pointer replace under 1 ms | mutex and `mem::replace` of a prebuilt `Arc` |
 
-The bench ids are `48/skill_propose` and `48/index_swap`. The old ids `46/skill_propose` and `44/skill_propose` are aliases of the first. The old ids `46/index_swap` and `44/index_swap` are aliases of the second. The aliases live in `benchmarks/descriptions.json`. The function names did not change when the ids moved.
-
-`descriptions.json` says `skill_propose` is a `Proposal` named cite, body `Name the file.`, `force` false, trust `Community`. The deque starts empty. The result is `Queued`. The timing note says the `Proposal` is built before the bench. `iter_batched`. Setup is `VecDeque::new` and is not timed. The timed routine clones the proposal, calls `skill_propose` with the queue and that clone passed through `black_box`, then `black_box` of the result and the queue. The length check and `push_back` are inside the sample. `librarian_accept`, `allow_install`, `swap_index`, and `FakeModel` are not called. The `Full` path is not taken. The inputs line says the body is 14 characters. `Name the file.` is those 14, including the period.
-
 ```rust
 fn skill_propose_enqueue(c: &mut Criterion) {
     let proposal = Proposal {
@@ -792,8 +777,6 @@ fn skill_propose_enqueue(c: &mut Criterion) {
 ```
 
 The criterion name is `skill_propose`. The Rust function around it is `skill_propose_enqueue`. `VecDeque::new` is the setup function item. The clone of `cite` is inside the sample.
-
-`descriptions.json` says `index_swap` replaces a version-1 index that holds the bundled skill echo with a version-2 `Arc` that holds the team skill cite. The `what` field calls the rendered text a three-line `TEAM.md`. The `inputs` field says the string is `# TEAM\n- cite (team)\n`. The bench source stores that string. The timing note says setup builds `Library::new` of the bundled echo skill and an `Arc` of the version-2 index, and is not timed. The timed routine calls `swap_index` with that library and `Arc` passed through `black_box`, then `black_box` of the previous `Arc`. The mutex and `mem::replace` are inside the sample. Cloning the skill vec, rendering `TEAM.md`, and `FakeModel` are not called.
 
 ```rust
 fn index_swap(c: &mut Criterion) {
@@ -828,27 +811,15 @@ fn index_swap(c: &mut Criterion) {
 
 Echo's body in this setup is `Say it back.`, the test's body, not `demo`'s `Say the line back.` Cite's body is `Name the file.`, the propose bench's body, not `Name the file you read.` The layer on the next skill is `Team`. Version is 2. `team_md` is the literal the descriptions `inputs` field quotes. `Index::bundled` in the setup does render echo's heading, and that render is outside the timer. The timed `swap_index` does not call `render_team`.
 
-The mean for `skill_propose` is 80.1 ns. The mean for `index_swap` is 200.3 ns. Each is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196), section `48`. The ids are `48/skill_propose` and `48/index_swap`. `.github/scripts/run_bench_section.sh` runs `cargo bench -p ch48-team-skills --bench skills --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10` for that section. The same flags are in `steps/ch48-team-skills/README.md`. The Criterion `time:` line is the slope, not the mean.
+`descriptions.json` says `skill_propose` is a `Proposal` named cite, body `Name the file.`, `force` false, trust `Community`. The deque starts empty.
 
-### Milestone demo
-
-The `cargo run` above. The line is `skills: v2 3`.
+The means are `mean.point_estimate` from [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196), section `48`. Bench ids: `48/skill_propose`, `48/index_swap`, `46/skill_propose`, `44/skill_propose`, `46/index_swap`, `44/index_swap`. Command: `cargo bench -p ch48-team-skills --bench skills --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
 The propose bench is one push onto an empty deque. `allow_install` is not in it. A number that includes `FakeModel` is the librarian, not this sample. The swap bench is the pointer replace. A number that includes `render_team` or the skill-vec clone is the setup, which `iter_batched` leaves outside the timer.
 
-`skill_propose` will queue a body that `allow_install` will later refuse. The cap is 64 proposals, not 64 safe proposals. `Full` drops the proposal. The 65th text is gone unless the caller cloned it first.
-
-`force: true` does not install `then rm -rf /` from a community proposal, and it does not install a scanner `Dangerous` verdict on a community or trusted source. A non-dangerous community block can still become `Allow` under `force`, because `hard_block` is only the dangerous verdict. The two local phrases return before that branch when trust is `Community`.
-
-An empty body is `false` from `allow_install` and `Reject::Empty` from `librarian_accept`. Spaces are empty. `skill_propose` does not check.
-
 `Builtin` mapped to `skill_write::Trust::Builtin` would allow a scanner-dangerous body. The match maps it to `Trusted`. A builtin `rm -rf /` is still allowed, because the scanner does not flag that command and the local check only forces the refuse for `Community`. A builtin `ignore previous instructions` is not allowed, because the scanner marks it critical and trusted plus dangerous is a hard block.
-
-`swap_index` does not render and does not scan. Calling it with an `Arc` you built by hand, the way the worker test does, publishes no `skills.updated` notice. The notice is `librarian_accept`'s push, after a successful swap. A direct swap leaves `notices()` empty.
-
-`librarian_accept` does not replace a skill with the same name. It appends. The rendered list can name `cite` twice. The manifest's "user copy still matches" rule is not applied.
 
 `demo` drops the `Propose` value and `expect`s the accept. A guard failure panics the binary. The dangerous-community test is the one that checks `Reject::Guard`.
 
@@ -887,7 +858,7 @@ pub fn chapter_48_propose_waits() -> bool {
 }
 ```
 
-`todo!("chapter 48")` is the panic. The test wants `chapter_48_propose_waits()` to be false. Enqueue does not wait. In the step crate that is `skill_propose` on a `VecDeque`: a length check, and `push_back` when the length is under 64. `FakeModel` is not called. `swap_index` is not called. The stub stays `todo!`. Do not paste `team_skills.rs` into `my-harness/`.
+`todo!("chapter 48")` is the panic. The test wants `chapter_48_propose_waits()` to be false. Enqueue does not wait. In the step crate that is `skill_propose` on a `VecDeque`: a length check, and `push_back` when the length is under 64. `FakeModel` is not called. `swap_index` is not called. The stub stays `todo!`. 
 
 ## Chapter summary
 
@@ -896,7 +867,7 @@ pub fn chapter_48_propose_waits() -> bool {
 - **Writer.** `librarian_accept` runs `FakeModel` before `swap_index`. The notice kind is `skills.updated`.
 - **Readers.** `load` returns an `Arc`. The old arc keeps its version.
 - **Heading.** `render_team` writes `# TEAM` and one bullet per skill. The demo line is `skills: v2 3`.
-- **Time.** `skill_propose` mean 80.1 ns. `index_swap` mean 200.3 ns. Each is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196). The Criterion `time:` line is the slope.
+- **Time.** `skill_propose` mean 80.1 ns. `index_swap` mean 200.3 ns. Each is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196).
 
 ## What's next
 

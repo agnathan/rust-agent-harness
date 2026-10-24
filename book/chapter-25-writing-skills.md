@@ -12,17 +12,6 @@ Rust, at the policy: the actor, the origin, and the verdict are enums, and the p
 
 `cargo run --locked -p ch25-skill-writing --bin ch25-skill-writing` runs the safe demo. The exercise is `my-harness/tests/ch25.rs`: a dangerous community skill is blocked even with force.
 
-**In this chapter**
-
-- 25.1 The enums the policy matches on
-- 25.2 `Writer` holds the gate in a `Mutex`
-- 25.3 Pin, the background queue, and `view`
-- 25.4 `create` and `install` share `write_skill`
-- 25.5 Five rules, then the full policy table
-- 25.6 Patch and `write_file` are the reviewer path
-- 25.7 `delete` checks the pin and the origin
-- 25.8 The write is a temp file, and the demo is `safe`
-
 | Section | What it walks |
 |---|---|
 | 25.1 | `Actor`, `Trust`, `Verdict`, `Decision`, `Finding`, `ScanResult`, `WriteError` |
@@ -713,11 +702,9 @@ The binary writes one skill under a temp directory and prints the verdict. No ke
 
 `enqueue_unsolicited` opens a `Writer` on a temp directory before the bench. The timed closure is `b.iter`. Inside it: `enqueue_background` of `create notes`, passed through `black_box`. The queue drops the oldest job at 64. No skill directory is created.
 
-The Mean cells are `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `25`. The ids are `25/scan_one_skill` and `25/enqueue_unsolicited`. The old ids `23/scan_one_skill` and `23/enqueue_unsolicited` are aliases in `benchmarks/descriptions.json`. Criterion also prints a `time:` line. That line is the slope. It is not the mean.
+The scan is `safe`. The created skill is `rename`.
 
-### Milestone demo
-
-The `cargo run` above. The scan is `safe`. The created skill is `rename`.
+The means are `mean.point_estimate` from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `25`. Bench ids: `25/scan_one_skill`, `25/enqueue_unsolicited`, `23/scan_one_skill`, `23/enqueue_unsolicited`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -728,12 +715,6 @@ The approval flag and the ask label are different holds. Turning the flag off do
 `patch` fails when the find string matches twice. The error is `Missing` with the count. The file is unchanged.
 
 `enqueue_background` drops the oldest job at 64. The queue is a `VecDeque` in the process. It is not a file.
-
-`delete` ignores the actor. A foreground user hits the same pin and the same origin check as a reviewer.
-
-`find_skill_dir` keeps the last directory whose frontmatter name matches. Chapter 24's `find_dir` returns the first. One skill with that name makes them the same directory.
-
-The five rules are a subset of `THREAT_PATTERNS`. A pattern that exists only in the full list is `Safe` here.
 
 ## Guardrails in this chapter
 
@@ -766,7 +747,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). This
 
 `my-harness/tests/ch25.rs` is the milestone. The test is `a_dangerous_community_skill_is_blocked_even_with_force`. It asserts `chapter_25_force_installs_dangerous()` is false. Force does not install a dangerous skill.
 
-The function in `my-harness` is a stub. It ends in `todo!("chapter 25")` and panics until the assertion can pass. The step crate is the reference. Do not copy it into `my-harness/`.
+The function in `my-harness` is a stub. It ends in `todo!("chapter 25")` and panics until the assertion can pass. 
 
 ## What's next
 

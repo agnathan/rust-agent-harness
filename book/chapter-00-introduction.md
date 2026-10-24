@@ -78,4 +78,6 @@ If you're new to Rust, read the chapters in order and do the exercises. The comp
 
 If you already know Rust and are here for the agent architecture, skim to Chapter 9 (the loop), Chapter 10 (the turn state machine), and Chapters 29, 35, and 36 (the supervisor, actors, and supervision). Each has a "How Hermes does it" section with file paths, so you can read the Python next to the Rust.
 
+The step crates, the milestone stubs, the sidebars, and the two boxes are in [How to read this book](preface-how-to-read-this-book.md). The measurements are in [How the numbers were measured](appendix-benchmark-method.md).
+
 Let's start with `cargo new`.

@@ -207,9 +207,10 @@ That is the whole policy. One role. A new vec. The next owner is handed that vec
 
 > **Rust sidebar: `Result`**
 >
-> - The return type is `Result<Vec<Message>, HandoffError>`. `Ok` carries the filtered transcript. `Err` carries `Empty` or `Limit`. The `Vec` is moved into `Ok` at the bottom. On the error paths the local `filtered` is dropped with the stack frame, and the caller does not receive it.
-> - `return Err(...)` skips the owner write. That is why a refusal leaves the owner alone. The write is a later statement, and these returns never reach it.
-> - `?` is not used here. The function matches its own conditions and returns the enum. Callers in the tests use `unwrap` on the success path and `matches!` on the error path.
+> - The return type is `Result<Vec<Message>, HandoffError>`. `Err` carries `Empty` or `Limit`. On the error paths the local `filtered` is dropped with the stack frame, and the caller does not receive it.
+> - `return Err(...)` skips the owner write.
+> - Callers in the tests use `unwrap` on the success path and `matches!` on the error path.
+> - `Option`, `Result`, enums, and `Arc` are taught in [chapter 1](chapter-01-first-contact.md).
 
 The first statement filters. The empty check is next, before any atomic update. A transcript of only scratch produces an empty vec. The function returns `Empty`. `fetch_add` does not run. `count` stays 0. The owner stays the name from `new`. The test `an_empty_filtered_transcript_does_not_move_ownership` builds that case: one scratch message, `handoff` to `draft`, expects `Empty`, expects owner `outline`, expects count 0.
 
@@ -329,7 +330,7 @@ criterion_main!(benches);
 
 The vec is built before `b.iter`. Indexes `0, 5, 10, ...` are role `scratch`, because `i % 5 == 0`. The other indexes are role `user`. Every text is `message {i} about the rename procedure`. One hundred messages. The timed closure calls `filter_transcript` and passes the slice through `black_box`. The new vec goes through `black_box` so the clone stays in the sample. `Board` is not constructed. `fetch_add` does not run. The mean is the filter, which is the allocation the next owner receives.
 
-The mean is `2.13 µs`. It is `mean.point_estimate`. The Criterion `time:` line is the slope, not this mean.
+The mean is `2.13 µs`. It is `mean.point_estimate`.
 
 `black_box` is `std::hint::black_box`, imported at the top of the bench file. It stops the compiler from deleting a result that the function does not otherwise use.
 
@@ -437,11 +438,9 @@ The binary filters one scratch line and moves the owner from `outline` to `draft
 
 `filter_100` builds the vec before `b.iter`. The timed closure is `filter_transcript` and `black_box` of the new vec. No board. No model.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `30`. The id is `30/filter_100`. The old id `28/filter_100` is an alias in `benchmarks/descriptions.json`. The printed Criterion `time:` line is the slope, not the mean.
+The next owner is `draft`. It sees 2 messages.
 
-### Milestone demo
-
-The `cargo run` above. The next owner is `draft`. It sees 2 messages.
+The means are `mean.point_estimate` from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `30`. Bench ids: `30/filter_100`, `28/filter_100`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -452,12 +451,6 @@ The filter compares `role` to `scratch`. It does not search `text`. A user messa
 `Empty` returns before `fetch_add`. A handoff of nothing does not burn one of the four. If the empty check moved below the increment, a scratch-only transcript would consume a slot and still return `Empty`. The source checks empty first.
 
 The `Limit` path calls `fetch_sub`. The atomic is back at 4 after the refusal. The owner write is below that return, so `one-more` does not become the owner. Forgetting the `fetch_sub` would leave the count one higher than the cap after a refused call. The source undoes the increment it just did.
-
-`Ordering::Relaxed` is the ordering on every atomic operation in this file. The owner update is a separate mutex. The tests are one thread. `count()` after `handoff` returns on that thread sees the update that thread made.
-
-Error 4009 is the Hermes response when the session is running. `HandoffError` has `Limit` and `Empty`. A running session is not a state this `Board` stores. Platform re-bind is chapter 39.
-
-`filter_transcript` allocates. `handoff` returns that allocation inside `Ok`. The caller's original vec still has the scratch rows. A caller who prints `messages` after a successful handoff still sees scratch. The next owner is supposed to read the `Ok` value.
 
 ## Guardrails in this chapter
 
@@ -477,7 +470,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). This
 - **Cap.** Four accepted handoffs. The next is `Limit`. `MAX_HANDOFFS` is this harness, not a Hermes constant.
 - **Owner.** Changes only after a non-empty filtered transcript is accepted. `Empty` and `Limit` leave the owner as it was.
 - **Atomic.** `AtomicU32` with `Ordering::Relaxed`. `fetch_add` returns the previous count. The refusal undoes itself.
-- **Time.** `filter_100` mean `2.13 µs`. That is `mean.point_estimate`. The Criterion `time:` line is the slope.
+- **Time.** `filter_100` mean `2.13 µs`. That is `mean.point_estimate`.
 
 ## What you implement
 
@@ -500,7 +493,7 @@ pub fn chapter_30_keeps_scratch() -> bool {
 }
 ```
 
-`todo!("chapter 30")` is the panic. The test wants `chapter_30_keeps_scratch()` to be false. The step crate is the reference. Do not copy it into `my-harness/`.
+`todo!("chapter 30")` is the panic. The test wants `chapter_30_keeps_scratch()` to be false. 
 
 ## What's next
 

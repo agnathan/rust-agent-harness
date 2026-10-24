@@ -12,16 +12,6 @@ Rust, at the translate: the update and the mail are enums, and the mapping is a 
 
 `cargo run -p ch44-acp --bin ch44-acp` runs the demo. The exercise is `my-harness/tests/ch44.rs`: one ACP update becomes one inbox submit.
 
-**In this chapter**
-
-- 44.1 `INBOX_CAP`, `StopReason`, and `stop_reason`
-- 44.2 `Approval` and `map_permission`
-- 44.3 `Update`, `Mail`, and `translate`
-- 44.4 `Submit` and `Inbox`
-- 44.5 `Streams`, `write_result`, and `log_line`
-- 44.6 `FakeModel` and `demo`
-- 44.7 The Copilot client, the missing adapter, and this inbox
-
 | Section | What it walks |
 |---|---|
 | 44.1 | `INBOX_CAP`, `StopReason`, `stop_reason` |
@@ -97,9 +87,9 @@ pub fn stop_reason(cancelled: bool) -> StopReason {
 
 `Update` stores the same bool. `demo` passes `update.cancelled` into `stop_reason` after `translate`. `translate` does not read the flag. The stop reason and the mail are two outputs of one update.
 
-### Rust: `match` on a `Copy` enum
-
-`match` has to name both variants. A new variant would fail to compile until `as_str` learned a string for it. Taking `self` by value on a `Copy` type does not move the original if the caller still needs it. `stop_reason` returns the enum. The caller can call `as_str` and still hold the enum, because the copy went into the method. `PartialEq` is why a test could also compare `stop_reason(true)` to `StopReason::Cancelled`. The test compares the strings instead.
+> **Rust sidebar: `match` on a `Copy` enum**
+>
+> `match` has to name both variants. A new variant would fail to compile until `as_str` learned a string for it. Taking `self` by value on a `Copy` type does not move the original if the caller still needs it. `stop_reason` returns the enum. The caller can call `as_str` and still hold the enum, because the copy went into the method. `PartialEq` is why a test could also compare `stop_reason(true)` to `StopReason::Cancelled`. The test compares the strings instead.
 
 ## 44.2 `Approval` and `map_permission`
 
@@ -130,9 +120,9 @@ I did not copy this table from `acp_adapter/permissions.py`. That file is not in
 
 `map_permission` is not called by `translate`, `submit`, or `demo`. The permission decision and the inbox submit are separate. The test `unknown_permissions_deny` lists the five known ids and `allow_forever`.
 
-### Rust: or-patterns and `_`
-
-`"deny" | "deny_always"` is one arm. Both strings produce the same value. `_` matches every other `&str`. Putting `_` before the allow arms would make those arms unreachable and the compiler would say so. The allow arms are first. A typo in an editor's option id hits `_` and denies. That is the fail-closed choice. Returning `Once` from `_` would let an unrecognized id run the tool once.
+> **Rust sidebar: or-patterns and `_`**
+>
+> `"deny" | "deny_always"` is one arm. Both strings produce the same value. `_` matches every other `&str`. Putting `_` before the allow arms would make those arms unreachable and the compiler would say so. The allow arms are first. A typo in an editor's option id hits `_` and denies. That is the fail-closed choice. Returning `Once` from `_` would let an unrecognized id run the tool once.
 
 ## 44.3 `Update`, `Mail`, and `translate`
 
@@ -161,11 +151,11 @@ The test builds `Update { text: "hello", cancelled: false }`, translates it, and
 
 The Copilot client does the other shape. Each `session/update` chunk is appended, and `_run_prompt` returns `"".join(text_parts)` after the prompt request finishes. Several chunks become one string there. Here, one `Update` is already one string, and `translate` does not join a list. A caller who has ten chunks and calls `translate` ten times gets ten mails, if the inbox has room.
 
-### Rust: clone the `String`, borrow the update
-
-`translate` takes `&Update` so the caller still has `cancelled` afterward. `demo` uses `update.text` for the model and `update.cancelled` for the stop reason after `translate` has returned. If `translate` took `Update` by value, `demo` would have to clone the update first or split the fields before the call. The clone that does happen is `update.text.clone()`, one owned `String` inside the `Mail`. The inbox then owns that mail. The update's `String` stays with the update.
-
-`PartialEq` on both structs is why the test writes `assert_eq!(mail, Mail { text: "hello".into() })`.
+> **Rust sidebar: clone the `String`, borrow the update**
+>
+> `translate` takes `&Update` so the caller still has `cancelled` afterward. `demo` uses `update.text` for the model and `update.cancelled` for the stop reason after `translate` has returned. If `translate` took `Update` by value, `demo` would have to clone the update first or split the fields before the call. The clone that does happen is `update.text.clone()`, one owned `String` inside the `Mail`. The inbox then owns that mail. The update's `String` stays with the update.
+>
+> `PartialEq` on both structs is why the test writes `assert_eq!(mail, Mail { text: "hello".into() })`.
 
 ## 44.4 `Submit` and `Inbox`
 
@@ -219,11 +209,11 @@ impl Inbox {
 
 The test `an_update_lands_on_the_inbox` translates `hello`, expects the mail, submits it, and reads `front` as `hello`. It then submits `INBOX_CAP - 1` more mails, each `Accepted`, then one more `Mail { text: "more" }` and expects `Full`. `len` stays `INBOX_CAP`. `is_empty` is false. The first mail is still `hello`, because `Full` did not push and nothing popped.
 
-### Rust: `VecDeque` and a moved `Mail`
-
-`push_back` adds at the tail. `front` reads the head. A queue of edits stays in arrival order. `VecDeque::with_capacity` allocates the buffer up front so the first 64 pushes do not reallocate, if the cap is 64. The `Full` path does not use that spare capacity. Length, not capacity, is the guard.
-
-`Mail` is not `Copy`. `submit` takes ownership. `translate` returns a new `Mail`, and that value is the argument. The bench does those two calls inside the timed closure.
+> **Rust sidebar: `VecDeque` and a moved `Mail`**
+>
+> `push_back` adds at the tail. `front` reads the head. A queue of edits stays in arrival order. `VecDeque::with_capacity` allocates the buffer up front so the first 64 pushes do not reallocate, if the cap is 64. The `Full` path does not use that spare capacity. Length, not capacity, is the guard.
+>
+> `Mail` is not `Copy`. `submit` takes ownership. `translate` returns a new `Mail`, and that value is the argument. The bench does those two calls inside the timed closure.
 
 ## 44.5 `Streams`, `write_result`, and `log_line`
 
@@ -258,11 +248,11 @@ For `Cancelled` the stop reason field is `cancelled`. The raw string `r#"..."#` 
 
 `copilot_acp_client.py` pumps `proc.stdout` into the JSON inbox and `proc.stderr` into `stderr_tail`. This struct is the in-memory picture of that split. Nothing here writes a process handle. `println!` is not called. A later chapter that writes the real handles has to keep the log on stderr. Mixing them would put `session started` on the protocol stream.
 
-### Rust: raw strings and doubled braces
-
-`format!` treats `{` as the start of a placeholder. A JSON object written in a normal string has to escape every brace. The raw string `r#"..."#` does not interpret backslashes, and doubled braces are still the format escape. `as_str` returns a value with no quotes in it, so the inserted text does not break the JSON for these two reasons. A stop reason that contained a quote would. Neither spelling does.
-
-`Streams` derives `Default`, so `Streams::default()` is the demo's starting point. The fields are public. A test can read `streams.stdout[0]` without a getter.
+> **Rust sidebar: raw strings and doubled braces**
+>
+> `format!` treats `{` as the start of a placeholder. A JSON object written in a normal string has to escape every brace. The raw string `r#"..."#` does not interpret backslashes, and doubled braces are still the format escape. `as_str` returns a value with no quotes in it, so the inserted text does not break the JSON for these two reasons. A stop reason that contained a quote would. Neither spelling does.
+>
+> `Streams` derives `Default`, so `Streams::default()` is the demo's starting point. The fields are public. A test can read `streams.stdout[0]` without a getter.
 
 ## 44.6 `FakeModel` and `demo`
 
@@ -311,9 +301,9 @@ fn main() {
 
 `cargo run` needs `--bin ch44-acp`. The package also builds `ch44_mcp_fixture` and `sandbox-worker`. The example binary prints eval lines. No key is read. `FakeModel::complete` ignores the prompt, the same way the cron and service fakes do. This one is `harness_core::acp::FakeModel`. The cron module has its own `FakeModel`. They are different types in different modules.
 
-### Rust: the format of the demo line
-
-`format!("acp: {}", reason.as_str())` is the whole return value. The colon and the space are literal. `as_str` supplies `end_turn` or `cancelled` and nothing else. The test compares the full string. A change to the JSON line does not change `demo`'s return value. The JSON is on `streams`, and `demo` drops `streams` at the end of the function. The test of the streams is `logs_stay_off_stdout`, which builds its own `Streams`.
+> **Rust sidebar: the format of the demo line**
+>
+> `format!("acp: {}", reason.as_str())` is the whole return value. The colon and the space are literal. `as_str` supplies `end_turn` or `cancelled` and nothing else. The test compares the full string. A change to the JSON line does not change `demo`'s return value. The JSON is on `streams`, and `demo` drops `streams` at the end of the function. The test of the streams is `logs_stay_off_stdout`, which builds its own `Streams`.
 
 ## 44.7 The Copilot client, the missing adapter, and this inbox
 
@@ -363,13 +353,13 @@ Count the test `an_update_lands_on_the_inbox`. The first `submit` is the transla
 
 `ch44-harness-cli` depends on `ch44-acp` by path. `ch44-acp` does not depend on `ch43-cron`. `pub mod cron` is the copied module. `cargo run -p ch44-acp --bin ch44-acp` selects `chapter_demo.rs`. The example target `demo` still runs `run_saved_evals` and would not print `acp: end_turn`.
 
-### Rust: two inboxes, one number
-
-`INBOX_CAP` and `INBOX_BOUND` are both `usize` constants equal to 64. Rust will not stop you from changing one. A comment in `acp.rs` does not mention `inbox.rs`. The shared number is a decision recorded in this chapter, not a const alias. `use crate::inbox::INBOX_BOUND` inside `acp.rs` would have made them the same item. The file defines its own. The bench passes `INBOX_CAP` into `Inbox::new`, so a reader who changes `INBOX_BOUND` and reruns `translate_update` is still allocating 64.
-
-`iter_batched` with `BatchSize::SmallInput` asks Criterion to clone the setup value across a small batch of timed iterations. The setup closure is `|| Inbox::new(INBOX_CAP)`. The timed closure takes that inbox by value, translates, and submits. The `Update` is captured by reference from the outer `let`. `black_box(&update)` keeps the compiler from lifting the clone of `hello` out of the sample. `black_box(submitted)` keeps it from deleting the `submit` call once it sees that nobody reads `Accepted`.
-
-`write_result` of `StopReason::Cancelled` pushes a second kind of line, and the test checks it after the end-turn line is already in the vec:
+> **Rust sidebar: two inboxes, one number**
+>
+> `INBOX_CAP` and `INBOX_BOUND` are both `usize` constants equal to 64. Rust will not stop you from changing one. A comment in `acp.rs` does not mention `inbox.rs`. The shared number is a decision recorded in this chapter, not a const alias. `use crate::inbox::INBOX_BOUND` inside `acp.rs` would have made them the same item. The file defines its own. The bench passes `INBOX_CAP` into `Inbox::new`, so a reader who changes `INBOX_BOUND` and reruns `translate_update` is still allocating 64.
+>
+> `iter_batched` with `BatchSize::SmallInput` asks Criterion to clone the setup value across a small batch of timed iterations. The setup closure is `|| Inbox::new(INBOX_CAP)`. The timed closure takes that inbox by value, translates, and submits. The `Update` is captured by reference from the outer `let`. `black_box(&update)` keeps the compiler from lifting the clone of `hello` out of the sample. `black_box(submitted)` keeps it from deleting the `submit` call once it sees that nobody reads `Accepted`.
+>
+> `write_result` of `StopReason::Cancelled` pushes a second kind of line, and the test checks it after the end-turn line is already in the vec:
 
 ```text
 {"jsonrpc":"2.0","result":{"stopReason":"cancelled"}}
@@ -426,8 +416,6 @@ The binary translates one update and ends the turn. No key.
 |---|---|---|---|
 | `translate_update` | 132.4 ns | one update onto an empty inbox | `translate` then `submit` |
 
-The function name is `translate_update`. The bench id is `44/translate_update`. The old ids `42/translate_update` and `40/translate_update` are aliases in `benchmarks/descriptions.json`. The function name did not change when the id moved.
-
 ```rust
 fn translate_update(c: &mut Criterion) {
     let update = Update {
@@ -448,13 +436,9 @@ fn translate_update(c: &mut Criterion) {
 }
 ```
 
-The `Update` is built before the bench, with text `hello` and `cancelled` false. `iter_batched` runs the setup closure outside the timer. That closure calls `Inbox::new(64)` and is not timed. The timed routine calls `translate` with the update passed through `black_box`, then `submit` of the mail, then `black_box` of the `Submit` value. The string clone and the push are inside the sample. The inbox is empty at the start of each sample, so the result is `Accepted`. `write_result`, `log_line`, `map_permission`, and `FakeModel` are not called. The `Full` path is not taken. The descriptions file says the budget is under a millisecond. The mean cell is the measurement.
+The `Update` is built before the bench, with text `hello` and `cancelled` false. `iter_batched` runs the setup closure outside the timer.
 
-The mean is `132.4 ns`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `44`. The id is `44/translate_update`. The old ids `42/translate_update` and `40/translate_update` are aliases in `benchmarks/descriptions.json`. `.github/scripts/run_bench_section.sh` runs `cargo bench -p ch44-acp --bench acp --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10` for that section. The same flags are in `steps/ch44-acp/README.md`. The Criterion `time:` line is the slope, not the mean.
-
-### Milestone demo
-
-The `cargo run` above. The line is `acp: end_turn`.
+The means are `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `44`. Bench ids: `44/translate_update`, `42/translate_update`, `40/translate_update`. Command: `cargo bench -p ch44-acp --bench acp --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -465,14 +449,6 @@ Stdout and stderr are vecs. `log_line` cannot reach `stdout` unless someone late
 `submit` on a full inbox drops the `Mail`. The 65th text is gone. ACP does not pop the front to make room. `front` still returns the first accepted mail. `len` stays 64.
 
 `translate` ignores `cancelled`. A caller who only submits the mail and never calls `stop_reason` will enqueue a cancelled turn as ordinary text. `demo` does both. The return value follows the flag. The mail does not.
-
-`map_permission` is case-sensitive, and `_` denies. `deny_always` is a deny, not a distinct variant. There is no `Allow` catch-all.
-
-`Inbox` is not `SessionInbox`. Both cap at 64. Submitting a `Mail` does not push a string onto the chapter 2 queue. The milestone counts submits of this inbox. `chapter_44_update_submits_once(1)` wants 1.
-
-The Copilot client joins many `session/update` chunks into one prompt result. Calling `translate` once per chunk will fill this inbox one mail at a time. Sixty-five chunks on an empty inbox of 64 yield one `Full`.
-
-`demo` drops `Streams`. The JSON it built does not appear in the printed line. The printed line is `acp: end_turn`.
 
 ## Guardrails in this chapter
 
@@ -510,7 +486,7 @@ pub fn chapter_44_update_submits_once(updates: usize) -> usize {
 }
 ```
 
-`todo!("chapter 44")` is the panic. The test passes `1` and wants `1` back: one update becomes one submit. In the step crate that is `translate` of one `Update`, then one `Inbox::submit` that returns `Accepted` while the queue is under `INBOX_CAP`. The stub stays `todo!`. Do not paste `acp.rs` into `my-harness/`.
+`todo!("chapter 44")` is the panic. The test passes `1` and wants `1` back: one update becomes one submit. In the step crate that is `translate` of one `Update`, then one `Inbox::submit` that returns `Accepted` while the queue is under `INBOX_CAP`. The stub stays `todo!`. 
 
 ## Chapter summary
 
@@ -519,7 +495,7 @@ pub fn chapter_44_update_submits_once(updates: usize) -> usize {
 - **Streams.** JSON on stdout. Logs on stderr.
 - **Permission.** The three allow ids keep their outcomes. `deny`, `deny_always`, and any unknown id deny.
 - **Model.** `FakeModel` answers `ok`. The demo line is `acp: end_turn`.
-- **Time.** `translate_update` mean `132.4 ns`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The Criterion `time:` line is the slope.
+- **Time.** `translate_update` mean `132.4 ns`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573).
 
 ## What's next
 

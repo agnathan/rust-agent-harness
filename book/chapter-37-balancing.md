@@ -12,15 +12,6 @@ Rust, at the pick: the outstanding count is an integer you increment and decreme
 
 `cargo run -p ch37-balancing --offline` prints the demo line. The exercise is `my-harness/tests/ch37.rs`: a least-outstanding pick does not open a connection.
 
-**In this chapter**
-
-- 37.1 The crate around the new module
-- 37.2 `Policy`, `Backend`, and `pick`
-- 37.3 `call` formats a string and puts the counter back
-- 37.4 `federate` and `pool_for` group one tool
-- 37.5 `discover` counts overlap, capped at 4
-- 37.6 `FakeModel` and the demo line
-
 | Section | Step | What it adds |
 |---|---|---|
 | 37.1 | `steps/ch37-balancing` | the vendored chapter 23 crate, and which `demo` runs |
@@ -36,19 +27,25 @@ Rust, at the pick: the outstanding count is an integer you increment and decreme
 >
 > I read `tools/mcp_tool_discovery.py` and the `mcp` block in `hermes_cli/config_defaults.py`.
 >
-> ```text
+> 
+
+```text
 > 25  # Default max concurrent MCP server connections per discovery pass
 > 27  # ``mcp.discovery_concurrency`` overrides it, 0 = unlimited (#117373).
 > 28  _DISCOVERY_CONNECT_CONCURRENCY = 4
 > ```
+
 >
 > `_discovery_connect_concurrency` reads `mcp.discovery_concurrency`. A non-integer, a bool, or a negative value warns and returns 4. The comment on the constant says 0 means unlimited. `config_defaults.py` sets that key to 4, in the `mcp` object, and the comment there says the same thing: max servers connected at once per discovery pass, and 0 means unlimited. `_discover_all` builds the bound:
 >
-> ```text
+> 
+
+```text
 > 442  # Flat cap for all transports; 0 (unlimited) keeps the original unbounded gather.
 > 443  cap = _discovery_connect_concurrency()
 > 444  semaphore = asyncio.Semaphore(cap) if cap > 0 else None
 > ```
+
 >
 > A positive cap is an `asyncio.Semaphore`. Zero leaves `semaphore` as `None`, and `_connect_bounded` then awaits the connect with no semaphore. That is the unlimited setting.
 >
@@ -457,13 +454,11 @@ cargo bench -p ch37-balancing --bench balancing --locked -- --warm-up-time 1 --m
 |---|---|---|---|
 | `pick_least` | 3.74 ns | a local pick among a pool | the quietest of four backends |
 
-`pick_least` is `benches/balancing.rs`. It builds four backends before the bench, with outstanding counts 3, 1, 4, and 2. The timed closure is `b.iter`. Inside: `pick(Policy::LeastOutstanding)` passed through `black_box`, then `black_box` of the index. Each sample loads four atomics and returns index 1. `call` is not used, so the counters do not change and the `via` string is not allocated. No thread is started. `discover` is not called. No socket is opened. `FakeModel` is not constructed. `LearnedGateway` is not constructed. The prediction path is not on this bench.
+The line is `pick: echo via alpha`. The milestone is the pick itself: least outstanding does not open a connection. The index is a `usize` into a vec of strings and atomics.
 
-The mean is `3.74 ns`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `37`. The id is `37/pick_least`. The old id `35/pick_least` is an alias in `benchmarks/descriptions.json`. The Criterion `time:` line is the slope, not the mean.
+`pick_least` is `benches/balancing.rs`. It builds four backends before the bench, with outstanding counts 3, 1, 4, and 2.
 
-### Milestone demo
-
-The `cargo run` above. The line is `pick: echo via alpha`. The milestone is the pick itself: least outstanding does not open a connection. The index is a `usize` into a vec of strings and atomics.
+The means are `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `37`. Bench ids: `37/pick_least`, `35/pick_least`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -474,12 +469,6 @@ The `cargo run` above. The line is `pick: echo via alpha`. The milestone is the 
 Power of two is only as random as the indexes the caller passes. This crate does not draw them.
 
 Discovery with a zero hold can show a max below 4, because the threads may not overlap. The test holds for 40 milliseconds so they do. The cap is still 4 when they overlap. It does not raise the count above 4.
-
-Hermes treats `discovery_concurrency: 0` as unlimited, by skipping the semaphore. This gate does not. Four is the constant. There is no parameter to pass 0.
-
-`lib.rs`'s `demo` and `federation::demo` are different functions. The binary prints the federation line. A test that calls `balancing::demo()` is on the learned-tools tuple, not on `pick: echo via alpha`.
-
-`catalog::Upstream` will not compile in a `federate` call. The federation struct is `balancing::federation::Upstream`.
 
 ## Guardrails in this chapter
 
@@ -497,7 +486,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
 ## What you implement
 
-`my-harness/tests/ch37.rs` is the milestone. The step crate is the reference. The stub stays `todo!`.
+`my-harness/tests/ch37.rs` is the milestone. The stub stays `todo!`.
 
 ```rust
 use my_harness::chapter_37_pick_opens_connection;

@@ -933,7 +933,7 @@ calls the provider. The same inbox is what later chapters' gateway, cron, and
 editor integration submit to.
 ```
 
-The two builds, on the same 4-vCPU Intel Xeon guest (KVM, 16 GiB, Linux, rustc 1.99.0, cargo-nextest 0.9.148):
+The two builds, on the [bench host](appendix-benchmark-method.md):
 
 ```text
    Compiling ch02-harness-core v0.2.0 (/workspace/steps/ch02-conversations/crates/harness-core)
@@ -1010,16 +1010,16 @@ Benchmarking chat_turn_overhead: Analyzing
 chat_turn_overhead      time:   [599.91 ns 616.27 ns 632.80 ns]
 ```
 
-The `time:` line is Criterion's slope. The means below are the mean point estimates from `target/criterion/inbox_submit/new/estimates.json` and `target/criterion/chat_turn_overhead/new/estimates.json` on this same run.
-
 | Benchmark | Mean | Target | Machine |
 |---|---|---|---|
-| `inbox_submit` | 32.78 ns | < 1 µs | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0, sample size 10 |
+| `inbox_submit` | 32.78 ns | < 1 µs | [bench host](appendix-benchmark-method.md) |
 | `chat_turn_overhead` | 628.2 ns | < 1 ms | same |
 
 `inbox_submit` is one `submit` into an empty inbox. The setup of the inbox is outside the measurement. `chat_turn_overhead` is one mock turn: submit, pop, append the user line, call the provider, append the reply. Model latency is zero. Both are under the budget.
 
-CI runs these tests on Ubuntu, macOS, and Windows. Criterion for this bench, and the chapter 1 benches, runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml). The median, low, and high land in the job summary and in `criterion-summary-<commit>.json`. A push to `main` appends the run to the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/).
+Where these numbers were taken is in [How the numbers were measured](appendix-benchmark-method.md).
+
+How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## What's next
 

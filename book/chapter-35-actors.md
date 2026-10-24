@@ -12,15 +12,6 @@ Rust, at the channel: `tokio::sync::mpsc` with a bound of 64 is the queue, and `
 
 `cargo run -p ch35-actors --bin ch35-actors --offline` prints the answer. The exercise is `my-harness/tests/ch35.rs`: a full inbox does not grow.
 
-**In this chapter**
-
-- 35.1 The cap, the three mails, and a model that ignores the prompt
-- 35.2 `try_submit` refuses the 65th message
-- 35.3 `step` applies one mail
-- 35.4 `submit` is `try_send` with two error arms
-- 35.5 `serve` drains one channel, and `fan` starts `n` tasks
-- 35.6 The demo answers, and the bench submits one turn
-
 | Section | Step | What it adds |
 |---|---|---|
 | 35.1 | `steps/ch35-actors` | `INBOX_CAP`, `Mail`, `InboxError`, `FakeModel` |
@@ -148,9 +139,10 @@ impl Default for Inbox {
 
 > **Rust sidebar: `Result`**
 >
-> - `Result<(), InboxError>` uses `()` as the success value. Success means the mail is now at the back of the queue. There is no ticket returned.
-> - `Err(InboxError::Full)` returns the mail's ownership to the caller only in the sense that `mail` is dropped at the `return`. It was moved into `try_submit`. The queue does not contain it.
+> - `Result<(), InboxError>` uses `()` as the success value.
+> - `Err(InboxError::Full)` returns the mail's ownership to the caller only in the sense that `mail` is dropped at the `return`. It was moved into `try_submit`.
 > - `Ok(())` runs only after `push_back`. The length check and the push are on `&mut self`, one caller at a time. `Inbox` is not wrapped in a `Mutex` in this module. Sharing it across tasks is the channel in `submit`, not a shared `Inbox`.
+> - `Option`, `Result`, enums, and `Arc` are taught in [chapter 1](chapter-01-first-contact.md).
 
 `new` starts with an empty queue, an empty steer, and `interrupted` false. `Default` calls `new`. `len` and `is_empty` read the queue. They do not look at `steer` or `interrupted`. After `step` consumes a `Steer`, the queue can be empty while `steer` holds text. `is_empty` is true in that state. The cap check uses `len`, so stored steer text does not consume a slot by itself. The slot was consumed when the `Steer` mail was pushed, and it was released when `step` popped it.
 
@@ -422,25 +414,11 @@ The binary submits one turn to an empty inbox and prints the model reply. No key
 |---|---|---|---|
 | `inbox_submit` | 250.1 ns | one `try_send` into an empty channel of 64 | `submit` of `Mail::Turn("hello")` |
 
-Each sample gets a new channel from the batch setup. The timed closure sends one turn. It does not fill the inbox. The mean is `250.1 ns`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `35`. The id is `35/inbox_submit`. The old id `33/inbox_submit` is an alias in `benchmarks/descriptions.json`. The printed Criterion `time:` line is the slope, not the mean.
-
-### Milestone demo
-
-The `cargo run` above. The line is `agent: ok`.
+The means are `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `35`. Bench ids: `35/inbox_submit`, `33/inbox_submit`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
-`harness_core::InboxError` is the re-export from `inbox.rs`. It is `Full { bound }`. `harness_core::actors::InboxError` is `Full` or `Closed`. The tests in `tests/actors.rs` import the actors names. A test that imports `InboxError` from the crate root will not match `actors::try_submit`.
-
-`len` is the queue. A stored `steer` and a raised `interrupted` flag do not add to `len`. After a steer is applied, `is_empty` can be true while the next turn will still append that steer. The cap counts queued `Mail` values waiting for `step`.
-
-`try_submit` drops the refused mail. The caller that still needs the text has to have kept a copy. `TrySendError::Full` also drops the mail, because `submit` matches it with `_`. Neither path pushes the 65th message.
-
-`Interrupt` is one `bool`. Two interrupt mails before one turn still skip that one turn once. The second interrupt does not skip a second turn unless another `Interrupt` is queued after the flag was cleared. A `Turn` already at the front of the queue runs if `step` reaches it before the interrupt mail.
-
 `complete` ignores the prompt. The reply depends on `FakeModel::new`, not on `Mail::Turn`'s string. `fan` puts the index in both the prompt (`job {index}`) and the reply (`ok {index}`). The assertion looks at the reply. A model that echoed the prompt would be a different `complete`.
-
-`serve` calls `step` before the next `recv`, so the `VecDeque` inside `serve` stays at or under one. The `Full` a producer observes on that path comes from `submit` filling the channel. The `Full` the unit test observes comes from calling `try_submit` in a loop on one `Inbox`. Both caps are `INBOX_CAP`. They are two checks.
 
 `fan` sorts strings. The order after `sort` is not numeric order of the index. `join_next` order is not index order either. `expect("agent")` panics the `fan` future if a task panics. This chapter does not catch that panic and start the task again.
 
@@ -481,7 +459,7 @@ pub fn chapter_35_full_inbox_does_not_grow() -> bool {
 }
 ```
 
-`todo!("chapter 35")` is the panic. The test wants the function to return true when an inbox that already holds `INBOX_CAP` messages refuses the next submit and keeps the same length. The step crate is the reference. Do not copy it into `my-harness/`.
+`todo!("chapter 35")` is the panic. The test wants the function to return true when an inbox that already holds `INBOX_CAP` messages refuses the next submit and keeps the same length. 
 
 ## Chapter summary
 
@@ -489,7 +467,7 @@ pub fn chapter_35_full_inbox_does_not_grow() -> bool {
 - **Mail.** `Turn` calls the model. `Steer` waits for a turn. `Interrupt` drops the next turn before `complete`.
 - **Tasks.** `fan` starts one tokio task per agent, each with its own channel of 64. One hundred tasks return one hundred replies.
 - **Demo.** `agent: ok`.
-- **Time.** `inbox_submit` mean `250.1 ns`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The Criterion `time:` line is the slope.
+- **Time.** `inbox_submit` mean `250.1 ns`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573).
 - **Hermes.** `gateway/turn_executor.py` has no queue and no cap. `gateway/session_bot.py` describes a delivery receipt. This mailbox is the harness inbox.
 
 ## What's next

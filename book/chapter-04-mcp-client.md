@@ -12,13 +12,6 @@ Rust, in sidebars: a child process and stdio, an HTTP session, `async` across th
 
 `cargo run -p ch04-4-harness-core --example demo --quiet` runs the fixture. `cargo run -p ch04-4-harness-cli -- --mock ask "hello"` is the CLI. No step calls OpenRouter. A key that is present is refused with the message that this demo does not place a live call.
 
-**In this chapter**
-
-- 4.1 Stdio
-- 4.2 Streamable HTTP
-- 4.3 The same registry
-- 4.4 A cache, and the chapter 6 seam
-
 | Section | Step | What it adds |
 |---|---|---|
 | 4.1 | `steps/ch04-1-stdio` | an `rmcp` session over stdio, list and call |
@@ -122,9 +115,9 @@ stdio_echo_round_trip   time:   [70.240 µs 70.665 µs 71.238 µs]
 
 | Benchmark | Mean | Target | Machine |
 |---|---|---|---|
-| `stdio_echo_round_trip` | 71.29 µs | one local stdio call, no model | 4 vCPU, sample size 10, warm-up 1 s, measurement 2 s |
+| `stdio_echo_round_trip` | 71.29 µs | one local stdio call, no model | [bench host](appendix-benchmark-method.md) |
 
-CI runs the fixture and this step on Ubuntu, macOS, and Windows. The bench runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml). A push to `main` appends the medians to the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/).
+Where these numbers were taken is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ### Milestone demo
 
@@ -360,10 +353,6 @@ A missing `readOnlyHint` is a write. A server that forgets the hint on a search 
 `grow` spawns the notification. Calling `notify_tool_list_changed` inline deadlocks against the handler that is still on the peer. The test polls for `extra` because the spawn can lose the race with the next `list`.
 
 Every `list_changed` drops the cache. Hermes coalesces a burst into one refresh plus one follow-up. A server that notifies on a timer will make this client list on every timer tick. Coalescing belongs with the health loop, and this chapter does not have one yet.
-
-`shutdown` needs the session by value. Code that has only an `Arc` should drop the `Arc`. The child dies in `Drop`. Calling `shutdown` and also dropping a second clone will not compile, which is the point of taking `self`.
-
-The HTTP URL's port changes every run. A test that asserts a fixed port will fail. Read `MCP_URL=` from stderr.
 
 ## Guardrails in this chapter
 

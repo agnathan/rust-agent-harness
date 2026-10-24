@@ -12,16 +12,6 @@ Rust, at the wait: a mutex guards the posts, and a condition variable is what `c
 
 `cargo run -p ch45-blackboard --bin ch45-blackboard` runs the demo. The exercise is `my-harness/tests/ch45.rs`: 100 waiters, one claim.
 
-**In this chapter**
-
-- 45.1 `MAX_WAKES` and `Waiter`
-- 45.2 `Threat` and `Claim`
-- 45.3 `Board`, pause, and `post`
-- 45.4 `claim_one`
-- 45.5 `Shared`, `tick`, and `is_injection`
-- 45.6 `FakeModel`, `answer`, and `demo`
-- 45.7 The dispatcher tick, the ESTOP, and the four phrases
-
 | Section | What it walks |
 |---|---|
 | 45.1 | `MAX_WAKES` and `Waiter` |
@@ -36,7 +26,9 @@ Rust, at the wait: a mutex guards the posts, and a condition variable is what `c
 >
 > I looked for a blackboard type. Hermes does not ship one. On Hermes `main` at `9e01b44` the thin scheduler is the kanban dispatcher tick. `hermes_cli/kanban_db_dispatch.py` defines `dispatch_once`. The body takes a non-blocking dispatch lock, runs the tick, and then fires the observer. The comment at line 2029 is the rule I copied the shape of:
 >
-> ```python
+> 
+
+```python
 >     with _kbc._dispatch_tick_lock(db_path) as held:
 >         if not held:
 >             result = DispatchResult(skipped_locked=True)
@@ -49,20 +41,26 @@ Rust, at the wait: a mutex guards the posts, and a condition variable is what `c
 >     _kb._fire_dispatch_tick_hook(result, board=board, dry_run=dry_run)
 >     return result
 > ```
+
 >
 > Line 2348 repeats that the dispatch lock has been released before the observer. The comment sits above `def _dispatch_once_locked`, and the words are:
 >
-> ```python
+> 
+
+```python
 > # The dispatch lock has been released here. Fire the tick observer strictly OUTSIDE the single-writer
 > # critical section (#56066 sweeper finding / #64231 disposition): a slow subscriber must never extend the
 > # lock hold and stall a sibling dispatcher's tick.
 > ```
+
 >
 > The hook call I found next to the first comment is `_fire_dispatch_tick_hook` at line 2031, after the `with` block ends. The same function also calls the hook at line 2020 when resolving the database path throws, on a tick that never took the lock. I did not find a hook call on line 2348.
 >
 > Pause is `agent/estop.py`. `is_engaged` at line 52 is true when any candidate sentinel exists, and it fails safe:
 >
-> ```python
+> 
+
+```python
 > def is_engaged() -> bool:
 >     """True if ANY candidate sentinel exists; fail SAFE (True) on stat errors."""
 >     saw_stat_error = False
@@ -74,10 +72,13 @@ Rust, at the wait: a mutex guards the posts, and a condition variable is what `c
 >             saw_stat_error = True
 >     return saw_stat_error
 > ```
+
 >
 > `check_paused` at line 122 returns true when engaged. It logs once per component per engagement, then returns true. When the sentinel is gone it returns false and drops that component from the logged set:
 >
-> ```python
+> 
+
+```python
 > def check_paused(component: str, logger: logging.Logger) -> bool:
 >     """Return True when engaged, logging once per engagement per component (re-armed after a resume)."""
 >     if not is_engaged():
@@ -96,14 +97,18 @@ Rust, at the wait: a mutex guards the posts, and a condition variable is what `c
 >         )
 >     return True
 > ```
+
 >
 > The module docstring above those functions says `hermes pause` writes `$HERMES_HOME/ESTOP`, cron and kanban and new gateway turns skip work, and in-flight work is never killed. A stat error counts as engaged.
 >
 > The injection phrases come from `tools/threat_patterns.py`. The module comment at line 8 says filler between tokens is the bounded `_FILLER`. Line 19 defines that filler as `(?:\w+\s+){0,8}`. Line 27 is the pattern:
 >
-> ```python
+> 
+
+```python
 > (rf'ignore\s+{_FILLER}(previous|all|above|prior)\s+{_FILLER}instructions', "prompt_injection", "all"),
 > ```
+
 >
 > The four alternations are `previous`, `all`, `above`, and `prior`. The scope on that tuple is `all`. `_FILLER` allows zero to eight words between `ignore` and the alternation, and again between the alternation and `instructions`.
 >
@@ -165,9 +170,9 @@ impl Waiter {
 
 `new` takes `impl Into<String>` for both arguments. `Waiter::new("researcher", "ready")` passes two `&str` values. `name.into()` builds the owned `String`. `Waiter::new(format!("w{n}"), format!("k{n}"))` in the bench passes `String` values, and `Into<String> for String` is the identity. The same function serves both call sites. `wakes` is not a parameter. Every new waiter starts at zero wakes. A test that wants a waiter already at the cap has to write the field, or claim eight times. The tests claim eight times.
 
-### Rust: `impl Into<String>`
-
-`impl Into<String>` is a generic bound written in argument position. The caller chooses the type. The function body calls `.into()` and stores a `String`. `&str`, `String`, and anything else that implements `Into<String>` are legal. The bound is on each argument separately, so the name and the key can be different source types in one call. `new` does not borrow the caller after it returns. The `Waiter` owns both strings.
+> **Rust sidebar: `impl Into<String>`**
+>
+> `impl Into<String>` is a generic bound written in argument position. The caller chooses the type. The function body calls `.into()` and stores a `String`. `&str`, `String`, and anything else that implements `Into<String>` are legal. The bound is on each argument separately, so the name and the key can be different source types in one call. `new` does not borrow the caller after it returns. The `Waiter` owns both strings.
 
 ## 45.2 `Threat` and `Claim`
 
@@ -189,11 +194,11 @@ pub enum Claim {
 
 `answer` borrows a `&Claim`. `demo` matches on `&claim` to read the name, then uses the same claim again as the argument to `answer`. The borrow is why both can run. Moving the claim into `answer` would have forced `demo` to clone it or to split the fields first.
 
-### Rust: a unit struct and a data-carrying variant
-
-`pub struct Threat;` is a type with one value, written `Threat`. It is not `()`. `Result<(), Threat>` uses `()` as the success value and `Threat` as the error. Callers cannot confuse a refused post with a successful one that stored an empty string. Success is `Ok(())` only after `insert`.
-
-`Claim::Woke { name, value }` is a struct variant. The fields are named. `Claim::Woke { value, .. }` in `answer` binds `value` and ignores `name`. `Claim::Idle` and `Claim::Paused` are unit variants. A `match` that names all three is exhaustive. Adding a fourth variant would fail to compile in `answer` and in `demo` until those matches learned an arm.
+> **Rust sidebar: a unit struct and a data-carrying variant**
+>
+> `pub struct Threat;` is a type with one value, written `Threat`. It is not `()`. `Result<(), Threat>` uses `()` as the success value and `Threat` as the error. Callers cannot confuse a refused post with a successful one that stored an empty string. Success is `Ok(())` only after `insert`.
+>
+> `Claim::Woke { name, value }` is a struct variant. The fields are named. `Claim::Woke { value, .. }` in `answer` binds `value` and ignores `name`. `Claim::Idle` and `Claim::Paused` are unit variants. A `match` that names all three is exhaustive. Adding a fourth variant would fail to compile in `answer` and in `demo` until those matches learned an arm.
 
 ## 45.3 `Board`, pause, and `post`
 
@@ -265,11 +270,11 @@ The fields are private. Callers outside the module use the methods. `facts` is a
 
 `HashMap::new` does not allocate a fact. `Vec::new` does not allocate a waiter. `with_waiters` moves the caller's buffer in, so the vec's existing capacity stays.
 
-### Rust: private fields and `HashMap::insert`
-
-Privacy is per module. `facts` has no `pub`. A test in `tests/blackboard.rs` cannot write `board.facts`. It calls `post`, `has_fact`, `pause`, and `resume`. The integration test is outside `harness_core`, so it sees only the public API. `claim_one` is public and is the one function that removes a key.
-
-`insert` returns `Option<String>`, the previous value. `post` ignores that option. The `Result` is about the injection check, not about whether the key was new. `Ok(())` means the value passed the check and was stored. `Err(Threat)` means the check failed and `insert` did not run.
+> **Rust sidebar: private fields and `HashMap::insert`**
+>
+> Privacy is per module. `facts` has no `pub`. A test in `tests/blackboard.rs` cannot write `board.facts`. It calls `post`, `has_fact`, `pause`, and `resume`. The integration test is outside `harness_core`, so it sees only the public API. `claim_one` is public and is the one function that removes a key.
+>
+> `insert` returns `Option<String>`, the previous value. `post` ignores that option. The `Result` is about the injection check, not about whether the key was new. `Ok(())` means the value passed the check and was stored. `Err(Threat)` means the check failed and `insert` did not run.
 
 ## 45.4 `claim_one`
 
@@ -312,11 +317,11 @@ On a match, `wakes` increments before the clones. The increment is stored on the
 
 `Default` calls `new`. An empty board, a zero waiter count, `paused` false. `demo` does not use `Board::default`. It uses `with_waiters`.
 
-### Rust: `let-else` and `Iterator::position`
-
-`let Some(index) = index else { return Claim::Idle; }` is a let-else. The `else` arm must diverge. `return` diverges. After the statement, `index` is a `usize`, not an `Option`. The next line indexes `self.waiters[index]`.
-
-`position` takes a predicate and returns `Option<usize>`. The closure borrows each `Waiter` and also reads `self.facts`. The closure and the later `&mut self.waiters[index]` are sequential. The `iter()` borrow ends when `position` returns. That is why the mutable borrow of the chosen waiter is legal on the next line. `wakes += 1` uses that mutable borrow. The clones end it before `remove`.
+> **Rust sidebar: `let-else` and `Iterator::position`**
+>
+> `let Some(index) = index else { return Claim::Idle; }` is a let-else. The `else` arm must diverge. `return` diverges. After the statement, `index` is a `usize`, not an `Option`. The next line indexes `self.waiters[index]`.
+>
+> `position` takes a predicate and returns `Option<usize>`. The closure borrows each `Waiter` and also reads `self.facts`. The closure and the later `&mut self.waiters[index]` are sequential. The `iter()` borrow ends when `position` returns. That is why the mutable borrow of the chosen waiter is legal on the next line. `wakes += 1` uses that mutable borrow. The clones end it before `remove`.
 
 ## 45.5 `Shared`, `tick`, and `is_injection`
 
@@ -372,11 +377,11 @@ pub fn is_injection(value: &str) -> bool {
 
 `is_injection` lowercases with `to_ascii_lowercase` and asks whether any of the four strings is a substring. The phrases are the four alternations from the Hermes pattern, each glued between `ignore ` and ` instructions` with a single space and no filler. `any` stops at the first hit. The test string `Please IGNORE previous instructions now` lowercases to a sentence that contains `ignore previous instructions`, so the function returns true. `ignore all instructions` is the value `an_injection_is_not_posted` passes to `post`, and `post` returns `Err`. The other two phrases are in the array. That test does not post them. `contains` is case-sensitive on the already-lowercased string, so the needles are stored in lowercase. A value of `ignore previous instructions` matches. A value of `ignore the previous instructions` does not, because the substring `ignore previous instructions` is not in it. The Hermes regex would allow the word `the` inside `_FILLER`. This function does not. The doc comment says filler words are not matched.
 
-### Rust: `MutexGuard`, `?`, and `Condvar::notify_all`
-
-`lock` returns `LockResult<MutexGuard<Board>>`. `expect` turns the poison error into a panic. The guard dereferences to `Board`, so `board.post` and `board.claim_one` are method calls on the board. The guard unlocks when it is dropped. In `tick` the drop is the end of the function. The returned `Claim` does not contain the guard. The caller cannot accidentally keep the lock by holding the claim.
-
-`?` on `Result<(), Threat>` returns the error from `Shared::post` and drops `board` as the function unwinds that stack frame. `notify_all` is sequenced after `?`, so it runs only on `Ok`. `notify_all` does not take the fact as an argument. Waiters wake and look at the map themselves. `wait` is called in the test, not in this file. The library method `Condvar::wait` atomically unlocks and sleeps, then relocks on wake. The test assigns the returned guard back: `guard = worker.cv.wait(guard).unwrap()`.
+> **Rust sidebar: `MutexGuard`, `?`, and `Condvar::notify_all`**
+>
+> `lock` returns `LockResult<MutexGuard<Board>>`. `expect` turns the poison error into a panic. The guard dereferences to `Board`, so `board.post` and `board.claim_one` are method calls on the board. The guard unlocks when it is dropped. In `tick` the drop is the end of the function. The returned `Claim` does not contain the guard. The caller cannot accidentally keep the lock by holding the claim.
+>
+> `?` on `Result<(), Threat>` returns the error from `Shared::post` and drops `board` as the function unwinds that stack frame. `notify_all` is sequenced after `?`, so it runs only on `Ok`. `notify_all` does not take the fact as an argument. Waiters wake and look at the map themselves. `wait` is called in the test, not in this file. The library method `Condvar::wait` atomically unlocks and sleeps, then relocks on wake. The test assigns the returned guard back: `guard = worker.cv.wait(guard).unwrap()`.
 
 ## 45.6 `FakeModel`, `answer`, and `demo`
 
@@ -443,11 +448,11 @@ fn main() {
 
 `cargo run` needs `--bin ch45-blackboard`. The example binary prints eval lines. No key is read. `FakeModel::complete` ignores the prompt. This type is `harness_core::blackboard::FakeModel`. The `acp` module in the same crate has its own `FakeModel`. They are different types.
 
-### Rust: `try_lock` and implicit format arguments
-
-`try_lock` returns immediately. `lock` would wait. `answer` uses `try_lock` so a held mutex is a panic, not a stall behind the model. The guard's name is `_free`. The underscore prefix keeps the unused-binding warning quiet after the type has done its job. `drop(_free)` is explicit so the unlock happens before `complete`, even though the guard would also drop at the end of the function. Without that `drop`, the guard would live across `complete` and the function would hold the lock for the call it exists to keep unlocked.
-
-`format!("blackboard: {name} {reply}")` captures the local variables by name. The colon and the spaces are literal. `name` is `&str`. `reply` is `String`. Both implement `Display`. The format string does not include the fact value. The fact was the model's prompt, and the model discarded it. The printed line is the waiter name and the reply.
+> **Rust sidebar: `try_lock` and implicit format arguments**
+>
+> `try_lock` returns immediately. `lock` would wait. `answer` uses `try_lock` so a held mutex is a panic, not a stall behind the model. The guard's name is `_free`. The underscore prefix keeps the unused-binding warning quiet after the type has done its job. `drop(_free)` is explicit so the unlock happens before `complete`, even though the guard would also drop at the end of the function. Without that `drop`, the guard would live across `complete` and the function would hold the lock for the call it exists to keep unlocked.
+>
+> `format!("blackboard: {name} {reply}")` captures the local variables by name. The colon and the spaces are literal. `name` is `&str`. `reply` is `String`. Both implement `Display`. The format string does not include the fact value. The fact was the model's prompt, and the model discarded it. The printed line is the waiter name and the reply.
 
 ## 45.7 The dispatcher tick, the ESTOP, and the four phrases
 
@@ -471,9 +476,9 @@ Count the bench setup, which is the milestone's shape. `for n in 0..99` pushes `
 
 `demo` posts under the lock it takes itself, with `expect("clean fact")`, then drops that guard at the end of the statement. `tick` takes a new guard. `answer` try-locks a third time and drops it before `complete`. Three acquisitions, none of them held across the model. The returned string is `blackboard: researcher ok`. The fact value `notes` is not in that string.
 
-### Rust: `to_ascii_lowercase` allocates
-
-`to_ascii_lowercase` returns a new `String`. It changes `A` through `Z`. It leaves other bytes alone. The four needles are ASCII, so a phrase written in ASCII capitals matches, which is why `IGNORE` in the test is enough. The function does not trim and does not strip punctuation. The substring match is why `Please IGNORE previous instructions now` is an injection without the phrase being the whole value. A Unicode case fold is not what this call does. The Hermes pattern is a regex on the original text with `\s+` between tokens. This function lowercases first and then looks for a single space.
+> **Rust sidebar: `to_ascii_lowercase` allocates**
+>
+> `to_ascii_lowercase` returns a new `String`. It changes `A` through `Z`. It leaves other bytes alone. The four needles are ASCII, so a phrase written in ASCII capitals matches, which is why `IGNORE` in the test is enough. The function does not trim and does not strip punctuation. The substring match is why `Please IGNORE previous instructions now` is an injection without the phrase being the whole value. A Unicode case fold is not what this call does. The Hermes pattern is a regex on the original text with `\s+` between tokens. This function lowercases first and then looks for a single space.
 
 ## Tests
 
@@ -532,8 +537,6 @@ The binary posts one fact and claims it. No key.
 |---|---|---|---|
 | `claim_with_waiters` | 4.96 µs | a claim under 1 ms with 100 waiters | lock, scan, remove the fact |
 
-The function name is `claim_with_waiters`. The bench id is `45/claim_with_waiters`. The old ids `43/claim_with_waiters` and `41/claim_with_waiters` are aliases in `benchmarks/descriptions.json`. The function name did not change when the id moved.
-
 ```rust
 fn claim_with_waiters(c: &mut Criterion) {
     c.bench_function("claim_with_waiters", |b| {
@@ -558,17 +561,13 @@ fn claim_with_waiters(c: &mut Criterion) {
 }
 ```
 
-`iter_batched` runs the setup closure outside the timer. That closure builds waiters `w0` through `w98` on keys `k0` through `k98`, then `chosen` on `ready`, posts `notes`, wraps the board in a `Mutex`, and is not timed. The timed routine calls `tick` with that mutex passed through `black_box`, then `black_box` of the `Claim`. The lock, the scan of 100 waiters, the wake increment, the name and key clones, and the removal of the fact are inside the sample. Building the waiters is excluded. `FakeModel`, `answer`, `pause`, and the `Condvar` are not called. The descriptions file states those timing facts in the `timing` field of `45/claim_with_waiters`. The `inputs` field says 100 waiters, the matching key `ready` last, the fact value `notes` at 5 characters, `MAX_WAKES` at 8, and the board not paused. The `fake` field says the waiters are records, not threads, `FakeModel` is not constructed, and there is no condvar wait and no sleep. The `why` field says a claim has to stay under a millisecond with 100 waiters, and the lock must not be held across a model call. This sample is the claim. The model is not in it.
+> **Rust sidebar: `black_box` and `BatchSize::SmallInput`**
+>
+> `black_box(&board)` keeps the compiler from proving the mutex is unused and deleting `tick`. `black_box(claim)` keeps it from deleting the call once it sees that nobody reads the `Claim`. `BatchSize::SmallInput` tells Criterion the setup value is small enough to clone across a batch of iterations. The setup value here is a `Mutex<Board>`. Each timed iteration receives its own mutex from a setup call. The next iteration does not see the removed fact. `Submit`-style fullness does not apply. Every sample starts from a board that still holds `notes`.
 
-The mean is 4.96 µs. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196). The id is `45/claim_with_waiters`. The aliases are `43/claim_with_waiters` and `41/claim_with_waiters`. `.github/workflows/benchmarks.yml` runs `bash .github/scripts/run_bench_section.sh 45 "chapter 45 blackboard" ch45-blackboard blackboard`. That script runs `cargo bench -p ch45-blackboard --bench blackboard --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10`. The same flags are in `steps/ch45-blackboard/README.md`. The Criterion `time:` line is the slope, not the mean.
+`iter_batched` runs the setup closure outside the timer. That closure builds waiters `w0` through `w98` on keys `k0` through `k98`, then `chosen` on `ready`, posts `notes`, wraps the board in a `Mutex`, and is not timed.
 
-### Milestone demo
-
-The `cargo run` above. The line is `blackboard: researcher ok`.
-
-### Rust: `black_box` and `BatchSize::SmallInput`
-
-`black_box(&board)` keeps the compiler from proving the mutex is unused and deleting `tick`. `black_box(claim)` keeps it from deleting the call once it sees that nobody reads the `Claim`. `BatchSize::SmallInput` tells Criterion the setup value is small enough to clone across a batch of iterations. The setup value here is a `Mutex<Board>`. Each timed iteration receives its own mutex from a setup call. The next iteration does not see the removed fact. `Submit`-style fullness does not apply. Every sample starts from a board that still holds `notes`.
+The means are `mean.point_estimate` from [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196). Bench ids: `45/claim_with_waiters`, `43/claim_with_waiters`, `41/claim_with_waiters`. Command: `cargo bench -p ch45-blackboard --bench blackboard --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -576,17 +575,9 @@ The bench is the claim. A number that spawns 100 threads and waits on a condvar 
 
 The lock has to end before the model. `answer` panics if `try_lock` fails. Holding a guard across `complete` would fail that call, and it would make every other `tick` wait until the model returned. `drop(_free)` runs before the match so `answer` itself does not hold the guard across `complete` either.
 
-`post` of an injection returns `Threat` and leaves the map unchanged. `Shared::post` does not `notify_all` on that error. A later claim cannot wake on a fact that was refused. Filler words that the Hermes regex allows are stored here. `ignore the previous instructions` does not contain the exact needle.
-
 Eight wakes is the cap. The ninth `post` still stores the fact. `tick` leaves it there and returns `Idle`. `MAX_WAKES` is not a Hermes constant I found in the files I quoted.
 
 `claim_one` picks the first matching waiter. A second waiter on the same key is not claimed in that call. The fact is already removed, so the second waiter needs a new `post`.
-
-`Paused` does not remove the fact and does not increment `wakes`. `resume` is what makes the next `tick` able to claim it. `answer` on a `Paused` claim still calls `complete("")`. `demo` does not pass a paused claim.
-
-The board is a `HashMap` in a `Mutex`. A crash drops it. Two processes do not share it. That durability is chapter 46.
-
-`demo` returns the waiter name and the reply. It does not return the fact. `examples/demo.rs` does not call `blackboard::demo`.
 
 ## Guardrails in this chapter
 
@@ -624,7 +615,7 @@ pub fn chapter_45_one_claim(waiters: usize) -> usize {
 }
 ```
 
-`todo!("chapter 45")` is the panic. The test passes `100` and wants `1` back: one hundred waiters, one claim. In the step crate that is the bench shape. Ninety-nine waiters on other keys, one waiter on `ready`, one `post` of `notes`, one `tick` that returns a single `Woke`. The stub stays `todo!`. Do not paste `blackboard.rs` into `my-harness/`.
+`todo!("chapter 45")` is the panic. The test passes `100` and wants `1` back: one hundred waiters, one claim. In the step crate that is the bench shape. Ninety-nine waiters on other keys, one waiter on `ready`, one `post` of `notes`, one `tick` that returns a single `Woke`. The stub stays `todo!`. 
 
 ## Chapter summary
 
@@ -634,7 +625,7 @@ pub fn chapter_45_one_claim(waiters: usize) -> usize {
 - **Pause.** `Claim::Paused`. The fact stays. A claim already in hand still reaches `answer`.
 - **Injection.** Four exact phrases. `post` does not store them.
 - **Cap.** Eight wakes. The next fact stays on the board.
-- **Time.** `claim_with_waiters` mean 4.96 µs. That is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196). The id is `45/claim_with_waiters`. The aliases are `43/claim_with_waiters` and `41/claim_with_waiters`. The Criterion `time:` line is the slope.
+- **Time.** `claim_with_waiters` mean 4.96 µs. That is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196). The id is `45/claim_with_waiters`. The aliases are `43/claim_with_waiters` and `41/claim_with_waiters`.
 
 ## What's next
 

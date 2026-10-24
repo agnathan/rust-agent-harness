@@ -1,39 +1,16 @@
 # Chapter 12: Hooks and Plugins
 
-Chapter 11 can refuse a command. It cannot yet let some other code watch the call, rewrite the arguments, or keep a note about the turn. Plugins, a memory backend, and the reflection fork all need a place to stand that is not a copy of `drive_loop`. This chapter adds that place. The crate is `steps/ch12-hooks`, a copy of chapter 11 plus a `hooks` module. The package is `ch12-hooks`. The library is `harness_core`.
+Chapter 11 can refuse a command. It cannot yet let some other code watch the call, rewrite the arguments, or keep a note about the turn. Plugins, a memory backend, and the reflection fork all need a place to stand that is not a copy of `drive_loop`. This chapter adds that place. The crate is `steps/ch12-hooks`, a copy of chapter 11 plus a `hooks` module. The package is `ch12-hooks`.
 
 The loop does not call the hook runner. The chapter's own tests do. Later chapters keep that split: memory, reflection, and curation call their own functions, and `drive_loop` still does not name the runner. A hook must not hold the dispatch permit across a human wait. That rule is chapter 11's, and a plugin does not get to break it.
 
-`ToolHook` is the plugin shape. `PreAction` is one directive: continue, rewrite the arguments, block, or escalate. `dispatch_pre` walks the hooks until one blocks. `merge_args` is a shallow patch. `dispatch_post` lets the last `Some` win, which is how a hook rewrites a tool result. `escalation_block` turns an unapproved escalate into a block, so a plugin cannot promote itself into a human prompt the policy did not ask for. `ApiHook` and `run_api_hook` borrow the messages. They do not clone the conversation to look at it. `TurnRecord` and `MemoryQueue` are the swappable memory backend: the trait is defined here, and chapter 21 is the file implementation behind it. `BlockName` blocks one tool. `scan_plugin_shape` checks the structural caps — 400 files, 10 MB total, 1 MB per file — and never returns `Dangerous` by itself. Oversized is caution. `should_allow_plugin_install` lets `--force` override caution and does not let it override dangerous. The pattern engine that can return dangerous is chapter 25.
+`ToolHook` is the plugin. `dispatch_pre` walks the hooks until one blocks. The memory trait is defined here, and chapter 21 is the file implementation. `scan_plugin_shape` checks the structural caps and never returns `Dangerous` by itself. The pattern engine that can return dangerous is chapter 25.
 
-This module is the extension point the learning chapters hang on. Chapter 21 writes memory through the trait defined here, so a different backend can be swapped without a new tool shape. Chapter 26's post-turn reviewer is a hook that runs after the turn, with a tool slice of its own. Chapter 27's curator stays off the request path and still needs a place to enqueue. If those writes were pasted into `drive_loop`, every new lesson would be a change to the hot path. The hook is how the hot path stays the model and the tools the model called.
+This module is the extension point the learning chapters hang on. If those writes were pasted into `drive_loop`, every new lesson would be a change to the hot path.
 
 Rust, where the feature needs it: a trait is the plugin and the memory backend. A borrow is why the API hook does not copy a thousand messages. An enum is the pre-action, so a hook returns one directive. The queue is the background write.
 
 `cargo run -p ch12-hooks` runs the scripted block. The exercise is `my-harness/tests/ch12.rs`: an oversized plugin is caution, and force does not pass a dangerous verdict.
-
-**In this chapter**
-
-- 12.1 The module is `hooks`, and `drive_loop` does not call it
-- 12.2 `HookError` is a message the runner drops
-- 12.3 `PreAction` is one directive
-- 12.4 `ToolHook` is the plugin
-- 12.5 `Dispatch` is what the walk returns
-- 12.6 `dispatch_pre` walks hooks until a block
-- 12.7 `merge_args` is a shallow patch
-- 12.8 `dispatch_post` lets the last `Some` win
-- 12.9 `escalation_block` turns an unapproved escalate into a block
-- 12.10 `gate_failed` is the string when the gate cannot run
-- 12.11 `ApiHook` and `run_api_hook` borrow the messages
-- 12.12 `TurnRecord` and `MemoryQueue`
-- 12.13 `Registry` in this file is not the chapter 3 tool registry
-- 12.14 `BlockName` blocks one tool
-- 12.15 `run_script` is the fake model
-- 12.16 `sample_block` is the one-call form of that script
-- 12.17 Three caps, and the verdict types
-- 12.18 `scan_plugin_shape` never returns `Dangerous`
-- 12.19 `should_allow_plugin_install` lets force override caution only
-- 12.20 What the benches time
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -160,9 +137,11 @@ pub enum PreAction {
 ```
 
 > **Rust sidebar: an enum is one of several shapes**
-> - A struct always has the same fields. An enum is a choice. A `PreAction` is exactly one variant.
+>
+> - A `PreAction` is exactly one variant.
 > - `Continue` carries nothing. `Block` owns the message. `Approve` owns a message and a `rule_key`. `Modify` owns a `serde_json::Value`: one JSON value.
 > - `Clone` is why a test hook can store a `Vec<PreAction>` and return a copy. The runner then moves each action into `match`.
+> - `Option`, `Result`, enums, and `Arc` are taught in [chapter 1](chapter-01-first-contact.md).
 
 `Continue` and an empty `Vec` are both no-ops. `Block` is the veto: the message becomes the tool result, and later hooks do not run. `Approve` does not run the tool and does not stop the walk. The runner keeps the first pair. `Modify` is a patch merged into the arguments later hooks see. Section 12.7 covers a patch that is not an object.
 
@@ -208,12 +187,15 @@ impl ToolHook for NopHook {}
 `NopHook` is a unit struct. No fields. The bench passes `&NopHook` where the parameter is `&dyn ToolHook`. A local reference is enough when the hook does not have to outlive the call. There is no `Arc` on that path.
 
 > **Rust sidebar: `Result` is success or failure**
-> - `Result<Vec<PreAction>, HookError>` is `Ok(actions)` or `Err(error)`. The default is `Ok(Vec::new())`. An empty list is still success.
-> - `Err` means the plugin could not run. It is not a `Block`. `dispatch_pre` skips that hook. The next hook still runs. `"plugin down"` never appears on the `Dispatch`.
+>
+> - `Result<Vec<PreAction>, HookError>` is `Ok(actions)` or `Err(error)`. The default is `Ok(Vec::new())`.
+> - It is not a `Block`. `dispatch_pre` skips that hook. `"plugin down"` never appears on the `Dispatch`.
+> - `Option`, `Result`, enums, and `Arc` are taught in [chapter 1](chapter-01-first-contact.md).
 
 > **Rust sidebar: `Option` is a value or nothing**
-> - `Some(string)` from `post_tool_call` replaces the result. `None` leaves it. `Some("notes")` from `enable_toolset` names a set. The default is `None`.
-> - There is no `Result` on the way out. A post hook can replace the string. It cannot fail the call.
+>
+> - `Some(string)` from `post_tool_call` replaces the result. `Some("notes")` from `enable_toolset` names a set.
+> - `Option`, `Result`, enums, and `Arc` are taught in [chapter 1](chapter-01-first-contact.md).
 
 > **Rust sidebar: a slice is a pointer and a length**
 > - `&str` and `&[T]` are a pointer plus a length. `name: &str` borrows the tool name. `args: &Value` borrows the JSON. The caller keeps both.
@@ -837,11 +819,9 @@ The binary installs one hook that blocks `rm`, then a script of `rm` and `echo`.
 
 `memory_enqueue` locks the queue, drops the front if the length is already 64, and pushes one formatted string. The queue is built before the bench. The string format is inside the sample. Nothing is written to disk.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `12`.
+The result is the block message. `stopped` is 1.
 
-### Milestone demo
-
-The `cargo run` above. The result is the block message. `stopped` is 1.
+The means are `mean.point_estimate` from [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `12`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -879,7 +859,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Laye
 
 ## What you implement
 
-`my-harness/tests/ch12.rs` is the milestone. It compiles, then panics in `todo!("chapter 12")` until `chapter_12_plugin_decision` returns `"confirm"` for 401 files with force false, and `"block"` for a dangerous plugin with force true. Force does not override dangerous. The step crate is the reference. Do not copy it into `my-harness/`.
+`my-harness/tests/ch12.rs` is the milestone. It compiles, then panics in `todo!("chapter 12")` until `chapter_12_plugin_decision` returns `"confirm"` for 401 files with force false, and `"block"` for a dangerous plugin with force true. Force does not override dangerous. 
 
 ## What's next
 

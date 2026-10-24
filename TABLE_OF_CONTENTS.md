@@ -1,6 +1,6 @@
 # Table of contents
 
-The chapter list for browsing on GitHub. Grouping, titles, and the *(server)* marks match [book/SUMMARY.md](book/SUMMARY.md). The longer plan is [book/book-outline.md](book/book-outline.md).
+The chapter list for browsing on GitHub. Grouping, titles, and the *(server)* marks match [book/SUMMARY.md](book/SUMMARY.md). The longer plan is [book/book-outline.md](book/book-outline.md). How the chapters, the step crates, and the measurements fit together is [book/preface-how-to-read-this-book.md](book/preface-how-to-read-this-book.md). The Criterion means are [book/appendix-benchmark-method.md](book/appendix-benchmark-method.md).
 
 Written chapters link to `book/chapter-….md`. A chapter that has no page yet is marked (not yet written). Each line also links the step crates under `steps/` that exist for that chapter. Server-track chapters are marked *(server)*. They are chapters 5, 7, 8, 15, 23, 37, 42, and 51. The process crate is [`mcp-gateway/`](mcp-gateway/).
 
@@ -74,3 +74,7 @@ Written chapters link to `book/chapter-….md`. A chapter that has no page yet i
 - [Chapter 50: Seeing Inside](book/chapter-50-tracing.md) — [`steps/ch50-tracing`](steps/ch50-tracing)
 - [Chapter 51: Load and Token Capstone](book/chapter-51-capstone.md) *(server)* — [`steps/ch51-capstone`](steps/ch51-capstone)
 - [Chapter 52: Evals](book/chapter-52-evals.md) — [`steps/ch52-evals`](steps/ch52-evals)
+
+## Appendix
+
+- [How the numbers were measured](book/appendix-benchmark-method.md)
