@@ -1,7 +1,5 @@
 # Chapter 21: Memory Files
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 20 can resume a session. A fact that is true in every session — the user's name, a preference, a constraint — does not belong in a transcript you have to search. It belongs in a small file that is frozen into the system prompt when the session starts, and then left alone so the prefix cache stays valid. This chapter is that file. The crate is `steps/ch21-memory`, a copy of chapter 20 plus `memory_files`. The package is `ch21-memory`. The module implements the memory trait chapter 12 defined, so a different backend can still be swapped without a new tool.
 
 `open` reads `MEMORY.md` and `USER.md` into an `Arc`. Entries are separated by a section mark. The budgets are the Hermes ones: 2,200 characters for memory and 1,375 for the user profile. One `memory` tool supports add, replace, remove, and a batch. Replace requires the old text to match exactly one entry. Going over budget returns how many characters to free, so the model consolidates instead of dropping the write. Writes are atomic and locked. A hand edit that breaks the delimiter is a drift error, not a silent rewrite.
@@ -36,8 +34,6 @@ Rust, at the file: `Arc` is the frozen snapshot, cloned cheaply into the prompt 
 > **Adapted.** The scan is those four checks, not the full pattern list. The env-name lookahead on `hardcoded_secret` is not ported. The write lock is a `Mutex` in this process, plus a temp file and `rename`. It is not a cross-process file lock. The approval gate stays off.
 >
 > **Deferred.** A9, `memory.write_approval`, is chapter 25. This chapter writes when `add` is called. It does not stage a diff for a human.
-
-[personal note: a note that showed up in the prompt on the same turn you wrote it, or one that did not]
 
 ## What this chapter decides
 
@@ -587,8 +583,6 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Laye
 - **Scan.** `authorized_keys` and a zero-width space never reach the file.
 - **Queue.** `enqueue_turn` does not write. The gate A9 stays off.
 - **Time.** One enqueue measured **54.59 ns**.
-
-[personal note: an entry the scan blocked, and whether you agreed with it]
 
 ## What you implement
 

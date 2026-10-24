@@ -1,7 +1,5 @@
 # Chapter 20: Sessions on Disk
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 2 can save a conversation as one JSON file, and chapter 19 can fold a stream into text worth keeping. Neither of those is a session you can resume, search, or trust with a secret that passed through the transcript. A learning agent that forgets every session can only learn inside one sitting. This chapter puts the session on disk, and it scrubs the text on the way in. The crate is `steps/ch20-sessions`, a copy of chapter 19 plus `wal` and `redact`. The package is `ch20-sessions`. The library is `harness_core`. `lib.rs` re-exports the redaction functions from here on, so later chapters call `crate::redact` instead of growing a second scrub.
 
 `Store` is a SQLite connection in WAL mode. Two tables hold the session and its messages. `append_turn` runs both strings through `redact_sensitive_text` before the insert, so a turn that contains a key is stored without the secret. The mask keeps the prefix through the first `-` or `_`, then stars. The patterns cover the prefix families, environment assignments, `Authorization` headers, and PEM blocks. `redact_for_egress` is that scrub plus a sweep that turns a bare bearer token into `Bearer [redacted]`. A background queue does the write. Full-text search is not built here. The ids are queued. Chapter 22 builds the search on this store.
@@ -36,8 +34,6 @@ Rust, beside the connection: SQLite is a library linked into the process, WAL is
 > **Adapted.** The FTS virtual table is not created here. `append_turn` pushes the new row ids onto a queue of 64 and drops the oldest. Nothing in this crate runs a `MATCH` query. `rusqlite` is bundled so CI does not need a system SQLite.
 >
 > **Deferred.** Trigram search, hiding subagent sessions, and demoting cron are chapter 22. The triggers in `FTS_TRIGRAM_SQL` land there, in a smaller form.
-
-[personal note: a session you expected to resume, and what was actually on disk]
 
 ## What this chapter decides
 
@@ -490,7 +486,6 @@ The test calls `redact_for_egress` on a bare `Bearer abcdefghijklmnopqrstuvwxyz0
 
 `tests/redact.rs` is the new test. One function checks all three. `redact_sensitive_text` on the openai sentence must contain `sk-***` and `OPENAI_API_KEY=***` and must not contain `super-secret-value`. `redacting_formatter` on the Authorization line must contain `Authorization: ***` and must not contain the token. `redact_for_egress` on the bare Bearer sentence must contain `Bearer [redacted]` and must not contain the token. The three session tests are unchanged in what they expect to read back. `hi` and `pong` still round-trip. The journal mode is still `wal`. The trigram table still does not exist.
 
-
 ## Tests
 
 Three tests. A turn appends two rows, the journal is `wal`, and the trigram table does not exist. A second turn resumes the same session. The chapter 9 saved evals and the four stress evals pass.
@@ -558,8 +553,6 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Laye
 - **Search.** Two ids queued. No virtual table.
 - **Evals.** The chapter 9 mock set still passes.
 - **Time.** One WAL append measured **139.2 µs**.
-
-[personal note: a resume that came back empty, and which file you had opened]
 
 ## What you implement
 

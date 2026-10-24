@@ -26,8 +26,6 @@ Chapter 4 is the MCP client. The 10,000-tool benches here still generate the cat
 
 No live model call. --mock is the demo. Without a key the CLI prints the missing OPENROUTER_API_KEY error and stops.
 
-[personal note]
-
 6/
 Next, the agent loop: the model picks a tool, including search_tools, and the result comes back as a message.
 
@@ -47,8 +45,6 @@ The model starts with one meta-tool, search_tools. Matched schemas are appended 
 Search over 10,000 tools was 146.8 µs. Routing by server first brought that to 16.00 µs. A cached tool list hit was 17.56 ns, against 12.07 ms to clone the catalog the first time.
 
 The 10,000-tool benches still generate the catalog. Chapter 4's client hands a real list to the same cache. I'm new to Rust, so the inverted index, the append-only prefix, and Arc show up in short sidebars when they're needed. The demo is offline. I did not paste a live model transcript.
-
-[personal note: one takeaway from writing this chapter]
 
 Next up: the server-side catalog (chapter 7), then the agent loop (chapter 9). Read Chapter 6: [link]
 

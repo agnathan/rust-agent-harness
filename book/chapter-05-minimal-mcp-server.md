@@ -1,7 +1,5 @@
 # Chapter 5: A Minimal MCP Server
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 4 can talk to an MCP server. It cannot be one. The harness decides what enters a prompt: the task, the budget, the cached prefix. Something else has to hold the tool list and run the call. This chapter is that other program, in the smallest form that is still a server. The step crate is `steps/ch05-minimal-server`, package `ch05-minimal-server`. The types are `Gateway`, `ToolCard`, `SessionView`, `CallGate`, and `GatewayError`.
 
 `Gateway::new` starts empty. `register` appends a name and a description, and a second registration of the same name is `GatewayError::Duplicate`, which is the rule chapter 3 already uses. `session_tools` returns that list, in registration order, for every session id. There is no per-session filter yet. `call` looks up the name before it takes a permit, so an unknown name does not occupy a slot. `echo` reads the string field `text` and returns it. Any other registered name returns its description. A missing `text` on `echo` is `BadArgs`.
@@ -38,8 +36,6 @@ Rust for a new reader: a second crate is a separate compilation unit with its ow
 > **Adapted.** Hermes `register()` in `tools/registry.py` lets a same-name, same-toolset duplicate overwrite. This server returns `GatewayError::Duplicate` and keeps the first tool, which is the rule chapter 3 already uses. Hermes serves stdio. This chapter stays in-process. The book's budget for this row is 32 accepted calls and 8 executing. Those two numbers are not in `mcp_serve.py`. Eight is the same bound as `_MAX_TOOL_WORKERS` in `agent/tool_executor.py`. Thirty-two is the number of accept permits.
 >
 > **Deferred.** A socket, streamable HTTP, and OAuth 2.1 as a resource server wait for chapter 42. Server-side search waits for chapter 7. Per-session filtering waits for chapter 8.
-
-[personal note: the moment a client and a server stopped being the same process in your head]
 
 ## What this chapter decides
 
@@ -132,8 +128,6 @@ This process does not authenticate a caller. Default-deny and pairing are chapte
 - **List.** A new gateway is empty. `register` appends. `session_tools` returns that list for every session.
 - **Call.** `echo` returns `text`. A second `echo` is `Duplicate`. An unknown name is `Unknown` and takes no permit.
 - **Gate.** 32 calls may be inside. 8 may run the body. One more is `Saturated`. A permit round trip measured **45.53 ns**. Eight 1 ms sleeps measured **2.129 ms**.
-
-[personal note: what was harder, the semaphore or deciding the server is not the harness]
 
 ## What's next
 

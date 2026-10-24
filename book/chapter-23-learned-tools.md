@@ -1,7 +1,5 @@
 # Chapter 23: Learned Tools
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 22 can search past sessions from the harness. The gateway still offers whatever the session's starter set and searches revealed. It does not yet notice that this kind of task always ends up calling the same handful of tools, or that three tools are really one procedure. This chapter is that offer, and it lives on the server. The harness decides what may enter the prompt. The server decides which names the session is shown. Putting the score inside the model call would make every request wait on a ranking. The score changes the offered set beforehand.
 
 The crate is `steps/ch23-learned-tools`. The library is `gw_learned`. It vendors chapter 15 the way chapter 15 vendored chapters 7 and 8: `catalog`, `session`, and `limits` are modules, and there is no path dependency on `ch15-limits`. `LearnedGateway` is the type. It binds no socket. `mcp-gateway` will re-export a later copy of this gateway, from chapter 51, under the name `Gateway`.
@@ -49,8 +47,6 @@ Rust, at the offer: `Arc` is the installed set, swapped the way chapter 7 swaps 
 > **Deferred.** The real interpreter, the UDS and file RPC transports, and the stdout caps (`MAX_STDOUT_BYTES` is 50_000, `MAX_STDERR_BYTES` is 10_000) stay out. A live embedder is still later.
 
 > **Guardrails.** The new limit sits on the tool the script is allowed to call. The prediction is not a model call. The full box is [Guardrails in this chapter](#guardrails-in-this-chapter).
-
-[personal note: a tool the score kept offering after you had stopped using it]
 
 ## What this chapter decides
 
@@ -571,8 +567,6 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). The 
 - **Names.** A composite and a macro expand to steps. They do not run them.
 - **Code mode.** `call tool json`, allowlist, offer, and 50 calls. The backend runs only after the script parses.
 - **Time.** Applying 32 names measured **76.1 ns**. Scoring 1,000 rows measured **149.64 µs**.
-
-[personal note: the first time the offer was right without a search]
 
 ## What you implement
 

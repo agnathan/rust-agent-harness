@@ -1,7 +1,5 @@
 # Chapter 45: The Blackboard
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 44 is an editor front door. An update becomes one message on the inbox. It does not make agents call each other. A team that should not know who else is on the team needs a board: someone posts a fact, someone else waits until the fact they need appears, and a thin scheduler wakes the waiter. This chapter adds that board. The crate is `steps/ch45-blackboard`, a copy of chapter 44 plus `blackboard`. The package is `ch45-blackboard`. The lock is not held across a model call. Holding it there would stall every other agent for the length of a completion.
 
 `Board` holds the posts. `post` adds one. `claim_one` takes one claim. `Waiter` is the condition a poster signals. `MAX_WAKES` caps how many times a waiter is kicked, so a noisy board cannot spin a task. `Shared` is the handle the tasks clone. `tick` is the scheduler's one pass. `is_injection` recognizes the four phrases the threat list cares about, and a post that matches is not treated as a fact the team should act on. `Threat` and `Claim` are the outcomes. Pause is a flag. The demo answers from `FakeModel` outside the lock: the model runs, then the result is posted. The bench is 100 waiters and one claim.
@@ -116,8 +114,6 @@ Rust, at the wait: a mutex guards the posts, and a condition variable is what `c
 > **Deferred.** Durable compare-and-swap is chapter 46. The board is a `HashMap` in a `Mutex`, not SQLite.
 
 > **Guardrails.** Injection refusal at `post`. A paused board claims nothing. The lock is released before the model. The wake cap leaves the fact on the board. The full box is [Guardrails in this chapter](#guardrails-in-this-chapter).
-
-[personal note: the moment the lock had to end before the fake reply]
 
 ## What this chapter decides
 
@@ -639,8 +635,6 @@ pub fn chapter_45_one_claim(waiters: usize) -> usize {
 - **Injection.** Four exact phrases. `post` does not store them.
 - **Cap.** Eight wakes. The next fact stays on the board.
 - **Time.** `claim_with_waiters` mean 4.96 µs. That is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196). The id is `45/claim_with_waiters`. The aliases are `43/claim_with_waiters` and `41/claim_with_waiters`. The Criterion `time:` line is the slope.
-
-[personal note: a guard that ended in the right function]
 
 ## What's next
 

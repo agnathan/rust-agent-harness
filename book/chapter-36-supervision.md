@@ -1,7 +1,5 @@
 # Chapter 36: Supervision and Restart
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 35 can run an agent as a task with a bounded inbox. A task that panics, or that sits inside a tool and never returns, stays dead or stays stuck. Chapter 9 can cancel a call. It does not retry the child, and it does not decide that "no progress" has gone on long enough. This chapter's `restart_child` calls `complete` a second time after `record`. That is one retry of one completion, with bookkeeping, not a new task and not a restart of chapter 35's actor. The crate is `steps/ch36-supervision`, a copy of chapter 35 plus `supervision`. The package is `ch36-supervision`. Heartbeats, deferred by chapter 29 and chapter 31, land here.
 
 `Supervisor::record` is the chain of what the child has done. `restart_child` retries once, and the demo prints the retry. The cancellation token and the budget stay the ones chapter 9 put on the call. `Pulse` and `is_stale` are the heartbeat. The interval is 30 seconds. Idle stale is 15 cycles, 450 seconds. A child that is inside a tool uses 40 cycles, 1,200 seconds. Progress is a new iteration, a different tool, or a newer `last_activity_ts`. An in-flight model wait refreshes that timestamp, so a slow model is not idle. `is_stale` does not sleep and does not start a thread. The caller asks, and the caller decides to restart. That keeps the clock out of the function the bench times.
@@ -64,8 +62,6 @@ Rust, at the pulse: the timestamps are integers, and the comparison is pure, whi
 > **Adapted.** `is_stale` is a pure function. It divides elapsed seconds by 30 and compares. It does not schedule `tick`, it does not sleep, and it does not start a thread. The longer cap is `previous.in_tool`, a bool stored on the pulse, where Hermes uses the truth of `current_tool` on this tick. Iteration progress is `!=`, where Hermes uses `>`. The boot log is a `Mutex<Vec<u64>>` plus an `AtomicU32`. There is no `restart_loop.json`. `now` is an argument. The child is `FakeModel`. One failure retries once. `is_stale` and `restart_child` do not call each other.
 >
 > **Deferred.** The periodic scheduler, the parent `_touch_activity` touch, the `settled` event, and `_STALE_RESULT_GRACE_SECONDS` of 2.0. The persisted boot file, `_MAX_STORED_BOOTS` of 50, and a real child process. `DEFAULT_MAX_ITERATIONS` of 250 is the line above the heartbeat constants. This module does not store it. Wiring a stale result into `record` waits. Chapter 37 is the server pool, on the other lineage.
-
-[personal note: a child that went quiet, and a check that was only the comparison]
 
 ## What this chapter decides
 
@@ -520,8 +516,6 @@ pub fn chapter_36_idle_is_stale(cycles: u64, in_tool: bool) -> bool {
 - **Chain.** Gap 300 seconds. Length 3 trips. I/O failure stays open.
 - **Split.** `record` does not call the child. `is_stale` does not record a boot. The bench times `record(0)`.
 - **Demo.** `restarted: ok`. No key.
-
-[personal note: a comparison you could run without waiting the 450 seconds]
 
 ## What's next
 

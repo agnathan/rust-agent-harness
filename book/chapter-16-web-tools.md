@@ -1,7 +1,5 @@
 # Chapter 16: Built-in Tools I: Web Search and Extract
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 The loop can call a tool, the approval floor can refuse a shell command, and the server can cap a tool named `web_search` at 50 calls. The harness still has no web search of its own. Asking the model to "look it up" only works if some tool actually looks it up, and if the page it reads cannot be a cloud metadata address or a URL with a secret in it. This chapter adds those two tools. The crate is `steps/ch16-web-tools`, a copy of chapter 14's harness. It is not a copy of chapter 15. Chapter 15 is the server, and the harness does not absorb it. The new module is `web`. The package is `ch16-web-tools`. The library is `harness_core`.
 
 `SearchBackend` is the trait. `FakeSearch` is what the tests and the benches call, so CI never needs a key and never dials. `EnvSearch` reads `WEB_SEARCH_API_KEY` and does not dial unless `WEB_SEARCH_ALLOW_NETWORK=1`. The tool names are `web_search` and `web_extract`. The search name is deliberate: chapter 15's cap is keyed by that string, and a second counter here would let a turn blow past 50 by calling a differently named twin. Search results are metadata: title, url, description, position. `limit` is clamped. Extract text is truncated, about three quarters head and one quarter tail, with a stored ceiling, and an inline base64 image becomes a placeholder rather than page text.

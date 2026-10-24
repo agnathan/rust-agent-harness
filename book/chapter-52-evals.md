@@ -1,7 +1,5 @@
 # Chapter 52: Evals
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 9 saved three tasks and four stress names, and it said a later chapter would re-run them. The harness between then and now has grown approvals, a sandbox, memory, skills, a team, a bus, and tracing. A loop that still compiles can still have changed what `echo-hello` means. This chapter runs the saved set on this copy of `run_loop`, and it adds one red-team case per guardrail layer. The scores come back as data. `FAIL_THRESHOLD` is `None`. There is no fail threshold in CI. The crate is `steps/ch52-evals`, a copy of chapter 50. It is not a copy of chapter 51. The server capstone stays the other program. The new module is `suite`, because a private `mod evals` already exists. The package is `ch52-evals`. The library is `harness_core`.
 
 `run_saved` and `run_stress` block on the chapter 9 runners, which call the real loop. `echo-hello`, `direct`, and `eight-reads` are the saved names. The stress names are `tool-fails-then-recovers`, `hits-iteration-cap`, `unknown-tool-repair`, and `stall`. `unknown-tool-repair` is the loop repairing `eco` into `echo` through `repair_name`. There is no stub that ignores its input and returns success. `run_red_team` returns ten scores, L1 through L9 and X. Each function calls the module that already implements that layer: the gateway pause, the context scan, redaction, the loop's budget, the dispatcher, the tool guards, the sandbox, the memory and skill scans, the cron and delegation limits, and the cross-cutting case. `append_event` pushes one JSON object onto a vec. `run_trajectories` runs 100 tasks that take permits from the worker bound. The demo prints every score, the trajectory line, and `threshold: None`.
@@ -69,8 +67,6 @@ Rust, at the score: `Score` is a struct with a name and a pass bit. `block_on` r
 > **Deferred.** A fail threshold in CI, a JSONL file, and a live model. Hermes does not have this runner to port. The Benchmarks job still does not fail on a slow mean.
 
 > **Guardrails.** One case per layer, each calling the real module. No fail threshold. Saved tasks re-run on this copy of the loop. The full box is [Guardrails in this chapter](#guardrails-in-this-chapter).
-
-[personal note: a score that was allowed to be data]
 
 ## What this chapter decides
 
@@ -827,8 +823,6 @@ pub fn chapter_52_saved_passed(name: &str) -> bool {
 - **Layers.** L1 through L9 and X each call the real module. `FAIL_THRESHOLD` is `None`.
 - **Trajectories.** One append is one JSON object. One hundred tasks stay within the worker bound of 8. The ninth permit is refused. The peak is not printed.
 - **Time.** `append_event` mean `82.2 ns`. `saved_set` mean `21.26 ms`. Both are `mean.point_estimate`. The Criterion `time:` line is the slope. The saved-set sample includes the sleep.
-
-[personal note: the last score, still just a bool]
 
 ## What's next
 

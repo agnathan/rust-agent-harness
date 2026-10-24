@@ -1,7 +1,5 @@
 # Chapter 4: MCP Client
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 3 can call a tool that lives in this process. A real workspace does not keep every tool there. A file server, a browser, a notes database: each is its own program, and the way those programs advertise tools is MCP. This chapter is the client. It speaks MCP over a child process's stdin and stdout, and over streamable HTTP on `127.0.0.1`. The tools that come back are the same `Tool` values chapter 3 already dispatches. The four copies are `steps/ch04-1-stdio`, `steps/ch04-2-http`, `steps/ch04-3-registry`, and `steps/ch04-4-cache`. The library in every copy is still `harness_core`.
 
 `McpSession` is the connection. `McpTool` is the registry entry. `readOnlyHint` becomes `ToolKind`, and a missing hint means `Write`, because treating silence as a read would let a mutating tool overlap its neighbors. A duplicate name is `ToolError::Duplicate`. The test server is the fixture in `steps/ch04-fixture`, included into each step so the tests can see `CARGO_BIN_EXE_mcp_fixture`. It does not dial an external host. Linux, macOS, and Windows all run it. `echo` returns its text and is read-only. `note` stores a line and is a write. `grow` reveals a fourth tool, `extra`, and sends `notifications/tools/list_changed`. Section 4.4's `ToolListCache` remembers the last `tools/list` for one connection and drops it on that notification.
@@ -35,8 +33,6 @@ Rust, in sidebars: a child process and stdio, an HTTP session, `async` across th
 > `notifications/tools/list_changed` triggers a refresh: list again, drop tools that disappeared, register tools that appeared. A burst of those notifications is coalesced in `tools/mcp_tool_health.py`, in `_schedule_tools_refresh`: one refresh runs, and at most one follow-up is queued behind it. Prompt and resource list-changed notifications are received and not fully acted on. The embedded `hermes mcp serve` command is stdio-only. The client speaks both stdio and HTTP.
 >
 > This chapter's client is the same split. `McpSession` is the connection. `McpTool` is the registry entry. `readOnlyHint` becomes `ToolKind`. A duplicate name is `ToolError::Duplicate`. The cache in 4.4 drops on every notification. It does not coalesce a burst. That difference is a pitfall at the end of the chapter.
-
-[personal note: the first MCP server you pointed a client at, and what it listed]
 
 ## What this chapter decides
 
@@ -386,8 +382,6 @@ Sampling and elicitation limits (M7, `tools/mcp_tool_sampling.py`) are not in th
 - **Registry.** Remote tools are `Arc<dyn Tool>`. A duplicate `echo` is rejected. `note` is a write because it has no read-only hint. Eight delayed reads overlapped. Fifty zero-delay calls measured 1.908 ms concurrent and 3.603 ms sequential.
 - **Cache.** Two reads of `tools/list` increment `list_calls` once. `grow` sends `list_changed`, and the next read sees `extra`. The cold list measured 82.87 µs. The hit measured 168.0 ns.
 - **Chapter 6.** `cards_from_listed`, `ListCache::from_cards`, and `replace_cards` take a real list without linking `rmcp`. The 10,000-tool benches still use the generator. The section crates for that chapter stay `steps/ch06-*`.
-
-[personal note: which part of MCP was harder than the protocol, the process lifetime or the list cache]
 
 ## What's next
 

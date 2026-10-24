@@ -1,7 +1,5 @@
 # Chapter 18: Providers
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 1 can call OpenRouter, and every later harness copy still can. A harness that is serious about more than one model needs a native adapter beside that client, a way to fall through when a route is invalid, a way to rotate a key without building a new HTTP client, and a cheaper model for the summaries it will soon want. This chapter adds that module. It is `adapters`, on a copy of chapter 17. The crate is `steps/ch18-providers`. The package is `ch18-providers`. The library is `harness_core`. `drive_loop` does not call this module yet. The chapter's tests and the demo do. The chapter 9 provider stays the loop's client until a later edit wires the route in.
 
 `Msg` is the message this module sends. Two request bodies, both JSON values, cover the OpenAI-compatible shape and the native Anthropic shape. Bedrock sits beside them. TLS stays on the operating system's trust store. `Preferences` and the route picker choose the next model. An invalid route falls through to the fallback. Key rotation returns the same pooled client chapter 1 created, so a new key is not a new connection pool. The side model is named for summaries and is not invoked on the user turn unless that turn asked for a summary. Duplicate tool-call ids in one batch are uniquified, and a dangling tool row is repaired, which is the rest of the body-repair work chapter 9 started.
@@ -39,8 +37,6 @@ Rust, in the sidebars: another impl of the same trait is how a new provider appe
 > **Adapted.** There is no HTTP client in this crate. The per-model output-ceiling table is not ported. A `max_tokens` of 0 is an error. Fallbacks are a `models` array on the route object. I did not find Hermes writing that array inside `build_anthropic_kwargs` or `build_converse_kwargs`. Hermes keeps the list on `fallback_model`. Rotation advances an index in one `Pool` and the client id stays `1`. The side model is a string choice, not a second request.
 >
 > **Deferred.** OAuth transforms, thinking budgets, and cache points stay out. Live certificate verification stays out with the socket. Chapter 19 strips think blocks from a stream.
-
-[personal note: a provider body that failed because one field was missing]
 
 ## What this chapter decides
 
@@ -720,8 +716,6 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Laye
 - **Client.** Rotation changes the key and keeps client id 1. The side model stays off.
 - **Wire.** `call_0` twice becomes `call_0` and `call_0_d2`. A dangling tool row is closed.
 - **Time.** Choosing the next route measured **5.990 ns**. Rotating a key measured **3.465 ns**.
-
-[personal note: a key rotation that built a second client, and what the pool was supposed to keep]
 
 ## What you implement
 

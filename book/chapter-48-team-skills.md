@@ -1,7 +1,5 @@
 # Chapter 48: Shared Team Skills
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 27 can curate one agent's skills. A team that learns together needs a shared library, and it needs exactly one writer. If every worker patches the team store, two patches will tear a file, and a dangerous install will depend on which worker remembered the scanner. This chapter adds the library, the proposal, and the librarian. The crate is `steps/ch48-team-skills`, a copy of chapter 47 plus `team_skills`. The package is `ch48-team-skills`.
 
 `Library` has layers: team, agent-local, and bundled. `load` reads them. `render_team` writes the index the workers see. `Index` is stored in an `Arc`, and `swap_index` replaces that `Arc`. Workers do not wait on the swap. `skill_propose` enqueues a `Proposal` on the bus from chapter 47 and returns. `PROPOSAL_CAP` bounds that queue. `librarian_accept` is the single writer. It calls `allow_install`, which calls chapter 25's `scan_text` and `should_allow_install`. Community plus `force` does not override a dangerous body. A local check for `rm -rf /` stays, because that scanner does not name the command. `Notice` is what running agents hear on their next turn. Agents spawned after the swap get the new index. `TEAM.md` is the team fact file, and it is not this chapter's worker-writable skill body.
@@ -53,8 +51,6 @@ Rust, at the swap: `Arc` is the index, and swapping it is one atomic store the r
 > **Deferred.** The manifest hash, the disk copy, and the user-deleted skip. A git history of the library is not this file. `stage_write` is not this file.
 
 > **Guardrails.** `force` does not install a dangerous community skill. An empty body is rejected. Workers load an `Arc` and do not take the write lock across the model. The full box is [Guardrails in this chapter](#guardrails-in-this-chapter).
-
-[personal note: a worker that only held an Arc]
 
 ## What this chapter decides
 
@@ -901,8 +897,6 @@ pub fn chapter_48_propose_waits() -> bool {
 - **Readers.** `load` returns an `Arc`. The old arc keeps its version.
 - **Heading.** `render_team` writes `# TEAM` and one bullet per skill. The demo line is `skills: v2 3`.
 - **Time.** `skill_propose` mean 80.1 ns. `index_swap` mean 200.3 ns. Each is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196). The Criterion `time:` line is the slope.
-
-[personal note: the librarian wrote, and the worker did not wait]
 
 ## What's next
 

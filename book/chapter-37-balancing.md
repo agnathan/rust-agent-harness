@@ -1,7 +1,5 @@
 # Chapter 37: Balancing and Federation
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 36 can restart a child that stopped making progress. That child may be waiting on a tool that lives on another MCP server, and the gateway still treats every backend for a tool as one call. If three upstreams offer `search`, the gateway should pick one that is not already busy, and it should not open a connection to all of them while it decides. This chapter adds the pool and the federation map. It is the server line, not the harness line. The crate is `steps/ch37-balancing`. It vendors chapter 23, library name `balancing`, new module `federation`. It binds no socket. Chapter 38 copies chapter 36. It does not copy this directory.
 
 `Policy` is least-outstanding or power-of-two choices. `Backend` is one upstream in the pool. `pick` chooses without opening a connection, which is the property the bench locks. `call` formats a string and puts the counter back, so a finished call decrements the outstanding count the next pick will see. `federate` and `pool_for` group one tool name to the server names that provide it. `discover` counts overlap and connects at most 4, the discovery concurrency Hermes uses. `0` as "unlimited" stays unimplemented. A live socket to those upstreams stays unimplemented too. The pool is in memory.
@@ -59,8 +57,6 @@ Rust, at the pick: the outstanding count is an integer you increment and decreme
 > **Adapted.** Least outstanding, and the quieter of two indexes, are this chapter's pool. I did not find them in the MCP client. Federation is a `HashMap` from tool name to server names, built from an in-memory list. Outstanding is an `AtomicUsize`. `pick` only loads it. `call` adds one, formats `reply via server`, and subtracts one. `discover` is threads, a mutex, and a condvar. The test's `hold` is a `thread::sleep` so the workers overlap. It is not a TCP connect. `0` as unlimited is not implemented. The gate always uses 4.
 >
 > **Deferred.** A live upstream connection, the unlimited override, and session routing. Chapter 42 is the service that routes by session id. The pick stays a local read.
-
-[personal note: a tool that had one backend until a second server offered the same name]
 
 ## What this chapter decides
 
@@ -532,8 +528,6 @@ pub fn chapter_37_pick_opens_connection() -> bool {
 - **Federation.** A map from tool name to server names. `echo` on `alpha` and `beta` picks `alpha` when both counters are 0.
 - **Discovery.** Four at a time. Unlimited `0` stays unimplemented.
 - **Demo.** `pick: echo via alpha`. The bench is `pick`, not `call`.
-
-[personal note: four atomic loads, and a name that came back without a handshake]
 
 ## What's next
 

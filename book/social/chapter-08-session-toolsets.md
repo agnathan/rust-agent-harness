@@ -24,9 +24,6 @@ dynamic: 135
 The dynamic arm measured 5.687 ms. Revealing every tool measured 8.355 ms. Those times include building the catalog.
 
 5/
-[personal note]
-
-6/
 Chapter 9 is the agent loop. It does not call this gateway. Chapter 10 is the transition table around the loop's exits.
 
 Read Chapter 8: [link]
@@ -39,8 +36,6 @@ Chapter 8 is out: Session Toolsets.
 The expensive part of a tool catalog is showing the schema. Hermes Agent caps search at 7 queries and describe at 10 names, and it rebuilds the catalog so a session-scoped copy cannot drift. I kept the caps. The session stores revealed names. The catalog stores the cards. A call to a name that was not revealed fails.
 
 On 2,000 synthetic tools a fake task succeeded three ways. Showing every schema was 45,104 estimated tokens. A static set was 153. Search plus one describe was 135. The estimate is bytes divided by 4. It is not a bill.
-
-[personal note: one takeaway from writing this chapter]
 
 Next: the turn state machine. Read Chapter 8: [link]
 

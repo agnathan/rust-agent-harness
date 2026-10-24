@@ -15,8 +15,6 @@ redact_bounded redacts str(raw or "") and length-bounds it. moa_trace.py is opt-
 4/
 The demo prints "trace: ok events=3 spans=5 team=101". The bench ids are 50/event_without_span and 50/span_per_event. Aliases: 48/event_without_span, 46/event_without_span, 48/span_per_event, and 46/span_per_event. The means are 18.1 ns and 236.4 ns, mean.point_estimate from [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196).
 
-[personal note]
-
 5/
 Next is chapter 51, the server capstone: load and tokens. Chapter 52 copies this harness, not chapter 51.
 
@@ -32,8 +30,6 @@ The harness is the chapter 49 tree copied forward, plus spans. tracing = "0.1" o
 I read Hermes at 9e01b44. The OTLP exporter maps gateway events to spans, the SDK is optional, and headers_env is read at export time and never logged or stored. redact_bounded redacts and length-bounds. moa.save_traces is off by default. The side channel is a file under the trace dir, not a row in the messages table.
 
 The demo prints "trace: ok events=3 spans=5 team=101". The bench ids are 50/event_without_span and 50/span_per_event. The means are 18.1 ns and 236.4 ns, mean.point_estimate from [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196). Subscriber install sits outside both samples.
-
-[personal note]
 
 Next: chapter 51, the server capstone, load and tokens. Chapter 52 copies this harness, not chapter 51. Read Chapter 50: [link]
 

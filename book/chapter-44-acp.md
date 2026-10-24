@@ -1,7 +1,5 @@
 # Chapter 44: Editor Integration
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 43 can claim a scheduled job and submit the next one to the inbox. An editor is a different client. It speaks the Agent Client Protocol: a stream of updates, permission requests, and a place to write the result. Teaching the editor about the turn table, the approval floor, and the memory files would duplicate the harness inside the editor. This chapter translates one ACP update into one submit on the session inbox. The crate is `steps/ch44-acp`, a copy of chapter 43 plus `acp`. The package is `ch44-acp`.
 
 `Update` is what the editor sent. `Mail` is what the inbox already understands, the turn, steer, and interrupt from chapter 35. `translate` is the function between them. `Approval` and `map_permission` turn an editor permission into the approval vocabulary chapter 11 already returns, so the editor does not grow a second allow or deny. `Submit` and `Inbox` are the queue, still capped at 64. `Streams` writes the result and a log line back. `stop_reason` maps the harness outcome onto the reason the editor shows. `FakeModel` completes one turn. The demo runs that path. The chapter looks at what a Copilot-style client sends and at the adapter this repo does not vendor. The behavior under test is the inbox, not a live editor session.
@@ -49,8 +47,6 @@ Rust, at the translate: the update and the mail are enums, and the mapping is a 
 > **Deferred.** A real editor session, the `acp_adapter` process, usage tokens on the response, and the permission prompt UI. Wiring `Mail` into `SessionInbox` is not this file. E1 and E2 are chapter 20. This file does not call them.
 
 > **Guardrails.** The catalog has no ACP row. The permission map fails closed. The full box is [Guardrails in this chapter](#guardrails-in-this-chapter).
-
-[personal note: an editor update that was just another message on the inbox]
 
 ## What this chapter decides
 
@@ -524,8 +520,6 @@ pub fn chapter_44_update_submits_once(updates: usize) -> usize {
 - **Permission.** The three allow ids keep their outcomes. `deny`, `deny_always`, and any unknown id deny.
 - **Model.** `FakeModel` answers `ok`. The demo line is `acp: end_turn`.
 - **Time.** `translate_update` mean `132.4 ns`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The Criterion `time:` line is the slope.
-
-[personal note: a protocol line that stayed a single string]
 
 ## What's next
 

@@ -1,7 +1,5 @@
 # Chapter 49: A2A for External Agents
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 48's team shares skills inside this process, on a bus the process owns. An agent that lives somewhere else — another product, another language, another trust boundary — is not a subscriber you can `try_send` to. MCP already covers tools, and agents, and skills this harness exposes. A second protocol for those would split the catalog. This chapter uses A2A only for agents outside the process. The crate is `steps/ch49-a2a`, a copy of chapter 48 plus `a2a`. The package is `ch49-a2a`.
 
 `ExternalAgent` is the peer. `AgentCard` describes it. `Pool` and `HttpPool` record calls in memory. `record` appends the url and the body the test will read. Nothing opens a socket. `acquire` and `hold` bound how many outbound calls are in flight, `CALL_BOUND`. `RemotePeer::send` is the trait method the fake implements. `call` passes chapter 20's `redact_for_egress` into that send, so a key in the outbound body is scrubbed by the one egress function. `wrap_inbound` marks the reply as data, with `INBOUND_PREFIX`, because the other agent is an untrusted writer the way a web page is. `cancel` reaches an in-flight call. `wait_cancel` is the join the bench times. `demo` prints the round trip against the fake.
@@ -85,8 +83,6 @@ Rust, at the boundary: the peer is a trait, so the test supplies a fake that rec
 > **Deferred.** Bind host. Token auth. A true abort of a running model. Email redaction.
 
 > **Guardrails.** E2 on the way out. The inbound prefix. A bound of 8. Cancel before `record`. The full box is [Guardrails in this chapter](#guardrails-in-this-chapter).
-
-[personal note: a URL that stayed outside this process]
 
 ## What this chapter decides
 
@@ -661,8 +657,6 @@ pub fn chapter_49_cancel_reached() -> bool {
 - **Card.** The name is `harness`. The skill is `research`.
 - **Model.** `FakeModel` answers `ok`. The demo line is `a2a: ok`.
 - **Time.** `cancel_inflight` mean `46.13 µs`. That cell is `mean.point_estimate` for id `49/cancel_inflight`. The Criterion `time:` line is the slope.
-
-[personal note: a permit that came back when the flag was already set]
 
 ## What's next
 

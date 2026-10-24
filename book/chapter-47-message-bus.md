@@ -1,7 +1,5 @@
 # Chapter 47: The Message Bus
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 46's processes can claim a card. They cannot publish a sentence to whoever is listening. A peer that wants to say "the build failed" without knowing the subscriber's inbox needs a bus: a topic, a bounded channel per subscriber, and a rule for what happens when one subscriber is slow. This chapter adds that bus. The crate is `steps/ch47-message-bus`, a copy of chapter 46 plus `bus`. The package is `ch47-message-bus`.
 
 `Envelope` is the message. `Sub` is a subscriber. `Bus` holds them. `subscribe` registers a name on a topic. The channel bound is `BUS_CAP`, 64, the same number as the agent inbox, so "slow" means the same thing in both places. `publish` fans the envelope out. `deliver` calls chapter 20's `redact_for_egress` before `try_send`. `bus.rs` does not define its own scrubber. A published envelope that contains a key is scrubbed. `send_to` is the direct path and does not scrub, which the chapter treats as a hole you have to know about: publishers use `publish`. `publish_bot` counts toward the bot-loop guard, 20 delivered events and then `Cooldown`. There is no clock. Ordinary `publish` does not count. A full channel returns `Slow` instead of allocating a 65th slot. A different topic returns `Delivered(0)`.
@@ -53,8 +51,6 @@ Rust, at the fan-out: each subscriber has an `mpsc` sender, `try_send` is the no
 > **Deferred.** The 300 second window and the notify cursor. A real socket is not this file. Chapter 49 is the call that leaves the process.
 
 > **Guardrails.** E2 is called here. The name in the catalog is egress scrub. The full box is [Guardrails in this chapter](#guardrails-in-this-chapter).
-
-[personal note: a full channel that had to say slow]
 
 ## What this chapter decides
 
@@ -709,8 +705,6 @@ pub fn chapter_47_published(body: &str) -> String {
 - **Egress.** E2. `deliver` calls `crate::redact::redact_for_egress`. There is no second scrubber in this file.
 - **Model.** `FakeModel` answers `ok`. The demo line is `bus: ping ok`.
 - **Time.** `publish_to_agents` mean 47.98 µs. That is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196). The Criterion `time:` line is the slope.
-
-[personal note: a channel that stayed at 64]
 
 ## What's next
 

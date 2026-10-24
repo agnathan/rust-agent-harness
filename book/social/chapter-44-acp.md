@@ -15,8 +15,6 @@ What is there: agent/copilot_acp_client.py appends session/update chunks, and it
 4/
 The demo prints "acp: end_turn". The bench id is 44/translate_update. The old ids 42/translate_update and 40/translate_update are aliases. The mean is 132.4 ns, mean.point_estimate from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573).
 
-[personal note]
-
 5/
 Next is chapter 45, the blackboard: agents claim shared state, and the lock is not held across a model call.
 
@@ -32,8 +30,6 @@ The harness is the chapter 43 tree copied forward, plus an ACP module. translate
 Hermes Agent at 9e01b44 lists acp_adapter in pyproject.toml, and cmd_acp imports acp_adapter.entry. That directory is not in the checkout. The ACP code I could read is agent/copilot_acp_client.py: session/update chunks are appended, a permission request is answered cancelled, and stdout and stderr are pumped apart. gateway/session_acp_lifecycle.py ends an idle ACP session. It does not turn an update into a submit. The adapter in this chapter is the harness file.
 
 The demo prints "acp: end_turn". The bench id is 44/translate_update. Aliases: 42/translate_update and 40/translate_update.
-
-[personal note]
 
 Next: chapter 45, the blackboard. Read Chapter 44: [link]
 

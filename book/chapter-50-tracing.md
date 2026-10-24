@@ -1,7 +1,5 @@
 # Chapter 50: Seeing Inside
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 49 can call an external agent and cancel the call. When a team run goes wrong, the transcript says what the model said. It does not say which span was open, which field was safe to log, or whether the hundred agents in a research team finished. This chapter adds spans on the events the harness already emits, and it adds the research team that uses them. The crate is `steps/ch50-tracing`, a copy of chapter 49 plus `spans`. The package is `ch50-tracing`. Chapter 51 is not this team. Chapter 51 is the server's load and token comparison. Chapter 52 copies this harness, not chapter 51.
 
 `CountingSubscriber` counts the spans a test opened, so the bench can compare a turn with tracing and a turn without it. `safe_field` decides what may be attached to a span. A secret is not a span field. `emit` records one event. `mock_turn` runs the scripted model under that subscriber. `Memory` is the small store the research team reads across runs, the harness memory, not a new database. `research_team` runs 100 mock agents and then one more. `demo` prints the team. A span per event still finishes the mock turn, which is the requirement: tracing is not allowed to change the outcome, and it is not allowed to blow the chapter 1 budget of a millisecond of overhead once the model is excluded.
@@ -87,8 +85,6 @@ Rust, at the subscriber: the `tracing` crate's subscriber is a trait you impleme
 > **Deferred.** A collector. Headers. `moa.save_traces` files.
 
 > **Guardrails.** The prompt is not a span field. No socket. Memory notes are the mock reply, which is `ok` or `kept`, not the user prompt, because `FakeModel` ignores the prompt. The full box is [Guardrails in this chapter](#guardrails-in-this-chapter).
-
-[personal note: a span that held a name]
 
 ## What this chapter decides
 
@@ -555,8 +551,6 @@ pub fn chapter_50_span_finishes_turn() -> bool {
 - **Team.** `research_team(100)` then `research_team(1)` leaves 101 notes. The second call sees the earlier notes. The note text is the mock reply.
 - **Model.** `FakeModel` answers `ok` or `kept` in `demo`. The line is `trace: ok events=3 spans=5 team=101`.
 - **Time.** `event_without_span` mean `18.1 ns`. `span_per_event` mean `236.4 ns`. Those cells are `mean.point_estimate`. The Criterion `time:` line is the slope.
-
-[personal note: five spans, and the sink held three names]
 
 ## What's next
 

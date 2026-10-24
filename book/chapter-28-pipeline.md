@@ -1,7 +1,5 @@
 # Chapter 28: The Sequential Pipeline
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 One agent can now remember, search, read a skill, write one under a scanner, reflect, and curate. It still does every stage of a piece of work inside one conversation. Outline, draft, critique, and revise have different jobs, and stuffing them into one transcript makes each stage fight the previous stage's notes. This chapter runs them as four agent runs, in order, on one shared context. The crate is `steps/ch28-pipeline`, a copy of chapter 27 plus `pipeline`. The package is `ch28-pipeline`. It does not write a skill and it does not write a memory file. Those stores stay where chapters 21 and 25 put them.
 
 The context is one allocation. `run` appends a note and returns the same `Arc`. `hand_off` is the pointer the next stage is given. Copying the transcript would be legal and wasteful, and it would tempt a stage to mutate a private copy that the next stage never sees. The demo runs the four names — outline, draft, critique, revise — and prints the last note. The benches time the pointer and, beside it, the cost of copying 100 messages, so the difference is a measurement rather than a slogan.
@@ -41,8 +39,6 @@ Rust, at the hand-off: `Arc` is a clone of a pointer, and the clone is what you 
 > **Adapted.** Four scripted stages share one `Arc<Context>`. `hand_off` returns the same `Arc`. The replies are values in the stage slice. A separate bench clones 100 messages so the copy has a mean. The pipeline does not call that clone.
 >
 > **Deferred.** Live reference models. Chapter 29 runs specialists under a bound. Those specialists stay scripted too.
-
-[personal note: a draft you wish had gone through a critique stage before you saw it]
 
 ## What this chapter decides
 
@@ -500,8 +496,6 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). This
 - **Notes.** Each stage pushes `name: reply` under the mutex. The demo's last line is `revise: the revision`.
 - **Replies.** Scripted. No key. No model.
 - **Time.** `arc_pass` mean `9.15 ns`. `copy_transcript` mean `6.12 µs`. Both are `mean.point_estimate`. The Criterion `time:` line is the slope.
-
-[personal note: a pipeline stage that only made sense because it could see the previous note]
 
 ## What you implement
 

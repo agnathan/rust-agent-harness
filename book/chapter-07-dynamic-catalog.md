@@ -1,7 +1,5 @@
 # Chapter 7: Dynamic Catalog
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 5 can list the tools it was given at startup. A gateway that only does that cannot pick up a plugin, or a second server's tools, without a restart. Chapter 6 already measured what a 10,000-tool list costs when the client holds the index: the search is fast, and it still runs inside the agent. This chapter moves the catalog into the server. The step crate is `steps/ch07-catalog`, package `ch07-catalog`. It binds no socket. A live connection to an upstream MCP server waits until chapter 37.
 
 `Gateway` holds a `Snapshot` behind `RwLock<Arc<Snapshot>>`. The snapshot is the merged list: native tools, a `PluginSet`, and an in-memory `Upstream`. `Origin` says which of those a card came from. `Bm25Index` ranks the way chapter 6 did, with the same k1 and b, and an exact name match ranks first. `Embedder` is the trait chapter 6 introduced, and `HashEmbedder` is the stand-in that does not call a network. `reload` builds a new index, then replaces the `Arc`. A caller that already cloned the old `Arc` keeps it. `call` clones the `Arc` before it reads the card, so a reload during the body does not change that call's tool. A duplicate name is `CatalogError`, and the previous snapshot stays.
@@ -38,8 +36,6 @@ Rust, for a new reader: `Arc` is a shared pointer with a count. Cloning it is ch
 > **Adapted.** Hermes rebuilds on every assembly. This server keeps a `Snapshot` behind `RwLock<Arc<Snapshot>>`. `reload` builds the new index, then replaces the `Arc`. A caller that already cloned the old `Arc` keeps it. `call` clones the `Arc` before it reads the card, so a reload during the body does not change that call's tool. The rarest-token admission in `search_catalog` (`_gate_token`, and `_required_term_coverage`) is not in this index. Chapter 6's client search does not have it either. I am not assigning it to a later chapter. `HashEmbedder` buckets bytes into eight floats. Search calls it when one is installed, and ranking stays BM25. That is the same seam as chapter 6.
 >
 > **Deferred.** A real embedder, a real upstream MCP connection, and hot reload across replicas wait. Federation of live servers is chapter 37. Per-session views are chapter 8. The 7-query and 10-describe caps are chapter 8.
-
-[personal note: a reload that surprised a call still in flight]
 
 ## What this chapter decides
 
@@ -139,8 +135,6 @@ Context-file injection scanning (F2) and the 20,000-character cap (F3) are chapt
 - **Search.** BM25, exact name first. 10,000 tools, top 8, measured **299.0 µs**.
 - **Reload.** The index is built, then the `Arc` is stored. Rebuilding 10,000 tools measured **27.42 ms**. Swapping a one-tool snapshot while holding the old `Arc` measured **2.467 µs**.
 - **Embedder.** Optional. Ranking does not use it.
-
-[personal note: whether the reload or the index was the part you had to reread]
 
 ## What's next
 

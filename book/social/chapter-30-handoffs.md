@@ -15,8 +15,6 @@ This board filters before it counts. MAX_HANDOFFS is 4, and that cap is this har
 4/
 The mean for filter_100 is 2.13 µs, mean.point_estimate from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589). The demo prints "draft sees 2". No key.
 
-[personal note]
-
 5/
 Next is fan-out: a queue of 100, gather on the pool of 8, replies in task_index order. Heartbeats stay chapter 36.
 
@@ -30,8 +28,6 @@ Chapter 30 is out: Handoffs.
 The next agent should receive a filtered transcript. Hermes Agent's handoff.request writes a pending transfer for a watcher to claim and re-bind. A running session is error 4009, and platform is required. I kept the idea that a handoff is a recorded transfer, not a model call. This board drops role scratch first, then allows four transfers. The fifth is Limit, and the owner string stays.
 
 The mean for filter_100 is 2.13 µs.
-
-[personal note]
 
 Next: a queue of 100 tasks that refuses the 101st. Read Chapter 30: [link]
 

@@ -1,7 +1,5 @@
 # Chapter 30: Handoffs
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 29's supervisor calls specialists and gets summaries back. The parent still owns the task. Sometimes ownership should move: a router decides that a different agent continues, and the first agent is done. If that transfer copied the whole transcript, the next agent would see scratch it should not see. This chapter filters the transcript and then moves the owner. It does not rewrite the system prompt. Chapter 2's cache rule is why that prefix has to stay put. The code's job is the filter, not a prompt edit. The crate is `steps/ch30-handoffs`, a copy of chapter 29 plus `handoffs`. The package is `ch30-handoffs`.
 
 The board is a count and an owner. `filter_transcript` drops scratch and keeps order. `handoff` filters, then counts, then writes the owner. A max-handoff limit stops a task from bouncing forever. The demo shows the next owner and the filtered length. The bench times the filter on 100 messages, which is the copy the next owner receives, not the full transcript. Platform re-bind, the part where a chat session starts talking to the new owner, stays in chapter 39. This chapter changes the owner field. It does not talk to Telegram.
@@ -42,8 +40,6 @@ Rust, at the board: the owner is an enum or a name in a struct, and the count is
 > **Adapted.** The context is filtered before the next agent. `filter_transcript` drops role `scratch`. `MAX_HANDOFFS` is 4. That cap is this harness. It is not a Hermes constant.
 >
 > **Deferred.** Platform re-bind, to chapter 39. The watcher that claims the pending row. Error 4009. The required platform field. This `Board` does not take a platform.
-
-[personal note: a handoff that passed along a scratch note you did not mean the next agent to see]
 
 ## What this chapter decides
 
@@ -482,8 +478,6 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). This
 - **Owner.** Changes only after a non-empty filtered transcript is accepted. `Empty` and `Limit` leave the owner as it was.
 - **Atomic.** `AtomicU32` with `Ordering::Relaxed`. `fetch_add` returns the previous count. The refusal undoes itself.
 - **Time.** `filter_100` mean `2.13 µs`. That is `mean.point_estimate`. The Criterion `time:` line is the slope.
-
-[personal note: a transfer that was really a platform change, and the filter you still wanted]
 
 ## What you implement
 

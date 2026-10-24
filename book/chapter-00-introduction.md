@@ -1,7 +1,5 @@
 # Chapter 0: Why I'm learning Rust by building a multi-agent harness
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 I'm learning Rust by building the thing I actually want: a harness that can run teams of agents, and that can get better at a kind of task the longer it runs. A tutorial that introduces `struct` and then stops would teach the syntax and leave the design untested. A harness has to keep a conversation, call tools, refuse a bad call, remember a fact, and hand work to another agent. Each of those problems forces a language feature at the moment it is needed, which is the pace this book uses.
 
 An agent, stripped of the product language, is a loop. You send the messages so far and a list of tools to a model. If the model answers with text, the turn is over. If it asks for a tool, you run the tool, append the result, and ask again. The loop is short. The harness is everything that makes the loop trustworthy: which provider you called, which tools the model was allowed to see, how long it may run, what happens when a call fails, where the session is stored, and how a second agent receives only the part of the work it should see. Hermes Agent, the open-source system this book learns from, already has a version of that harness, including the closed loop in which an agent writes skills, keeps memory, searches its own sessions, and curates what it learned. This book rebuilds the ideas that matter in Rust, one chapter at a time, with tests.
@@ -19,8 +17,6 @@ Rust shows up in sidebars when the design needs it: a struct for a message, an e
 - Why rebuild ideas from it in Rust?
 - The plan
 - How to read this book
-
-[personal note: what got me interested in AI agents and in Rust in the first place, and what I do day to day]
 
 ## What is an "agent harness"?
 
@@ -63,8 +59,6 @@ Not because Python is "bad". Hermes works, and much of its complexity comes from
 
 Rust's async runtime (tokio) can run thousands of lightweight tasks on a handful of threads. Dropping a future cancels it immediately and completely. The compiler won't let two tasks mutate the same data without synchronisation. Those properties line up closely with what a multi-agent harness needs.
 
-[personal note: other reasons Rust appeals to me, e.g. performance, reliability, wanting to learn a systems language, career goals]
-
 ## The plan
 
 The book is six parts and chapters 0 through 52. The outline is [`book/book-outline.md`](book-outline.md). Each chapter has a milestone test in `my-harness/tests/chNN.rs` that fails until the code for that chapter is in place, and a finished reference under `steps/`.
@@ -80,9 +74,7 @@ Rust shows up when the harness needs it: ownership when the conversation is a va
 
 ## How to read this book
 
-If you're new to Rust like me, read the chapters in order and do the exercises. The compiler is strict, and early on that's frustrating. I'll be honest about the moments it beat me.
-
-[personal note: first impressions of Rust after the setup chapter]
+If you're new to Rust, read the chapters in order and do the exercises. The compiler is strict, and early on that's frustrating.
 
 If you already know Rust and are here for the agent architecture, skim to Chapter 9 (the loop), Chapter 10 (the turn state machine), and Chapters 29, 35, and 36 (the supervisor, actors, and supervision). Each has a "How Hermes does it" section with file paths, so you can read the Python next to the Rust.
 

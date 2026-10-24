@@ -286,7 +286,7 @@ Hermes, read on current `main` (do not invent a path that is not in this list):
 
 Adopt the result shape, the clamp, the secret-URL refusal, the SSRF floor (metadata always blocked), the head/tail truncation, the base64 rewrite, and the untrusted wrapper. Adapt the backends to one trait: `FakeSearch` for tests and benches, and one optional real backend that reads a single env var (name it in the chapter; do not call the network in CI). Defer the vendor ladder (Firecrawl, Tavily, Exa, Perplexity, ddgs, keyless rescue, TTL memo) and `tools/website_policy.py`. Say so in the Hermes box.
 
-The chapter is the chapter 1–4 shape: numbered sections, full listings, a Rust sidebar when the trait and `async` show up, real nextest output, `mean.point_estimate` from that PR's Benchmarks run, pitfalls, guardrails (I3, the SSRF floor, F4 wrapping), a What you implement exercise, and social posts with `[personal note]` placeholders.
+The chapter is the chapter 1–4 shape: numbered sections, full listings, a Rust sidebar when the trait and `async` show up, real nextest output, `mean.point_estimate` from that PR's Benchmarks run, pitfalls, guardrails (I3, the SSRF floor, F4 wrapping), a What you implement exercise, and a social draft.
 
 ### Built-in Tools II: Files, Terminal, Todo, and Clarify
 

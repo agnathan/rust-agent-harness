@@ -1,7 +1,5 @@
 # Chapter 32: The Critic
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 31 can gather a hundred replies into an ordered summary. Somebody still has to say whether the summary is good enough to stop. If the same agent that did the work also grades it, the grade tends to agree with the work. This chapter adds a critic that reads the summary and does not do the task. The crate is `steps/ch32-critic`, a copy of chapter 31 plus `critic`. The package is `ch32-critic`.
 
 `judge` is a function, not the `Tool` trait and not chapter 29's `Job`. It takes one permit from the chapter 29 pool. It does not take eight. A judge that ran wide would starve the workers it is judging. `parse_verdict` scans the reply for one word, so a chatty model still yields a single decision. The snippet the critic sees is cut on a character boundary, which matters in Rust because a string slice must not land in the middle of a UTF-8 sequence. `judge` takes the permit, reads, and does not push a new task onto the fan-out. The demo accepts. The bench times one permit.
@@ -41,8 +39,6 @@ Rust, at the snippet: indexing a `&str` is by byte, and `is_char_boundary` is th
 > **Adapted.** The parser is a line scan of the reply for the word `verdict`. A missing verdict word is `Reject`. `as_tool` and `final_gate` both call `judge`. `judge` takes one permit with `pool.acquire`, locks the notes, and does not push. The 30 second timeout is not slept. `SNIPPET_CHARS` is 4,000. The cut uses `raw.len()`, which is bytes, then steps back to a char boundary. Hermes's `_JUDGE_RESPONSE_SNIPPET_CHARS` is a character count.
 >
 > **Deferred.** The continuation loop, the wait target, and the quality-gate shell commands, to chapter 33. `DEFAULT_GATE_TIMEOUT_SECONDS` and `DEFAULT_GATE_MAX_RETRIES` are not stored in this file. `JUDGE_SYSTEM_PROMPT` is not embedded here.
-
-[personal note: a result that looked finished until something had to say so]
 
 ## What this chapter decides
 
@@ -450,8 +446,6 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 - **Snippet.** At most 4,000 bytes of `raw`, on a character boundary.
 - **Constants.** 20 turns and 30 seconds, returned by `limits`. The 30 seconds are not slept.
 - **Time.** `judge_one_permit` mean `278.9 ns`. That is `mean.point_estimate`. The Criterion `time:` line is the slope.
-
-[personal note: a gate you wanted to fail closed]
 
 ## What you implement
 

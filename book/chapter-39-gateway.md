@@ -1,7 +1,5 @@
 # Chapter 39: The Gateway
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 38 can resolve a persona and keep a secret out of the prompt. The only way to start a turn is still the CLI. A messaging platform, a second bot, or a user who types while a turn is running needs a front door into the session inbox from chapter 2, which chapter 35 made the agent's mailbox. This chapter is that door. It is the chat gateway. It is not the MCP server. The MCP server is chapters 5, 7, 8, 15, 23, 37, 42, and 51, and it stays a separate program. The crate is `steps/ch39-gateway`, a copy of chapter 38 plus `gateway`. The package is `ch39-gateway`.
 
 Authorization is default-deny after an allowlist and a pairing check. A pairing code is stored, and five failures lock the caller out. Twenty bot messages trip a cooldown so two bots cannot talk forever. A stat error on the pause sentinel fails safe: the gateway treats the emergency stop as engaged. The inbox is a `VecDeque` of 64, the same cap as chapter 35. A platform enqueue is not a model call. Folding keeps text and skips tool chunks, using chapter 19's events so a chat user sees one message. A running session refuses a re-bind. Chapter 30 deferred that re-bind to here. Outbound text calls chapter 20's `redact_for_egress`.
@@ -57,8 +55,6 @@ Rust, at the inbox: the deque is the bounded queue, and enqueue is a `push_back`
 > **Deferred.** The rest of `_is_user_authorized` (trusted upstream, group lists, adapter roles, `GATEWAY_ALLOW_ALL_USERS`). Home-channel checks. A real sentinel file. Live platform sockets. Salted hashes and `chmod 0600`. The cron prompt scanner. Chapter 43 keeps `check_gateway_lifecycle` for job text. This chapter does not move that check. Interpreter-image kills (`pkill python`) and the launchctl submit pre-scan stay in Hermes. The MCP server is chapter 42.
 >
 > I looked for `tui_gateway/methods_session.py` in this checkout. That directory is not on `9e01b44`. Chapter 30 read `handoff.request` at `ab3fe9dffb0a` and left the platform re-bind for here. `handoff_request` is that deferred check. Busy is code 4009, the code chapter 30 recorded. Empty platform is 4023 and an unknown platform is 4024 in this crate.
-
-[personal note: a message that was a push, and a stranger the allowlist did not name]
 
 ## What this chapter decides
 
@@ -682,8 +678,6 @@ pub fn chapter_39_enqueue_is_a_model_call() -> bool {
 - **Egress.** `send_out` is `redact_for_egress`.
 - **Model.** `demo` calls `FakeModel` and prints `gateway: queued`. The bench does not call it.
 - **Time.** `enqueue_platform` mean `152.0 ns`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The Criterion `time:` line is the slope.
-
-[personal note: a stranger who stayed outside, and a restart the supervised process refused]
 
 ## What's next
 

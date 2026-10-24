@@ -15,8 +15,6 @@ tools/threat_patterns.py line 27 matches ignore, a bounded filler, previous|all|
 4/
 The demo prints "blackboard: researcher ok". The bench id is 45/claim_with_waiters. The old ids 43/claim_with_waiters and 41/claim_with_waiters are aliases. The mean is 4.96 µs, mean.point_estimate from [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196).
 
-[personal note]
-
 5/
 Next is chapter 46, the kanban board: one lock file, one winner.
 
@@ -32,8 +30,6 @@ The harness is the chapter 44 tree copied forward, plus a blackboard module. Fac
 Hermes Agent at 9e01b44 does not ship a blackboard type. hermes_cli/kanban_db_dispatch.py releases the dispatch lock before the tick observer, at line 2029, and line 2348 says the same thing. agent/estop.py is_engaged is true if any sentinel exists and fails safe on a stat error. check_paused returns true when engaged. tools/threat_patterns.py bounds the filler between ignore and instructions. This chapter's check is the four phrases with no filler words.
 
 The demo prints "blackboard: researcher ok". The bench id is 45/claim_with_waiters. Aliases: 43/claim_with_waiters and 41/claim_with_waiters. The mean is 4.96 µs, mean.point_estimate from [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196).
-
-[personal note]
 
 Next: chapter 46, the kanban board, one lock file, one winner. Read Chapter 45: [link]
 

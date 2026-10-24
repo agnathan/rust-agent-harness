@@ -1,7 +1,5 @@
 # Chapter 43: Cron
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 41's harness can see an image and wrap the caption. It still runs only when something calls it. This chapter is about who is allowed to run a job and what the job may say. There is no cron expression and no clock. `scan_due` returns jobs the test has already marked due. The store is in memory. The crate is `steps/ch43-cron`, a copy of chapter 41. Chapter 42 is the MCP server and is not copied. The new module is `cron`. The package is `ch43-cron`. The chat gateway's lifecycle guard stays in chapter 39. This chapter has its own check for a job prompt, and the two are not merged.
 
 `Job` is the record. `claim` takes it, and a second claim loses. `crash` releases the claim once, so a retry happens at most once. A second crash keeps the claim. `Store` holds the jobs. `scan_due` returns the ones that are due and unclaimed. `watchdog` and `chain` are separate from the scan: the watchdog notices a stuck claim, and `chain` submits the next job to the same inbox chapter 35 already bounds. A chained job is not a direct model call. `scan_prompt` runs before `claim`. The patterns cover injection, a hidden instruction, a system-prompt override, secret reads, and a destructive command. `check_lifecycle` blocks a prompt that would restart, stop, or uninstall the gateway, or kill its process. `start` is allowed. `unattended_denies` matches the dangerous command chapter 11 already denies when nobody is there. `run_job` is the path that scans, checks, claims, and calls `FakeModel`.
@@ -55,8 +53,6 @@ Rust, at the claim: the owner is an `Option` in the job, and compare-and-set is 
 > **Deferred.** The jobs file, the 300 second claim TTL, `advance_next_run`, invisible-unicode stripping, the GitHub `api.github.com` curl exemption, wget and header exfil, `launchctl`, nested-script reads, and interpreter-image kills. The full dangerous-command list stays in chapter 11.
 
 > **Guardrails.** M1 is `scan_prompt`. M2 is `check_lifecycle`, and it stays in `cron.rs`. Chapter 39's B4 is the shell guard on the chat gateway. A4 stays chapter 11. The full box is [Guardrails in this chapter](#guardrails-in-this-chapter).
-
-[personal note: a job that was due, and a second process that did not get to run it]
 
 ## What this chapter decides
 
@@ -659,8 +655,6 @@ pub fn chapter_43_lifecycle_allowed(command: &str) -> bool {
 - **Off the path.** `watchdog` and `chain` are separate calls. `scan_due` only returns indexes.
 - **Model.** `FakeModel` answers `ok`. The demo line is `cron: claimed`.
 - **Time.** `scan_thousand` mean `1.75 µs`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The Criterion `time:` line is the slope.
-
-[personal note: a due list that was an index, and a job the scanner refused to claim]
 
 ## What's next
 

@@ -1,7 +1,5 @@
 # Chapter 33: Composing Patterns
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 The team patterns now exist as separate modules: a pipeline, a supervisor with a pool of eight, a filtered handoff, a fan-out of 100, and a critic with one permit. A real task uses more than one of them. A supervisor fans out, and it hands off only when ownership should move. A nested fan-out that ignores the pool will schedule a width the machine never agreed to. This chapter composes the patterns and puts the limits in front of the scheduling. The crate is `steps/ch33-composition`, a copy of chapter 32. The new module is `composition`. The package is `ch33-composition`. It does not path-depend on four older crates. The sources are copied, which is the rule from chapter 10 on.
 
 `nested_fanout` refuses a width of 9 before `schedule` is called. Eight is the pool. The refusal happens before any task starts, so a too-wide request does not leave orphan work. `dispatch` moves ownership only for `Route::Move`. Any other route keeps the parent, which is how a fan-out result stays a result instead of becoming a handoff. `wait_target` reads a session, then a pid, then seconds, the wait chapter 30 deferred. `Gate` records shell exits for the quality gate, also deferred from chapter 30. The loop runs the gates, then the critic from chapter 32. `limits` returns the four numbers the composition actually enforces, and the demo stays inside them. `FakeModel` pops a scripted line.
@@ -43,8 +41,6 @@ Rust, at the refusal: the route is an enum, so "move" and "stay" are not boolean
 > **Adapted.** The nested bound is `pool.limit()`. The tests build that pool with `WORKER_BOUND`, which is 8 in the copied supervisor. Hermes's default concurrent-children cap is 10. `held.saturating_add(width)` is compared with the limit before `FanBoard::new`. A refusal returns `ComposeError::ExceedsBound` and leaves `max_seen` at 0. The gate is a `VecDeque` of scripted exit codes. This file does not spawn a shell and does not sleep 300 or 30. `wait_target` scans the three names `wait_on_session`, `wait_on_pid`, and `wait_for_seconds`. `FakeModel::complete` pops a scripted line. `dispatch` returns `Ok(None)` for `Route::Stay`.
 >
 > **Deferred.** The alias keys `session_id`, `wait_session`, `pid`, `wait_pid`, `seconds`, and `wait_seconds`. A JSON object parse. Spawning the gate command. Heartbeats, which stay in chapter 36. Context-file scan, truncation, and the untrusted wrap, which are chapter 34. `MAX_DEPTH` stays the copied supervisor's depth check. This chapter does not call `child_call`.
-
-[personal note: a width that looked small until I added the workers I already held]
 
 ## What this chapter decides
 
@@ -593,8 +589,6 @@ pub fn chapter_33_refuses_width_nine_before_tasks_start() -> bool {
 - **Cap.** Twenty turns return `LoopStop::Turns`.
 - **Demo.** `fan n0 | n1; owner supervisor; done`.
 - **Time.** `nested_eight` mean `271.87 µs`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The Criterion `time:` line is the slope.
-
-[personal note: the moment the ninth child was the bug]
 
 ## What's next
 

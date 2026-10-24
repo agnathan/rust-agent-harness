@@ -1,7 +1,5 @@
 # Chapter 22: Recall
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 21 can remember a fact that is true every session. It cannot answer "what did we decide last Tuesday?" The transcript is in the chapter 20 store, and the full-text rows were left for this chapter. When the user refers to a past conversation, the agent should search before it asks them to repeat it. This chapter is that search. The crate is `steps/ch22-recall`, a copy of chapter 21 plus `recall`. The package is `ch22-recall`. The search calls `crate::wal`. It does not take a dependency on a separate sessions crate, and it does not call a model.
 
 `session_search` picks one shape from the arguments. A query is discover: BM25 hits, one row per session lineage, with the matching text on the top hit. A session id plus `around` is scroll, a window of messages. A session id alone is read, the session or its head and tail, with compaction summaries kept out of that view. No arguments is browse, the recent sessions. Subagent sessions are hidden. Automation sessions, cron and workers, are demoted so their repeated vocabulary does not push the user's own sessions out of the results. `insert_message` writes the rows the index rebuilds from. The virtual table is FTS5, created on purpose, with a trigram tokenizer, kept in sync by the insert path.
@@ -37,8 +35,6 @@ Rust, beside the query: FTS5 is a SQLite virtual table, which is a schema you cr
 > **Adapted.** Cron is still in the index, and the `ORDER BY` puts `cron` and `worker` after other sources. Hermes leaves cron out of the trigram index and searches it another way. I did not port that split. There is no `messages_fts` beside the trigram table. Rebuild is one `INSERT ... VALUES('rebuild')` after the rows exist, not the trigger set in `FTS_TRIGRAM_SQL`.
 >
 > **Deferred.** CJK tokenizer, the rank explanation Hermes returns to the model, and compaction summaries staying out of a read. The queue from chapter 20 is not what feeds this index. `install_fts` rebuilds from `messages`.
-
-[personal note: a search that returned a cron log instead of the conversation you meant]
 
 ## What this chapter decides
 
@@ -545,8 +541,6 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Reca
 - **Discover.** One hit per session. `desk` before `nightly`. `child` is absent.
 - **Other shapes.** Scroll is a window of 5. Read is the session. Browse is recent sessions, with cron after the user.
 - **Time.** One discover over 10,000 messages measured **60.80 µs**.
-
-[personal note: a past session the search found, or one it hid]
 
 ## What you implement
 

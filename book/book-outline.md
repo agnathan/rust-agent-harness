@@ -17,7 +17,7 @@
 3. the Rust needed for this piece, in a short sidebar
 4. building it, with the milestone tests in `my-harness/tests/chNN.rs`
 5. a milestone demo: the mock by default, and an optional real OpenRouter call
-6. what was learned, including `[personal note]` placeholders for the author's own experience
+6. what was learned
 
 The book is six parts and chapters 0 through 52. Eight of those chapters are the MCP gateway, marked *(server)* below: chapters 5, 7, 8, 15, 23, 37, 42, and 51. They sit immediately after the harness chapter they build on. The architecture and the notes from Hermes and from ContextForge, ToolHive, and the Docker MCP gateway are in [`docs/mcp-gateway.md`](../docs/mcp-gateway.md). Performance is a budget on every chapter, not a late part: async tokio from chapter 1, concurrent tools from chapter 3, and learning work off the hot path. The numbers are in [`docs/performance.md`](../docs/performance.md). MCP is first-class from Part I: tools are shaped like MCP tools (chapter 3), the harness is an MCP client (chapter 4, via `rmcp`), and a separate gateway process is the MCP server (chapter 5, then the rest of the server track). Later chapters call those servers and can publish skills through them. Part II is learning: one agent gets better with use before the book builds a team. The design for skills, memory, recall, reflection, curation, and the team librarian is [`docs/self-improvement.md`](../docs/self-improvement.md). Part III is the team patterns. The default team is a supervisor that calls other agents as tools, fans them out under a bound, and shares one context object by `Arc`. The rules for choosing a pattern are in [`docs/team-patterns.md`](../docs/team-patterns.md). Part IV is making that system robust. Part V runs it as a service: profiles, a chat gateway, browser tools, vision, the MCP gateway as a highly available service, cron, and an editor. Part VI is loosely coupled teams, including a durable kanban board next to the blackboard. Speed is already in force by then.
 
@@ -229,4 +229,3 @@ Chapters 1 through 4, chapter 6, and chapters 9 through 52 have step crates. Cha
 - "How Hermes does it": file paths and design notes from NousResearch/hermes-agent.
 - "Guardrails": the layer from [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md), and which catalog ids the chapter adopts or leaves for later. The line is in [`docs/chapter-template.md`](../docs/chapter-template.md).
 - Rust, introduced when the harness needs it.
-- "[personal note]": the author's own experience while working through the chapter.

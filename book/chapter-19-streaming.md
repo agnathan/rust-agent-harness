@@ -1,7 +1,5 @@
 # Chapter 19: Streaming
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 18 can choose an adapter and a route. The reply it handles is still buffered: the whole message arrives, then the harness looks at it. A user watching a long answer, and a loop that could overlap a safe tool with the rest of the reply, both want the tokens as they come. They also want a thinking block, split across chunks, not to leak into the text the user sees or the transcript the next turn sends. This chapter folds a stream into the `Event` values chapter 1 already defined. The module is `stream`, on a copy of chapter 18. The crate is `steps/ch19-streaming`. The package is `ch19-streaming`. `drive_loop` does not call it yet. The tests do.
 
 `Delta` is one chunk. `Assembler` folds chunks into the text and the tool calls. `ThinkScrubber` has `feed`, `flush`, and `reset`. It watches for the think tags, and a tag that arrives split across two chunks stays buffered until the scrubber can see the whole token. A partial tag is not emitted as text. Folding plain chunks matches joining them in a buffer, which is the test that the scrubber is a filter and not a rewriter of ordinary prose. The nine tags are the vocabulary the scrubber recognizes. The demo folds a scripted stream. Overlap with a safe tool is the shape chapter 9 described and left for here: a read can run while later chunks arrive. A write still waits.
@@ -38,8 +36,6 @@ Rust, at the fold: a stream is an iterator of deltas you do not have to collect 
 > **Adapted.** The newline-boundary flag and the orphan-close regex are not ported. Case folding is ASCII, which covers the English tags. The CJK tags do not change under that fold. Overlap is a rule on the delta: a read-only tool is recorded while text is still arriving, and a write is stored until `finish`. Hermes starts safe tools from the stream in the tool executor. This chapter does not call that executor.
 >
 > **Deferred.** The streaming repetition watch from chapter 14's guard stays a full-string check. Provider SSE parsers stay out, with the socket.
-
-[personal note: a think tag that arrived in two chunks, and what leaked before the hold]
 
 ## What this chapter decides
 
@@ -613,8 +609,6 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Laye
 - **Tags.** English and the four CJK tags. An inline mention without a close is kept.
 - **Overlap.** `echo` starts. `write` waits for `finish`.
 - **Time.** Folding 100 plain chunks measured **2.67 µs**. Joining them measured **689.3 ns**.
-
-[personal note: a stream that showed the thought before the close tag arrived]
 
 ## What you implement
 

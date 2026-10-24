@@ -1,7 +1,5 @@
 # Chapter 3: Tools
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 A conversation that can only talk is still a chat. The model needs a way to act: look something up, write something down, and receive a result it can read on the next turn. This chapter adds that shape. It does not yet ask the model which tool to call. That loop is chapter 9. It does not speak MCP on the wire. That client is chapter 4. It does not load thousands of schemas. That is chapter 6. What it adds is the shape those chapters share, in three copies: `steps/ch03-1-registry`, `steps/ch03-2-toolsets`, and `steps/ch03-3-dispatch`.
 
 A tool has a name, a description, a JSON Schema for its arguments, and a content result. That is the same shape as an MCP tool, chosen now while every tool is still a function in this process. If a native tool and a remote tool were different types, chapter 9's loop would grow a match arm for each. One trait means the loop asks for a name and a JSON object, and the registry answers. `Tool` carries the schema, a `ToolKind`, and `call`. The registry rejects a second registration of the same name, so a later plugin cannot quietly replace a built-in. `Catalog` turns named toolsets on only when an environment map contains the expected value and a check accepts it. The library never reads `std::env` itself, so a test builds the map it wants. The list a later chapter shows the model contains only the tools that passed.
@@ -33,8 +31,6 @@ The demos are offline. `cargo run -p ch03-3-harness-core --example demo` is the 
 > Parallelism is a separate list. `_PARALLEL_SAFE_TOOLS` in `agent/tool_dispatch_helpers.py` is the read-only set (`read_file`, `web_search`, `skills_list`, and the rest of that frozenset). Anything outside it runs one at a time, unless it is path-scoped. `_PATH_SCOPED_TOOLS` is `read_file`, `write_file`, and `patch`. Two of those may overlap in time when their normalized paths do not overlap. The same path, or a path that contains the other, waits.
 >
 > This chapter's `Tool` trait is the entry: schema, kind, and `call`. `Catalog` is the toolset gate, and the check looks at an env value the caller passed in, not at a process probe. `Dispatcher` is the pool. The kind is coarser than Hermes: every `Write` runs alone. There is no path check yet, so two writes to different files still wait for each other. I want that rule in the type before I teach the dispatcher about paths.
-
-[personal note: the first tool you wanted the harness to have, and why]
 
 ## What this chapter decides
 
@@ -680,8 +676,6 @@ The loop's tool-call validator (K1, `agent/turn_tool_validation.py`) is chapter 
 - **`ToolRegistry`** owns the tools behind `Arc<dyn Tool>` and refuses a duplicate name. Lookup of one tool in a 50-tool map was 13.96 ns.
 - **`Catalog`** turns toolsets on from an env map plus a check. The available list for 50 tools was 21.89 µs. Tools that fail the gate are not in that list.
 - **`Dispatcher`** runs reads together up to 8, and runs a write alone. Eight 1 ms reads took 2.362 ms together and 17.55 ms one at a time.
-
-[personal note: which of these three rules was the one you almost skipped, and what would have broken later]
 
 ## What's next
 

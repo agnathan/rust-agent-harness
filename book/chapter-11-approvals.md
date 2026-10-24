@@ -1,7 +1,5 @@
 # Chapter 11: Approvals and Guardrails
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 10's loop will call whatever tool the model names, as long as the name resolves and the scheduler has a permit. That is the right default for `echo`. It is the wrong default for a shell. This chapter puts a decision in front of dispatch. The crate is `steps/ch11-approvals`, a copy of chapter 10's harness plus an `approval` module. The package is `ch11-approvals`, the library is `harness_core`, and the demo binary is `ch11-approvals`. The loop calls `approval::deny_tool` before `dispatcher.run_raced`. A denial is pushed as the tool result, and the tool body does not run.
 
 `check` is the single entry. The order is the floor, then YOLO or mode off, then the allowlist, then unattended mode, then a smart check, then ask. Hardline patterns — `rm -rf /`, `mkfs`, a raw `dd`, a fork bomb, `kill -1`, shutdown — are denied with `hardline: true`, and YOLO does not move that branch. Dangerous commands are a wider class. They are normalized, stripping wrappers such as `sudo` and `env NAME=value`, and an interactive session asks while cron denies them. Only `terminal` and `execute_code` are gated. `echo` and `delegate` are unchanged. An inherited chapter 9 test that expects `echo` to run must still pass. If a new guard would deny `echo`, the guard is wrong.
@@ -37,8 +35,6 @@ Rust, next to the code: the verdict is an enum, so allow, ask, and deny do not c
 > **Adapted.** The pattern table is a short set of the commands I read in `HARDLINE_PATTERNS` (root `rm -rf`, `mkfs`, `dd` onto a raw disk, a fork bomb, `kill -1`, shutdown). Hermes's `DANGEROUS_PATTERNS` list is much longer; this chapter treats recursive `rm`, a write under `/etc` or `.ssh` or `.env`, a `curl` upload, and an interpreter `-c`/`-e` as the dangerous class. Quote masking is a character scan, not Hermes's quote-and-heredoc rewriter. A safe command with an empty deny list returns before that scan allocates. The smart step is `fake_smart_review`, not an auxiliary model. The human wait is one `tokio::sync::Mutex`.
 >
 > **Deferred.** Deleting the running binary (`agent/runtime_self_protection.py`, B6) and the self-repo git guard (B5, `tools/self_repo_guard.py`) are chapter 14, on this same floor, before YOLO. The gateway lifecycle block (B4, `tools/terminal_tool_guards.py` `gateway_lifecycle_block`) is chapter 39, because the chat gateway does not exist yet. Persisting "always" to a file is A7 and is not this chapter. A plugin that escalates to the human gate is chapter 12 (A8). The whole-script `execute_code` gate is chapter 13 (A2); until then `deny_tool` returns `None` for `execute_code` and the script is not blocked here.
-
-[personal note: a command you expected the allowlist to pass, and which floor still refused it]
 
 ## What this chapter decides
 
@@ -946,8 +942,6 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Laye
 - **Prompt.** Two dangerous calls share one mutex. The tool permit is back in the semaphore before either wait starts.
 - **Fake model.** `rm -rf /` then `echo hello` produces one verdict, `deny`.
 - **Time.** The skip of `echo hello` measured **249.6 ns**. The target is under 1 µs.
-
-[personal note: the first command you put on the allowlist, and whether the floor still caught a cousin of it]
 
 ## What you implement
 

@@ -1,7 +1,5 @@
 # Chapter 40: Browser Tools
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 39 can accept a chat message into the inbox. The harness still cannot open a page, click, or type. Chapter 16 can extract a URL to text. A page that only makes sense after a click is a different tool, and it has the same ways to go wrong: a secret in the URL, a metadata address, a snapshot so large it becomes the prompt, and page text that tries to give the model instructions. This chapter adds the browser tools behind a trait so the tests never start a browser. The crate is `steps/ch40-browser`, a copy of chapter 39 plus `browser`. The package is `ch40-browser`.
 
 `PageBackend` is the trait. `FakeBrowser` is the implementation the tests and the bench use. The session holds one page. The resolver is a map, so a hostname lookup in the test is data rather than DNS. Navigate checks in order: a secret URL is refused, then `is_safe_url` with private URLs disallowed, then the backend opens, then `final_url` is checked again so a redirect cannot land on an address the first check allowed. The metadata address is blocked before any lookup. Snapshot text is capped, a head and a tail, with a stored ceiling. Click, type, and scroll go through the same session. The wrapper starts at 32 characters, the same untrusted-result idea as chapter 16, and an embedded closer is neutralized.
@@ -51,8 +49,6 @@ Rust, at the trait: `async` is the navigate call, and the fake completes immedia
 > **Adapted.** One trait, `PageBackend`. `open` returns a `Page` or a `BrowserError`. There is no Chromium, no session key, no task id, and no cloud-versus-local split. `allow_private` is the literal `false` at the `is_safe_url` call. `clip_snapshot` cuts on characters, 75% head and the rest tail, and inserts `\n[TRUNCATED]\n`. Hermes cuts on line boundaries and writes the full snapshot to a file for `read_file`. This session keeps the `Page` the backend returned. The cap applies to the string handed back. `wrap_untrusted` lives in `web.rs` and is called with the source name `browser_navigate`, `browser_snapshot`, `browser_click`, `browser_type`, or `browser_scroll`. The Rust replace is case-sensitive. Hermes's delimiter regex is case-insensitive. Click and type notes may be shorter than 32 characters, so a test that only checks the note text still passes when the wrapper is skipped.
 >
 > **Deferred.** `plugins/browser/browserbase`, `plugins/browser/browser_use`, and `plugins/browser/firecrawl`. Camofox. Website allow and deny lists. Bot-detection titles. Stealth warnings. A real browser process. `browser_console` and the G4 eval policy. The MCP prefix is chapter 42's problem. This chapter wraps the five browser names it implements.
-
-[personal note: a page that arrived as text, and an address the opener never saw]
 
 ## What this chapter decides
 
@@ -605,8 +601,6 @@ pub fn chapter_40_navigates_metadata(url: &str) -> bool {
 - **Untrusted.** `wrap_untrusted("browser_navigate", ...)`. Shorter than 32 characters stays plain text.
 - **Demo.** `browser: Notes`.
 - **Time.** `fake_navigate` mean `1.97 µs`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The Criterion `time:` line is the slope.
-
-[personal note: a title that came back as JSON, and a metadata address that never became a page]
 
 ## What's next
 

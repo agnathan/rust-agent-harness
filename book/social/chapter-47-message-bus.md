@@ -15,8 +15,6 @@ agent/redact.py redact_for_egress is the one scrub for text leaving the process.
 4/
 The demo prints "bus: ping ok". The bench id is 47/publish_to_agents. The old ids 45/publish_to_agents and 43/publish_to_agents are aliases. The mean is 47.98 µs, mean.point_estimate from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196). The Criterion time: line is the slope.
 
-[personal note]
-
 5/
 Next is chapter 48, shared team skills. Workers enqueue. The librarian is the only writer.
 
@@ -34,8 +32,6 @@ deliver calls crate::redact::redact_for_egress before try_send. That is E2, the 
 Hermes Agent at 9e01b44 claims kanban notify events inside BEGIN IMMEDIATE and advances the subscriber cursor in that transaction. BotLoopGuardSettings admits 20 bot messages, then cools down. admit returns tripped when the window fills and cooldown while that deadline still holds. redact_for_egress is the one scrub for text leaving the process, and it fails closed.
 
 The demo prints "bus: ping ok". The bench id is 47/publish_to_agents. Aliases: 45/publish_to_agents and 43/publish_to_agents. The mean is 47.98 µs, mean.point_estimate from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196).
-
-[personal note]
 
 Next: chapter 48, shared team skills. Workers enqueue. The librarian is the only writer. Read Chapter 47: [link]
 

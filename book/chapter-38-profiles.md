@@ -1,7 +1,5 @@
 # Chapter 38: Profiles
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 36's harness can supervise a child. It still has one persona and one pile of secrets. A process that serves more than one user, or more than one role, needs several personas in one config, and it needs a secret that stays out of the system prompt. This chapter adds that map. The crate is `steps/ch38-profiles`, a copy of chapter 36 plus `profiles`. The package is `ch38-profiles`. It is the harness line. Chapter 37, the balancer, is not copied in.
 
 `Profile` owns the persona text and the secret map. The store is built from config. `get_secret` fails closed when no scope is installed: the error is the unscoped-secret error, and the secret is not in the prompt. That is the multiplex rule. A profile that is selected resolves in well under the cost of a model call, and the resolved persona is what the prompt receives. The map stays beside it. `FakeModel` echoes the persona, so a test can see the secret did not ride along in the string.
@@ -49,8 +47,6 @@ Rust, at the map: the store is a struct built once, the profile is an owned pers
 > **Adapted.** The maps are `HashMap`s. The error is a `Result`, not a raise. There is no `ContextVar`: one `Profiles` value holds one `scope` field. There is no global-env allowlist, so a name Hermes would still read from `os.environ` also fails closed here when multiplex is on and no scope is installed. The process environment is a `HashMap` filled by `set_process`, not `os.environ`. The prompt is an `Arc<str>` of the persona. `resolve` reports `has_secret` and drops the `String`. `secret_leaked_into_prompt` is a substring check. `FakeModel` ignores the prompt bytes and returns its scripted reply.
 >
 > **Deferred.** `_is_global_env`, the `.env` parser further down `secret_scope.py`, task-local scope, and the multiplexed gateway process. Chapter 39 is the chat gateway. The copied harness already contains chapter 20's redaction module. `profiles.rs` does not call it.
-
-[personal note: two personas in one process, and a key that never showed up in the prompt]
 
 ## What this chapter decides
 
@@ -475,8 +471,6 @@ pub fn chapter_38_unscoped_secret_in_prompt() -> bool {
 - **Scope.** The installed profile's map. A multiplex miss is `Ok(None)`. A single-profile miss can fall through to the process map.
 - **Prompt.** The secret `String` is not stored on `Resolved`. `demo` prints `profile: writer`.
 - **Bench.** `resolve_profile` mean `96.7 ns`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The Criterion `time:` line is the slope.
-
-[personal note: a key that resolved, and a prompt that did not contain it]
 
 ## What's next
 

@@ -15,8 +15,6 @@ tools/skills_guard.py should_allow_install lets force override every block excep
 4/
 The demo prints "skills: v2 3". The bench id 48/skill_propose has aliases 46/skill_propose and 44/skill_propose. Its mean is 80.1 ns. The bench id 48/index_swap has aliases 46/index_swap and 44/index_swap. Its mean is 200.3 ns. Both are mean.point_estimate from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196). The Criterion time: line is the slope.
 
-[personal note]
-
 5/
 Next is chapter 49, A2A for agents outside this process.
 
@@ -36,8 +34,6 @@ librarian_accept runs FakeModel before swap_index. The swap is mem::replace of a
 Hermes Agent at 9e01b44 syncs bundled skills through a manifest hash in .bundled_manifest. I did not find a file in that tree that writes the heading this chapter renders. The sync path is the manifest, not that string. should_allow_install is the install decision I read. stage_write exists for pending skill writes. This chapter does not call it.
 
 The demo prints "skills: v2 3". The bench ids are 48/skill_propose and 48/index_swap. Aliases: 46/skill_propose, 44/skill_propose, 46/index_swap, and 44/index_swap. The means are 80.1 ns and 200.3 ns, each mean.point_estimate from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196).
-
-[personal note]
 
 Next: chapter 49, A2A for agents outside this process. Read Chapter 48: [link]
 

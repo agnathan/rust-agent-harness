@@ -1,7 +1,5 @@
 # Chapter 29: The Supervisor
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 28 can run four stages in order on one context. A lot of work is not a sequence. A manager names specialists, they run, and only a summary comes back. That is the default team in this book. The crate is `steps/ch29-supervisor`, a copy of chapter 28 plus `supervisor`. The package is `ch29-supervisor`. `Job` is the specialist: a name, a scripted reply, and an optional hold. It is not the `Tool` trait from chapter 3. The pool runs jobs. The tool trait stays the way the loop calls a tool.
 
 The bound is 8. Hermes caps concurrent children higher, at 10, and that default stays in the comments as Hermes's number. The harness measurement, and the pool, is eight, the same bound the dispatcher has used since chapter 3. `acquire` waits for a permit, and `Drop` wakes one waiter, so a finished specialist releases the slot even when the caller forgets. `thread::scope` runs the jobs and joins them, which keeps the borrows honest: a specialist cannot outlive the scope that lent it the context. `child_call` is a `Result`. The blocked tools are the ones a child must not have: `delegate_task`, `clarify`, `memory`, `send_message`, and cron. Depth is 1. A child does not spawn another supervisor. The worktree is a marker, opt-in, not a git operation this chapter performs. The reflection note is a string you enqueue. It does not run chapter 26's reviewer on the team turn.
@@ -41,8 +39,6 @@ Rust, at the pool: a semaphore permit is a guard, and `Drop` is the release. `th
 > **Adapted.** `WORKER_BOUND` is 8, not 10. `HERMES_MAX_CONCURRENT_CHILDREN` keeps the 10 visible. The pool uses 8. `worktree` returns `None` unless opt-in, and it does not create a git worktree. Specialists return scripted replies.
 >
 > **Deferred.** Heartbeats, to chapter 36. A real git worktree. The queue of 100 and `task_index` order, to chapter 31. Live models, still deferred from chapter 28.
-
-[personal note: a team of specialists you ran together, and the tool you did not want a child to have]
 
 ## What this chapter decides
 
@@ -590,8 +586,6 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). This
 - **Worktree.** `None` unless opt-in. The opt-in value is `opt-in`. No git worktree is created.
 - **Reflection.** A `push_back` on a deque of 64. `max_seen` stays 0. `spawn_reviewer` is not called.
 - **Time.** `schedule_eight` mean `149.22 µs`. `enqueue_reflection` mean `18.4 ns`. Both are `mean.point_estimate`. The Criterion `time:` line is the slope.
-
-[personal note: the specialist that only worked because it could not call the parent's tools]
 
 ## What you implement
 

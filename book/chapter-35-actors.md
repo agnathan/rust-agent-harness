@@ -1,7 +1,5 @@
 # Chapter 35: Agents as Actors
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 34 can share a snapshot across a composed team. The parent still drives every stage in one task. A harness that runs many agents needs each agent to be its own task, with a mailbox. This chapter's `serve` does not show that overlap. It reads one mail, submits it, and calls `step` before the next `recv`, so the in-memory inbox holds at most one message while the demo runs. The 64 cap is the channel bound, and the unit test that fills the queue by hand. Chapter 2 already built that mailbox for one session, with a capacity of 64. This chapter makes it the mailbox of an agent task. The crate is `steps/ch35-actors`, a copy of chapter 34 plus `actors`. The package is `ch35-actors`.
 
 The cap is `INBOX_CAP`, 64. The three mails are a turn, a steer, and an interrupt. `try_submit` refuses the 65th message and does not grow the queue. `submit` is the async form, `try_send` on a bounded channel, with two error arms: full, and closed. `step` applies one mail. A steer is stored and appended on the next turn that actually calls the model. An interrupt skips that turn and clears the steer. `serve` drains one channel. `fan` starts `n` tasks. The demo answers. The bench submits one turn. `FakeModel` ignores the prompt and returns the scripted line, so the test is about the mailbox rather than the model.
@@ -45,8 +43,6 @@ Rust, at the channel: `tokio::sync::mpsc` with a bound of 64 is the queue, and `
 > **Adapted.** The mailbox is `actors::Inbox` plus `tokio::sync::mpsc::channel(INBOX_CAP)`. Capacity is 64, the const `INBOX_CAP`. `submit` uses `try_send` and returns `InboxError::Full` or `InboxError::Closed`. `step` trims steer text, joins later steers with `\n`, and appends them to the model reply. `Mail::Interrupt` sets a flag. The next `Mail::Turn` returns `interrupted` and does not call `FakeModel::complete`. `fan` uses a `JoinSet`. The model reply is the scripted string. No socket is opened.
 >
 > **Deferred.** `STEER_MARKER_OPEN` is not wrapped around the steer. F7's control-frame list is not applied. The delivery-receipt mailbox in `session_bot.py` is not this queue. Chapter 36 restarts a failed child. This file does not.
-
-[personal note: a queue that kept accepting work until the agent could not see the end of it]
 
 ## What this chapter decides
 
@@ -495,8 +491,6 @@ pub fn chapter_35_full_inbox_does_not_grow() -> bool {
 - **Demo.** `agent: ok`.
 - **Time.** `inbox_submit` mean `250.1 ns`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The Criterion `time:` line is the slope.
 - **Hermes.** `gateway/turn_executor.py` has no queue and no cap. `gateway/session_bot.py` describes a delivery receipt. This mailbox is the harness inbox.
-
-[personal note: the sixty-fifth message was the one that had to wait outside]
 
 ## What's next
 

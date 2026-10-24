@@ -1,7 +1,5 @@
 # Chapter 27: Curation
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 26 can fork a reviewer that writes skills. If every correction becomes a new skill, the index fills with one-off notes named after today's bug. The agent then sees a noisy list, loads the wrong procedure, and the cache-stable index from chapter 24 becomes a catalog of accidents. This chapter is the job that moves agent-created skills from active to stale, and then to archived. It does not delete. It does not run on the request path. The crate is `steps/ch27-curation`, a copy of chapter 26 plus `curation`. The package is `ch27-curation`.
 
 `Curator` keeps the gate in a mutex, the same shape as chapter 25's writer. `enqueue` records that a pass was requested and does not write. That is the whole point of the milestone: enqueue is not a mutation. `due` compares the last pass with the interval. `pass` marks stale, then archives. Pinned skills are exempt. Bundled, hub, and team skills are not candidates. `install` calls chapter 25's scan and chapter 25's gate. It does not grow a second scanner, and the scan stays off the request path with the rest of this work. `snapshot` writes a gzip of the tree and keeps two, so a bad consolidation can be put back. The optional pass that merges skills into umbrella skills stays off unless configured.
@@ -45,8 +43,6 @@ Rust, at the job: a mutex guards the gate so two passes cannot archive the same 
 > **Deferred.** A real clock. A scheduler thread.
 
 > **Guardrails.** Enqueue records `curate` and leaves the disk alone. The scan is `scan_text` plus `should_allow_install`, called from `install`, which `enqueue` does not call. The approval flag starts off. When it is on, an archive and an install stage a label. `PRUNE_BUILTINS` is false, so a bundled skill is not a candidate. Hub skills are not candidates. Consolidate stays false and writes no skill body.
-
-[personal note: a skill that should have been archived, and one you pinned so it would not be]
 
 ## What this chapter decides
 
@@ -607,8 +603,6 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Cura
 - **Snapshot.** A gzip of the tree, two kept, `.git` left out. Taken at the start of `pass`.
 - **Scan and gate.** Chapter 25's `scan_text` and `should_allow_install`. The curator's own approval flag. Neither runs from `enqueue`.
 - **Consolidate.** Off. The consolidated count stays 0.
-
-[personal note: a directory you were glad got a tarball before it moved]
 
 ## What you implement
 

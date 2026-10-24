@@ -1,7 +1,5 @@
 # Chapter 1: First Contact
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Every agent framework I have looked at reduces to one act, repeated: send a list of messages to a language model and get a message back. Before this chapter the repository has no such act. There is no type for a message, no interface for a provider, and no command you can run. This chapter builds that act in four copies under `steps/ch01-1-messages`, `steps/ch01-2-provider`, `steps/ch01-3-cli`, and `steps/ch01-4-errors`. Each copy compiles, has its own tests, and keeps the earlier code, so section 1.1 still builds after 1.4 exists.
 
 The types are small and they stay. `Message` and `Role` serialize to the OpenAI JSON shape, which is the shape the rest of the harness will store and resend. `Provider` is the trait every later caller uses, so the loop never learns which company answered. `Event` is one enum — text, a tool call, usage, done, or an error — and both the mock and the real client emit it. The mock can sleep, which is how a test sees latency without a network. The client speaks HTTP to OpenRouter by default, so a model id such as `openai/gpt-4o-mini` is a flag. Usage and a dollar cost are recorded only when the server sent them. Section 1.4 puts one timeout on the whole request and spells out what a buffered reply may omit.
@@ -18,8 +16,6 @@ At the end of section 1.4 you can run `cargo run -p ch01-4-harness-cli -- --mock
 - 1.2 Provider
 - 1.3 OpenRouter, the client, and `harness ask`
 - 1.4 Timeouts and what the reply may omit
-
-[personal note: where I was with Rust when I started this chapter]
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -805,8 +801,6 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). This
 ## Chapter summary
 
 The harness can send one prompt and print one reply. Messages are OpenAI JSON. `Provider` hides the server. Every call, including the mock, emits the same `Event` values. The HTTP client is created once, pools connections, and can speak HTTP/2. OpenRouter is the default endpoint, `--model` selects a model id, and another `--base-url` still works for OpenAI, Ollama, and a local fake. A successful reply can name the model that answered, the token counts, and a USD cost when the server sent one. Those numbers accumulate on one agent. A slow call fails once, as a timeout, and is not retried here.
-
-[personal note: a moment where the compiler stopped me, and how I worked out what it wanted]
 
 ## What you implement
 

@@ -1,7 +1,5 @@
 # Chapter 25: Writing Skills
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 24 can list skills and view one. It cannot create a skill, patch one, or refuse a dangerous one. An agent that only reads procedures never closes the loop Hermes is built around: notice a correction, write it down as a skill, and have it there next time. Writing is also how a poisoned page becomes a permanent instruction, so the write has a scanner and a gate. This chapter adds both. The crate is `steps/ch25-skill-writing`, a copy of chapter 24 plus `skill_write`. The package is `ch25-skill-writing`.
 
 `Writer` holds the gate in a mutex. `create` and `install` share `write_skill`. The policy table is five rules and then the full match: who is asking, where the skill came from, whether it is pinned, whether the scan said dangerous. A community skill that scans as dangerous is blocked, and `force` does not override that. Caution can be overridden. That is the pattern half of the plugin rule chapter 12 left for here. The structural caps stayed in chapter 12. `scan_text` is the function chapter 48's team library will call. It does not grow a second scanner.
@@ -49,8 +47,6 @@ Rust, at the policy: the actor, the origin, and the verdict are enums, and the p
 > **Deferred.** The content-hash scan cache. `.skillignore`.
 
 > **Guardrails.** H1 is the scan and the policy table. A dangerous community or trusted skill stays blocked when `force` is true. A9 is the approval flag, and it starts off. A reviewer patch requires a prior `view` whose hash still matches the file. A pin blocks delete. An origin of `bundled`, `hub`, or `team` blocks delete. Supporting files are capped at 1,048,576 bytes. `enqueue_background` does not write a skill.
-
-[personal note: a skill the model tried to write that you wanted to read first]
 
 ## What this chapter decides
 
@@ -765,8 +761,6 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). This
 - **Reviewer.** `view` before `patch`. The hash is FNV-1a of the bytes that were loaded.
 - **Delete.** A pin, and origin `bundled`, `hub`, or `team`, are refused.
 - **Queue.** An unsolicited write is `enqueue_background`. Scanning one skill measured **155.3 ns**. Enqueue measured **17.4 ns**. Those are the means.
-
-[personal note: a write you were glad the gate held]
 
 ## What you implement
 

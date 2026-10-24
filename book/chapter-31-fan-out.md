@@ -1,7 +1,5 @@
 # Chapter 31: Fan-out and Gather
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 29 can run eight specialists at once. Chapter 30 can hand a task to one next owner. Neither of them is the question "what if there are a hundred independent tasks, and I need their replies in order?" A fan-out that allocates without a cap will start a hundred tasks and then a hundred more. This chapter adds the queue, the refusal, and the gather. The crate is `steps/ch31-fan-out`, a copy of chapter 30 plus `fanout`. The package is `ch31-fan-out`. Heartbeats are not this chapter. They were deferred by chapter 29 and they stay deferred until chapter 36.
 
 A task is an index, a reply, and a trace. `schedule` accepts up to 100 and rejects the 101st. The cap is this book's, not a Hermes config key. Hermes's concurrent-children cap is a different number, and the harness queue of 100 is the one the tests lock. `gather` sorts replies and leaves the trace behind. The sort is by `task_index`, so a reply that finishes first is not the reply that prints first. The demo schedules out of order and prints sorted lines. The bench fills the queue and does not gather, which is how you measure scheduling without measuring the joins. The permit `gather` takes is still chapter 29's pool. Fan-out does not invent a second bound for the work it actually runs. The queue of 100 is how many tasks may be waiting. The pool of 8 is how many run. `gather` starts one scoped thread per queued task, and each thread blocks in `pool.acquire` until a permit is free. A full queue can therefore leave up to 100 threads waiting on a pool of 8. A worker pool that pulled from the queue would not park a thread per task. This chapter keeps the thread per task so the gather can reuse chapter 29's pool.
@@ -42,8 +40,6 @@ Rust, at the queue: the cap is a length check before `push`. The index is an int
 > **Adapted.** `QUEUE_CAP` is 100. The cap is a queue of 100, not the concurrent-children number. The 101st `schedule` returns `FanError::Full`. `gather` sorts by `task_index` and returns replies only, not `tool_trace`. The pool that runs the tasks is still `WORKER_BOUND` of 8. The queue of 100 and the `task_index` order were deferred from chapter 29 to here.
 >
 > **Deferred.** Heartbeats, to chapter 36. This chapter does not beat. It schedules, refuses at 100, and gathers.
-
-[personal note: a fan-out that came back in a different order than you launched it]
 
 ## What this chapter decides
 
@@ -501,8 +497,6 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 - **Aggregator.** `sort_by_key` on `task_index`. The summary is the replies joined with newlines.
 - **Trace.** `tool_trace` is not in the summary. The demo's trace is `secret-tool` and the printed lines are `a`, `b`, `c`.
 - **Time.** `schedule_100` mean `4.12 µs`. That is `mean.point_estimate`. The Criterion `time:` line is the slope.
-
-[personal note: a batch that came back sorted, and the tool log you were glad the parent never saw]
 
 ## What you implement
 

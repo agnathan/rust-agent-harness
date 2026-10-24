@@ -1,7 +1,5 @@
 # Chapter 14: When Things Fail
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 9's loop can stop, stall, and wrap up. It still treats a failure as one outcome. An empty reply, a truncated reply, a repeated paragraph, a timeout, and a model that should have been the fallback all look different and need different next steps. Two dangerous commands also still sit outside the approval floor: deleting the binary that is running, and rewriting this crate's own git tree. This chapter classifies the failure and closes those two floor checks. The crate is `steps/ch14-when-things-fail`, a copy of chapter 13 plus a `failure` module. The package is `ch14-when-things-fail`. The library is `harness_core`.
 
 `Kind` is the classification. `retry_budget` and `EmptyAttempt` implement the empty-response rule chapter 9 deferred: three retries, or one if a single attempt costs more than a quarter dollar. `deterministic_empty` refuses to retry a reply that will be empty again for the same reason. `is_repetition_dominated` is the repetition guard: a run of the same text covering enough of the output stops the loop. `length_verdict` is the continuation decision when a reply was cut off. `run_models` walks a route, which is the seed of chapter 18's fallback. `call_with_timeout` cancels the in-flight call and releases its permit, so a stuck call does not pin one of the eight slots. `retry_in_bound` keeps the retries inside that same bound. `FakeMcp` is the stand-in for a server that crashes, times out, or needs a reconnect.
@@ -52,8 +50,6 @@ Rust, taught at the match: `Kind` and `Reply` are enums, and `OrderedF64` exists
 > **Adapted.** The repetition check is the window count. I did not port the line fast path or the anchor scan. Fallback is the next `Model` in a slice, not Hermes's provider chain. The timeout uses `tokio::time::timeout` and drops an owned semaphore permit. Retries take that permit one at a time.
 >
 > **Deferred.** Preflight compression before the model call stays chapter 34. Think-block stripping is chapter 19. Rate-limit backoff on the server is chapter 15.
-
-[personal note: an empty reply you would have retried, and what the cost did to the budget]
 
 ## What this chapter decides
 
@@ -735,7 +731,6 @@ An empty command or an empty runtime path is false. There is nothing to overlap.
 
 `normalized` is an owned `String`. `replace("&&", "\n")` runs first, then `replace("||", "\n")`. A chain joined by `&&` or `||` becomes several lines. `split([';', '\n', '|'])` then breaks on semicolon, newline, and a single pipe. A single `&` is not in that list. Backgrounding with `&` stays inside the segment, and `fast_safe` would have rejected `&` anyway if the floor had missed. The git detector's split is shorter, and section 14.18 reads it.
 
-
 Each segment goes through `strip_wrappers`. An empty word list is skipped. A segment that was only `sudo` becomes empty and does not panic on `words[0]`.
 
 `name` is the first real word, after the wrappers are gone. `rsplit(['/', '\\'])` takes the last path component, so `/bin/rm` and `C:\Windows\rm` both yield `rm`. `unwrap_or` is the empty-split case. `to_ascii_lowercase` means `RM` and `Remove-Item` match the lowercase table. The comparison is `*item == name`, byte for byte, after that lowercase.
@@ -762,7 +757,6 @@ fn path_hits(word: &str, runtime_path: &str) -> bool {
 ```
 
 `trim_matches` strips matching quote characters from both ends. `rm "/opt/uv/..."` and `rm /opt/uv/...` compare the same path. The quotes are not part of the path.
-
 
 Equality is the first arm. `rm` of the exact `current_exe` string hits here. The test `yolo_still_refuses_to_delete_the_running_binary` uses a stand-in runtime, `/opt/uv/python/cpython-3.12.7-x86_64/bin/python`, for the pure function, then calls `check` with `std::env::current_exe()` under `yolo = true` and expects `Deny` with `hardline: true`.
 
@@ -1016,8 +1010,6 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Laye
 - **Session.** One crash, one reconnect, then `pong`.
 - **Floor.** `rm` of `current_exe` and `git reset --hard` of `CARGO_MANIFEST_DIR` are denied before the fast path and before YOLO.
 - **Time.** The budget check measured **0.9046 ns**. The repetition scan measured **2.77 µs**.
-
-[personal note: a fallback you did not expect, and which empty rule sent the turn there]
 
 ## What you implement
 

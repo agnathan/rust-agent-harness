@@ -1,7 +1,5 @@
 # Chapter 41: Vision
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 40 can navigate a fake page and wrap the text. It cannot look at an image. A screenshot, a diagram, or a photo the user attached is a different input, and the failure modes are size and type rather than HTML. An uncompressed claim of a huge PNG, a file that is not an image, or a caption that carries instructions all have to be refused or wrapped before they reach the model. This chapter adds that check behind a trait, so the tests never call a vision API. The crate is `steps/ch41-vision`, a copy of chapter 40 plus `vision`. The package is `ch41-vision`.
 
 `ImageSource` is the trait. The fake is two maps, bytes by name and a caption by name. `prepare` refuses empty, oversized, foreign, and enormous images. The download cap is 50 MB. The inline cap is 20 MB. The allowed types are jpeg, png, gif, and webp, decided by the header, not the extension. PNG dimensions are two big-endian integers in the header, and the pixel cap is 100,000,000, so a tiny header that claims a gigantic image is rejected before anyone allocates the pixels. Remote URLs use chapter 16's SSRF floor. The caption is wrapped as untrusted, the same idea as a page snapshot. `tiny_png` is a 1-by-1 header the demo looks for. The other three prefixes go through the same sniff function.
@@ -49,8 +47,6 @@ Rust, at the header: byte slices and big-endian integers are the PNG parse, a fe
 > **Adapted.** `prepare` takes a `&[u8]` already in memory. It does not download, resize, or call Pillow. Over 50 MB is `TooBig` with the download cap. Over 20 MB, and under 50 MB, is `TooBig` with the inline cap. There is no second chance that shrinks the image. `sniff` returns `None` for BMP, SVG, HEIC, and AVIF. Hermes names BMP and then rejects it as an inline type, and it tries to rasterize SVG and HEIC when the libraries are installed. `png_pixels` reads the IHDR width and height and multiplies them. It does not walk frames. A GIF is not measured in pixels. `analyze` wraps `"{mime}\n{caption}"` with `wrap_untrusted("vision_analyze", ...)`. The caption comes from `ImageSource::caption`. Hermes calls an auxiliary vision model. `data:` URLs skip `check_remote` and still go through `prepare` once `load` returns bytes. `tiny_png` is a 1×1 header. It is not a file Pillow would accept as a finished PNG. The bench sniffs that header.
 >
 > **Deferred.** The download itself, the 30 second vision download timeout, retries, the auxiliary LLM, the 1568 pixel embed edge, the resize-on-reject path, Pillow `verify`, animation frame caps, SVG and HEIC conversion, and a real `data:` URL parser for the media type. `FakeImages` is the source. No HTTP client runs.
-
-[personal note: a file that claimed to be a picture, and a header that said what it actually was]
 
 ## What this chapter decides
 
@@ -517,8 +513,6 @@ pub fn chapter_41_accepts_image(bytes: &[u8]) -> bool {
 - **Caption.** Wrapped as `vision_analyze`. The model is not called.
 - **Demo.** `vision: png`, from a 1×1 header.
 - **Time.** `sniff_png` mean `11.2 ns`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The Criterion `time:` line is the slope.
-
-[personal note: a header of eight bytes that was enough to name the file, and a buffer that was refused before anyone looked at it]
 
 ## What's next
 

@@ -1,7 +1,5 @@
 # Chapter 6: Thousands of Tools
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 3 can hold a few dozen tools, and the model was shown every schema that passed its gate. That stops working when the catalog is the size of a real MCP workspace: several servers, each with its own list, easily a thousand tools and sometimes ten thousand. Three costs arrive together. The prompt grows by the schema text, so the provider bills more input tokens. The model has more near-matches to choose from, so it calls the wrong tool more often. And every turn pays that cost even when the user asked for one rename.
 
 This chapter is the client half of the catalog. It keeps the chapter 3 shape — a name, a description, a JSON Schema — and it does not open an MCP connection. Chapter 4 is the client that does. Chapter 5 is the separate server that will hold the list. The benches here still need a catalog of 1,000 and 10,000 tools, so a deterministic generator fills it. The five copies are `steps/ch06-1-schema-cost`, `ch06-2-tool-index`, `ch06-3-search-tool`, `ch06-4-routing`, and `ch06-5-lazy-list`. Section numbers stay 6.1 through 6.5 so they match those crates.
@@ -21,8 +19,6 @@ The runnable demo is offline. `cargo run -p ch06-5-harness-cli -- --mock ask "re
 - 6.3 search_tools and lazy loading
 - 6.4 Route, then shrink
 - 6.5 The registry at scale
-
-[personal note: the first time a tool list was too long to read]
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -477,8 +473,6 @@ Hermes F3 (`agent/prompt_builder.py`, `CONTEXT_FILE_MAX_CHARS`, 20,000 character
 - **`search_tools`.** The first turn is 55 tokens. Five revealed schemas on the next turn bring it to 305, against 103,063 for all 2,000 tools. The core prefix stays byte-identical, including when the cap evicts the oldest revealed names. Rendering the lazy prompt took 12.26 µs.
 - **Routing.** "rename a file" stays on the files server. That search took 16.00 µs. Shrinking 2,000 short descriptions went from 412,249 bytes to 401,057. Sentences that name an unavailable tool are dropped.
 - **Cache.** Two reads of the stand-in `tools/list` call the source once. A stand-in `tools/list_changed` makes the next read call it again. A real list uses the same cache through `from_cards` and `replace_cards`. The cache hit was 17.56 ns. One agent's server filter over 10,000 tools was 77.00 µs.
-
-[personal note: which number changed how you think about putting tools in the prompt]
 
 ## What's next
 

@@ -1,7 +1,5 @@
 # Chapter 42: MCP Gateway Service
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 The chat gateway in chapter 39 can deliver a platform message to the harness. The MCP gateway is still an in-process catalog with a pool. It cannot yet route a session to a replica, drain, enforce a tenant quota, or check a bearer token. Those are service problems, and they belong to the MCP server, which stays a separate program from the harness and from the chat gateway. Mixing them would make a Telegram adapter and a tool catalog the same process, with one failure domain. This chapter is the MCP service. The crate is `steps/ch42-service`. It vendors chapter 37. The library name is `gwservice`. The new module is `service`. It binds no socket. OAuth token issuance stays deferred. A bearer check stands in for the resource-server decision.
 
 `Config` is the reloaded configuration. `Service::new` starts from it. `route` and `place` remember which replica holds a session id. `kill` marks a replica dead, and the next lookup fails over to the other id, which is the milestone. `reload` swaps an `Arc`, the same publish-a-snapshot idea as chapter 7, applied to config. `accept` and `finish` are the drain: stop accepting, let the calls already accepted finish. `bearer_ok` checks the token the test presents. `Sampler` enforces the sampling limit. `elicit` is the form-mode approval path. `OsvCache` is the check before an npx or uvx launch, in memory, with no registry call in the test. Quotas are per tenant, concurrent, in memory. The audit log is a vec. Span names are strings. Health and readiness are flags.
@@ -57,8 +55,6 @@ Rust, at the route table: a map from session id to replica id, an `Arc` swapped 
 > **Deferred.** A live listener, OAuth 2.1 token issuance, a real exporter, Redis, and oha. `pipx`, Windows launcher suffixes, path basenames, the OSV disk cache, and the 256-entry cap stay in Hermes. The drain marker file and its 3600 second max age stay in `gateway/drain_control.py`. The route bench is a map lookup.
 
 > **Guardrails.** Sampling and elicitation are M7. The malware check is H4. Both live in `service.rs` as `SAMPLING_MAX_RPM`, `OSV_TIMEOUT_SECONDS`, and `OsvCache`. The full box is [Guardrails in this chapter](#guardrails-in-this-chapter).
-
-[personal note: a session that moved when its replica went away, and a call the drain let finish]
 
 ## What this chapter decides
 
@@ -707,8 +703,6 @@ pub fn chapter_42_route_after_kill(killed: &str, other: &str) -> Option<String> 
 - **Client checks.** Sampling at 10 per 60 seconds. Form elicitation at 300 seconds. URL mode declined. `MAL-*` cached for 3600 seconds. Network failure uncached.
 - **Model.** `FakeModel` answers `ok` and `demo` drops it. The line is `route: a`.
 - **Time.** `route_session` mean `19.7 ns`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The Criterion `time:` line is the slope.
-
-[personal note: a failover that was a map update]
 
 ## What's next
 

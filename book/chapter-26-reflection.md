@@ -1,7 +1,5 @@
 # Chapter 26: The Reflection Loop
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 25 can write a skill when something asks it to. Nothing yet asks. A turn can finish, the user can correct a style or a workflow, and the harness will store the session and otherwise move on. The lesson sits in the transcript until it scrolls out. This chapter adds the nudge and the fork that reads the turn afterward. The crate is `steps/ch26-reflection`, a copy of chapter 25 plus `reflection`. The package is `ch26-reflection`.
 
 Two counters live on the loop. A memory nudge fires every 10 user turns. A skill nudge fires every 10 tool iterations. Both defaults can be changed. `finalize` returns the fork and clears the flags. `spawn_reviewer` builds a tool slice that contains only the skill and memory tools, and it zeroes the intervals so the same turn cannot fork twice. The reviewer is a supervised child with its own cancellation. A new user turn cancels it. `execute` runs the scripted model one tool at a time. The parent transcript is not edited, so the prompt cache from the user turn stays valid. The reviewer uses the parent's model and the same system-prompt prefix for that reason.
@@ -49,8 +47,6 @@ Rust, beside the fork: a child is a thread the cancel bench can join. The tool s
 > **Deferred.** Running the reviewer inside `drive_loop`. `Loop::finalize` returns the fork. The user turn's `run_loop` does not call it.
 
 > **Guardrails.** The fork's tool slice is the whitelist. `terminal` is refused. A skill nudge omits `memory`. Intervals on the fork are 0, so the reviewer does not schedule another reviewer. Cancel is an `AtomicBool`. `HERMES_CANCEL_TIMEOUT` is two seconds and this crate does not sleep it. The user turn does not run the reviewer.
-
-[personal note: a turn you wished the agent had reviewed after you left]
 
 ## What this chapter decides
 
@@ -574,8 +570,6 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). The 
 - **Cancel.** A flag, then a join. The two-second Hermes wait is a constant this crate does not sleep.
 - **Turn.** `run_loop` and `drive_loop` do not call `finalize`.
 - **Time.** Building the fork measured **47.5 ns**. Cancelling the spinner measured **873.74 µs**. Those are the means.
-
-[personal note: a review that was worth running after the turn, not during it]
 
 ## What you implement
 

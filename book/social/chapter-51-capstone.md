@@ -15,8 +15,6 @@ This crate uses integer div_ceil. tool_07 sits inside the first eight, so all th
 4/
 The demo prints "capstone: every=160 static=40 dynamic=5 success=1/1/1 task=1/1/1 load=100/100 waves=13". The bench ids are 51/dynamic_tokens and 51/load_100. The old ids 49/dynamic_tokens, 47/dynamic_tokens, 49/load_100, and 47/load_100 are aliases. The means are 264.8 ns and 122.77 µs, mean.point_estimate from [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196).
 
-[personal note]
-
 5/
 Next is chapter 52, evals: chapter 9's saved tasks on the full harness. That chapter copies the tracing tree, not this server crate.
 
@@ -32,8 +30,6 @@ The server track ends by comparing what a completed task costs in schema tokens.
 The load runs 100 calls through SessionGateway in memory. CALL_BOUND is 8. The wave counter increments when the in-flight count returns to 0, so 100 calls are 13 waves. Nothing listens. oha is not invoked. p99 is computed on the samples and is not printed.
 
 The bench ids are 51/dynamic_tokens and 51/load_100. Aliases: 49/dynamic_tokens, 47/dynamic_tokens, 49/load_100, and 47/load_100. The means are 264.8 ns and 122.77 µs, mean.point_estimate from [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196). The demo does not need an API key.
-
-[personal note: one takeaway from writing this chapter]
 
 Next: chapter 52 re-runs the saved tasks on the harness. Read Chapter 51: [link]
 

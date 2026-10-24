@@ -1,7 +1,5 @@
 # Chapter 46: The Kanban Board
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 45's board works inside one process. Two processes that both want the same task will both think they own it, because a mutex does not cross a process boundary. A team of agent processes needs a board on disk, and a claim that one of them wins. This chapter adds that board. The crate is `steps/ch46-kanban`, a copy of chapter 45 plus `kanban`. The package is `ch46-kanban`. The claim binary is `ch46_kanban_claim`, not the chapter demo binary. Cargo turns hyphens into underscores in the environment variable, and a shared binary name would overwrite `target/debug`.
 
 `Task` and `Board` are the JSON document. `Op` is claim, complete, review, or block. `apply` checks `parents_done` before a task can be claimed, so a dependent task waits. `transact` locks, reads, checks status and owner, writes, and unlocks. The lock is a sibling file opened with `create_new`. There is no version integer. Two claims of one task: one creates the lock and writes, the other gets `Busy` while the lock exists or `Lost` once the status is no longer `ready`. `Unlock` is the guard that releases it. Paths stay inside the board file the test created. `FakeModel` and the demo run one claim. Hermes's SQLite board is a compare-and-swap on status. This chapter's board is the JSON file and the lock. Pause is a field on the JSON. It is not the process-wide emergency stop.
@@ -93,8 +91,6 @@ Rust, at the file: the board is serialized JSON, and the write is a temp file pl
 > **Deferred.** WAL, `task_runs`, and claim expiry. The model runs after the lock file is gone. `demo` asserts `!lock_path.exists()` before `FakeModel`.
 
 > **Guardrails.** Two owners cannot both win the compare-and-swap. An empty result is refused. Pause blocks a new claim. Parents gate the claim. The full box is [Guardrails in this chapter](#guardrails-in-this-chapter).
-
-[personal note: a second process that had to lose]
 
 ## What this chapter decides
 
@@ -735,8 +731,6 @@ pub fn chapter_46_claims_won(attempts: usize) -> usize {
 - **Race.** Two processes. One `claimed`. One `lost`.
 - **Model.** `FakeModel` runs after `!lock_path.exists()`. The demo line is `kanban: done`.
 - **Time.** `claim_transaction` mean 328.02 µs. That is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196). The id is `46/claim_transaction`. The aliases are `44/claim_transaction` and `42/claim_transaction`. The Criterion `time:` line is the slope.
-
-[personal note: the lock file that had to disappear before the reply]
 
 ## What's next
 

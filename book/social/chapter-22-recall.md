@@ -15,8 +15,6 @@ A child session that contains the same token is not a hit. A cron session that c
 4/
 Discover over 10,000 messages measured 60.80 µs. The demo hit is the user session named desk. No key.
 
-[personal note]
-
 5/
 That is chapter 22. The next server chapter is learned tools. The next harness chapter is skills.
 
@@ -30,8 +28,6 @@ Chapter 22 is out: Recall.
 Past sessions are searchable without another model call. An FTS5 trigram index sits on the messages table from the sessions chapter. A query discovers one hit per session. A session id reads it. A session id plus an anchor scrolls a window. No arguments browses recent sessions.
 
 Subagent sessions stay out of the results, matching Hermes Agent's hidden sources. Cron sorts after the user's own session instead of being dropped from the index. Discover over 10,000 messages measured 60.80 µs.
-
-[personal note: one takeaway from writing this chapter]
 
 Next: skills, and learned tools on the server. Read Chapter 22: [link]
 

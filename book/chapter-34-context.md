@@ -1,7 +1,5 @@
 # Chapter 34: Managing Context
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 33 can compose a team on one shared context. A long run still appends every note, and chapter 2's crude trim — drop the oldest exchange — is not good enough once skills, memory, and tool results are in the transcript. Providers also cache the prefix, so the compression has to be the one allowed rewrite, and it has to leave a marker where it dropped something the agent may need to reload. This chapter is that rewrite. The crate is `steps/ch34-context`, a copy of chapter 33 plus `context`. The package is `ch34-context`.
 
 Four patterns are compiled once. `scan_context` reads project files such as `AGENTS.md` and blocks a match, replacing it with a short refusal. A user file is kept. Load truncates only what was not blocked, keeping a head and a tail under the size cap. Untrusted tool output is wrapped, and an embedded closer is neutralized so the page cannot end the wrapper and continue as instructions. That is the wrapper chapter 16 already uses for extract text, now in the harness module later chapters share. `preflight` compresses only when the transcript is over the cap, which is the compression chapter 9 deferred. The hot path sends the `Arc` snapshot. Compression and the memory flush run before that send, or between turns. The flush calls chapter 21's memory path so a fact that would otherwise be cut still has a chance to land in the file. A loaded skill that compression drops leaves a `[SKILL_PRUNED]` marker. The agent reloads with `skill_view` if it still needs the skill. The system-prompt index from chapter 24 is rebuilt at this compaction, not in the middle of the session.
@@ -43,8 +41,6 @@ Rust, at the slice: a `Vec` of messages is split into a head you keep, a middle 
 > **Adapted.** The pattern table here is those four regexes. `scan_for_threats` compiles a larger table and reports invisible codepoints. The scan window compares `content.len()` (bytes) with 65,536 and steps back to a char boundary. Hermes slices a Python `str`, which is by code point. Truncation counts `chars()`, not bytes. Omitted markdown headings are not listed. The wrap does not attach `_tool_output_risk_metadata` and does not append the elision notice. `preflight` sums `message.text.chars().count()` and compares that sum with `CONTEXT_FILE_MAX_CHARS`. The side model is `FakeModel`. The flush is the latest `role == "user"` line, stored on `Prep.flushed`. `share` is `Arc::clone`.
 >
 > **Deferred.** The rest of `_PATTERNS`, scope names, NFKC, and invisible-unicode findings. `context_file_max_chars` from config and `_dynamic_context_file_max_chars`. The truncation-warning queue. Risk metadata and upstream elision. Token thresholds, cooldowns, and the auxiliary summary route inside `compress`. The `MEMORY.md` / `USER.md` disk snapshot in `memory_tool.py`. Chapter 35's mailbox. Chapter 36's restart.
-
-[personal note: a rules file that was longer than the prompt I meant to send]
 
 ## What this chapter decides
 
@@ -594,8 +590,6 @@ pub fn chapter_34_hot_path_returns_the_same_arc() -> bool {
 - **Snapshot.** Both paths, and `share`, clone the same `Arc`.
 - **Demo.** `shared: clean`.
 - **Time.** `share_snapshot` mean `4.86 ns`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The Criterion `time:` line is the slope.
-
-[personal note: the rules stayed one allocation, and the transcript was what changed]
 
 ## What's next
 

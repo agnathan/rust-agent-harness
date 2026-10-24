@@ -1,7 +1,5 @@
 # Chapter 2: Conversations
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 At the end of chapter 1 the harness can send one prompt, print the reply, and forget it. Ask "what's my name?" on the next call and the model has nothing to go on. That is how these APIs work. The model stores nothing between requests, so a conversation is a list the program keeps and sends again in full. This chapter builds that list, and the one door a turn goes through before the provider sees it. The code is `steps/ch02-conversations`, starting from the chapter 1 messages, the `Provider` trait, and the pooled client.
 
 `Conversation` holds a system prompt and an ordered history. The fields are private. `push` refuses a history that would put two user messages or two assistant messages in a row, because strict providers respond to a broken alternation by misbehaving, and a bug of that kind shows up far from the line that caused it. The system prompt is set once and the history cannot touch it. Providers cache the prefix of a request, so a system prompt that changes on turn three makes every later call pay full price. Length is tracked, and a too-long history drops the oldest exchange without touching the system prompt or the newest message. Save and load use JSON. A scripted mock provider lets a multi-turn test run with no network and no key.
@@ -34,8 +32,6 @@ Rust, for a new reader: ownership is why the conversation is a value the session
 > Hermes writes the message-list rules down in `agent/AGENTS.md` ("Message-flow invariants"). Roles alternate (`agent/message_sanitization.py`). The system prompt is built once per session (`agent/system_prompt.py::build_system_prompt`) and stays byte-stable so a provider can cache that prefix. The only sanctioned rewrite of history is compression (`agent/context_compressor.py`). This chapter's `Conversation` is that list: private fields, a single `push` that refuses a bad alternation, and a system prompt the history cannot touch. Hermes stores the list in SQLite (`hermes_state.py`). I store JSON. The slash commands in Hermes live in one registry (`hermes_cli/commands.py`); mine are a small enum.
 >
 > Hermes also has one place a new turn arrives, rather than each client calling the model itself. This chapter's `SessionInbox` is that place. `harness chat` and `harness ask` submit a line, the session pops it, then the provider runs. The gateway, cron, and the editor integration later submit to this same inbox. They do not grow a second queue.
-
-[personal note: how Chapter 1 went, whether you ran it against a real model, and what you wanted to do next]
 
 ## What Hermes taught me about conversations
 
@@ -823,8 +819,6 @@ event: error missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 ```
 
-[personal note: a real chat session, e.g. testing whether the model remembers something said three turns earlier]
-
 ## Guardrails in this chapter
 
 Layer L4's transcript invariants, in the form this type can enforce. The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
@@ -851,8 +845,6 @@ Hermes K4 (`agent/message_sanitization.py`) sanitizes the outbound payload, uniq
 - **`harness chat` and `harness ask`:** OpenRouter by default, `--mock` with no key, and the same event lines as chapter 1.
 
 New Rust along the way: private fields as a way to enforce rules, borrowing slices, match guards, `Option` vs `Result`, generics with trait bounds, blanket implementations, a sync mutex inside an async function, and the basics of terminal input.
-
-[personal note: which Rust idea finally made sense in this chapter, and which still feels shaky]
 
 ## Build, run, and benchmark
 

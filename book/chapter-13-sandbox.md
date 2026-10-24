@@ -1,7 +1,5 @@
 # Chapter 13: Sandboxed Execution
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 11 can deny a dangerous shell command. Chapter 12 can watch a call. Neither of them runs a model-written script outside the harness process. `execute_code` that simply `eval`s in-process is the harness trusting the model with its own address space. This chapter adds the boundary. The crate is `steps/ch13-sandbox`, a copy of chapter 12 plus a `sandbox` module. The package is `ch13-sandbox`. The worker binary stays named `sandbox-worker`, because the tests and the bench compile `CARGO_BIN_EXE_sandbox-worker`. Later copies keep that name.
 
 `deny_tool` now calls `sandbox::check_execute_code` for `execute_code`. The default loop path passes interactive presence, mode off false, yolo false, and `whole_script` false, so a local interactive script is approved here and its `terminal` calls still hit chapter 11. Cron, single-query, and unattended deny a local script. An isolated `env_type` — anything other than `local` — approves. `whole_script` asks once, not once per line. That is the script gate Hermes calls `check_execute_code_guard`, deferred from chapter 11 and closed here.
@@ -42,8 +40,6 @@ Rust, in the sidebars: a child process is `std::process`, and the worker is a bi
 > **Adapted.** Nothing calls Docker. `docker_run_args` returns the argv a test can read. The worker is one process this crate compiles, not a container. `run_until` kills that direct child. Hermes's `kill_process_tree` also walks descendants (`taskkill /F /T` on Windows, a process-group kill on POSIX). This chapter does not. The checkpoint is a manifest of path and content, not a shadow git repo. Rewind copies the manifest back.
 >
 > **Deferred.** Credential-file mounts (D5) and per-child git worktrees (D6, chapter 29). This chapter does not parse Python. A2 is the script gate above, not a source scan.
-
-[personal note: a job you thought was sandboxed, and which backend it actually used]
 
 ## What this chapter decides
 
@@ -925,8 +921,6 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Laye
 - **Checkpoint.** Off until enabled. Rewind copies the manifest back.
 - **Gate.** The loop's local interactive `execute_code` is `Approved`. Cron on `local` is `Denied` when you call `check_execute_code`.
 - **Time.** A warm accept measured **30.49 µs**. Checkpoint of 1,000 paths measured **50.37 µs**. Rewind measured **83.79 µs**.
-
-[personal note: the first time the worker stayed up after the test, and which drop killed it]
 
 ## What you implement
 

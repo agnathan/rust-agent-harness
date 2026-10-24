@@ -1,7 +1,5 @@
 # Chapter 10: The Turn State Machine
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 9 returns one `TurnOutcome` when a turn ends. The loop that produces it is a nest of checks: cancel, steer, budget, stall, validation, wrap-up. You can read it, and you can still not say which combinations are legal. This chapter pulls the legal moves into a table, and then makes that same loop walk the table. The step is not a second demo sitting beside the loop. It is chapter 9's finished harness, `steps/ch09-10-evals`, copied to `steps/ch10-turn-state`, plus a `turn` module. The package is `ch10-turn-state`, the library is `harness_core`, and the CLI package is `ch10-harness-cli`. The demo binary is `ch10-turn-state`.
 
 `Phase` names where a turn is: `Idle`, `CallingModel`, `Dispatching`, `WrappingUp`, and the terminals `Finished`, `Cancelled`, `SoftStopped`, `Budget`, `Partial`, `InvalidToolCalls`, `Stalled`. A terminal phase accepts no further event. `TurnEvent` is the observation: the model returned text, the model asked for tools, a hard cancel arrived, the budget hit, the tools finished, and the few cases the first table could not name. `step` maps a phase and an event to the next phase, or to `Illegal`. `note` panics if the move is illegal, so a chapter 9 outcome the table cannot name fails the test instead of drifting. `Driver` remembers which kind of wrap is in progress. `drive_loop` holds that driver and calls `advance` at every observation. `run_loop` and `run_loop_with_inbox` go through it. `run_loop_driven` returns the outcome and the phase together.
@@ -36,8 +34,6 @@ Rust, for a new reader: an enum is the phase and the event. `match` is exhaustiv
 > **Adapted.** The table is exhaustive. Every `(Phase, TurnEvent)` pair is either `Ok(next)` or `Illegal`. Hermes stores the fields and lets the loop decide. I did not port `_LoopState`'s fields. Three events are new because the live loop has moves the first table did not name: `NoDone`, `BudgetAbort`, and `SoftWrapIgnoredTools`. Compression attempts are chapter 34. Provider overflow stays with the failure path in chapter 14. Verification holds are not a row in this table.
 >
 > **Deferred.** `run_script` is still a fake model: a list of `ScriptStep` values, no HTTP, no key. Empty-response retries and the repetition guard stay in chapter 14. They are not new phases here.
-
-[personal note: a transition you expected to be legal, and the test that said it was not]
 
 ## What this chapter decides
 
@@ -908,8 +904,6 @@ Secret redaction is still absent (E1, E2). Approvals are chapter 11. The table w
 - **Loop.** `drive_loop` holds a `Driver` and panics if a move is illegal. A zero-iteration budget never enters `CallingModel`.
 - **Script.** A tool call, a tool result, and a text answer end `Finished`. Soft stop ends `SoftStopped`. A budget wrap-up that asks for tools ends `Partial`.
 - **Time.** One transition measured **1.258 ns**. The three-step script measured **19.08 ns**.
-
-[personal note: which exit you had been handling inline, and how it looked as a row]
 
 ## What you implement
 

@@ -1,7 +1,5 @@
 # Chapter 24: Using Skills
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 22's harness can remember a fact and search a session. It cannot yet carry a procedure for a kind of task: the steps, the pitfalls, the files you always open. Stuffing that procedure into `MEMORY.md` would mix instructions with facts, and stuffing it into the system prompt would bust the cache every time a skill changed. This chapter adds skills as something you read. Writing them is chapter 25. The crate is `steps/ch24-skills`, a copy of chapter 22 — chapter 23 is the server and is not on this line — plus a `skills` module. The package is `ch24-skills`.
 
 A skill is a folder, category then name, with `SKILL.md` at the top: YAML frontmatter and a markdown body. The caps match Hermes: the name at most 64 characters, the description that appears in the index at most 1,024 characters, the body at most 100,000 characters. `load_tree` walks categories, then skill folders. `parse_skill` reads the keys this chapter needs. `SkillSession` stores the rendered index in an `Arc`. `render_index` writes one `<available_skills>` block, category then name, fixed formatting. The block is computed once and left untouched for the rest of the session, so loading 500 skills does not change the index bytes when one is viewed. `skills_list` filters by category. `skill_view` reads one file, the whole of it, with no offset. `change_note` compares names so a later message can say what appeared or disappeared without rewriting the system prompt.
@@ -51,8 +49,6 @@ Rust, beside the loader: the directory walk is `std::fs`, and the frontmatter pa
 > **Deferred.** The live hub. Prompt-cache byte identity with the parent model request. That stays a note in chapter 26.
 
 > **Guardrails.** This chapter reads. A name over 64 characters, a description over 1,024, or a body over 100,000 characters does not enter the index. `skill_view` refuses a relative path that contains `..`, an absolute path, and a file whose first component is outside `references`, `templates`, `scripts`, and `assets`. The stored block is one `Arc`. The scan and the write gate are chapter 25.
-
-[personal note: a skill you loaded late, and the step it would have saved]
 
 ## What this chapter decides
 
@@ -717,8 +713,6 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Skil
 - **Tools.** `skills_list` filters by category. `skill_view` returns one whole file, or one supporting file under the four directories.
 - **Note.** Added and removed names become the note. The `Arc` stays.
 - **Time.** Loading and rendering 500 skills measured **4.15 ms**. That is the mean.
-
-[personal note: a procedure that belonged in a skill instead of in the prompt]
 
 ## What you implement
 

@@ -15,8 +15,6 @@ The whitelist adds read_file and search_files. Write tools stay off the slice. H
 4/
 Building the fork measured 47.5 ns. Cancel and join measured 873.74 µs ([run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589)). Those figures are the means. The demo note is "prefer short notes". No key.
 
-[personal note]
-
 5/
 Next is curation: stale at 14 days, archived at 30, and the request path only enqueues the pass.
 
@@ -30,8 +28,6 @@ Chapter 26 is out: The Reflection Loop.
 A finished turn can teach the next one, and that work stays outside the turn the user is waiting on. Hermes Agent nudges a background review on memory.nudge_interval and the skill interval, then forks a reviewer whose own nudge intervals are 0. Memory is on that fork only when the memory nudge fired. I did the same: Loop::finalize returns the fork, terminal is refused, and cancel is a flag. The 2 second wait is a constant this crate does not sleep. run_loop does not call finalize.
 
 Building the fork measured 47.5 ns. Cancel and join measured 873.74 µs ([run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589)). Those figures are the means.
-
-[personal note: one takeaway from writing this chapter]
 
 Next: a curator that archives unused skills off the request path. Read Chapter 26: [link]
 

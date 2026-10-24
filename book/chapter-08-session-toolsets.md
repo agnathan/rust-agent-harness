@@ -1,7 +1,5 @@
 # Chapter 8: Session Toolsets
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 7's gateway has one catalog. Every caller who can search it can see every name. A session should see a smaller set: the tools a task starter picked, plus the names a search revealed. The full schema stays off that list until something asks for it. This chapter adds that view, and it counts schema tokens, call tokens, and result tokens for three ways of doing the same fake task. The step crate is `steps/ch08-session-toolsets`. It depends on `ch07-catalog`. It binds no socket.
 
 `SessionGateway` is the type a client holds. `set_task` installs a starter set for a task description. `search_tools` returns a short line per hit, `name — blurb`, and refuses more than 7 queries. `describe` returns the server and the full description, and refuses more than 10 names. Those two caps are the ones Hermes puts on its bridge tools. Revealed names accumulate on the session. `SessionView` is what `session_tools` returns: the names this session may see, not the whole catalog. `take_list_changed` flips a flag back to false, which is the bit a later socket would send as `notifications/tools/list_changed`. Results page at 2,000 characters. `Telemetry` records schema tokens, call tokens, and result tokens. `Arm` and `TaskReport` are the three-way comparison: every tool, a static set, and a dynamic set. `run_rename_task` is the fake task those arms share. Token estimates divide bytes by 4.
@@ -38,8 +36,6 @@ Rust, as it arrives: a session is a struct keyed by an id, not a global. A flag 
 > **Adapted.** The session is keyed. Hermes refuses that for the client's catalog because it would drift. This server is the source of the list, so the session stores names and the catalog stores cards. When the revealed names change, `list_changed` becomes true. The client in chapter 4 already drops its cache on that notification. This chapter only sets the flag. `set_task` scores servers by token overlap and reveals up to 8 names from the winning server. That starter set is the runtime version of an include list. I did not find it in Hermes, so the box does not cite a function for it.
 >
 > **Deferred.** Putting `list_changed` on the wire waits for chapter 42. Untrusted-output wrapping (F4, `agent/tool_dispatch_helpers.py`) waits for chapter 34. The load-test capstone that reports these three arms under real traffic is chapter 51.
-
-[personal note: the first time the full schema was obviously the expensive part]
 
 ## What this chapter decides
 
@@ -139,8 +135,6 @@ Secret redaction (E1, E2) is still not in this process. Rate limits and the per-
 - **Listing versus schema.** Search returns a short line. `describe` returns the full text. Both add to `schema_tokens`.
 - **Three arms, 2,000 tools.** Every tool 45,104 schema tokens, static 153, dynamic 135. All three succeed. The dynamic arm measured **5.687 ms**. The every-tool arm measured **8.355 ms**.
 - **Flag.** `take_list_changed` is true once after the revealed set grows.
-
-[personal note: which of the three token numbers you would show someone who wants every tool in the prompt]
 
 ## What's next
 

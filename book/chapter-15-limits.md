@@ -1,7 +1,5 @@
 # Chapter 15: Limits and Breakers
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 The harness can now classify a failure and refuse a destructive command. Those are decisions about one agent. A gateway that fronts many tools has a different problem: one tool can be slow, one tool can be called fifty times in a turn, and a backend that is already failing should not be called again while it recovers. This chapter is the server's answer. It is a copy of the gateway, not of the harness. Chapter 16 will copy chapter 14. It will not copy this crate.
 
 The package is `ch15-limits`, the library is `gw_limits`, and the bench is `limits`. Chapter 7's catalog and chapter 8's session gateway are vendored under `src/catalog/` and `src/session.rs`, so this step builds alone. There is no path dependency on `ch07-catalog` or `ch08-session-toolsets`. The public names chapter 23 already calls stay: `Catalog`, `LimitedGateway` (`new`, `catalog`, `open_session`, `session_tools`), and `SessionView`. The crate binds no socket.
@@ -66,8 +64,6 @@ Rust, beside the types: a permit is an owned guard, and releasing it is a drop, 
 > **Adapted.** The breaker, the 32/8 gate, the hedge, and 429/503 handling are this chapter's server policy. A transport error, or a status other than 429 or 503, retries once when the tool is idempotent. 429 and 503 do not retry. Three failed calls open the breaker. A success clears the failure count only while the breaker is still closed. A hedge starts a second call only for an idempotent tool and keeps the first success.
 >
 > **Deferred.** The 30-second cooldown that doubles to 10 minutes is not copied. A half-open breaker, shared rate-limit state, and the socket stay later (chapters 35 and 38). Chapter 9 still counts a tool named `delegate` against `max_subagent_iterations`. This chapter counts `delegate_task`.
-
-[personal note: a retry you would have allowed, and why the tool was not marked idempotent]
 
 ## What this chapter decides
 
@@ -933,8 +929,6 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Laye
 - **Breaker.** Three failures, then the backend is not called.
 - **Caps.** 50 web searches. 50 subagent spawns. A list action still runs.
 - **Time.** The open-breaker check measured **31.97 ns**. The permit round trip measured **57.73 ns**.
-
-[personal note: a breaker that opened on a tool you still wanted to retry]
 
 ## What you implement
 

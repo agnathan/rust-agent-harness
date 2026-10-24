@@ -1,7 +1,5 @@
 # Chapter 12: Hooks and Plugins
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 11 can refuse a command. It cannot yet let some other code watch the call, rewrite the arguments, or keep a note about the turn. Plugins, a memory backend, and the reflection fork all need a place to stand that is not a copy of `drive_loop`. This chapter adds that place. The crate is `steps/ch12-hooks`, a copy of chapter 11 plus a `hooks` module. The package is `ch12-hooks`. The library is `harness_core`.
 
 The loop does not call the hook runner. The chapter's own tests do. Later chapters keep that split: memory, reflection, and curation call their own functions, and `drive_loop` still does not name the runner. A hook must not hold the dispatch permit across a human wait. That rule is chapter 11's, and a plugin does not get to break it.
@@ -52,8 +50,6 @@ Rust, where the feature needs it: a trait is the plugin and the memory backend. 
 > **Adapted.** `post_tool_call` returns `Option<String>`, a replacement result. I did not port Hermes's post-hook payload. `pre_api_request` takes `&[Message]` so the hook cannot be the thing that clones the conversation. `MemoryBackend::enqueue_turn` is a `Mutex<VecDeque>` capped at 64, not Honcho or Hindsight. A hook may name a toolset to enable. `set_thread_tool_whitelist` in `hermes_cli/plugins.py` narrows tools; this enable is the other direction, and a failed availability check still hides the tool.
 >
 > **Deferred.** The reviewer that runs after a turn, and `on_pre_compress`, are chapter 26. The file backend is chapter 21. Untrusted-output wrapping is chapter 34 (F4).
-
-[personal note: a hook that fired on a tool you thought was still going to run]
 
 ## What this chapter decides
 
@@ -880,8 +876,6 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Laye
 - **Borrow.** The API hook sees the message slice. It does not get its own copy.
 - **Queue.** One turn enqueues. The file write is chapter 21.
 - **Time.** The empty pair measured **10.90 ns**. The API hook measured **2.182 ns**. The enqueue measured **61.70 ns**.
-
-[personal note: which hook you expected to be a block, and what it rewrote instead]
 
 ## What you implement
 

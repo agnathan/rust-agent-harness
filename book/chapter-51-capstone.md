@@ -1,7 +1,5 @@
 # Chapter 51: Load and Token Capstone
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 8 defined three ways to offer tools for one fake task and counted schema tokens, call tokens, and result tokens. Chapter 50's research team is a harness story. It does not answer the catalog question: how many tokens does the dynamic offer cost, does the task still succeed, and what does a hundred in-process dispatches cost? This chapter answers that on a sample of 32 cards. Each schema is `{"name":"tool_NN"}`, 18 bytes. `approx_tokens` is `div_ceil` of that length by 4, so one card is 5 tokens and the three arms are 160, 40, and 5. That is the arithmetic of this sample, not a tokenizer and not chapter 6's 10,000-tool list. The crate is `steps/ch51-capstone`. It copies chapter 42, library name `gwservice`, new module `capstone`. It is not on the harness copy chain. It binds no socket. `oha` is not run, because there is no listener to point it at. `mcp-gateway` re-exports `LearnedGateway` from this crate as `Gateway`, and it re-exports chapter 8's session types beside it.
 
 `Card` is a tool in the sample catalog. `Arm` is dynamic, static, or every tool. `sample_catalog` builds the fixed set the three arms share. `approx_tokens` divides by four and rounds up with `div_ceil`, so the count is deterministic and does not call a tokenizer. `tokens_of` and `offers_needed` are the arithmetic. `compare` runs the three arms and reports tokens and task success for each. The dynamic arm offers the names the task needs. The static arm offers a fixed eight. The every-tool arm offers the whole sample. `task_arms` is the rename task, the same shape as chapter 8's fake task. `load` admits 100 in-memory dispatches. `p99` is the nearest-rank percentile inside that process, not a network percentile. `admit` is the gate the load passes through. `demo` prints the arms and the load line.
@@ -47,8 +45,6 @@ Rust, at the arithmetic: integer `div_ceil` is the token estimate, a `struct` pe
 > **Deferred.** A real socket, `oha`, and a remote catalog. A live embedder stays out of this file. The Benchmarks job still measures the in-process functions.
 
 > **Guardrails.** The arms report tokens and a success bit. A deadline the wide arms exceed fails those arms and leaves the dynamic arm successful. The full box is [Guardrails in this chapter](#guardrails-in-this-chapter).
-
-[personal note: three token counts on a task that still finished]
 
 ## What this chapter decides
 
@@ -637,8 +633,6 @@ pub fn chapter_51_arm_succeeded(name: &str) -> bool {
 - **Load.** 100 in-memory calls, bound 8, 13 waves. `p99` is computed and not printed.
 - **Process.** `mcp-gateway` re-exports `LearnedGateway` as `Gateway`. It binds no socket.
 - **Time.** `dynamic_tokens` mean `264.8 ns`. `load_100` mean `122.77 µs`. Both are `mean.point_estimate`. The Criterion `time:` line is the slope.
-
-[personal note: a wide arm that failed its deadline and a narrow arm that finished]
 
 ## What's next
 
