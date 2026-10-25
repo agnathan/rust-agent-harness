@@ -20,7 +20,7 @@ The binary needs no key:
 
 cargo run -p ch53-the-loop-closes --bin ch53-the-loop-closes
 
-close_loop does not call OpenRouter. The command that does take a key is the older ask path, and it does not run this loop. The bench id is 53/close_once. I am not quoting a Criterion mean.
+close_loop does not call OpenRouter. The command that does take a key is the older ask path, and it does not run this loop. The bench id is 53/close_once. mean.point_estimate is 701.61 µs, from run 40163536226.
 
 Read Chapter 53: [link]
 
@@ -37,6 +37,6 @@ A dangerous body is still staged, and force still does not install it through th
 
 cargo run -p ch53-the-loop-closes --bin ch53-the-loop-closes
 
-No API key. The live ask command is the older CLI, and without a key it exits before building a client. close_loop does not call it. The bench id is 53/close_once. This post does not quote a Criterion mean. Read Chapter 53: [link]
+No API key. The live ask command is the older CLI, and without a key it exits before building a client. close_loop does not call it. The bench id is 53/close_once. mean.point_estimate is 701.61 µs, from run 40163536226. Read Chapter 53: [link]
 
 #Rust #AIAgents #LearningInPublic #SoftwareEngineering

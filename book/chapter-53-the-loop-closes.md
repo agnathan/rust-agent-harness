@@ -443,7 +443,7 @@ attempts: 2
 
 Read it as a trace, not as a summary I smoothed over. `before` finished, which means the loop didn't hit the budget or a stall. It finished on the text `unknown`, with no tool call, after one model call. The trajectory JSON is `append_event` of that score. `first_turn_fork=false` is the interval doing what chapter 26 specified. `user_turns=10` is the counter at the second `finalize`. The note is the scripted argument, and it contains the real final text. `skill_file: true` is the path after curation. The curator checked 2, archived 1, left the fresh skill `Active`, and left one `curate` on the queue. `scratch_archived: true` is the moved directory. The librarian's version is 2. The team line names the skill and not the command. The chapter 24 index also names the task. The bus delivered one envelope, and the body after redact is `skills.updated v2`. `after` finished on the command, with one `skill_view` and two model calls. `attempts` is 2.
 
-The bench id is `53/close_once`, in `benches/improve.rs`. It calls `improve::run` on a fresh directory and black-boxes the second score. The Benchmarks workflow is where this book's Criterion means come from. I don't have that run's `mean.point_estimate` for this id, so I'm not printing one.
+The bench id is `53/close_once`, in `benches/improve.rs`. It calls `improve::run` on a fresh directory and black-boxes the second score. The Benchmarks workflow is where this book's Criterion means come from. `mean.point_estimate` for this id is 701.61 µs, from [run 40163536226](https://github.com/agnathan/rust-agent-harness/actions/runs/40163536226). The printed `time:` line is the slope. How to read it is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Tests
 
@@ -526,7 +526,7 @@ Two smaller checks, if you want them beside the milestone. A skill whose text ma
 - `Writer::create` scans the procedure and stores it. The curator archives `scratch` and leaves the new skill `Active`. The queue stays at 1.
 - The librarian moves the index to version 2. `team_md` names the skill and doesn't carry the command. The bus delivers `skills.updated v2`.
 - A dangerous body is staged, and the librarian rejects it with `force` set. A `..` write is refused. A tool loop stops on the budget wrap-up. The run writes only under its temp root.
-- `close_loop` doesn't call OpenRouter. The bench id is `53/close_once`, and this chapter doesn't quote a Criterion mean for it.
+- `close_loop` doesn't call OpenRouter. The bench id is `53/close_once`, and its `mean.point_estimate` is 701.61 µs, from run 40163536226.
 
 ## What the run proved, and what it left open
 
