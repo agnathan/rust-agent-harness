@@ -1,16 +1,14 @@
 # Chapter 26: The Reflection Loop
 
-Chapter 25 can write a skill when something asks it to. Nothing yet asks. A turn can finish, the user can correct a style or a workflow, and the harness will store the session and otherwise move on. The lesson sits in the transcript until it scrolls out. This chapter adds the nudge and the fork that reads the turn afterward. The crate is `steps/ch26-reflection`, a copy of chapter 25 plus `reflection`. The package is `ch26-reflection`.
+After ten user turns the demo prints `note: prefer short notes` and `forked: after 10 user turns`. The note is a scripted model echoing one stored line, `memory prefer short notes`, and the second line is a string in `main`, written as 10 because the interval constant is 10. What the print is showing is the fork, and ten calls to `note_user_turn` set the memory flag, `finalize` returns the reviewer, and `execute` runs that one line. The parent transcript stays untouched, so the prompt cache from the user turn keeps its bytes. That sequence is scripted, and it is the whole closed loop this chapter can show.
 
-Two counters live on the loop. A memory nudge fires every 10 user turns. A skill nudge fires every 10 tool iterations. Both defaults can be changed. `finalize` returns the fork and clears the flags. `spawn_reviewer` builds a tool slice that contains only the skill and memory tools, and it zeroes the intervals so the same turn cannot fork twice. The reviewer is a supervised child with its own cancellation. A new user turn cancels it. `execute` runs the scripted model one tool at a time. The parent transcript is not edited, so the prompt cache from the user turn stays valid. The reviewer uses the parent's model and the same system-prompt prefix for that reason.
+The user turn doesn't run it. `drive_loop` still awaits the model and the tools the model called, and a search of `agent.rs` finds that function and the calls that reach it, with no `Loop`, no `finalize`, and no `spawn_reviewer`. Spawning the reviewer builds a fork, and the user turn leaves that fork for a caller outside the loop. Chapter 27 archives skills off to the side and doesn't start this fork either. A continuously improving harness needs the lesson written down after the person has moved on, and it needs that write off the latency they were waiting on.
 
-Spawning the reviewer is the cost that stays on the turn. Running it is not. The hot path still awaits the model and the tools the model called. That split is the performance rule for the whole learning half of the book: reflection, curation, index rebuilds, and full-text updates are background work. Chapter 27 will enqueue curation the same way, and it will not run the reviewer either. Chapter 29's team can enqueue a reflection note without running this fork on the team's turn. Chapter 36 is what "supervised" will later mean for a child that stops making progress. This chapter's cancel is the chapter 9 token, raced with the review.
+The reviewer is handed the skill and memory tools, and the slice leaves out `terminal`, `web_search`, and `delegate`. A reviewer that can do the user's task will do the user's task. A reviewer that can only patch a skill or add a memory line has to write the lesson down, straight into the stores chapter 21 and chapter 25 already guard. Spawning the fork is the cost that stays on the turn, and running it is background work, the same rule as curation, index rebuilds, and full-text updates.
 
-The fork is how the harness moves toward the closed loop without putting the closed loop on the user's latency. The reviewer writes straight to the stores chapter 21 and chapter 25 already guard. It does not get `terminal`, `web_search`, or `delegate`. A reviewer that can do the user's task will do the user's task. A reviewer that can only patch a skill or add a memory line has to write the lesson down.
+Chapter 25 can write a skill when something asks. This chapter is the nudge that asks: every 10 user turns for memory, every 10 tool iterations for a skill, both defaults changeable. `finalize` returns the fork and clears the flags. `spawn_reviewer` builds the slice and zeroes the intervals so the same turn can't schedule another reviewer. The child has its own cancellation, and a new user turn cancels it with the chapter 9 token, raced with the review. Chapter 15's limit gate is a different object. Chapter 29's team can enqueue a reflection note without running this fork on the team's turn, and chapter 36 is what "supervised" will later mean for a child that stops making progress.
 
-Rust, beside the fork: a child is a thread the cancel bench can join. The tool slice is a set of names you build once. An interval counter is an integer, and the flag is the nudge. `Drop` or an explicit cancel is how the child stops when the user types again.
-
-`cargo run --locked -p ch26-reflection --bin ch26-reflection` forks after ten user turns. The exercise is `my-harness/tests/ch26.rs`: spawning the reviewer does not run it on the user turn.
+The step is chapter 25's harness plus `reflection`, at `steps/ch26-reflection`, package `ch26-reflection`, and the child the cancel bench joins is a thread. The tool slice is a set of names built once, the interval counter is an integer, and the flag is the nudge. `cargo run --locked -p ch26-reflection --bin ch26-reflection` is the two-line print above, and `my-harness/tests/ch26.rs` checks that spawning the reviewer leaves the user turn alone.
 
 | Section | What it walks |
 |---|---|
@@ -39,23 +37,23 @@ Rust, beside the fork: a child is a thread the cancel bench can join. The tool s
 
 ## What this chapter decides
 
-`MEMORY_NUDGE_INTERVAL` and `SKILL_NUDGE_INTERVAL` are both 10. `note_user_turn` increments a counter and sets `memory_due` when the count is a multiple of 10. `note_tool_iter` does the same for `skill_due`. `finalize` clears both flags. When both are clear it returns `None`. When either is set it returns `spawn_reviewer(review_memory)`. A turn where both flags are set still passes `review_memory == true`, so the fork includes `memory`.
+`MEMORY_NUDGE_INTERVAL` and `SKILL_NUDGE_INTERVAL` are both 10, and `note_user_turn` increments a counter and sets `memory_due` when the count is a multiple of 10. `note_tool_iter` does the same for `skill_due`, and `finalize` clears both flags. When both are clear it returns `None`, and when either is set it returns `spawn_reviewer(review_memory)`. A turn where both flags are set still passes `review_memory == true`, so the fork includes `memory`.
 
-`spawn_reviewer(true)` copies `memory`, `skill_view`, `skill_manage`, `read_file`, and `search_files`. `spawn_reviewer(false)` copies the same list without `memory`. Both intervals on the fork are 0. The function does not start a thread. It stores a fresh `AtomicBool` set to false.
+`spawn_reviewer(true)` copies `memory`, `skill_view`, `skill_manage`, `read_file`, and `search_files`, and `spawn_reviewer(false)` copies the same list without `memory`. Both intervals on the fork are 0, but the function doesn't start a thread. It stores a fresh `AtomicBool` set to false.
 
-`execute` pulls one scripted line at a time. The first word is the tool. A tool absent from the fork's slice is `ReviewError::NotAllowed`, and later lines do not run. `memory` pushes the rest of the line onto a note vec. `skill_view` calls chapter 24's loader when a root is passed. `read_file`, `search_files`, and `skill_manage` return the line. They do not write a file. Cancel is checked after the line is taken from the model and before the tool runs.
+`execute` pulls one scripted line at a time, and the first word is the tool. A tool absent from the fork's slice is `ReviewError::NotAllowed`, and later lines do not run. `memory` pushes the rest of the line onto a note vec, and `skill_view` calls chapter 24's loader when a root is passed. `read_file`, `search_files`, and `skill_manage` return the line, and they do not write a file. Cancel is checked after the line is taken from the model and before the tool runs.
 
-`ReviewRun::spawn_spinner` starts a thread that sleeps 1 millisecond until the flag is true. `cancel_and_join` sets the flag and joins. The test expects that join to finish in under 50 milliseconds. `HERMES_CANCEL_TIMEOUT` names the two seconds Hermes waits. Nothing in this file calls `thread::sleep` with that duration.
+`ReviewRun::spawn_spinner` starts a thread that sleeps 1 millisecond until the flag is true, and `cancel_and_join` sets the flag and joins. The test expects that join to finish in under 50 milliseconds, and `HERMES_CANCEL_TIMEOUT` names the two seconds Hermes waits. Nothing in this file calls `thread::sleep` with that duration.
 
-`demo` takes 10 user turns, finalizes, and runs `memory prefer short notes`. The binary prints that note and the line `forked: after 10 user turns`. No key.
+`demo` takes 10 user turns, finalizes, and runs `memory prefer short notes`, and the binary prints that note and the line `forked: after 10 user turns`. No key.
 
-`drive_loop` is still the user turn. It does not construct a `Loop`. It does not call `finalize`.
+`drive_loop` remains the user turn, and the fork stays outside it, as the opening said.
 
-The skill index from chapter 24 is still a note when the tree changes after the prompt. This chapter does not give the parent request a new copy of those bytes.
+The skill index from chapter 24 is still a note when the tree changes after the prompt. This chapter doesn't give the parent request a new copy of those bytes.
 
 ## 26.1 Two intervals, one timeout, two slices
 
-The constants are the policy. The slices are the tools.
+The constants are the policy, and the slices are the tools.
 
 ```rust
 pub const MEMORY_NUDGE_INTERVAL: u32 = 10;
@@ -74,11 +72,11 @@ const MEMORY_TOOLS: &[&str] = &[
 const SKILL_TOOLS: &[&str] = &["skill_view", "skill_manage", "read_file", "search_files"];
 ```
 
-Both intervals are `u32`. The counters on `Loop` are `u32` too, so the comparison does not mix integer widths. Ten user turns is the memory nudge. Ten tool iterations is the skill nudge. The doc comment on `HERMES_CANCEL_TIMEOUT` is the adaptation in the source: Hermes waits this long, and this crate does not sleep for it. `Duration::from_secs(2)` is 2.0 seconds, the same number as `_BACKGROUND_REVIEW_CANCEL_TIMEOUT_SECONDS`. A search of this file finds no use of `HERMES_CANCEL_TIMEOUT` except the constant itself. The cancel path uses the flag.
+Both intervals are `u32`, and the counters on `Loop` are `u32` too, so the comparison doesn't mix integer widths. Ten user turns is the memory nudge, and ten tool iterations is the skill nudge. The doc comment on `HERMES_CANCEL_TIMEOUT` is the adaptation in the source: Hermes waits this long, and this crate doesn't sleep for it. `Duration::from_secs(2)` is 2.0 seconds, the same number as `_BACKGROUND_REVIEW_CANCEL_TIMEOUT_SECONDS`, and a search of this file finds no use of `HERMES_CANCEL_TIMEOUT` except the constant itself. The cancel path uses the flag.
 
-`MEMORY_TOOLS` has five names. `SKILL_TOOLS` has four. The missing name is `memory`. That is the split: a skill-nudge review does not get the memory tool. Both slices include `skill_view`, `skill_manage`, `read_file`, and `search_files`. `read_file` and `search_files` are the names the whitelist adds. `terminal` is on neither slice. Write tools are absent. `skill_manage` is a name on the slice. `execute` handles it by echoing the line. It does not call `Writer`.
+`MEMORY_TOOLS` has five names and `SKILL_TOOLS` has four, and the missing name is `memory`, so a skill-nudge review can't write a memory line. Both slices include `skill_view`, `skill_manage`, `read_file`, and `search_files`. `terminal`, `web_search`, and `delegate` are on neither slice, because a reviewer that can do the user's task will do the user's task, and a reviewer limited to a skill patch or a memory line has to write the lesson down. `execute` echoes `skill_manage` and leaves `Writer` for chapter 25.
 
-The types are `'static` string slices. `spawn_reviewer` copies them into a `Vec<&'static str>` on the fork. The vec owns the list of pointers. The string data stays in the binary.
+The types are `'static` string slices, and `spawn_reviewer` copies them into a `Vec<&'static str>` on the fork. The vec owns the list of pointers, and the string data stays in the binary.
 
 ```rust
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -89,11 +87,11 @@ pub enum ReviewError {
 }
 ```
 
-`NotAllowed` owns the tool name that was refused. `Cancelled` has no payload. `Skill` owns the `Debug` text of a `SkillError`, or the words `no root` when `skill_view` runs without a directory. `execute` returns `Result<Vec<String>, ReviewError>`.
+`NotAllowed` owns the tool name that was refused, and `Cancelled` has no payload. `Skill` owns the `Debug` text of a `SkillError`, or the words `no root` when `skill_view` runs without a directory. `execute` returns `Result<Vec<String>, ReviewError>`.
 
 ## 26.2 `Loop` counts, and the flags are the nudge
 
-`Loop` is the counter. It is not the agent loop in `agent.rs`. The name is the review schedule.
+`Loop` is the counter, but it isn't the agent loop in `agent.rs`. The name is the review schedule.
 
 ```rust
 pub struct Loop {
@@ -132,13 +130,13 @@ impl Loop {
     }
 ```
 
-`new` starts every field at zero or false. `note_user_turn` takes `&mut self` because it writes the counter and maybe the flag. The increment happens first. The first call takes the counter from 0 to 1. `is_multiple_of(10)` is false for 1 through 9 and true for 10, 20, and so on. Zero is a multiple of 10, and the increment-before-check is why a fresh loop does not mark itself due before any turn. The tenth call sets `memory_due`. The eleventh does not clear it. Only `finalize` clears it. Two more calls do not matter until the count hits 20, which sets the flag again if `finalize` had cleared it.
+`new` starts every field at zero or false, and `note_user_turn` takes `&mut self` because it writes the counter and maybe the flag. The increment happens first, and the first call takes the counter from 0 to 1. `is_multiple_of(10)` is false for 1 through 9 and true for 10, 20, and so on. Zero is a multiple of 10, and the increment-before-check is why a fresh loop doesn't mark itself due before any turn. The tenth call sets `memory_due`, but the eleventh doesn't clear it. Only `finalize` clears it. Two more calls do not matter until the count hits 20, which sets the flag again if `finalize` had cleared it.
 
-`note_tool_iter` is the same shape for `tool_iters` and `skill_due`. The two counters are independent. Ten tool iterations with no user turn set `skill_due` and leave `memory_due` false. Ten user turns with no tool iteration set `memory_due` and leave `skill_due` false.
+`note_tool_iter` is the same shape for `tool_iters` and `skill_due`, and the two counters are independent. Ten tool iterations with no user turn set `skill_due` and leave `memory_due` false, and ten user turns with no tool iteration set `memory_due` and leave `skill_due` false.
 
-`user_turns` is the read. The demo does not print it. The tests use `finalize` rather than this getter. The getter is there so a caller can see the count without taking `&mut self`.
+`user_turns` is the read, but the demo doesn't print it. The tests use `finalize` rather than this getter, and the getter is there so a caller can see the count without taking `&mut self`.
 
-The test `the_tenth_user_turn_forks_a_reviewer_with_memory` loops `MEMORY_NUDGE_INTERVAL - 1` times, which is 9, and expects `finalize()` to be `None`. The next `note_user_turn` is the tenth. `finalize` then returns a fork with `review_memory` true, `memory` in the tools, and `skill_view` in the tools. A second `finalize` is `None`, because the first one cleared the flag.
+The test `the_tenth_user_turn_forks_a_reviewer_with_memory` loops `MEMORY_NUDGE_INTERVAL - 1` times, which is 9, and expects `finalize()` to be `None`. The next `note_user_turn` is the tenth, and `finalize` then returns a fork with `review_memory` true, `memory` in the tools, and `skill_view` in the tools. A second `finalize` is `None`, because the first one cleared the flag.
 
 The test `a_skill_nudge_does_not_hand_the_reviewer_memory` calls `note_tool_iter` ten times and expects `review_memory` false, `memory` absent, and `skill_manage` present.
 
@@ -150,7 +148,7 @@ The test `a_skill_nudge_does_not_hand_the_reviewer_memory` calls `note_tool_iter
 
 ## 26.3 `finalize` returns the fork and clears the flags
 
-This is the function the chapter adds at the end of a turn. It is not called from `drive_loop`.
+This is the function the chapter adds at the end of a turn. The user turn leaves it for a caller outside `drive_loop`, and the body here is what it returns when that caller does run it.
 
 ```rust
     /// Record the fork when a nudge is due. Returns `None` when this turn
@@ -175,15 +173,15 @@ impl Default for Loop {
 }
 ```
 
-The locals copy the flags before the fields are cleared. `bool` is `Copy`, so `review_memory` is a separate value. Clearing the fields first would make the locals follow the fields if they were assigned after. The order in the source is the copy, then the write of `false`.
+The locals copy the flags before the fields are cleared, and `bool` is `Copy`, so `review_memory` is a separate value. Clearing the fields first would make the locals follow the fields if they were assigned after. The order in the source is the copy, then the write of `false`.
 
-Both locals false is `None`. The `Option` is how "no review" is represented. It is not an error. A caller matches `None` and continues the turn. `Some` is the fork.
+Both locals false is `None`, and the `Option` is how "no review" is represented. It isn't an error, and a caller matches `None` and continues the turn. `Some` is the fork.
 
-`review_skill` is used only in the `if`. It does not select the tool list. `spawn_reviewer` receives `review_memory`. When the memory flag is true, the fork gets `MEMORY_TOOLS`, whether or not the skill flag is also true. When only the skill flag is true, `review_memory` is false and the fork gets `SKILL_TOOLS`. One turn, one fork. The function does not return two forks.
+`review_skill` is used only in the `if`, but it doesn't select the tool list. `spawn_reviewer` receives `review_memory`. When the memory flag is true, the fork gets `MEMORY_TOOLS`, whether or not the skill flag is also true. When only the skill flag is true, `review_memory` is false and the fork gets `SKILL_TOOLS`. One turn, one fork, but the function doesn't return two forks.
 
-The doc comment says building the fork is the work added to turn finalize. The bench `spawn_reviewer` times that build. `finalize` itself is what the tests call, and it does the flag clear plus the build.
+The doc comment says building the fork is the work added to turn finalize, and the bench `spawn_reviewer` times that build. `finalize` itself is what the tests call, and it does the flag clear plus the build.
 
-`Default` is the trait. `Loop::default()` calls `new`. A generic bound `T: Default` can construct a loop. The tests call `Loop::new()` directly.
+`Default` is the trait. `Loop::default()` calls `new`. A generic bound `T: Default` can construct a loop, and the tests call `Loop::new()` directly.
 
 > **Rust sidebar: `Option` and the `Default` trait**
 >
@@ -228,25 +226,25 @@ pub fn spawn_reviewer(review_memory: bool) -> Fork {
 }
 ```
 
-`tools` is public so tests can call `contains`. The intervals are public so the test can assert they are 0. `review_memory` is public so the test can assert the flag that selected the slice. `cancel` is private. Callers use `cancel()` and `is_cancelled()`.
+`tools` is public so tests can call `contains`, and the intervals are public so the test can assert they are 0. `review_memory` is public so the test can assert the flag that selected the slice. `cancel` is private. Callers use `cancel()` and `is_cancelled()`.
 
-`tools.to_vec()` allocates a `Vec` and copies the `&str` pointers. `MEMORY_TOOLS` is a slice. The vec is owned by the fork. Changing the vec later does not change the constant.
+`tools.to_vec()` allocates a `Vec` and copies the `&str` pointers, and `MEMORY_TOOLS` is a slice. The vec is owned by the fork, but changing the vec later doesn't change the constant.
 
-Both intervals are the integer 0. The fork is not a `Loop`. Nothing in this file calls `is_multiple_of` on these fields. The zeroes are the fields the fork stores so a reviewer that read them would see 0. The test asserts both fields are 0 on the memory fork. The skill fork is built by the same function, so both of its intervals are 0 as well.
+Both intervals are the integer 0, but the fork isn't a `Loop`. Nothing in this file calls `is_multiple_of` on these fields, and the zeroes are the fields the fork stores so a reviewer that read them would see 0. The test asserts both fields are 0 on the memory fork, and the skill fork is built by the same function, so both of its intervals are 0 as well.
 
-`review_memory` is stored as the argument. `execute` does not read it. The tool slice is what `execute` checks. The flag is for the caller and the test.
+`review_memory` is stored as the argument, but `execute` doesn't read it. The tool slice is what `execute` checks, and the flag is for the caller and the test.
 
-`Arc::new(AtomicBool::new(false))` is the cancel flag. The `Arc` is so `ReviewRun` can share a flag with a thread. `Fork` holds one `Arc`. `cancel()` takes `&self` and stores `true`. The method does not need `&mut self`, because `AtomicBool::store` takes `&self`. That is interior mutability, like the `Mutex` in chapter 25, with a smaller operation: one boolean, no guard, no poison.
+`Arc::new(AtomicBool::new(false))` is the cancel flag, and the `Arc` is so `ReviewRun` can share a flag with a thread. `Fork` holds one `Arc`, and `cancel()` takes `&self` and stores `true`. The method doesn't need `&mut self`, because `AtomicBool::store` takes `&self`. That is interior mutability, like the `Mutex` in chapter 25, with a smaller operation: one boolean, no guard, no poison.
 
-`Ordering::Release` on the store and `Ordering::Acquire` on the load pair. A thread that `Acquire`-loads `true` sees the writes the storing thread made before the `Release` store. This flag has no other payload. The ordering is still the one the source writes. `Relaxed` would be the wrong copy of this code. The source says `Release` and `Acquire`.
+`Ordering::Release` on the store and `Ordering::Acquire` on the load pair, and a thread that `Acquire`-loads `true` sees the writes the storing thread made before the `Release` store. This flag has no other payload, and the ordering is still the one the source writes. `Relaxed` would be the wrong copy of this code, and the source says `Release` and `Acquire`.
 
-The spawn bench calls `spawn_reviewer(true)` inside `iter_custom`. It collects the forks in a vec, stops the timer, then drops the vec. No thread is started. The `true` is passed through `black_box`.
+The spawn bench calls `spawn_reviewer(true)` inside `iter_custom`, and it collects the forks in a vec, stops the timer, then drops the vec. No thread is started, and the `true` is passed through `black_box`.
 
-Hermes keeps the advertised tools list as the parent's, for prompt-cache parity. This function does not build a schema. The fork's `tools` vec is the slice `execute` will allow. There is no second list hiding beside it.
+Hermes keeps the advertised tools list as the parent's, for prompt-cache parity, but this function doesn't build a schema. The fork's `tools` vec is the slice `execute` will allow, and there is no second list hiding beside it.
 
 ## 26.5 `execute` runs the script, one tool at a time
 
-The model in this file is a different type from chapter 24's `ScriptedModel`. This one holds many lines and uses an atomic counter so `next` can take `&self`.
+The model in this file is a different type from chapter 24's `ScriptedModel`, and this one holds many lines and uses an atomic counter so `next` can take `&self`.
 
 ```rust
 pub struct ScriptedModel {
@@ -273,11 +271,11 @@ impl ScriptedModel {
 }
 ```
 
-`new` takes any iterator of items that convert into `String`. The demo passes `["memory prefer short notes"]`, an array of one `&str`. `IntoIterator` yields the `&str`. `Into::into` owns it. `collect` builds the vec. `calls` starts at 0.
+`new` takes any iterator of items that convert into `String`, and the demo passes `["memory prefer short notes"]`, an array of one `&str`. `IntoIterator` yields the `&str`. `Into::into` owns it. `collect` builds the vec, and `calls` starts at 0.
 
-`next` is private. `execute` is the caller. `fetch_add(1, Relaxed)` returns the previous value and adds one. The first call gets index 0 and leaves the counter at 1. `Vec::get` returns `Option<&String>`. `cloned` turns that into `Option<String>`. An index past the end is `None`, and the counter has still moved. A second `execute` on the same model continues at the next index. The lines are not rewound.
+`next` is private. `execute` is the caller, and `fetch_add(1, Relaxed)` returns the previous value and adds one. The first call gets index 0 and leaves the counter at 1. `Vec::get` returns `Option<&String>`. `cloned` turns that into `Option<String>`, and an index past the end is `None`, and the counter has still moved. A second `execute` on the same model continues at the next index, and the lines are not rewound.
 
-`calls()` loads with `Relaxed`. The test that refuses `terminal` asserts `calls() == 1`. The refused line was consumed. The following line was not, because `execute` returned.
+`calls()` loads with `Relaxed`, and the test that refuses `terminal` asserts `calls() == 1`. The refused line was consumed, and the following line was not, because `execute` returned.
 
 ```rust
 pub fn execute(
@@ -316,21 +314,21 @@ pub fn execute(
 }
 ```
 
-`fork` is shared. `cancel` can be called on it during the loop because `cancel` takes `&self`. `notes` is `&mut Vec<String>` because `memory` pushes. `skills_root` is `Option<&Path>`. The memory demo passes `None`. A `skill_view` line with `None` is `ReviewError::Skill("no root")`.
+`fork` is shared. `cancel` can be called on it during the loop because `cancel` takes `&self`, and `notes` is `&mut Vec<String>` because `memory` pushes. `skills_root` is `Option<&Path>`. The memory demo passes `None`, and a `skill_view` line with `None` is `ReviewError::Skill("no root")`.
 
-The `while let` ends when `next` returns `None`. Each line is split on the first space, at most two pieces. `splitn(2, ' ')` keeps the rest of the line, spaces included, as the second piece. `trim` on `arg` drops surrounding whitespace. A line with no space has tool equal to the whole line and arg equal to `""`. `unwrap_or("")` covers an empty iterator. `splitn` on a non-empty line yields at least the first piece.
+The `while let` ends when `next` returns `None`, and each line is split on the first space, at most two pieces. `splitn(2, ' ')` keeps the rest of the line, spaces included, as the second piece. `trim` on `arg` drops surrounding whitespace, and a line with no space has tool equal to the whole line and arg equal to `""`. `unwrap_or("")` covers an empty iterator, and `splitn` on a non-empty line yields at least the first piece.
 
-`fork.tools.contains(&tool)` refuses a name that is not on the slice. `terminal` is the test's name. The error is `NotAllowed("terminal")`. `notes` is unchanged. `done` is dropped with the error. The function returns before the match.
+`fork.tools.contains(&tool)` refuses a name that isn't on the slice, and `terminal` is the test's name. The error is `NotAllowed("terminal")`. `notes` is unchanged. `done` is dropped with the error, and the function returns before the match.
 
-The match is a second check. The `contains` check already required the tool to be on the slice. The match arms are the five names the slices use, plus `other`. `other` returns `NotAllowed` again. A name that passed `contains` and fell through to `other` would be a slice entry `execute` does not implement. The constants and the match agree.
+The match is a second check, and the `contains` check already required the tool to be on the slice. The match arms are the five names the slices use, plus `other`, and `other` returns `NotAllowed` again. A name that passed `contains` and fell through to `other` would be a slice entry `execute` doesn't implement. The constants and the match agree.
 
-`memory` pushes `arg` onto `notes` and uses the same string as the result. The demo line `memory prefer short notes` has tool `memory` and arg `prefer short notes`. The note vec becomes `["prefer short notes"]`. The returned vec is the same words.
+`memory` pushes `arg` onto `notes` and uses the same string as the result, and the demo line `memory prefer short notes` has tool `memory` and arg `prefer short notes`. The note vec becomes `["prefer short notes"]`, and the returned vec is the same words.
 
-`skill_view` requires a root. `ok_or_else` turns `None` into the skill error. `skill_view` from chapter 24 returns `Result<String, SkillError>`. `map_err` formats the error with `Debug` and wraps `ReviewError::Skill`. The `?` returns that error. Success pushes the file text onto `done`. The call passes `None` as the supporting-file argument, so the view is `SKILL.md`.
+`skill_view` requires a root, and `ok_or_else` turns `None` into the skill error. `skill_view` from chapter 24 returns `Result<String, SkillError>`, and `map_err` formats the error with `Debug` and wraps `ReviewError::Skill`. The `?` returns that error, and success pushes the file text onto `done`. The call passes `None` as the supporting-file argument, so the view is `SKILL.md`.
 
-`read_file`, `search_files`, and `skill_manage` format `{tool} {arg}` and push that string. They do not open a filesystem path and they do not call `Writer::patch`. A review that wants a real patch still goes through chapter 25, including `require_read`. This function does not call it.
+`read_file`, `search_files`, and `skill_manage` format `{tool} {arg}` and push that string, and they do not open a filesystem path and they do not call `Writer::patch`. A review that wants a real patch still goes through chapter 25, including `require_read`, but this function doesn't call it.
 
-Cancel is checked at the start of the loop body, after `next` has already incremented `calls`. A fork that was cancelled before `execute` consumes the first line, sees the flag, and returns `Cancelled`. The note vec stays empty. The test `cancel_before_the_next_tool_stops_the_review` asserts `Cancelled` and an empty notes vec. It uses the line `memory should not land`.
+Cancel is checked at the start of the loop body, after `next` has already incremented `calls`. A fork that was cancelled before `execute` consumes the first line, sees the flag, and returns `Cancelled`. The note vec stays empty, and the test `cancel_before_the_next_tool_stops_the_review` asserts `Cancelled` and an empty notes vec. It uses the line `memory should not land`.
 
 > **Rust sidebar: an atomic so `next` can share the model**
 >
@@ -341,7 +339,7 @@ Cancel is checked at the start of the loop body, after `next` has already increm
 
 ## 26.6 `ReviewRun` is the thread the cancel bench joins
 
-`spawn_reviewer` does not start a thread. The cancel measurement needs one. `ReviewRun` is that thread.
+`spawn_reviewer` only builds the fork. The cancel measurement needs a thread, and `ReviewRun` is that benchmark fixture: a spinner the bench can join, not the reviewer the demo runs.
 
 ```rust
 pub struct ReviewRun {
@@ -375,15 +373,15 @@ impl ReviewRun {
 }
 ```
 
-`spawn_spinner` makes a new flag, clones the `Arc` for the thread, and spawns. The closure is `move`, so it owns `flag`. The `ReviewRun` owns the other `Arc` and the `JoinHandle`. The handle is `Option` so `cancel_and_join` can `take` it. `take` replaces `Some` with `None` and returns the handle. `join` waits until the closure returns. `let _ =` drops the `Result` of the join. A panic inside the worker would be `Err` on that result. This worker does not panic. It loads the flag, sleeps 1 millisecond, and loads again.
+`spawn_spinner` makes a new flag, clones the `Arc` for the thread, and spawns, and the closure is `move`, so it owns `flag`. The `ReviewRun` owns the other `Arc` and the `JoinHandle`, and the handle is `Option` so `cancel_and_join` can `take` it. `take` replaces `Some` with `None` and returns the handle, and `join` waits until the closure returns. `let _ =` drops the `Result` of the join, and a panic inside the worker would be `Err` on that result. This worker doesn't panic, and it loads the flag, sleeps 1 millisecond, and loads again.
 
-The sleep is `Duration::from_millis(1)`. It is not `HERMES_CANCEL_TIMEOUT`. The comment on `spawn_spinner` says the spawn is the setup and `cancel_and_join` is the return path. The bench follows that split. `iter_batched` calls `spawn_spinner` in the setup closure, which Criterion does not include in the sample, and times `cancel_and_join`.
+The sleep is `Duration::from_millis(1)`, but it isn't `HERMES_CANCEL_TIMEOUT`. The comment on `spawn_spinner` says the spawn is the setup and `cancel_and_join` is the return path. The bench follows that split, and `iter_batched` calls `spawn_spinner` in the setup closure, which Criterion doesn't include in the sample, and times `cancel_and_join`.
 
-`cancel_and_join` takes `self` by value. The caller gives up the `ReviewRun`. The store uses `Release`. The worker's load uses `Acquire`. After the flag is true, the worker finishes its current sleep, sees the flag, and returns. The join then returns. The wait is at most one 1-millisecond sleep, plus scheduling. The test `cancelling_a_running_review_returns_quickly` starts an `Instant`, calls `cancel_and_join`, and asserts the elapsed time is under 50 milliseconds.
+`cancel_and_join` takes `self` by value, and the caller gives up the `ReviewRun`. The store uses `Release`, and the worker's load uses `Acquire`. After the flag is true, the worker finishes its current sleep, sees the flag, and returns. The join then returns, and the wait is at most one 1-millisecond sleep, plus scheduling. The test `cancelling_a_running_review_returns_quickly` starts an `Instant`, calls `cancel_and_join`, and asserts the elapsed time is under 50 milliseconds.
 
-`Fork::cancel` and `ReviewRun::cancel_and_join` are two flags. The fork's flag stops `execute`. The run's flag stops the spinner. The chapter does not wire them to the same `Arc`. A caller who wants one flag shares the `Arc` themselves. This file keeps the two paths separate: the scripted execute checks `Fork`, and the bench joins `ReviewRun`.
+`Fork::cancel` and `ReviewRun::cancel_and_join` are two flags, and the fork's flag stops `execute`. The run's flag stops the spinner, but the chapter doesn't wire them to the same `Arc`. A caller who wants one flag shares the `Arc` themselves, and this file keeps the two paths separate: the scripted execute checks `Fork`, and the bench joins `ReviewRun`.
 
-The adapted wait is the part this file refuses to do. Hermes waits up to 2.0 seconds for the thread to notice. `HERMES_CANCEL_TIMEOUT` records that number. `cancel_and_join` does not pass it to `sleep`, and it does not pass it to a timed join. The join returns when the worker returns. A worker that ignored the flag would hold the join until the process ends. This worker checks the flag.
+The adapted wait is the part this file refuses to do, and Hermes waits up to 2.0 seconds for the thread to notice. `HERMES_CANCEL_TIMEOUT` records that number, but `cancel_and_join` doesn't pass it to `sleep`, and it doesn't pass it to a timed join. The join returns when the worker returns, and a worker that ignored the flag would hold the join until the process ends. This worker checks the flag.
 
 ## 26.7 `demo` forks after ten user turns
 
@@ -401,9 +399,9 @@ pub fn demo() -> String {
 }
 ```
 
-`0..MEMORY_NUDGE_INTERVAL` is `0..10`, ten iterations. After the loop, `memory_due` is true and `user_turns` is 10. `finalize` returns the memory fork. `expect` panics if it were `None`. The model has one line. `execute` pushes `prefer short notes`. `pop` takes that string off the vec. `unwrap_or_default` on `Option<String>` is `""` when the vec was empty. The test `the_demo_note_is_the_scripted_line` expects `prefer short notes`.
+`0..MEMORY_NUDGE_INTERVAL` is `0..10`, ten iterations, and after the loop, `memory_due` is true and `user_turns` is 10. `finalize` returns the memory fork, and `expect` panics if it were `None`. The model has one line, and `execute` pushes `prefer short notes`. `pop` takes that string off the vec, and `unwrap_or_default` on `Option<String>` is `""` when the vec was empty. The test `the_demo_note_is_the_scripted_line` expects `prefer short notes`.
 
-The binary is shorter than the function. It prints the note, then a fixed second line.
+The binary is shorter than the function, and it prints the note, then a fixed second line.
 
 ```rust
 let note = demo();
@@ -411,9 +409,9 @@ println!("note: {note}");
 println!("forked: after 10 user turns");
 ```
 
-The second line is a string in `main`. It is not computed from `user_turns()`. The interval in the function is the constant 10, and the printed line says 10. They match because both are written as 10. A change to `MEMORY_NUDGE_INTERVAL` would change when `demo` forks. The printed line would still say 10 until `main` changed.
+The second line is a string in `main`, but it isn't computed from `user_turns()`. The interval in the function is the constant 10, and the printed line says 10. They match because both are written as 10, and a change to `MEMORY_NUDGE_INTERVAL` would change when `demo` forks. The printed line would still say 10 until `main` changed.
 
-`demo` calls `execute`. That is the chapter's way of showing the note. It is not `run_loop`. The user turn is a different function, in `agent.rs`, copied forward with the rest of the harness.
+`demo` calls `execute`. That is the chapter's way of showing the note, but it isn't `run_loop`. The user turn is a different function, in `agent.rs`, copied forward with the rest of the harness.
 
 ```rust
 pub async fn run_loop(
@@ -432,7 +430,7 @@ pub async fn run_loop(
 }
 ```
 
-The parameters are the messages, the provider, the registry, the dispatcher, the budget, the turn's `CancelFlag`, and the start time. There is no `Loop` argument. `run_loop` calls `run_loop_with_inbox`, which builds a `Driver` and calls `drive_loop`.
+The parameters are the messages, the provider, the registry, the dispatcher, the budget, the turn's `CancelFlag`, and the start time. There is no `Loop` argument, and `run_loop` calls `run_loop_with_inbox`, which builds a `Driver` and calls `drive_loop`.
 
 ```rust
 async fn drive_loop(
@@ -448,9 +446,7 @@ async fn drive_loop(
 ) -> TurnOutcome {
 ```
 
-`drive_loop` checks `cancel.is_cancelled()` on the turn's `CancelFlag`. That flag is the chapter 9 `CancelFlag`, the token that stops the user turn. Chapter 15 is the server's limit gate, not this flag. It is not `Fork::cancel`. The body of `drive_loop` does not name `reflection`, `finalize`, or `spawn_reviewer`. I looked for those names in `agent.rs`. The only hit in that file is the `drive_loop` definition itself, and the calls that reach it. The reviewer stays outside the user turn.
-
-`CancelFlag` and `Fork`'s `AtomicBool` are different types. Stopping the user turn does not by itself cancel a fork, because nothing in `drive_loop` holds a fork. Starting a fork does not by itself stop the user turn. The schedule and the turn are two objects.
+`drive_loop` checks `cancel.is_cancelled()` on the turn's `CancelFlag`, and that flag is the chapter 9 token that stops the user turn. Chapter 15 is the server's limit gate, a different object, and this flag is also different from `Fork::cancel`. The opening already recorded the search of `agent.rs`: the names `finalize` and `spawn_reviewer` aren't in this function. `CancelFlag` and the fork's `AtomicBool` are different types, so stopping the user turn leaves a fork running unless something holds that fork, and starting a fork leaves the user turn running. The schedule and the turn are two objects.
 
 > **Rust sidebar: `dyn Provider` is a trait object, and this chapter does not pass one to the fork**
 >
@@ -460,23 +456,23 @@ async fn drive_loop(
 
 ## 26.8 The skill index is still a note
 
-Chapter 24 deferred prompt-cache byte identity with the parent model request, and said that stays a note in this chapter. The deferral holds. `reflection` does not call `render_index`. It does not replace a `SkillSession`'s `Arc`. A skill added after the prompt is still `change_note`'s `Some(String)`. The index bytes in the `Arc` stay.
+Chapter 24 deferred prompt-cache byte identity with the parent model request, and said that stays a note in this chapter. The deferral holds. `reflection` doesn't call `render_index`, but it doesn't replace a `SkillSession`'s `Arc`. A skill added after the prompt is still `change_note`'s `Some(String)`, and the index bytes in the `Arc` stay.
 
-Hermes keeps the advertised tool list equal to the parent's so the prompt cache sees the same schema. This crate does not advertise a schema on the fork. `Fork.tools` is the slice `execute` allows. There is no parent schema beside it to keep byte-identical. That is the adaptation of the parity rule: the parent's list stays the parent's, in Hermes, and this harness only has the fork's slice.
+Hermes keeps the advertised tool list equal to the parent's so the prompt cache sees the same schema. This crate doesn't advertise a schema on the fork, and `Fork.tools` is the slice `execute` allows. There is no parent schema beside it to keep byte-identical. That is the adaptation of the parity rule: the parent's list stays the parent's, in Hermes, and this harness only has the fork's slice.
 
-`skill_manage` on the slice does not write. A real write is chapter 25, and a reviewer there has to `view` first. This chapter's `execute` will call `skill_view` if the script says so and a root is provided. It will not call `Writer::patch`. The read-before-write rule is unchanged, because the patch function is unchanged. This file does not wrap it.
+`skill_manage` on the slice doesn't write, and a real write is chapter 25, and a reviewer there has to `view` first. This chapter's `execute` will call `skill_view` if the script says so and a root is provided. It will not call `Writer::patch`, and the read-before-write rule is unchanged, because the patch function is unchanged. This file doesn't wrap it.
 
 ## Tests
 
-Six tests, in `steps/ch26-reflection/crates/harness-core/tests/reflection.rs`. The package is the copied harness plus these tests. The nextest line is 139 passed.
+Six tests, in `steps/ch26-reflection/crates/harness-core/tests/reflection.rs`, and the package is the copied harness plus these tests. The nextest line is 139 passed.
 
-`the_tenth_user_turn_forks_a_reviewer_with_memory` takes nine user turns and expects `finalize` to be `None`. The tenth turn's fork has `review_memory`, includes `memory` and `skill_view`, and has both intervals at 0. The next `finalize` is `None`.
+`the_tenth_user_turn_forks_a_reviewer_with_memory` takes nine user turns and expects `finalize` to be `None`, and the tenth turn's fork has `review_memory`, includes `memory` and `skill_view`, and has both intervals at 0. The next `finalize` is `None`.
 
-`a_skill_nudge_does_not_hand_the_reviewer_memory` takes ten tool iterations. The fork's `review_memory` is false. `memory` is absent. `skill_manage` is present.
+`a_skill_nudge_does_not_hand_the_reviewer_memory` takes ten tool iterations, and the fork's `review_memory` is false. `memory` is absent. `skill_manage` is present.
 
-`the_reviewer_cannot_call_terminal_and_can_write_a_note` runs `terminal ls` then a memory line on one model. The result is `NotAllowed` for `terminal`. The notes vec is empty. `calls()` is 1. A second model with `memory prefer short notes` returns that argument and pushes it.
+`the_reviewer_cannot_call_terminal_and_can_write_a_note` runs `terminal ls` then a memory line on one model, and the result is `NotAllowed` for `terminal`. The notes vec is empty. `calls()` is 1. A second model with `memory prefer short notes` returns that argument and pushes it.
 
-`cancel_before_the_next_tool_stops_the_review` cancels the fork, then `execute`s `memory should not land`. The result is `Cancelled`. The notes vec is empty.
+`cancel_before_the_next_tool_stops_the_review` cancels the fork, then `execute`s `memory should not land`, and the result is `Cancelled`. The notes vec is empty.
 
 `cancelling_a_running_review_returns_quickly` spawns the spinner and expects `cancel_and_join` to finish in under 50 milliseconds.
 
@@ -511,21 +507,21 @@ The binary counts ten user turns, forks, and runs the scripted memory line. No k
 
 `spawn_reviewer` uses `iter_custom`. The closure receives `iters`. It allocates a `Vec` with that capacity, starts an `Instant`, pushes `spawn_reviewer(black_box(true))` in a loop, reads `elapsed`, drops the vec, and returns the duration. The drop sits after the instant is read. No thread starts. No model runs.
 
-`cancel_review` uses `iter_batched` with `BatchSize::SmallInput`. The setup closure is `ReviewRun::spawn_spinner`. The timed closure is `cancel_and_join`. The worker sleeps 1 millisecond between flag checks, so the join waits out at most one of those sleeps.
+`cancel_review` uses `iter_batched` with `BatchSize::SmallInput`, and the setup closure is `ReviewRun::spawn_spinner`. The timed closure is `cancel_and_join`. The worker sleeps 1 millisecond between flag checks, so the join waits out at most one of those sleeps.
 
-The note is `prefer short notes`. The fork line says `after 10 user turns`.
+The note is `prefer short notes`, and the fork line says `after 10 user turns`.
 
-The means are `mean.point_estimate` from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `26`. Bench ids: `26/spawn_reviewer`, `26/cancel_review`, `24/spawn_reviewer`, `24/cancel_review`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
+The means are `mean.point_estimate` from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `26`, and bench ids: `26/spawn_reviewer`, `26/cancel_review`, `24/spawn_reviewer`, `24/cancel_review`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
-A memory nudge and a skill nudge on the same `finalize` produce one fork, and that fork's slice includes `memory`. The skill-only slice is the one `spawn_reviewer(false)` builds. `finalize` passes `review_memory`, which is true whenever the memory flag was set.
+A memory nudge and a skill nudge on the same `finalize` produce one fork, and that fork's slice includes `memory`. The skill-only slice is the one `spawn_reviewer(false)` builds, and `finalize` passes `review_memory`, which is true whenever the memory flag was set.
 
-`finalize` clears the flags before it returns. Calling it twice does not fork twice. Skipping it leaves the flags set, and a later `finalize` still returns a fork.
+`finalize` clears the flags before it returns, but calling it twice doesn't fork twice. Skipping it leaves the flags set, and a later `finalize` still returns a fork.
 
-`execute` consumes a scripted line before it checks cancel. A cancelled fork returns `Cancelled` and does not push a note. The model's `calls` counter has moved.
+`execute` consumes a scripted line before it checks cancel, but a cancelled fork returns `Cancelled` and doesn't push a note. The model's `calls` counter has moved.
 
-`HERMES_CANCEL_TIMEOUT` is two seconds. `cancel_and_join` does not sleep that long. A worker that never loads the flag would not come back. The spinner loads it every millisecond.
+`HERMES_CANCEL_TIMEOUT` is two seconds, but `cancel_and_join` doesn't sleep that long. A worker that never loads the flag would not come back, and the spinner loads it every millisecond.
 
 ## Guardrails in this chapter
 
@@ -548,16 +544,16 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). The 
 - **Counters.** Memory every 10 user turns. Skills every 10 tool iterations.
 - **Fork.** `finalize` returns it. Both intervals on it are 0. `memory` is on the slice only when the memory nudge fired.
 - **Refuse.** `terminal` is `NotAllowed`. A skill nudge has no `memory` tool.
-- **Cancel.** A flag, then a join. The two-second Hermes wait is a constant this crate does not sleep.
+- **Cancel.** A flag, then a join. The two-second Hermes wait is a constant this crate doesn't sleep.
 - **Turn.** `run_loop` and `drive_loop` do not call `finalize`.
 - **Time.** Building the fork measured **47.5 ns**. Cancelling the spinner measured **873.74 µs**. Those are the means.
 
 ## What you implement
 
-`my-harness/tests/ch26.rs` is the milestone. The test is `spawning_the_reviewer_does_not_run_it_on_the_user_turn`. It asserts `chapter_26_review_runs_on_user_turn()` is false. Spawning the reviewer does not run it on the user turn.
+`my-harness/tests/ch26.rs` is the milestone, and the test is `spawning_the_reviewer_does_not_run_it_on_the_user_turn`. It asserts `chapter_26_review_runs_on_user_turn()` is false, but spawning the reviewer doesn't run it on the user turn.
 
-The function in `my-harness` is a stub. It ends in `todo!("chapter 26")` and panics until the assertion can pass. 
+The function in `my-harness` is a stub, and it ends in `todo!("chapter 26")` and panics until the assertion can pass.
 
 ## What's next
 
-Chapter 27 is the curator. It marks an agent-created skill stale after 14 days and archives it after 30. The request path only enqueues that pass. A write still goes through chapter 25's scan and approval gate.
+Chapter 27 is the curator, and it marks an agent-created skill stale after 14 days and archives it after 30. The request path only enqueues that pass, and a write still goes through chapter 25's scan and approval gate.
