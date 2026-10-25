@@ -1,16 +1,16 @@
 # Chapter 6: Thousands of Tools
 
-Chapter 3 can hold a few dozen tools, and the model was shown every schema that passed its gate. That stops working when the catalog is the size of a real MCP workspace: several servers, each with its own list, easily a thousand tools and sometimes ten thousand. Three costs arrive together. The prompt grows by the schema text, so the provider bills more input tokens. The model has more near-matches to choose from, so it calls the wrong tool more often. And every turn pays that cost even when the user asked for one rename.
+Ask ten thousand tools to rename a file and the search ties. Every server has a `rename_file` tool, the scores match, and the tie breaks by name, so the first rows are `calendar_rename_file_*`. Keyword search found the words, but it has no idea that "file" belongs to the files server, which is why section 6.4 routes before it searches, and why handing the model every schema was never going to scale.
 
-This chapter is the client half of the catalog. It keeps the chapter 3 shape — a name, a description, a JSON Schema — and it does not open an MCP connection. Chapter 4 is the client that does. Chapter 5 is the separate server that will hold the list. The benches here still need a catalog of 1,000 and 10,000 tools, so a deterministic generator fills it. The five copies are `steps/ch06-1-schema-cost`, `ch06-2-tool-index`, `ch06-3-search-tool`, `ch06-4-routing`, and `ch06-5-lazy-list`. Section numbers stay 6.1 through 6.5 so they match those crates.
+Chapter 3's registry holds a few dozen tools and shows the model every schema that passed its gate. A real MCP workspace is several servers, each with its own list, easily a thousand tools and sometimes ten thousand. Three costs arrive together. The prompt grows by the schema text, so the provider bills more input tokens. The model has more near-matches to choose from, so it calls the wrong tool more often. And every turn pays that cost even when the person only asked for one rename.
 
-`SyntheticSource::list` is the stand-in the benches call. Section 6.1 counts schema bytes and reuses chapter 2's token estimate. Section 6.2 builds a BM25 index over names and descriptions, and an `Embedder` trait for a later vector. Section 6.3 adds `search_tools`: a hit is revealed on the next turn, the prompt prefix is append-only so a cached prefix stays valid, and a cap bounds how many schemas appear. Section 6.4 routes by server, then trims names and descriptions so the model is not told about a tool it cannot call. Section 6.5 caches `tools/list`, drops the cache on `list_changed`, filters to one agent's servers, and feeds a real chapter 4 list through `cards_from_listed`, `ListCache::from_cards`, and `replace_cards`. The chapter 3 dispatcher stays.
+This chapter is the client half of that catalog. It keeps the chapter 3 shape, a name, a description, a JSON Schema, and it leaves the MCP connection to chapter 4. Chapter 5 is the separate server that will hold the list. The benches still need a catalog of 1,000 and 10,000 tools, so a deterministic generator fills it. The five copies are `steps/ch06-1-schema-cost`, `ch06-2-tool-index`, `ch06-3-search-tool`, `ch06-4-routing`, and `ch06-5-lazy-list`. Section numbers stay 6.1 through 6.5 so they match those crates. The table is the map of the five sections.
 
-The server track exists so this work does not have to live inside the agent forever. Chapter 7 moves the BM25 index into the gateway, where a 10,000-tool search is not riding along in the harness process. This chapter keeps the part the harness must own: what is allowed into the prompt, in an order that does not rewrite the prefix. That rule is the same one chapter 2 locked for the system prompt. A self-improving agent that searches for a tool every turn, and rewrites the front of the prompt when it finds one, pays the cache again on every lesson. Revealing append-only, and evicting at a checkpoint, is how the harness stays cheap while the catalog grows. Learned prediction of which tools a task tends to use is chapter 23, on the server, and it changes the offered set rather than the middle of a request.
+`SyntheticSource::list` is the stand-in the benches call. The chapter 3 dispatcher stays. What the harness has to own, even after chapter 7 moves the index into the gateway, is which names may enter the prompt and in which order, because a search that rewrites the front of the prompt pays the cache again on every turn. Revealing append-only, and evicting at a checkpoint, is how the prefix chapter 2 locked stays valid while the catalog grows. Learned prediction of which tools a task tends to use is chapter 23, on the server, and it changes the offered set rather than the middle of a request.
 
-Rust, as it shows up: an inverted index is a map from token to postings. A trait hides the embedder so the tests use a hash. Append-only is a `Vec` you only push to. The cache is an ordinary struct you replace.
+An inverted index is a map from a token to the tools that contain it. A trait hides the embedder so the tests can use a hash. Append-only is a `Vec` you only push to, and the cache is an ordinary struct you replace.
 
-The runnable demo is offline. `cargo run -p ch06-5-harness-cli -- --mock ask "rename a file"` is the end state. A live OpenRouter call is optional on that CLI and was not run for this chapter. The missing-key error is a real run with the key unset.
+The runnable demo is offline. `cargo run -p ch06-5-harness-cli -- --mock ask "rename a file"` is the end state. A live OpenRouter call is optional on that CLI. I didn't make it, and the missing-key error later in the chapter is a real run with the key unset.
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -69,7 +69,7 @@ tools=1000 bytes=204909 tokens=51228 mentions_rename_file=21
 tools=10000 bytes=2070285 tokens=517572 mentions_rename_file=192
 ```
 
-Ten thousand schemas are about 2.07 MB and 517,572 estimated tokens. A 50-tool registry was 2,508 tokens. The 10,000-tool prompt is about 206 times that, which tracks the tool count (the extra comes from longer numeric suffixes). 192 cards match the words "rename" and "file". The model would still have to pick among them, after reading the other 9,808 schemas too.
+Ten thousand schemas are about 2.07 MB and 517,572 estimated tokens. A 50-tool registry was 2,508 tokens. The 10,000-tool prompt is about 206 times that, which tracks the tool count (the extra comes from longer numeric suffixes). 192 cards match the words "rename" and "file". Half a million estimated tokens, before the model has done any work, is what one rename costs if the prompt carries every schema, and the model would still have to pick among those 192 after reading the other 9,808.
 
 ```text
 schema_tokens_10000     time:   [21.036 ms 21.061 ms 21.084 ms]
@@ -96,18 +96,9 @@ tools=1000 bytes=204909 tokens=51228 mentions_rename_file=21
 tools=10000 bytes=2070285 tokens=517572 mentions_rename_file=192
 ```
 
-This section has no HTTP client. The chapter's optional OpenRouter command is the section 6.5 binary. I did not make that call. With the key unset it stops first:
-
-```bash
-cargo run -p ch06-5-harness-cli -- ask "rename a file"
-```
-
-```text
-event: error missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
-error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
-```
-
 ## 6.2 A searchable index
+
+The tie from the opening is this section's whole result. On 10,000 tools, "rename a file" scores the same on every server's `rename_file`, and the tie breaks by name, so the first rows are `calendar_rename_file_*`. That is why section 6.4 routes to a server before this search runs. The index itself is the boring part, and it has to exist before the route has anything to search inside.
 
 Build the index once. A query then walks the terms it actually used, instead of scanning every description in the prompt.
 
@@ -118,9 +109,7 @@ Build the index once. A query then walks the terms it actually used, instead of 
 
 `build_available` is the Hermes check. A card that fails the closure is not inserted, so a later turn cannot reveal it.
 
-Embeddings sit behind a trait. `HashedBag` hashes tokens into a fixed vector. It is not a model. Search still ranks with BM25. A test installs a counting embedder and checks that `search` calls it once and returns the same names BM25 would have returned alone. The bench does not install an embedder.
-
-On 10,000 tools, "rename a file" ties. Every server has a `rename_file` tool, the scores match, and the tie breaks by name, so the first rows are `calendar_rename_file_*`. That is the reason section 6.4 routes before it searches. Keyword search finds the words. It does not know that "file" belongs to the files server.
+Embeddings sit behind a trait. `HashedBag` hashes tokens into a fixed vector. It is a stand-in, and search still ranks with BM25. A test installs a counting embedder and checks that `search` calls it once and returns the same names BM25 would have returned alone. The bench leaves the embedder out.
 
 ### Build, run, and benchmark
 
@@ -168,17 +157,6 @@ indexed=10000
 6.240 calendar_rename_file_2586 (calendar)
 6.240 calendar_rename_file_26 (calendar)
 6.240 calendar_rename_file_3098 (calendar)
-```
-
-The optional live command is still the section 6.5 CLI, and it was not run. With the key unset:
-
-```bash
-cargo run -p ch06-5-harness-cli -- ask "rename a file"
-```
-
-```text
-event: error missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
-error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 ```
 
 ## 6.3 search_tools and lazy loading
@@ -274,17 +252,6 @@ visible_tokens_after=305
 core_prompt_unchanged=true
 ```
 
-The optional live command was not run. With the key unset:
-
-```bash
-cargo run -p ch06-5-harness-cli -- ask "rename a file"
-```
-
-```text
-event: error missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
-error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
-```
-
 ## 6.4 Route, then shrink
 
 A one-line summary per server is the first level: `files: list, read, write, rename, and move a file`. The query is scored against those summaries. "rename a file" picks `files` because that summary contains both `rename` and `file`. "rename a branch" picks `git`. The second level runs BM25 only inside that server's index.
@@ -345,17 +312,6 @@ files_rename_file_1560 (files)
 files_read_file_520 (files)
 full_bytes=412249
 shrunk_bytes=401057
-```
-
-The optional live command was not run. With the key unset:
-
-```bash
-cargo run -p ch06-5-harness-cli -- ask "rename a file"
-```
-
-```text
-event: error missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
-error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 ```
 
 ## 6.5 The registry at scale
@@ -446,7 +402,7 @@ event: error missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 ```
 
-A live call, when a key is present, posts to OpenRouter with the chapter 1 client and a single tool, `search_tools`. I did not make that call.
+A live call, when a key is present, posts to OpenRouter with the chapter 1 client and a single tool, `search_tools`.
 
 ## Guardrails in this chapter
 

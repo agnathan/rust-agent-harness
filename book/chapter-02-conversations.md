@@ -4,13 +4,13 @@ At the end of chapter 1 the harness can send one prompt, print the reply, and fo
 
 `Conversation` holds a system prompt and an ordered history. The fields are private. `push` refuses a history that would put two user messages or two assistant messages in a row, because strict providers respond to a broken alternation by misbehaving, and a bug of that kind shows up far from the line that caused it. The system prompt is set once and the history cannot touch it. Providers cache the prefix of a request, so a system prompt that changes on turn three makes every later call pay full price. Length is tracked, and a too-long history drops the oldest exchange without touching the system prompt or the newest message. Save and load use JSON. A scripted mock provider lets a multi-turn test run with no network and no key.
 
-The session inbox is the other half. It holds 64 pending turns. `harness chat` and `harness ask` submit a line, the session pops it, and only then does the provider run. That capacity is the bound chapter 35 will reuse when each agent is a task with a mailbox, and the same queue is where chapter 39's chat gateway, chapter 43's cron, and chapter 44's editor session deliver work. They do not grow a second queue. The events are still chapter 1's events, including usage and cost only when a server sent them.
+The session inbox is the other half. It holds 64 pending turns. `harness chat` and `harness ask` submit a line, the session pops it, and only then does the provider run. Later chapters keep that cap, but they don't all share this value. Chapter 35's actor mailbox, chapter 39's chat gateway, and chapter 44's editor queue are each their own deque with the same bound of 64, and chapter 43 chains a job onto the chapter 35 mailbox. None of them call `SessionInbox::submit`. The events are still chapter 1's events, including usage and cost only when a server sent them.
 
 Hermes writes these rules down as message-flow invariants: roles alternate, the system prompt stays byte-stable, and compression is the only sanctioned rewrite of the past. This chapter's trim is the crude form of that rewrite. Real compression, with a summary and a marker where a skill was pruned, is chapter 34. SQLite storage is chapter 20. What this chapter locks in is the shape those later chapters are allowed to assume: one list, one inbox, a prefix that stays put. A self-improving agent that rewrote its system prompt every time it learned a fact would throw away the cache on every lesson. Memory and skills, when they arrive, have to land somewhere else.
 
 Rust, for a new reader: ownership is why the conversation is a value the session holds rather than a bag of strings any function can alias. Private fields plus a method are how an invalid history becomes hard to represent. `Result` is the refusal. A `VecDeque` is the inbox. The REPL is an ordinary loop over stdin.
 
-`cargo run -p ch02-harness-cli -- --mock ask "Say hello"` is the offline path. `cargo run -p ch02-harness-core --example demo` walks the conversation. A live call is optional and uses the chapter 1 key rules. The exercise is `my-harness/tests/ch02.rs`.
+`cargo run -p ch02-harness-cli -- --mock ask "Say hello"` is the offline path. `cargo run -p ch02-harness-core --example demo` walks the conversation. A live call is optional and uses the chapter 1 key rules. I didn't make that live call. The exercise is `my-harness/tests/ch02.rs`.
 
 **In this chapter**
 
@@ -23,7 +23,7 @@ Rust, for a new reader: ownership is why the conversation is a value the session
 - Tests
 - Did it work?
 - Guardrails in this chapter
-- What we built
+- What this chapter adds
 - Build, run, and benchmark
 - What's next
 
@@ -31,7 +31,7 @@ Rust, for a new reader: ownership is why the conversation is a value the session
 >
 > Hermes writes the message-list rules down in `agent/AGENTS.md` ("Message-flow invariants"). Roles alternate (`agent/message_sanitization.py`). The system prompt is built once per session (`agent/system_prompt.py::build_system_prompt`) and stays byte-stable so a provider can cache that prefix. The only sanctioned rewrite of history is compression (`agent/context_compressor.py`). This chapter's `Conversation` is that list: private fields, a single `push` that refuses a bad alternation, and a system prompt the history cannot touch. Hermes stores the list in SQLite (`hermes_state.py`). I store JSON. The slash commands in Hermes live in one registry (`hermes_cli/commands.py`); mine are a small enum.
 >
-> Hermes also has one place a new turn arrives, rather than each client calling the model itself. This chapter's `SessionInbox` is that place. `harness chat` and `harness ask` submit a line, the session pops it, then the provider runs. The gateway, cron, and the editor integration later submit to this same inbox. They do not grow a second queue.
+> Hermes also has one place a new turn arrives, rather than each client calling the model itself. This chapter's `SessionInbox` is that place. `harness chat` and `harness ask` submit a line, the session pops it, then the provider runs. Later chapters keep the cap of 64. The gateway and the editor each hold a queue of their own, cron chains onto the actor mailbox, and none of them call `SessionInbox::submit`.
 
 ## What Hermes taught me about conversations
 
@@ -473,7 +473,7 @@ The inbox is a `Mutex<VecDeque<String>>`. Push and pop are the whole critical se
 > - `std::sync::Mutex` is the right lock when the section is a couple of pointer writes. Holding it across an `.await` would be the bug. This `submit` returns before any `.await`.
 > - `VecDeque` is a ring buffer. `push_back` plus `pop_front` is a queue. A `Vec` would also work, and would make "drop the oldest" shift every element.
 
-Chapters 35, 39, 43, and 44 reuse this inbox. Actors, the gateway, cron, and the editor submit turns here. This chapter only has the REPL, and the REPL still goes through the queue so those later callers do not need a second type.
+The cap of 64 is what comes back. Chapter 35's actors, chapter 39's gateway, and chapter 44's editor each hold a queue of their own with that bound, and chapter 43 pushes a chained job onto the actor mailbox. This chapter only has the REPL, and the REPL still goes through `SessionInbox`, so the shape those later doors copy is already submit, then pop, then the provider.
 
 A plain mock reply has no usage, so `usage.calls` stays 0. When a test attaches a scripted `Usage` with `cost: Some(0.25)`, `ask` records it on `session.usage`. `0.25` is a test constant. It is not a bill from OpenRouter.
 
@@ -783,7 +783,7 @@ The saved file is the JSON `save` actually wrote:
 
 ### Milestone demo
 
-The demo is the mock. I did not make a live call.
+The demo is the mock.
 
 ```bash
 cargo run -p ch02-harness-core --example demo
@@ -812,7 +812,7 @@ event: text-delta (mock) I heard you.
 event: done
 ```
 
-A live chat is the same `cargo run` without `--mock`, with `OPENROUTER_API_KEY` set. Another server is `--base-url` plus `OPENAI_API_KEY`. I did not make that live call. A missing OpenRouter key fails before any request:
+A live chat is the same `cargo run` without `--mock`, with `OPENROUTER_API_KEY` set. Another server is `--base-url` plus `OPENAI_API_KEY`. A missing OpenRouter key fails before any request:
 
 ```text
 event: error missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
@@ -831,16 +831,16 @@ Layer L4's transcript invariants, in the form this type can enforce. The catalog
 
 Hermes K4 (`agent/message_sanitization.py`) sanitizes the outbound payload, uniquifies tool-call ids, and closes an interrupted tool sequence. This chapter does none of that. Duplicate ids inside one batch are uniquified later, in chapter 9. Hermes K6 (`agent/transcript_repair.py`) repairs persisted rows. Load re-validation here is the local `push` rules.
 
-**Inbox backpressure.** `SessionInbox` defaults to `INBOX_BOUND` (64). `submit` returns `InboxError::Full` once the queue length has reached that bound, and it does not call the model. `new` allocates the `VecDeque` with `bound.min(64)`, which is only the initial capacity; the refusal uses `self.bound`. The catalog has no inbox row. Chapter 35 reuses this same queue for actors.
+**Inbox backpressure.** `SessionInbox` defaults to `INBOX_BOUND` (64). `submit` returns `InboxError::Full` once the queue length has reached that bound, and it does not call the model. `new` allocates the `VecDeque` with `bound.min(64)`, which is only the initial capacity; the refusal uses `self.bound`. The catalog has no inbox row. Chapter 35's actor mailbox uses the same bound of 64 on its own queue.
 
-## What we built
+## What this chapter adds
 
 - **`Conversation`:** a system prompt plus an alternating history, with the rules enforced by the type itself. Private fields, a single `push` gate, and re-validation on load.
 - **A stable system prompt** kept separate from history and resent identically every time, so it's friendly to prompt caching, as Hermes insists.
 - **Rough token tracking and pair-wise trimming** that never drops the system prompt or the newest message.
 - **JSON save and load.**
 - **A scriptable `MockProvider`** that can also fail on cue, and can attach a scripted usage when a test needs one.
-- **`SessionInbox`:** one bounded queue (64) in front of the provider. A full inbox refuses the turn. The gateway, cron, and the editor will submit here later.
+- **`SessionInbox`:** one bounded queue (64) in front of the provider. A full inbox refuses the turn. Later chapters keep the cap; the actor mailbox, the gateway, and the editor each hold a queue of their own.
 - **`ChatSession`:** testable chat logic, separate from the terminal, with rollback when a model call fails. It records `Event` values and, when a server sent them, tokens and cost.
 - **`harness chat` and `harness ask`:** OpenRouter by default, `--mock` with no key, and the same event lines as chapter 1.
 
@@ -869,7 +869,7 @@ OPENROUTER_API_KEY=sk-or-... \
   cargo run -p ch02-harness-cli -- chat
 ```
 
-I did not make that live call. `--help` on this machine:
+`--help` on this machine:
 
 ```text
 A tiny agent harness
