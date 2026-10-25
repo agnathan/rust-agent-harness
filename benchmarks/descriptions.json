@@ -3038,6 +3038,21 @@
         "50/saved_set",
         "48/saved_set"
       ]
+    },
+    {
+      "id": "53/close_once",
+      "section": "chapter 53 the loop closes",
+      "chapter": "Chapter 53 The Loop Closes",
+      "function": "close_once",
+      "summary": "Run the fake-model task once, learn a skill, and run it again.",
+      "what": "improve::run on a fresh temp directory. The first attempt finishes unknown. Writer, curator, and librarian run. The second attempt finishes the checksum command.",
+      "why": "The closing chapter has to show the score move. This sample is that whole loop, including the disk writes and the snapshot.",
+      "timing": "The timed closure is b.iter. Inside: a unique temp directory, improve::run, black_box of the second score's passed bit, then remove_dir_all. The scripted turns, the skill write, the curator snapshot, and the librarian swap are inside the sample. LiveProvider is not called.",
+      "inputs": "One task, release-checksum. The expected final text is sha256sum target/release/harness. MAX_ATTEMPTS is 2. Budget::default max_iterations is 8.",
+      "fake": "LookingModel reads the transcript. No network and no key. The skill body is the procedure in skill_markdown, scanned by Writer::create.",
+      "source": "steps/ch53-the-loop-closes/crates/harness-core/benches/improve.rs",
+      "reading": "Smaller is better. The sample writes a skill, builds a gzip snapshot, and runs two scripted turns. Milliseconds are the honest band. A number in seconds would mean the curator snapshot walked a much larger tree. There is no fail threshold.",
+      "aliases": []
     }
   ]
 }

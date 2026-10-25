@@ -175,6 +175,8 @@ jobs:
         run: bash .github/scripts/run_bench_section.sh 51 "chapter 51 capstone" ch51-capstone capstone
       - name: Chapter 52 evals
         run: bash .github/scripts/run_bench_section.sh 52 "chapter 52 evals" ch52-evals evals
+      - name: Chapter 53 the loop closes
+        run: bash .github/scripts/run_bench_section.sh 53 "chapter 53 the loop closes" ch53-the-loop-closes improve
       - name: Write the job summary
         if: always()
         run: python3 .github/scripts/bench_summary.py >> "$GITHUB_STEP_SUMMARY"

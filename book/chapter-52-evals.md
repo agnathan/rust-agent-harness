@@ -667,7 +667,7 @@ The checklist is section 4 of [`docs/hermes-guardrails.md`](../docs/hermes-guard
 
 **Saved tasks.** `echo-hello`, `direct`, and `eight-reads` run on this copy of `run_loop`. The stress names run on it too, including the repair of `eco`.
 
-**Left for later.** A fail threshold, a JSONL file, and a live model. The book ends on this harness.
+**Left for later.** A fail threshold, a JSONL file, and a live model. Chapter 53 copies this harness and runs one task twice.
 
 ## What you implement
 
@@ -705,14 +705,14 @@ pub fn chapter_52_saved_passed(name: &str) -> bool {
 
 ## Where the harness stands
 
-The harness at the end of the book is the chapter 50 tree plus `suite`. That tree already holds the loop, memory, skills, the team, the bus, and the spans from chapter 50, and this chapter adds the module that re-runs the saved tasks on that same `run_loop`. The server line's measurement ended in chapter 51, on the other program, and this crate doesn't copy that directory or fold those token arms into a score.
+The harness at the end of this chapter is the chapter 50 tree plus `suite`. That tree already holds the loop, memory, skills, the team, the bus, and the spans from chapter 50, and this chapter adds the module that re-runs the saved tasks on that same `run_loop`. The server line's measurement ended in chapter 51, on the other program, and this crate doesn't copy that directory or fold those token arms into a score.
 
 The saved tasks still mean what chapter 9 named: `echo-hello` finishes `hello` after a call to `echo`, `direct` calls no tool and the reply is `ok`, and `eight-reads` runs eight `delay_read` calls inside the bound and finishes `done`. The four stress names still come from that loop: a tool that fails with `boom` and then returns `ok`, an iteration cap that stops on `Budget` with `partial`, the repair of `eco` into `echo`, and a stall on a byte-identical stub. A score is a name and a bool, and `FAIL_THRESHOLD` is `None`, so a false score is data, not a failed process, and `demo` still returns the line.
 
 The red-team cases are one predicate per guardrail layer, and each one calls the module that already implements the guard. Entry goes through `authorize` and `is_engaged`, where an error while stating a sentinel counts as engaged, context goes through `scan_context`, and model output goes through `redact_for_egress`, the think scrubber, and the repetition check. The loop's budget goes through `check_gate`, dispatch goes through `approval::check` where yolo still loses to the hardline, and individual tools go through the stale-write check and the workspace root. The execution environment goes through `scrub_env`, which drops `OPENAI_API_KEY`, persistence goes through `should_allow_install` where force doesn't turn a dangerous community verdict into `Allow`, scheduling goes through `child_call` and the cron scans, and cross-cutting goes through `redacting_formatter`. The saved set and the stress set go through `run_loop` rather than through a stub that ignores its input.
 
-The ten predicates pass by how they are written, and this chapter doesn't show a guard flipped to false. The limits this chapter already states stay in force: there's no fail threshold in CI, there's no JSONL file, and there's no live model. The trajectory log is a vec of strings, one hundred tasks take permits from `WORKER_BOUND` of 8, and the demo prints whether the peak sat inside that bound rather than printing the peak. `append_event` records one JSON object in the order the saved scores returned. The bench means that were measured stay `82.2 ns` for one appended event and `21.26 ms` for the saved set, and the saved-set sample includes the sleep inside `eight-reads`. The book leaves the harness as that tree plus `suite`, scoring the tasks chapter 9 named.
+The ten predicates pass by how they are written, and this chapter doesn't show a guard flipped to false. The limits this chapter already states stay in force: there's no fail threshold in CI, there's no JSONL file, and there's no live model. The trajectory log is a vec of strings, one hundred tasks take permits from `WORKER_BOUND` of 8, and the demo prints whether the peak sat inside that bound rather than printing the peak. `append_event` records one JSON object in the order the saved scores returned. The bench means that were measured stay `82.2 ns` for one appended event and `21.26 ms` for the saved set, and the saved-set sample includes the sleep inside `eight-reads`. Chapter 53 copies this tree and scores one new task twice. The saved names stay here.
 
 ## What's next
 
-The book ends on this suite, with the saved tasks and the ten layer cases still scored on this copy of the loop.
+Chapter 53 copies this harness and runs one task twice. The first score fails, the learning path runs, and the second score passes. The saved tasks and the ten layer cases stay on this copy of the loop.

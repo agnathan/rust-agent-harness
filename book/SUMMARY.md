@@ -76,6 +76,7 @@ Server-track chapters are marked *(server)*. They are interleaved with the harne
 - [Chapter 50: Seeing Inside](chapter-50-tracing.md)
 - [Chapter 51: Load and Token Capstone](chapter-51-capstone.md) *(server)*
 - [Chapter 52: Evals](chapter-52-evals.md)
+- [Chapter 53: The Loop Closes](chapter-53-the-loop-closes.md)
 
 # Appendix
 

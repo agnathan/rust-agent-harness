@@ -2084,6 +2084,39 @@ dependencies = [
 ]
 
 [[package]]
+name = "ch53-harness-cli"
+version = "0.1.0"
+dependencies = [
+ "ch53-the-loop-closes",
+ "clap",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "ch53-the-loop-closes"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "criterion",
+ "flate2",
+ "regex",
+ "reqwest 0.12.28",
+ "rmcp",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tar",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "wiremock",
+]
+
+[[package]]
 name = "chacha20"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

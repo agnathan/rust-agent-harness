@@ -74,6 +74,7 @@ Written chapters link to `book/chapter-….md`. A chapter that has no page yet i
 - [Chapter 50: Seeing Inside](book/chapter-50-tracing.md) — [`steps/ch50-tracing`](steps/ch50-tracing)
 - [Chapter 51: Load and Token Capstone](book/chapter-51-capstone.md) *(server)* — [`steps/ch51-capstone`](steps/ch51-capstone)
 - [Chapter 52: Evals](book/chapter-52-evals.md) — [`steps/ch52-evals`](steps/ch52-evals)
+- [Chapter 53: The Loop Closes](book/chapter-53-the-loop-closes.md) — [`steps/ch53-the-loop-closes`](steps/ch53-the-loop-closes)
 
 ## Appendix
 

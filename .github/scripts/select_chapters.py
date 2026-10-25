@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Resolve my-harness milestone test targets.
 
-The plan is chapters 1-50 in .github/chapters.json. A spec may name any of
+The plan is chapters 1-53 in .github/chapters.json. A spec may name any of
 those chapters; a chapter with no tests/chNN.rs yet is an error.
 Specs: all | 1 | 1-48 | 3,6,12
 Changed paths: my-harness/tests/chNN.rs, and any my-harness/src change selects every chapter that has a test.
