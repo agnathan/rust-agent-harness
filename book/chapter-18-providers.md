@@ -1,14 +1,14 @@
 # Chapter 18: Providers
 
-Chapter 1 can call OpenRouter, and every later harness copy still can. A harness that is serious about more than one model needs a native adapter beside that client, a way to fall through when a route is invalid, a way to rotate a key without building a new HTTP client, and a cheaper model for the summaries it will soon want. This chapter adds that module. It is `adapters`, on a copy of chapter 17. The crate is `steps/ch18-providers`. The package is `ch18-providers`. The library is `harness_core`. `drive_loop` does not call this module yet. The chapter's tests and the demo do. The chapter 9 provider stays the loop's client until a later edit wires the route in.
+The first fake model answers `no`, the route moves on, and the turn comes back `pong` from the fallback, with the client id still `1` after the key rotates from `sk-one` to `sk-two`. That is the part this chapter builds, and it isn't wired into the loop yet. `drive_loop` still calls the chapter 9 provider. `agent.rs` never names `adapters`. The tests and the demo call the module, and a later edit is what connects the route, which is worth saying here so the gap at the end of the walk isn't a surprise.
 
-`Msg` is the message this module sends. Two JSON bodies cover the OpenAI-compatible shape and the native Anthropic shape, and Bedrock sits beside them. An invalid route falls through to the fallback. Key rotation keeps the pooled client. The side model is for summaries, not the user turn, unless that turn asked for one.
+Chapter 1 can call OpenRouter, and every later harness copy still can. A harness that is serious about more than one model needs a native body beside that client, a way to fall through when a route fails, a way to rotate a key without building a new HTTP client, and a cheaper model for the summaries it will soon want. `Msg` is the message this module sends. Two JSON bodies cover the OpenAI-compatible shape and the native Anthropic shape, and Bedrock sits beside them. The side model is for summaries, not the user turn, unless that turn asked for one.
 
-Chapter 19 streams these adapters. Chapter 34 asks the side model for a summary when it compresses. Reflection and compression should be the cheap calls, not a second run of the user-facing model.
+Chapter 19 will stream these adapters. Chapter 34 asks the side model for a summary when it compresses. Reflection and compression should be the cheap calls, not a second run of the user-facing model, which is how a continuously improving harness keeps the lesson cheaper than the task.
 
-Rust, in the sidebars: another impl of the same trait is how a new provider appears. An enum is the route. The client id is a value you can assert stayed put across rotation, which is the test that the pool was reused. `serde_json::Value` is the body, so the two request shapes can differ without two HTTP stacks.
+Another impl of the same trait is how a new provider would appear, once something implements it. This file returns `serde_json::Value` instead, so the two request shapes can differ without two HTTP stacks. An enum is the TLS decision. The client id is the value you can assert stayed put across rotation, which is the test that the pool was reused.
 
-`cargo run -p ch18-providers` runs the fake turn. The exercise is `my-harness/tests/ch18.rs`: an invalid route falls through to the fallback model, and rotation keeps the same client.
+The step is `steps/ch18-providers`, package `ch18-providers`, library `harness_core`, the module `adapters` on a copy of chapter 17. `cargo run -p ch18-providers` prints `reply: pong` and `client: 1`. `my-harness/tests/ch18.rs` is an invalid route falling through to the fallback, with rotation keeping the same client.
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -71,11 +71,10 @@ pub trait Provider: Send + Sync {
 ```
 
 > **Rust sidebar: a trait is a list of methods**
-> - `ScriptedProvider` implements `Provider`. The live client in `live.rs` implements it too. `drive_loop` takes `&dyn Provider`: the function does not name which type, so the value sits behind a pointer.
-> - `async_trait` makes `async fn complete` callable through that pointer, the same reason `Tool` used it in chapter 3.
-> - `adapters.rs` defines no trait. Anthropic and Bedrock are functions that return a `serde_json::Value`. There is no `impl Provider for` an Anthropic type in this file.
+>
+> `ScriptedProvider` and the live client in `live.rs` both implement `Provider`, and `drive_loop` takes `&dyn Provider` so the function doesn't name which type. `async_trait` makes `async fn complete` callable through that pointer, the same reason `Tool` used it in [chapter 3](chapter-03-tools.md). `adapters.rs` defines no trait: Anthropic and Bedrock return a `serde_json::Value`, and there is no `impl Provider for` an Anthropic type in this file.
 
-I searched `agent.rs` in this step. The name `adapters` does not appear. `drive_loop` is the private function `run_loop`, `run_loop_driven`, and `run_loop_with_inbox` all end up in. Its signature still takes the chapter 9 trait object.
+As the opening said, `agent.rs` never names `adapters`. `drive_loop` is the private function `run_loop`, `run_loop_driven`, and `run_loop_with_inbox` all end up in, and its signature still takes the chapter 9 trait object.
 
 ```rust
 async fn drive_loop(
@@ -93,7 +92,7 @@ async fn drive_loop(
 
 Inside the loop the model call is `provider.complete(&send)`, in the `tokio::select!` that also watches the cancel token. `budget_wrap_up` and `soft_wrap_up` each call `provider.complete` the same way. Those three calls are every model call in `agent.rs`. None of them call `anthropic_body`, `choose_next`, `mark_exhausted_and_rotate`, or `uniquify_tool_call_ids`.
 
-That gap is intentional. The inherited evals look at `Message` values from `ScriptedProvider`. The new tests construct the bodies themselves. The loop keeps the client it already has.
+That gap is intentional. The inherited evals look at `Message` values from `ScriptedProvider`, so I am leaving the module unwired and the loop keeps the client those evals already assert on. The new tests construct the bodies themselves.
 
 `Message` and `Msg` are different types. `Message` in `message.rs` uses the `Role` enum and also carries `tool_calls` and `tool_call_id`. `Msg` is local to `adapters.rs`: a `String` role and a `content` string. A function that accepts `&[Msg]` cannot take the vec `drive_loop` pushes into. The repair functions repair that smaller transcript.
 
@@ -130,7 +129,8 @@ impl Msg {
 ```
 
 > **Rust sidebar: `impl Into<String>`**
-> - `Msg::new` takes `impl Into<String>`. A literal becomes an owned `String` by allocating. An existing `String` moves, so the caller does not allocate twice. The test calls `Msg::new("user", "hi")`.
+>
+> `Msg::new` takes `impl Into<String>`, so a literal allocates and an existing `String` moves. The test calls `Msg::new("user", "hi")`. The same bound is on `open_session` in [chapter 15](chapter-15-limits.md).
 
 `Debug` is what `{:?}` prints. `Clone` is an explicit copy of both strings. `PartialEq` and `Eq` are `==`. The tests compare `Msg` values with `assert_eq!` on the content of the last row, which needs `PartialEq` on the string, and the error enum below derives the same pair so a test can compare `ProviderError::InsecureTls` by value.
 
@@ -147,9 +147,8 @@ pub enum ProviderError {
 ```
 
 > **Rust sidebar: an enum is one of several shapes**
-> - `ProviderError` is either `MaxTokens` or `InsecureTls`. `#[derive(Error)]` from `thiserror` is the text `Display` prints. The TLS test compares the variant with `assert_eq!`.
-> - A later error that needs a status code would add `{ status: u16 }` inside the variant.
-> - `Option`, `Result`, and enums are taught in [chapter 1](chapter-01-first-contact.md).
+>
+> `ProviderError` is either `MaxTokens` or `InsecureTls`. `#[derive(Error)]` from `thiserror` is the text `Display` prints, and the TLS test compares the variant with `assert_eq!`. A later error that needs a status code would add `{ status: u16 }` inside the variant. Enums are in [chapter 1](chapter-01-first-contact.md).
 
 The TLS result is a second enum. It is the success type, so it does not implement `Error`.
 
@@ -234,13 +233,11 @@ pub fn bedrock_body(
 }
 ```
 
-The shape of the function is the same. The keys are not. Bedrock's model field is `modelId`. The cap is nested: `inferenceConfig` is an object, and `maxTokens` sits inside it. The same zero check returns the same `ProviderError::MaxTokens`. The test locks zero on the Anthropic function (`is_err`) and locks `4096` on the Bedrock function. Bedrock's zero branch is the same `if` and is not called by the test. Anthropic's empty-system branch is the same `if !system.is_empty()` and is not called by the test either. The Bedrock test is the one that passes `""` and then checks the key is absent.
+The shape of the function is the same, and the keys aren't. Bedrock's model field is `modelId`, the cap is nested as `inferenceConfig.maxTokens`, and the same zero check returns `ProviderError::MaxTokens`. The interesting decision is the empty system string: it is omitted, which the Bedrock test locks by passing `""` and checking the key is absent. `4096` is the value that test passes for `maxTokens`, the default on `build_converse_kwargs`.
 
 > **Rust sidebar: a `Value` is an enum, and the body is one on purpose**
-> - One function returns `serde_json::Value` for both APIs. A struct with `max_tokens` could not also have `inferenceConfig.maxTokens`. Bedrock has no `max_tokens` key, so `Value` is the shared type. JSON as a value is taught in [chapter 3](chapter-03-tools.md).
-> - `body["max_tokns"]` compiles. The test's `anthropic["max_tokens"]` is what fails when the key is wrong.
-> - `body["system"] = ...` inserts a missing key. Reading a missing key with `value["system"]` is JSON null, the same as an explicit `"system": null`. `get("system")` returns `None` when the key was left out. The Bedrock test uses `bedrock.get("system").is_none()`.
-> - `let mut body` is required because the later assignment changes the object.
+>
+> One function returns `serde_json::Value` for both APIs, because a struct with `max_tokens` couldn't also have `inferenceConfig.maxTokens`, and Bedrock has no `max_tokens` key. JSON as a value is in [chapter 3](chapter-03-tools.md). `body["max_tokns"]` compiles, and the test's `anthropic["max_tokens"]` is what fails when the key is wrong. Assigning `body["system"]` inserts a missing key, while `get("system")` returns `None` when the key was left out, which is what the Bedrock test checks. `let mut body` is required because that assignment changes the object.
 
 `wire_messages` is the private helper both bodies share.
 
@@ -253,13 +250,11 @@ fn wire_messages(messages: &[Msg]) -> Vec<Value> {
 }
 ```
 
-> **Rust sidebar: an iterator is a trait you usually do not call**
-> - `.iter().map(...).collect()` walks the slice when `collect` asks. `json!` allocates one object per message then. The `Vec<Value>` is owned. The original `&[Msg]` is only borrowed.
-> - `choose_next` uses `position`, which stops at the first match and returns `Option<usize>`.
+> **Rust sidebar: an iterator is a trait you usually don't call**
+>
+> `.iter().map(...).collect()` walks the slice when `collect` asks, `json!` allocates one object per message, and the `Vec<Value>` is owned while the original `&[Msg]` is only borrowed. `choose_next` uses `position`, which stops at the first match and returns `Option<usize>`.
 
-Each object has exactly two keys, `role` and `content`. Tool-call ids, raw arguments, and the `Role` enum never enter this vec, because `Msg` does not have those fields. The Anthropic test builds one message with `Msg::new("user", "hi")` and asserts `messages[0].role == "user"`. It does not assert the content `"hi"`. The role check is enough to prove `wire_messages` ran. A swapped key would still fail that assert.
-
-An empty slice collects into an empty `Vec`, and `json!` stores that as an empty array. No test passes zero messages. The pipeline still has that input: `iter` yields nothing, `collect` allocates an empty vec.
+Each object has exactly two keys, `role` and `content`. Tool-call ids, raw arguments, and the `Role` enum never enter this vec, because `Msg` doesn't have those fields. The Anthropic test builds one message with `Msg::new("user", "hi")` and asserts `messages[0].role == "user"`, which is enough to prove `wire_messages` ran. An empty slice collects into an empty `Vec`, and `json!` stores that as an empty array.
 
 ## 18.4 Preferences, the route, and the next model
 
@@ -294,7 +289,7 @@ pub fn validated_sort(raw: &str) -> Option<&'static str> {
 
 `trim` drops leading and trailing whitespace. `to_ascii_lowercase` allocates a new `String` and changes only `A`–`Z`. `as_str` borrows that temporary so `match` can compare it to the literals. The three `Some` arms return string literals, which have type `&'static str`. They do not borrow `raw`. The temporary lowercase string dies at the end of the statement, and that is fine, because the returned `&str` points at the binary, not at the temporary.
 
-`"Price"` trims to itself, lowercases to `"price"`, and hits the third arm. `"fastest"` hits `_` and returns `None`. `" throughput "` would hit the first arm because of `trim`. The test does not pass whitespace. `"LATENCY"` would hit the second arm. The test does not pass it. The match is still exhaustive: `_` is every other string, including `""`.
+`"Price"` trims to itself, lowercases to `"price"`, and hits the third arm. `"fastest"` hits `_` and returns `None`. Whitespace and `"LATENCY"` would hit the first and second arms because of `trim` and the lowercase, and `_` is every other string, including `""`. The match stays exhaustive.
 
 `match` is how you take an enum, or a string, apart. Here the thing being matched is `&str`. Each arm is one pattern. The first matching arm runs, and the rest are skipped. There is no fall-through.
 
@@ -329,13 +324,13 @@ pub fn provider_preferences(prefs: &Prefs) -> Map<String, Value> {
 
 `Map<String, Value>` is the object variant before it is wrapped in a `Value`. `Map::new()` is empty. A key enters the map only from one of these six `if`s. An empty list never becomes `"ignore": []`. A missing key is how the wire stays quiet.
 
-`only`, `ignore`, and `order` share one pattern: skip the empty vec, otherwise `insert` the whole vec as a JSON array. `json!(prefs.only)` clones the strings into the `Value`. The `Prefs` borrow stays put. The test builds `only` as `["anthropic"]`, `ignore` as `[]`, and `order` as `["anthropic", "amazon"]`. It never asserts `map.get("only")`, `map.get("ignore")`, or `map.get("order")`. Those three branches run on that input. The asserts that do exist are on `sort`, `require_parameters`, and `data_collection`. The empty-`ignore` path is exercised and not locked. I am leaving that visible. The `if !is_empty()` is the whole policy for those three keys.
+`only`, `ignore`, and `order` share one pattern: skip the empty vec, otherwise `insert` the whole vec as a JSON array. `json!(prefs.only)` clones the strings into the `Value`, and the `Prefs` borrow stays put. The test builds `only` as `["anthropic"]`, `ignore` as `[]`, and `order` as `["anthropic", "amazon"]`, and the asserts that exist are on `sort`, `require_parameters`, and `data_collection`. The empty-`ignore` path runs and isn't locked by its own `get`. I am leaving that visible, because an assert on `sort` doesn't prove the empty list was dropped, and `if !is_empty()` is the whole policy for those three keys.
 
 The sort line is a chain. `prefs.sort` is `Option<String>`. `as_deref()` turns `Option<String>` into `Option<&str>` by borrowing the string inside. `and_then(validated_sort)` calls `validated_sort` only on `Some`, and flattens the `Option` that `validated_sort` itself returns. `Some("Price")` becomes `Some("price")`. `Some("fastest")` becomes `None`, and the `if let` does not insert. `None` stays `None` and also does not insert. The inserted JSON is `json!(sort)` where `sort` is the `&'static str` from the match, so the map owns a fresh JSON string and does not keep a borrow of `Prefs`.
 
-`require_parameters` inserts only when the bool is true, and the inserted value is `json!(true)`, not the bool variable. `false` leaves the key out. The test locks the `false` path with `map.get("require_parameters").is_none()`. The `true` path is the other branch of that `if`. No test sets the flag to true.
+`require_parameters` inserts only when the bool is true, and the inserted value is `json!(true)`, not the bool variable, so `false` leaves the key out. The test locks that absence with `map.get("require_parameters").is_none()`.
 
-`data_collection` uses `as_ref` so the `Option<String>` is borrowed as `Option<&String>`, then `filter` drops the `Some` when the string is empty. `Some("deny")` is kept. `Some("")` becomes `None` and the key is omitted. `None` stays `None`. The test locks `"deny"`. It does not pass the empty string. `filter` is an iterator-style method on `Option`: it keeps `Some` only when the closure returns true.
+`data_collection` uses `as_ref` so the `Option<String>` is borrowed, then `filter` drops the `Some` when the string is empty. `Some("deny")` is kept, which is what the test locks, and an empty string becomes `None` the same way a missing value does. `filter` keeps `Some` only when the closure returns true.
 
 ```rust
 pub fn openrouter_route(models: &[String], prefs: &Prefs) -> Value {
@@ -346,9 +341,7 @@ pub fn openrouter_route(models: &[String], prefs: &Prefs) -> Value {
 }
 ```
 
-The route is always both keys. `provider_preferences` returns the map, and `json!` accepts it because `Map<String, Value>` can be serialized as a JSON object. An all-default `Prefs` still produces `"provider": {}`. The key is present. The inner object is empty. The test checks `route["models"]` against `json!(models)` and does not read `route["provider"]`. The preference asserts happen on the map before it is wrapped.
-
-Choosing the next name does not look at that map.
+The route is always both keys. `provider_preferences` returns the map, and `json!` accepts it because `Map<String, Value>` can be serialized as a JSON object. An all-default `Prefs` still produces `"provider": {}`: the key is present and the inner object is empty. The preference asserts happen on the map before it is wrapped. Choosing the next name doesn't look at that map.
 
 ```rust
 pub fn choose_next<'a>(models: &'a [String], failed: Option<&str>) -> Option<&'a str> {
@@ -361,17 +354,14 @@ pub fn choose_next<'a>(models: &'a [String], failed: Option<&str>) -> Option<&'a
 ```
 
 > **Rust sidebar: the lifetime on the returned name**
-> - `'a` is a name for "how long this borrow lasts." `models: &'a [String]` says the slice is borrowed for `'a`. The return type `Option<&'a str>` says the string inside the `Option` is borrowed for that same `'a`.
-> - The returned `&str` points into one of the `String`s in the slice. It does not point at `failed`. `failed` is `Option<&str>` with a lifetime the signature leaves unnamed, because nothing returned borrows it. It is only compared.
-> - When the function returns, the caller must still be holding `models`. Drop the vec and the `&str` would dangle. The compiler rejects that. `run_turn` hits this and maps the name onto a `'static` literal before its local vec dies. That function is below.
-> - `let Some(failed) = failed else { ... }` is `let`-`else`. Matching `Some` binds the inner `&str` and continues. Matching `None` runs the `else` block, which returns. After that line, `failed` is a `&str`, not an `Option`.
-> - `?` on an `Option` means "if this is `None`, return `None` from the function." `position` returns `None` when no element equals `failed`. The function then returns `None` without looking at `index + 1`.
+>
+> `'a` is a name for how long this borrow lasts. `models: &'a [String]` says the slice is borrowed for `'a`, and the return type `Option<&'a str>` says the string inside the `Option` is borrowed for that same `'a`. The returned `&str` points into one of the `String`s in the slice, so it doesn't point at `failed`. `failed` is `Option<&str>` with a lifetime the signature leaves unnamed, because nothing returned borrows it. It is only compared. When the function returns, the caller must still be holding `models`. Drop the vec and the `&str` would dangle, and the compiler rejects that. `run_turn` hits this and maps the name onto a `'static` literal before its local vec dies. That function is below. `let Some(failed) = failed else { ... }` is `let`-`else`. Matching `Some` binds the inner `&str` and continues. Matching `None` runs the `else` block, which returns. After that line, `failed` is a `&str`, not an `Option`. `?` on an `Option` means "if this is `None`, return `None` from the function." `position` returns `None` when no element equals `failed`. The function then returns `None` without looking at `index + 1`.
 
 `failed == None` returns the first name, or `None` when the slice is empty. `first()` is `Option<&String>`. `map(String::as_str)` turns that into `Option<&str>`. `String::as_str` is a function pointer passed to `map`. It borrows the `String`.
 
-`failed == Some(name)` scans with `position`. The closure is `|model| model == failed`. `model` is `&String`. Comparing it to `&str` works because `String` implements equality with `str`. The scan stops at the first hit. `get(index + 1)` is `Option<&String>`, and `map(String::as_str)` borrows it. When `failed` is the last name, `index + 1` is past the end, `get` returns `None`, and the function returns `None`. When `failed` is not in the list, `position` is `None` and `?` returns `None`. The test calls `choose_next` with `Some("primary")` on `["primary", "fallback"]` and expects `Some("fallback")`, and with `None` and expects `Some("primary")`. It does not call the empty-slice case, the missing-name case, or the last-name case. Those are the `None` returns in the body.
+`failed == Some(name)` scans with `position`. The closure is `|model| model == failed`. `model` is `&String`. Comparing it to `&str` works because `String` implements equality with `str`. The scan stops at the first hit. `get(index + 1)` is `Option<&String>`, and `map(String::as_str)` borrows it. When `failed` is the last name, `index + 1` is past the end and the function returns `None`. When `failed` isn't in the list, `position` is `None` and `?` returns `None`. The test calls `choose_next` with `Some("primary")` on `["primary", "fallback"]` and expects `Some("fallback")`, and with `None` expects `Some("primary")`. The empty slice, a missing name, and the last name are the other `None` returns in the body.
 
-`choose_next` does not read `Prefs` and does not call a model. A failure you have not already classified still needs chapter 14. This function only picks the next name.
+`choose_next` picks the next name. It doesn't read `Prefs`, and it doesn't call a model, so a failure you haven't already classified still needs chapter 14.
 
 ## 18.5 One pool, one client id, and the side model
 
@@ -542,10 +532,8 @@ fn chosen_static(chosen: &str) -> &'static str {
 The return type is `(String, &'static str)`. The reply can be an owned `String` because it was cloned out of the model. The route name cannot be the `&str` from `choose_next`. That borrow points into `names`, and `names` is a local that dies when the function returns. `chosen_static` maps the borrowed name onto a literal before `names` is dropped.
 
 > **Rust sidebar: `'static` is the lifetime of a literal**
-> - `"fallback"` in the source is stored in the binary. A `&'static str` can be returned from any function. It does not borrow the arguments.
-> - `choose_next` returns `Option<&'a str>` tied to the local vec. Returning that from `run_turn` would be a dangling pointer. The compiler stops the build. `chosen_static` is the copy of the decision into a literal.
-> - The match arms are `"side"`, `"fallback"`, and `_`. Every other string, including `""`, `"primary"`, and `"last"`, becomes `"primary"`. A successful pick of the first model and a failed pick both come back as the same `'static` word `"primary"`. The reply string is how you tell those apart. An empty reply with route `"primary"` is the `unwrap_or` path. A real primary reply with route `"primary"` is `failed_first == false`, or a failed name the match does not know.
-> - The test passes `primary` plus `fallback` and `failed_first: true`, so `chosen` is `"fallback"` and the match hits the second arm. The route comes back `"fallback"`. The reply comes back `"pong"`.
+>
+> `"fallback"` in the source is stored in the binary, so a `&'static str` can be returned from any function and it doesn't borrow the arguments. `choose_next` returns `Option<&'a str>` tied to the local vec. Returning that from `run_turn` would be a dangling pointer, and the compiler stops the build. `chosen_static` is the copy of the decision into a literal. The match arms are `"side"`, `"fallback"`, and `_`. Every other string, including `""`, `"primary"`, and `"last"`, becomes `"primary"`. A successful pick of the first model and a failed pick both come back as the same `'static` word `"primary"`. The reply string is how you tell those apart. An empty reply with route `"primary"` is the `unwrap_or` path. A real primary reply with route `"primary"` is `failed_first == false`, or a failed name the match doesn't know. The test passes `primary` plus `fallback` and `failed_first: true`, so `chosen` is `"fallback"` and the match hits the second arm. The route comes back `"fallback"`. The reply comes back `"pong"`.
 
 The binary is `src/bin/chapter_demo.rs`. It is a separate crate. It can call `pub` functions only.
 
@@ -577,19 +565,16 @@ fn main() {
 
 ## 18.8 What each test locks
 
-`tests/providers.rs` is six tests. They are the public surface.
+`tests/providers.rs` is six tests. Each one fails if the decision it names regresses.
 
-`anthropic_and_bedrock_bodies_carry_the_fields_their_apis_require` builds `hello()` as one `Msg` of role `user` and content `hi`. `anthropic_body("claude", "be brief", &hello(), 128)` must be `Ok`.
-
-`an_invalid_sort_is_dropped_and_the_next_model_is_the_fallback` builds a `Prefs` with `only: ["anthropic"]`, `ignore: []`, `order: ["anthropic", "amazon"]`, `sort: Some("Price")`, `require_parameters: false`, and `data_collection: Some("deny")`. On the map it asserts `get("sort").map(|value| value.as_str())` equals `Some(Some("price"))`.
-
-`rotation_keeps_the_client_and_the_side_model_stays_off` builds a pool of `sk-one` and `sk-two`. `client_id()` must equal `CLIENT_ID`.
-
-`duplicate_tool_ids_and_a_dangling_tool_row_are_repaired` starts from `["call_0", "call_0", "call_1"]` and expects `["call_0", "call_0_d2", "call_1"]` after `uniquify_tool_call_ids`. It then builds `[Msg::new("assistant", ""), Msg::new("tool", "partial")]`.
-
-`tls_stays_on_the_os_store_unless_the_dev_flag_is_set` expects `resolve_tls(true, false)` to be `Ok(OsTrust)`, `resolve_tls(false, false)` to be `Err(InsecureTls)` via `expect_err`, and `resolve_tls(false, true)` to be `Ok(DevInsecure)`. `expect_err` turns the `Result` inside out.
-
-`the_fake_turn_uses_the_fallback_model` calls `run_turn` with primary reply `"no"`, fallback reply `"pong"`, and `failed_first` true. The tuple must be `("pong", "fallback")`.
+| Test | What breaks if you remove it |
+|---|---|
+| `anthropic_and_bedrock_bodies_carry_the_fields_their_apis_require` | `anthropic_body("claude", "be brief", &hello(), 128)` can drop `model`, `max_tokens`, or `system`, and a zero `max_tokens` can succeed |
+| `an_invalid_sort_is_dropped_and_the_next_model_is_the_fallback` | `sort: Some("Price")` can stay `"Price"`, or `"fastest"` can be inserted, and `choose_next` can stop returning `"fallback"` |
+| `rotation_keeps_the_client_and_the_side_model_stays_off` | `client_id()` can leave `CLIENT_ID` after a rotate, or `side_model(false, ...)` can return the side model |
+| `duplicate_tool_ids_and_a_dangling_tool_row_are_repaired` | `["call_0", "call_0", "call_1"]` can stay duplicated, or a trailing `tool` row can be left open |
+| `tls_stays_on_the_os_store_unless_the_dev_flag_is_set` | `resolve_tls(false, false)` can stop being `Err(InsecureTls)`, or the dev flag can stop producing `DevInsecure` |
+| `the_fake_turn_uses_the_fallback_model` | `run_turn` with `failed_first` true can stop returning `("pong", "fallback")` |
 
 ## 18.9 What the two benches time
 
