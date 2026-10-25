@@ -1,16 +1,18 @@
 # Chapter 37: Balancing and Federation
 
-Chapter 36 can restart a child that stopped making progress. That child may be waiting on a tool that lives on another MCP server, and the gateway still treats every backend for a tool as one call. If three upstreams offer `search`, the gateway should pick one that is not already busy, and it should not open a connection to all of them while it decides. This chapter adds the pool and the federation map. It is the server line, not the harness line. The crate is `steps/ch37-balancing`. It vendors chapter 23, library name `balancing`, new module `federation`. It binds no socket. Chapter 38 copies chapter 36. It does not copy this directory.
+This chapter is the MCP server program, the same line as chapters 5, 7, 8, 15, and 23, and it continues at 42 and 51. The harness doesn't copy this directory, because chapter 38 copies chapter 36 and this server crate stays on its own line.
 
-`Policy` is least-outstanding or power-of-two choices. `Backend` is one upstream in the pool. `pick` chooses without opening a connection, which is the property the bench locks. `call` formats a string and puts the counter back, so a finished call decrements the outstanding count the next pick will see. `federate` and `pool_for` group one tool name to the server names that provide it. `discover` counts overlap and connects at most 4, the discovery concurrency Hermes uses. `0` as "unlimited" stays unimplemented. A live socket to those upstreams stays unimplemented too. The pool is in memory.
+The notes record a gap that the pool has to fill on its own. The tree at the commit this chapter cites has no function that chooses the quietest replica, and it has no power-of-two picker either, so least outstanding and the quieter of two indexes are written here. The notes also say that other lines containing those words are not this pool, and the piece they adopt is the discovery cap.
 
-The server stays a separate program because the pool is a property of the upstreams, and every harness client should share it. `pick` reads the counters and returns an index. `call` then does `fetch_add`. Those two steps are not one critical section, so two threads can both `pick` the same index before either increment is visible. The counters live on the gateway. This chapter does not close that race. The harness remains the client: it asks for a tool by name, and the server chooses the backend. Chapter 42 vendors this crate and adds routing, drain, and quotas. Chapter 15's breaker still sits under the call. A pool that ignores an open breaker would send traffic at a backend the limits chapter already decided to leave alone.
+The reservation is two steps, and they aren't one critical section. `pick` reads the counters and returns an index, and `call` then does `fetch_add`, so two threads can both pick the same index before either increment is visible. This chapter shows the policy and leaves that reservation race open. The counters live on the gateway, and `pick` returns the index without opening a connection.
 
-Nothing here learns a skill. The connection to the self-improving harness is indirect and real: a team of agents calling tools only works if the catalog stays up. Federation is how the catalog grows to include tools the gateway does not contain, which is the same split chapter 4 drew for a single server, now with more than one upstream and a cap on how many you ask at once.
+A gateway that sees three upstreams for one tool still has to choose, and it should choose from the counters it already holds. `Policy` is least outstanding, or the quieter of two indexes the caller already named. `Backend` is one upstream in that pool, with a server name, a reply string, and an outstanding count. `federate` and `pool_for` group one tool name to the servers that provide it. `discover` counts how many workers overlap and lets at most 4 through, which is the discovery concurrency Hermes uses, and a setting of `0` for unlimited stays unimplemented. The pool lives in memory, and this crate binds no socket.
 
-Rust, at the pick: the outstanding count is an integer you increment and decrement. Power of two is "sample two, take the quieter one," a few lines, not a load-balancer framework. The discovery cap is a semaphore of 4. `Result` is a pool that has no backend for that name.
+The pool stays on the server because it is a property of the upstreams, and every harness client should share that view. Chapter 42 vendors this crate and adds routing, drain, and quotas. Chapter 15's breaker still sits under the call. A pool that ignored an open breaker would send traffic at a backend the limits chapter already decided to leave alone.
 
-`cargo run -p ch37-balancing --offline` prints the demo line. The exercise is `my-harness/tests/ch37.rs`: a least-outstanding pick does not open a connection.
+A continuously improving team can call tools only if the catalog stays up, and federation is how that catalog can include tools the gateway doesn't contain.
+
+At the pick, the outstanding count is an integer you raise and lower. Power of two in this file is a comparison rather than a framework. An empty pool returns `None`, which is how a missing name looks to the caller. The crate is `steps/ch37-balancing`, which vendors chapter 23 under the library name `balancing` and adds the module `federation`. `cargo run -p ch37-balancing --offline` prints `pick: echo via alpha`. The exercise is `my-harness/tests/ch37.rs`, and it checks that a least-outstanding pick returns an index from those counters.
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -57,27 +59,19 @@ Rust, at the pick: the outstanding count is an integer you increment and decreme
 
 ## What this chapter decides
 
-`pick` with `LeastOutstanding` returns the index of the smallest `outstanding` counter. Ties keep the earlier backend. `PowerOfTwo { a, b }` reduces both indexes modulo the pool length and returns the quieter one. An equal pair keeps the left index. An empty pool returns `None`.
+`pick` with `LeastOutstanding` returns the index of the smallest `outstanding` counter, and a tie keeps the earlier backend. `PowerOfTwo { a, b }` reduces both indexes modulo the pool length and returns the quieter one. An equal pair keeps the left index. An empty pool returns `None`, so the caller can tell a missing tool from a quiet backend.
 
-`call` picks, adds one to that counter, formats `reply via server`, and subtracts one. The counter is back where it started when `call` returns. The pick does not open a connection. `call` does not open one either. Both return data that was already in the `Backend`.
+`call` picks, adds one to that counter, formats `reply via server`, and subtracts one, which is why the counter is back where it started when `call` returns. Both functions hand back data that was already on the `Backend`, and the pick is the step the bench times.
 
-`federate` builds the map. `pool_for` turns one tool's servers into a pool whose reply string is the tool name and whose counters start at 0.
+`federate` builds the map from a tool name to the server names that offer it, and `pool_for` turns one tool's servers into a pool whose reply string is the tool name and whose counters start at 0.
 
-`discover` starts `n` threads and holds each one inside a gate of 4. The return is the max in flight. The function does not open a socket.
+`discover` starts `n` threads and holds each one inside a gate of 4, and the value it returns is the max in flight. The cap is 4 because that is the number Hermes uses, and the function counts overlap inside the gate.
 
-`federation::demo` federates `echo` on `alpha` and `beta` and returns `pick: echo via alpha`. No key. That is the line `main` prints.
+`federation::demo` federates `echo` on `alpha` and `beta` and returns `pick: echo via alpha`. That string is the line `main` prints, and the run reads no key on the way out.
 
 ## 37.1 The crate around the new module
 
-`src/lib.rs` is the chapter 23 gateway, copied in so the step builds alone. The module docs say a prediction is installed before the request, `session_tools` reads that set, composite and macro names expand to steps, and code mode runs a line script against an allowlist. The new line in that file, beside the older modules, is `pub mod federation`.
-
-The public surface I am not re-teaching is the vendored one. `catalog` is the chapter 7 gateway: native tools, plugin tools, upstream tool cards, and a BM25 index. `session` is the chapter 8 session view over that catalog. `limits` is the chapter 15 gateway: accept and execute permits, an idempotent retry, a breaker, and the caps of 50. `lib.rs` re-exports `Catalog`, `LimitedGateway`, `SessionError`, and `SessionView` from `limits`. On top of that sit the learned types: `Use`, `PredictInput`, `CodeError`, `ScriptedModel`, `LearnedGateway`, `predict`, `SANDBOX_ALLOWED`, and `CODE_MODE_MAX_CALLS` of 50. `LearnedGateway::session_tools` clones the installed offer. `refresh_prediction` is the offline score. `run_code_mode` accepts a line that starts with `call `, refuses a tool that is not in `SANDBOX_ALLOWED` or not in the offer, and stops after 50 calls.
-
-`pub fn demo()` in `lib.rs` opens a session named `desk`, predicts from a usage row for `read_file`, reads `session_tools`, and runs one `call read_file` line. It returns `(offered, bodies)`, a tuple. `main` does not call it. `tests/learned.rs` exercises that path: the prediction test, a zero-score exclusion, composite and macro expansion, the allowlist and the offer, the cap of 50, and the keyless scripted model. Those tests belong to the vendored gateway. The new behavior is `tests/balancing.rs`.
-
-`catalog::Upstream` is a name plus tool cards for the in-memory catalog. `federation::Upstream` is a server name plus a `Vec<String>` of tool names for the pool map. Same word, two types, two modules. The pool in this chapter is not `LimitedGateway`'s permit pool. That one limits how many calls run. This one chooses which backend would run, and then does not run a connection.
-
-The vendored constants and the learned types are what `tests/learned.rs` calls. They are in the crate so a reader who opens `lib.rs` can see them beside `pub mod federation`. They are not what `main` prints.
+The modules beside the new one are the chapter 7, 8, 15, and 23 gateway, copied in so this step builds alone. `pub mod federation` is the new line in `src/lib.rs`, and `main` doesn't call the learned `demo`, which `tests/learned.rs` still covers. `catalog::Upstream` is a name plus tool cards for the in-memory catalog. `federation::Upstream` is a server name plus a `Vec<String>` of tool names for the pool map, so the same word names two types. This pool chooses which backend would run, and it isn't `LimitedGateway`'s permit pool, because that pool limits how many calls run. The allowlist below is part of the copied gateway, and the learned tests are what still exercise it.
 
 ```rust
 pub const SANDBOX_ALLOWED: &[&str] = &[
@@ -93,25 +87,15 @@ pub const SANDBOX_ALLOWED: &[&str] = &[
 pub const CODE_MODE_MAX_CALLS: usize = 50;
 ```
 
-`SANDBOX_ALLOWED` is seven names. `run_code_mode` rejects any other tool with `CodeError::NotAllowed`. A name that is allowed and still missing from the offered slice is `CodeError::NotOffered`. A line that does not start with `call `, or that has no whitespace after the tool, is `CodeError::BadLine`. More than 50 calls is `CodeError::TooManyCalls`. The function parses every line into a local vec first. After each accepted line it checks `lines.len() > CODE_MODE_MAX_CALLS`. The 51st accepted line returns that error immediately. The callback runs only after the whole script has parsed, in the `Ok` arm, so a script that trips the cap invokes the callback zero times. Blank lines and lines whose first non-whitespace character is `#` are skipped before that parse.
-
-`Use` is one row of history: a task string and a tool string. `PredictInput` borrows the task, the usage slice, the memory text, a session note, and the catalog names. `predict` scores each catalog name. A usage row whose tool equals the name and whose task shares an alphanumeric token of length at least 3 with the new task adds 1. The memory text or the session note containing the tool name as a whole word adds 3. A score of 0 drops the name. The rest sort by score descending, then by name. `refresh_prediction` calls `predict`, stores the `Arc<Vec<String>>` on the gateway, sets `pending_change`, and increments `predict_calls`. `session_tools` clones that `Arc`'s vec into the view when the offer is non-empty, and swaps `pending_change` to false. It does not call `predict`. The comment on `offered_arc` says the request path clones the installed `Arc` and does not score usage.
-
-`ScriptedModel` holds a reply and a call count. `complete` increments the count and clones the reply. The learned `demo` does not construct it. `federation::demo` constructs a different `FakeModel`, the one in `federation.rs`. `LearnedGateway::new` starts from `LimitedGateway::new`, an empty offer, `pending_change` false, `predict_calls` at 0, and two empty `BTreeMap`s for composites and macros. `save_composite` and `save_macro` insert a name and a step list. `expand` looks at composites first and macros second. `Default` calls `new`.
-
-`limits.rs`, which I read at the top of the file, is the chapter 15 copy inside this crate. `ACCEPT_BOUND` is 32. `EXECUTE_BOUND` is 8. `BREAKER_THRESHOLD` is 3. `MAX_WEB_SEARCHES` and `MAX_SUBAGENTS` are 50. `Backend` there is a trait with `fn call(&self, tool: &str) -> Outcome`. That trait is not `federation::Backend`. The federation struct has no `call` method of its own. `Pool::call` is the method. The trait lives on the vendored gateway, and the federation pool does not implement it.
-
-Tokio is a dependency because that vendored gateway uses `tokio::sync::Semaphore`. The features on the dependency are `macros`, `rt-multi-thread`, `sync`, and `time`. `federation.rs` does not import tokio. `discover` uses `std::thread`. The pick uses `std::sync::atomic`. A reader who searches the new module for `TcpStream` will not find it.
+A reader who opens `lib.rs` still sees those names beside `pub mod federation`, and `main` prints the federation line instead.
 
 > **Rust sidebar: two crates, two names**
 >
-> - Chapter 36's library is `harness_core`. This package's library is `balancing`. A test says `use balancing::federation::...`.
-> - `pub mod federation` makes the module public. `main.rs` can name `balancing::federation::demo` because the binary is the same package and the module is `pub`.
-> - Vendoring means the files live in this crate. There is no `path` dependency on `steps/ch23-learned-tools`. Editing chapter 23 later does not change this copy.
+> Chapter 36's library is `harness_core`, and this package's library is `balancing`, which is why a test says `use balancing::federation::...`. `pub mod federation` makes the module public, so `main.rs` can name `balancing::federation::demo` from the same package. Vendoring means the files live in this crate, with no `path` dependency on `steps/ch23-learned-tools`, so a later edit to chapter 23 leaves this copy alone.
 
 ## 37.2 `Policy`, `Backend`, and `pick`
 
-The module starts with the cap and the policy.
+The module starts with the cap and the policy, and both stay small on purpose.
 
 ```rust
 /// Hermes `mcp.discovery_concurrency` default, from `tools/mcp_tool_discovery.py`.
@@ -124,9 +108,9 @@ pub enum Policy {
 }
 ```
 
-`DISCOVERY_CONCURRENCY` is 4, a `usize`, because it counts threads inside the gate. `Policy` is `Copy`. `LeastOutstanding` has no fields. `PowerOfTwo` carries the two indexes the caller already chose. This crate does not draw random numbers. A caller who always passes `0` and `1` never looks at the rest of the pool. The randomness, if there is any, stays outside `pick`.
+`DISCOVERY_CONCURRENCY` is 4, a `usize`, because it counts threads inside the gate. `Policy` is `Copy`, `LeastOutstanding` carries no fields, and `PowerOfTwo { a, b }` takes the two indexes from the caller. This file draws no random numbers, so this is the comparison step, not a random sample of two backends. A caller who always passes `0` and `1` never looks at the rest of the pool, which is why any randomness stays outside `pick`.
 
-`Backend` is one upstream in the pool.
+`Backend` is one upstream in the pool, and the struct is only the data `pick` needs.
 
 ```rust
 pub struct Backend {
@@ -150,9 +134,9 @@ impl Backend {
 }
 ```
 
-`server` and `reply` are public strings. `outstanding` is private. Readers use `outstanding()`, which loads the atomic. `new` can start the counter at any `usize`. The bench and the least-outstanding test start four backends at 3, 1, 4, and 2. `pool_for` starts every counter at 0. There is no connection field. There is no host, no port, and no client. The reply is the string `call` will format.
+`server` and `reply` are public strings, and `outstanding` is private, so readers call `outstanding()`, which loads the atomic. `new` can start the counter at any `usize`. The bench and the least-outstanding test start four backends at 3, 1, 4, and 2, and `pool_for` starts every counter at 0. The struct holds those strings and the counter, with no host, no port, and no client, and the reply is the string `call` will format later.
 
-`Pool` owns the vec.
+`Pool` owns the vec of backends, and `pick` is the only decision it makes.
 
 ```rust
 pub struct Pool {
@@ -198,25 +182,25 @@ impl Pool {
 }
 ```
 
-`len` and `is_empty` read the vec. `pick` takes `&self`. It does not need `&mut self`, because the counters are atomics and this function only loads them. An empty pool returns `None` before the `match`. The `Some(...)` wraps every other result.
+`len` and `is_empty` read the vec. `pick` takes `&self`, and it can, because the counters are atomics and this function only loads them. An empty pool returns `None` before the `match`, and the `Some(...)` wraps every other result, so a present pool always yields an index.
 
-`LeastOutstanding` enumerates `(index, backend)` and asks `min_by_key` for the smallest `outstanding()`. `min_by_key` keeps the first element when several keys tie, because it replaces the current minimum only when the new key is strictly smaller. Outstanding counts 3, 1, 4, 2 yield index 1, the backend whose counter is 1. If two backends both held 1, the earlier index would win. The tests use distinct counts, so the tie is the rule in `min_by_key`, not a row in the test. The `unwrap_or(0)` sits behind the empty check. On a non-empty pool `min_by_key` returns `Some`. The `0` is the value the expression would use if the iterator were empty, which this arm has already refused.
+`LeastOutstanding` enumerates `(index, backend)` and asks `min_by_key` for the smallest `outstanding()`. `min_by_key` keeps the first element when several keys tie, because it replaces the current minimum only when the new key is strictly smaller. Outstanding counts of 3, 1, 4, and 2 yield index 1, the backend whose counter is 1. If two backends both held 1, the earlier index would win. The tests use distinct counts, so the tie is the rule in `min_by_key` rather than a row the test asserts. The `unwrap_or(0)` sits behind the empty check. On a non-empty pool `min_by_key` returns `Some`. The `0` is only the value the expression would use if the iterator were empty, which this arm has already refused.
 
-`PowerOfTwo` reduces `a` and `b` with `% self.backends.len()`. An index past the end wraps. The test uses indexes inside the pool: `{ a: 0, b: 1 }` and `{ a: 2, b: 0 }` on a pool of three. The comparison is `<=`. The left index wins a tie. `{ a: 0, b: 1 }` with counters 5 and 1 returns 1. `{ a: 2, b: 0 }` with counters 4 at index 2 and 5 at index 0 returns 2, because 4 is less than 5. Swapping the field order would swap which side a tie prefers. The test's pairs are not ties.
+`PowerOfTwo` reduces `a` and `b` with `% self.backends.len()`, so an index past the end wraps into the pool. The test uses indexes that already sit inside the pool, `{ a: 0, b: 1 }` and `{ a: 2, b: 0 }` on a pool of three. The comparison is `<=`, which means the left index wins a tie. `{ a: 0, b: 1 }` with counters 5 and 1 returns 1. `{ a: 2, b: 0 }` with 4 at index 2 and 5 at index 0 returns 2, because 4 is less than 5. Swapping the field order would swap which side a tie prefers, and the test's pairs aren't ties, so that preference stays in the operator.
 
-`pick` does not call `call`. It does not format a reply. It does not read `server` except through the index it returns. It does not open a socket. The milestone is that fact: a least-outstanding pick does not open a connection. The value that comes back is `Option<usize>`.
+`pick` returns `Option<usize>`, and that index is the whole result. The function stops before `call`, before a formatted reply, and before any socket, which is the milestone: a least-outstanding pick returns an index and leaves the connection unopened.
 
-The bench's four backends are the same numbers as `least_outstanding_picks_the_quietest_backend`. Walk them once. Index 0 is server `a`, outstanding 3. Index 1 is `b`, outstanding 1. Index 2 is `c`, outstanding 4. Index 3 is `d`, outstanding 2. `min_by_key` starts at index 0 with key 3. Index 1 has key 1, which is smaller, so the minimum becomes 1. Index 2 has key 4, which is not smaller. Index 3 has key 2, which is not smaller than 1. The result is `Some(1)`. Four loads, one index. The servers' reply strings are never read.
+The bench's four backends are the same numbers as `least_outstanding_picks_the_quietest_backend`, so the walk is the test. Index 0 is server `a` at outstanding 3, and index 1 is `b` at 1. Index 2 is `c` at 4, and index 3 is `d` at 2. `min_by_key` starts at index 0 with key 3, and index 1 has key 1 and becomes the minimum. Indexes 2 and 3 have keys 4 and 2, which aren't smaller than 1. The result is `Some(1)`. Four loads produce one index, and the servers' reply strings stay unread.
 
-The power-of-two test is a pool of three: `a` at 5, `b` at 1, `c` at 4. `PowerOfTwo { a: 0, b: 1 }` compares index 0 (5) with index 1 (1). `5 <= 1` is false, so the result is the right index, 1. `PowerOfTwo { a: 2, b: 0 }` compares index 2 (4) with index 0 (5). `4 <= 5` is true, so the result is the left index, 2. Neither call wraps, because both indexes are already below the length. An index of 5 on this pool would wrap: `5 % 3` is 2, the same slot as `c`. The test does not pass 5. The wrap is what the `%` line does when a caller does.
+The power-of-two test is a pool of three, with `a` at 5, `b` at 1, and `c` at 4. `PowerOfTwo { a: 0, b: 1 }` compares index 0, which holds 5, with index 1, which holds 1. `5 <= 1` is false, so the result is the right index, 1. `PowerOfTwo { a: 2, b: 0 }` compares index 2, which holds 4, with index 0, which holds 5. `4 <= 5` is true, so the result is the left index, 2. Neither call wraps, because both indexes are already below the length. An index of 5 on this pool would wrap, since `5 % 3` is 2, the same slot as `c`. The test doesn't pass 5. The wrap is what the `%` line does when a caller hands in an index past the end.
 
 > **Rust sidebar: `min_by_key` and `%`**
 >
-> - `enumerate` yields `(0, first)`, then `(1, second)`, and so on. The key function receives `(_, backend)` and returns `backend.outstanding()`, a `usize`. The smallest key wins. The index is what `map` keeps.
-> - `%` is the remainder. `5 % 3` is 2. On a pool of length 3, index 5 names the same slot as index 2. A length of 0 never reaches this arm, because the empty check returned `None`. Dividing by zero is not this function's path.
-> - `Ordering::Relaxed` on the load means the read of the counter does not fence other memory. `pick` does not read anything else that would need a fence. The counter is the whole decision.
+> `enumerate` yields `(0, first)`, then `(1, second)`, and so on. The key function receives `(_, backend)` and returns `backend.outstanding()`, a `usize`, so the smallest key wins and `map` keeps the index. `%` is the remainder, `5 % 3` is 2, and on a pool of length 3 that names the same slot as index 2. A length of 0 never reaches this arm, because the empty check already returned `None`. `Ordering::Relaxed` on the load means the read of the counter doesn't fence other memory, and `pick` doesn't read anything else that would need a fence, because the counter is the whole decision.
 
 ## 37.3 `call` formats a string and puts the counter back
+
+The method picks a backend, bumps that counter, and formats the reply from strings already on the struct. It puts the count back before it returns.
 
 ```rust
 /// Pick, count one outstanding request, return the scripted reply, then drop the count.
@@ -230,19 +214,19 @@ pub fn call(&self, policy: Policy) -> Option<String> {
 }
 ```
 
-`?` on `Option` returns `None` when `pick` returns `None`. An empty pool makes `call` return `None` without touching a counter. On a hit, `fetch_add(1)` raises the chosen counter, the format builds `reply via server`, and `fetch_sub(1)` lowers it again. For the test pool, `call(LeastOutstanding)` returns `Some("echo via b")`. A second `pick` still returns `Some(1)`, because the counter is back at 1. The in-flight bump exists only between the add and the sub. A caller who samples `outstanding()` after `call` returns sees the idle number.
+`?` on `Option` returns `None` when `pick` returns `None`, so an empty pool makes `call` return `None` without touching a counter. On a hit, `fetch_add(1)` raises the chosen counter, the format builds `reply via server`, and `fetch_sub(1)` lowers it again. For the test pool, `call(LeastOutstanding)` returns `Some("echo via b")`, and a second `pick` still returns `Some(1)`, because the counter is back at 1. The in-flight bump exists only between the add and the sub, so a caller who samples `outstanding()` after `call` returns sees the idle number.
 
-There is no `await` between the add and the sub. The reply is a format of two strings that were already on the struct. No `TcpStream`, no `std::net`, no process. The comment on `FakeModel` says `call` does not open a socket. The same is true of `pick`, which `call` uses and which the bench calls alone.
+There is no `await` between the add and the sub, because the reply is a format of two strings that were already stored. The comment on `FakeModel` says `call` doesn't open a socket, and the same is true of `pick`, which `call` uses and which the bench calls on its own.
 
-Two threads can both `pick` index 1 before either `fetch_add` is visible to the other, because `pick` and the add are not one critical section. Each would then add. The tests call `pick` and `call` on one thread. The bench calls `pick` only, so its counters stay at 3, 1, 4, and 2 for every sample.
+Two threads can both pick index 1 before either `fetch_add` is visible to the other, because `pick` and the add aren't one critical section, and each thread would then add. The tests call `pick` and `call` on one thread. The bench calls `pick` only, so its counters stay at 3, 1, 4, and 2 for every sample.
 
 > **Rust sidebar: `?` on `Option`**
 >
-> - `pick` returns `Option<usize>`. `let index = self.pick(policy)?;` means "if this is `None`, return `None` from `call`". The rest of the function sees a `usize`.
-> - `fetch_add` and `fetch_sub` return the previous value. `call` ignores those returns. The string is the result.
-> - `format!` allocates a new `String`. That allocation is the work `call` does beyond the atomic updates. `pick` does not allocate that string. The bench stays on `pick`.
+> `pick` returns `Option<usize>`, and `let index = self.pick(policy)?;` means that a `None` returns `None` from `call` while the rest of the function sees a `usize`. `fetch_add` and `fetch_sub` return the previous value, and `call` ignores those returns because the string is the result. `format!` allocates a new `String`, and that allocation is the work `call` does beyond the atomic updates. `pick` doesn't allocate that string, which is why the bench stays on `pick`.
 
 ## 37.4 `federate` and `pool_for` group one tool
+
+The map is built by walking the upstream list once, in the order the caller passed, and each tool name collects the servers that offer it.
 
 ```rust
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -266,9 +250,9 @@ pub fn federate(upstreams: &[Upstream]) -> HashMap<String, Vec<String>> {
 }
 ```
 
-`Upstream` is public and plain. `federate` walks the slice in order. For each tool name it takes the `HashMap` entry, defaulting to an empty vec, and pushes the server name. A tool offered by `alpha` and then `beta` gets a vec `["alpha", "beta"]`. A tool offered only by `alpha`, such as `time` in the test, gets `["alpha"]`. The vec order is insertion order, which is the upstream slice order. `HashMap` iteration order is not that vec's order. The test reads `map.get("echo")`, which is one key, and compares the vec.
+`Upstream` is public and plain. `federate` walks the slice in order, takes the `HashMap` entry for each tool name, defaults that entry to an empty vec, and pushes the server name. A tool offered by `alpha` and then `beta` gets a vec `["alpha", "beta"]`, and a tool offered only by `alpha`, such as `time` in the test, gets `["alpha"]`. The vec order is insertion order, which is the upstream slice order, while `HashMap` iteration order isn't that vec's order. The test reads `map.get("echo")`, one key, and compares the vec.
 
-`entry` clones the tool name because the key is an owned `String`. `or_default` uses `Vec`'s default, an empty vec, when the key is new. `push` clones the server name so the map owns it. The input slice is only borrowed.
+`entry` clones the tool name because the key is an owned `String`. `or_default` uses `Vec`'s default, an empty vec, when the key is new, and `push` clones the server name so the map owns its copy. The input slice is only borrowed, so the caller keeps the upstreams it passed in.
 
 ```rust
 pub fn pool_for(tool: &str, upstreams: &[Upstream]) -> Pool {
@@ -282,19 +266,17 @@ pub fn pool_for(tool: &str, upstreams: &[Upstream]) -> Pool {
 }
 ```
 
-`pool_for` federates and then `remove`s one key. `remove` returns `Option<Vec<String>>`. A missing name becomes an empty vec through `unwrap_or_default`, and `Pool::new` of an empty vec is an empty pool. `is_empty` is then true, and `pick` returns `None`. The test checks `pool_for("missing", &upstreams).is_empty()`.
+`pool_for` federates the slice and then `remove`s one key. `remove` returns `Option<Vec<String>>`, a missing name becomes an empty vec through `unwrap_or_default`, and `Pool::new` of that empty vec is an empty pool. `is_empty` is then true, and `pick` returns `None`. The test checks `pool_for("missing", &upstreams).is_empty()`, which is the missing-name path.
 
-Each server becomes a `Backend` whose reply is the tool name and whose counter is 0. The server string is cloned into `new` because `Backend::new` takes `impl Into<String>` and the `map` closure would otherwise move the only copy. For `echo` on `alpha` then `beta`, the pool length is 2, both counters are 0, and least outstanding returns index 0. `call` formats `echo via alpha`. Ties at 0 keep the earlier server. That is the demo's pick.
+Each server becomes a `Backend` whose reply is the tool name and whose counter is 0. The server string is cloned into `new` because `Backend::new` takes `impl Into<String>`, and the `map` closure would otherwise move the only copy. For `echo` on `alpha` and then `beta`, the pool length is 2 and both counters are 0, so least outstanding returns index 0 and `call` formats `echo via alpha`. Ties at 0 keep the earlier server, even though neither backend has done any work yet. That earlier server is the demo's pick.
 
 > **Rust sidebar: `entry` and `remove`**
 >
-> - `entry(key)` is one lookup that can insert. `or_default()` inserts the default if the key is absent and returns a mutable reference to the vec. `push` writes the server onto that vec.
-> - `remove` takes the vec out of the map. The rest of the map is dropped at the end of the statement, including every other tool's server list. `pool_for` only needed one key.
-> - `HashMap` does not promise that `keys()` comes back in upstream order. The order that matters is inside the `Vec<String>` for that tool, and `pool_for` preserves it by walking that vec.
+> `entry(key)` is one lookup that can insert, `or_default()` inserts the default when the key is absent and returns a mutable reference to the vec, and `push` writes the server onto that vec. `remove` takes the vec out of the map, and the rest of the map drops at the end of the statement, including every other tool's server list. `pool_for` only needed the one key. `HashMap` doesn't promise that `keys()` comes back in upstream order, so the order that matters sits inside the `Vec<String>` for that tool, and `pool_for` preserves it by walking that vec.
 
 ## 37.5 `discover` counts overlap, capped at 4
 
-`Gate` is private. Tests reach it only through `discover`.
+`Gate` is private, and the tests reach it only through `discover`, so the cap is a behavior of that function rather than a knob on the call.
 
 ```rust
 struct Gate {
@@ -322,11 +304,11 @@ impl Gate {
 }
 ```
 
-`enter` locks `inflight` and waits while the count is already at `DISCOVERY_CONCURRENCY`. The wait is `cv.wait`, which unlocks, parks the thread until a notify, and relocks. The `while` checks again, because a notify means some waiter should look, not that this waiter owns a free slot. Then `enter` adds one. It keeps the inflight lock while it locks `max_seen`, and stores the max of the old high-water mark and the current count. `leave` subtracts one with `saturating_sub`, so a leave at zero would stay at zero, and `notify_one` wakes a single waiter. The others stay in `wait` until a later `leave`.
+`enter` locks `inflight` and waits while the count is already at `DISCOVERY_CONCURRENCY`. The wait is `cv.wait`, which unlocks, parks the thread until a notify, and relocks, and the `while` checks again because a notify means some waiter should look, not that this waiter owns a free slot. Then `enter` adds one and keeps the inflight lock while it locks `max_seen`. It stores the max of the old high-water mark and the current count. `leave` subtracts one with `saturating_sub`, so a leave that found zero would stay at zero. `notify_one` wakes a single waiter, and the others stay in `wait` until a later `leave`.
 
-Six workers and a cap of 4, with a hold long enough that they overlap, look like this. Workers 1 through 4 pass the `while`, each increment, and `max_seen` climbs to 4. Workers 5 and 6 block inside `wait`. When worker 1 leaves, inflight drops to 3 and one waiter enters, inflight returns to 4, and `max_seen` stays 4. The function returns that high-water mark, not the count at the end. At the end, after `thread::scope` joins, inflight is 0. The test asserts the high-water mark.
+Six workers and a cap of 4, with a hold long enough that they overlap, play out in a fixed order. Workers 1 through 4 pass the `while`, each of them increments, and `max_seen` climbs to 4, while workers 5 and 6 block inside `wait`. When worker 1 leaves, inflight drops to 3 and one waiter enters. Inflight returns to 4, and `max_seen` stays 4. The function returns that high-water mark rather than the count at the end. After `thread::scope` joins, inflight is 0, and the test asserts the high-water mark.
 
-Hermes does the same shape with a different runtime. `_discover_all` sets `semaphore = asyncio.Semaphore(cap) if cap > 0 else None`. Each connect takes the semaphore when `cap` is positive. A cap of 0 stores `None` and awaits the connect with no semaphore. `discover` has no `cap` argument and no `None` semaphore. The comparison in `enter` is always `>= 4`.
+Hermes does the same shape on a different runtime. `_discover_all` sets `semaphore = asyncio.Semaphore(cap) if cap > 0 else None`, each connect takes the semaphore when `cap` is positive, and a cap of 0 stores `None` and awaits the connect with no semaphore. `discover` has no `cap` argument and no `None` semaphore, so the comparison in `enter` is always `>= 4`.
 
 ```rust
 pub fn discover(n: usize, hold: Duration) -> usize {
@@ -351,19 +333,19 @@ pub fn discover(n: usize, hold: Duration) -> usize {
 }
 ```
 
-`thread::scope` joins every spawned thread before it returns. `n` is how many connects the test asked for. Each one enters, optionally sleeps `hold`, and leaves. The sleep is the overlap. A zero `hold` skips it. The function still refuses a fifth `enter` while four are inside. With a zero hold the threads may not overlap, so `max_seen` can come back below 4. The test passes `Duration::from_millis(40)` and `n` of 6 so they do overlap. The first four enter and sleep. The fifth and sixth block in `wait`. `max_seen` becomes 4 and stays 4. The return is 4. The test asserts that return equals `DISCOVERY_CONCURRENCY`, and asserts the constant equals 4.
+`thread::scope` joins every spawned thread before it returns, and `n` is how many connects the test asked for. Each worker enters, optionally sleeps `hold`, and leaves. The sleep is what makes those workers overlap, and a zero `hold` skips the sleep. Even though a zero hold skips that sleep, the function still refuses a fifth `enter` while four workers are inside. But the threads may not overlap, so `max_seen` can come back below 4. The test passes `Duration::from_millis(40)` and an `n` of 6 so the workers do overlap. The first four enter and sleep, and the fifth and sixth block in `wait`. `max_seen` becomes 4 and stays 4, and the return is 4. The test asserts that the return equals `DISCOVERY_CONCURRENCY`, and it asserts that the constant equals 4.
 
-Nothing in this function opens a socket. The "connect" is `enter` and `leave`. Hermes's `_discover_all` really does connect, under an `asyncio.Semaphore` of the configured cap, and a cap of 0 skips the semaphore. This gate has no argument for 0. Four is the constant. A caller who wanted unlimited concurrency will still see a max of 4 whenever the workers overlap.
+The connect in this function is the pair of `enter` and `leave`, and nothing in the function opens a socket. Hermes's `_discover_all` really does connect, under an `asyncio.Semaphore` of the configured cap, and a cap of 0 skips the semaphore. This gate has no argument for 0, four is the constant, and a caller who wanted unlimited concurrency still sees a max of 4 whenever the workers overlap.
 
-`pick` does not call `discover`. The bench does not call `discover`. The demo does not call `discover`. The cap and the pick are two public functions in one module.
+`pick` doesn't call `discover`, the bench doesn't call it, and the demo doesn't call it either. The cap and the pick are two public functions that happen to share one module.
 
 > **Rust sidebar: `thread::scope`**
 >
-> - `scope` lets the spawned closures borrow `gate` from the stack. They cannot outlive the scope. When the closure passed to `thread::scope` ends, the workers have finished.
-> - `Condvar::wait` takes the mutex guard and returns a new guard. The `while *inflight >= 4` loop rechecks after every wake. A wake is not by itself proof that a slot is free.
-> - `Duration::from_millis(40)` is the test's hold. `is_zero` is how a zero hold skips `thread::sleep`. The production pick path does not construct a `Duration`.
+> `scope` lets the spawned closures borrow `gate` from the stack, those closures can't outlive the scope, and when the closure passed to `thread::scope` ends, the workers have finished. `Condvar::wait` takes the mutex guard and returns a new guard, and the `while *inflight >= 4` loop rechecks after every wake, because a wake by itself isn't proof that a slot is free. `Duration::from_millis(40)` is the test's hold, and `is_zero` is how a zero hold skips `thread::sleep`. The production pick path doesn't construct a `Duration`.
 
 ## 37.6 `FakeModel` and the demo line
+
+The demo builds a two-server pool for `echo` and prints the pick, and the scripted model is only the fallback for an empty pool.
 
 ```rust
 /// Scripted upstream replies. `call` does not open a socket.
@@ -399,7 +381,7 @@ pub fn demo() -> String {
 }
 ```
 
-`FakeModel` in this module is not the harness `FakeModel`. It has one public `reply` and `complete` clones it. `demo` builds it as a fallback. `pool_for("echo", ...)` yields two backends, both at outstanding 0, so `call` returns `Some("echo via alpha")`. `unwrap_or_else` does not call `complete` when the option is `Some`. The format is `pick: echo via alpha`. An empty pool would fall through to `model.complete()` and print `pick: echo`. This input does not. No key is read. No socket is opened.
+`FakeModel` in this module isn't the harness `FakeModel`. It has one public `reply`, and `complete` clones that string. `demo` builds the model as a fallback. `pool_for("echo", ...)` yields two backends, both at outstanding 0, so `call` returns `Some("echo via alpha")`. `unwrap_or_else` doesn't call `complete` when the option is `Some`, and the format is `pick: echo via alpha`. An empty pool would fall through to `model.complete()` and print `pick: echo`, and this input doesn't take that path. The function reads no key, and it opens no socket.
 
 `main` prints that string and exits.
 
@@ -413,15 +395,15 @@ fn main() {
 
 ## Tests
 
-`tests/balancing.rs` is the new file. `tests/learned.rs` is the vendored chapter 23 suite. I am not going to invent a combined total.
+`tests/balancing.rs` is the new file, and `tests/learned.rs` is the vendored chapter 23 suite. The assertions below are the balancing ones, kept separate from that older file.
 
-`least_outstanding_picks_the_quietest_backend` builds counters 3, 1, 4, and 2. `pick(LeastOutstanding)` is `Some(1)`. `call` is `Some("echo via b")`. A second `pick` is still `Some(1)`.
+`least_outstanding_picks_the_quietest_backend` builds counters 3, 1, 4, and 2. `pick(LeastOutstanding)` is `Some(1)`, `call` is `Some("echo via b")`, and a second `pick` is still `Some(1)`.
 
-`power_of_two_picks_the_quieter_of_the_pair` uses counters 5, 1, and 4. `PowerOfTwo { a: 0, b: 1 }` is `Some(1)`. `PowerOfTwo { a: 2, b: 0 }` is `Some(2)`. The same pool's least-outstanding pick is `Some`. An empty `Pool` picks `None`.
+`power_of_two_picks_the_quieter_of_the_pair` uses counters 5, 1, and 4. `PowerOfTwo { a: 0, b: 1 }` is `Some(1)`, and `PowerOfTwo { a: 2, b: 0 }` is `Some(2)`. The same pool's least-outstanding pick is `Some`, and an empty `Pool` picks `None`.
 
-`federation_groups_a_tool_across_upstreams` puts `echo` and `time` on `alpha` and `echo` on `beta`. `federate` returns `["alpha", "beta"]` for `echo`. `pool_for("echo")` has length 2 and `call` returns `echo via alpha`. `pool_for("missing")` is empty.
+`federation_groups_a_tool_across_upstreams` puts `echo` and `time` on `alpha`, and `echo` on `beta`. `federate` returns `["alpha", "beta"]` for `echo`, `pool_for("echo")` has length 2 and `call` returns `echo via alpha`, and `pool_for("missing")` is empty.
 
-`discovery_stays_at_four` calls `discover(6, Duration::from_millis(40))` and expects 4, and expects the constant to be 4.
+`discovery_stays_at_four` calls `discover(6, Duration::from_millis(40))` and expects 4, and it expects the constant to be 4.
 
 `the_demo_picks_alpha` expects `balancing::federation::demo()` to equal `pick: echo via alpha`.
 
@@ -444,7 +426,7 @@ cargo run -p ch37-balancing --offline
 pick: echo via alpha
 ```
 
-The package has one binary, so the run does not need `--bin`. The line is the federation demo. No key.
+The package has one binary, so the run doesn't need `--bin`. The printed line is the federation demo, `pick: echo via alpha`, and the run prints no key.
 
 ```bash
 cargo bench -p ch37-balancing --bench balancing --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
@@ -454,21 +436,23 @@ cargo bench -p ch37-balancing --bench balancing --locked -- --warm-up-time 1 --m
 |---|---|---|---|
 | `pick_least` | 3.74 ns | a local pick among a pool | the quietest of four backends |
 
-The line is `pick: echo via alpha`. The milestone is the pick itself: least outstanding does not open a connection. The index is a `usize` into a vec of strings and atomics.
+`pick_least` times that local read, the quietest of four backends, and the mean in the table is the measurement. `discover(6, Duration::from_millis(40))` sleeps 40 ms so six workers overlap inside a gate of 4, and that sleep isn't in the pick bench.
 
-`pick_least` is `benches/balancing.rs`. It builds four backends before the bench, with outstanding counts 3, 1, 4, and 2.
+The milestone is the pick itself. Least outstanding returns an index, and the index is a `usize` into a vec of strings and atomics.
 
-The means are `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `37`. Bench ids: `37/pick_least`, `35/pick_least`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
+`pick_least` is `benches/balancing.rs`. It builds four backends before the timed loop, with outstanding counts 3, 1, 4, and 2. Every sample reads the same quiet backend.
+
+The means are `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `37`, and the bench ids are `37/pick_least` and `35/pick_least`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
-`call` drops the outstanding count before it returns. A metric that samples after `call` sees the idle number. The bump is visible only between `fetch_add` and `fetch_sub`, which for a scripted reply is the format of one string.
+`call` drops the outstanding count before it returns, so a metric that samples after `call` sees the idle number. The bump is visible only between `fetch_add` and `fetch_sub`, which for a scripted reply is the time it takes to format one string.
 
-`pick` and the add are separate. Two overlapping `call`s can choose the same index. The tests are single-threaded. The bench never adds.
+`pick` and the add are separate steps, so two overlapping calls can choose the same index. The tests run on one thread, and the bench never adds, so neither of those runs shows the race the opening left open.
 
-Power of two is only as random as the indexes the caller passes. This crate does not draw them.
+Power of two is only as random as the indexes the caller passes in, and this crate doesn't draw those indexes itself.
 
-Discovery with a zero hold can show a max below 4, because the threads may not overlap. The test holds for 40 milliseconds so they do. The cap is still 4 when they overlap. It does not raise the count above 4.
+A discovery run with a zero hold can show a max below 4, because the threads may finish before they overlap. The test holds for 40 milliseconds so the six workers do overlap, the cap stays at 4 while they do, and the gate doesn't let the count climb past 4.
 
 ## Guardrails in this chapter
 
@@ -486,7 +470,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
 ## What you implement
 
-`my-harness/tests/ch37.rs` is the milestone. The stub stays `todo!`.
+`my-harness/tests/ch37.rs` is the milestone, and the stub stays `todo!` until the reader fills it in.
 
 ```rust
 use my_harness::chapter_37_pick_opens_connection;
@@ -497,9 +481,9 @@ fn least_outstanding_pick_does_not_open_a_connection() {
 }
 ```
 
-The test wants `chapter_37_pick_opens_connection()` to be false. A least-outstanding pick returns an index. It does not open a connection.
+The test wants `chapter_37_pick_opens_connection()` to be false. A least-outstanding pick returns an index, and the connection stays closed for the whole call.
 
-The stub panics.
+The stub is the panic the reader replaces.
 
 ```rust
 pub fn chapter_37_pick_opens_connection() -> bool {
@@ -507,17 +491,17 @@ pub fn chapter_37_pick_opens_connection() -> bool {
 }
 ```
 
-`todo!("chapter 37")` is the panic. Filling the function in is the reader's work. Copying `steps/ch37-balancing` into `my-harness/` is not the milestone.
+`todo!("chapter 37")` panics when the test calls it. Filling the function in is the reader's work, and copying `steps/ch37-balancing` into `my-harness/` isn't the milestone the assertion is checking.
 
 ## Chapter summary
 
-- **Crate.** Server lineage. Library `balancing`. Chapter 23 is vendored. The new module is `federation`. `main` prints `federation::demo()`.
-- **Pick.** Least outstanding, or the quieter of two indexes. Ties on least outstanding keep the earlier backend. An empty pool is `None`. No socket.
-- **Call.** Add one, format `reply via server`, subtract one.
-- **Federation.** A map from tool name to server names. `echo` on `alpha` and `beta` picks `alpha` when both counters are 0.
-- **Discovery.** Four at a time. Unlimited `0` stays unimplemented.
-- **Demo.** `pick: echo via alpha`. The bench is `pick`, not `call`.
+- **Crate.** This is the server line, the library is `balancing`, chapter 23 is vendored into the crate, and the new module is `federation`, so `main` prints `federation::demo()`.
+- **Pick.** Least outstanding, or the quieter of two caller-supplied indexes, keeps the earlier backend on a tie, and an empty pool returns `None`.
+- **Call.** The method adds one, formats `reply via server`, and subtracts one before it returns the string.
+- **Federation.** The map runs from a tool name to server names, and `echo` on `alpha` and `beta` picks `alpha` when both counters are 0.
+- **Discovery.** Four workers in flight is the cap Hermes uses, and an unlimited `0` stays unimplemented in this gate.
+- **Demo.** The printed line is `pick: echo via alpha`, and the bench times `pick` rather than the format inside `call`.
 
 ## What's next
 
-Chapter 38 returns to the harness. It copies chapter 36 and skips this server crate. Several personas share one process. Each profile has its own secret map. In multiplex mode, a secret read with no scope installed fails closed, and the secret does not go into the prompt.
+Chapter 38 returns to the harness, where profiles put several personas in one process. This server continues at chapter 42, which is where routing meets the pool.

@@ -1,16 +1,14 @@
 # Chapter 38: Profiles
 
-Chapter 36's harness can supervise a child. It still has one persona and one pile of secrets. A process that serves more than one user, or more than one role, needs several personas in one config, and it needs a secret that stays out of the system prompt. This chapter adds that map. The crate is `steps/ch38-profiles`, a copy of chapter 36 plus `profiles`. The package is `ch38-profiles`. It is the harness line. Chapter 37, the balancer, is not copied in.
+A secret that never enters the prompt doesn't have to be scrubbed out of it later. Chapter 20 still redacts text that is stored or sent. This map is the earlier cut, and it matters to a continuously improving harness because memory and skills are written from whatever the model can see.
 
-`Profile` owns the persona text and the secret map. The store is built from config. `get_secret` fails closed when no scope is installed: the error is the unscoped-secret error, and the secret is not in the prompt. That is the multiplex rule. A profile that is selected resolves in well under the cost of a model call, and the resolved persona is what the prompt receives. The map stays beside it. `FakeModel` echoes the persona, so a test can see the secret did not ride along in the string.
+A scoped `resolve` is `96.7 ns`, and a model call is on the order of milliseconds, so the lookup isn't where a turn spends its time. The resolved persona is what the prompt receives, and the secret map stays beside that string rather than inside it.
 
-Chapter 39's chat gateway is the first caller that needs more than one persona, because a platform session is bound to a user. Chapter 20's redaction still runs on text that is stored or sent. Profiles are a different control: a secret that never enters the prompt does not need to be scrubbed out of the prompt later. Chapter 49's external call will scrub again on the way out, because the other process is a reader. The profile map is why there is a scoped value to refuse in the first place.
+The store keeps one mutable `scope` field, and two overlapping calls share that field, so this is the single-user toy. A safer shape would pass a scope token into `get_secret` instead of storing one field on the store. This file doesn't do that. Hermes uses a `ContextVar`, which this chapter doesn't have, and that is why two tasks there can hold two mappings while this struct can't.
 
-A self-improving agent makes this sharper. Memory and skills are written by the model from whatever it can see. A secret that leaks into the persona becomes a fact in `USER.md` or a line in a skill, and chapter 21's scanner is looking for instructions, not for every credential shape. Keeping the secret out of the prompt is the earlier cut. Reflection then has nothing secret to memorize.
+There is a second gap in the same struct, and the tests don't trip it. `resolve(profile, secret_name)` reads the secret from `self.scope`, not from the `profile` argument. A scope of `reader` with `resolve("writer", ...)` would put writer's persona on the prompt and reader's secret in the bool. The tests set the scope to the same name they resolve, so the persona and the bool stay on one profile.
 
-Rust, at the map: the store is a struct built once, the profile is an owned persona plus a map, and `get_secret` returns `Result` so the unscoped case is an error rather than an empty string that looks like a value. The prompt builder takes the persona by reference and never the map.
-
-`cargo run -p ch38-profiles --bin ch38-profiles --offline` prints the persona. The exercise is `my-harness/tests/ch38.rs`: an unscoped secret read is the error, and the secret is not in the prompt.
+The crate is `steps/ch38-profiles`, the package is `ch38-profiles`, and the tree is a copy of chapter 36 plus `profiles`. It doesn't copy chapter 37, because this chapter stays on the harness line and the balancer stays on the server. `Profile` owns the persona text and the secret map, the store is built from config, and `get_secret` fails closed when no scope is installed. The error is the unscoped-secret error, and the secret stays out of the prompt, which is the multiplex rule. At the map, the store is a struct built once, and `get_secret` returns `Result` so the unscoped case is an error rather than an empty string that could pass for a real value. The prompt builder takes the persona by reference and leaves the map where it is. `cargo run -p ch38-profiles --bin ch38-profiles --offline` prints `profile: writer`. The exercise is `my-harness/tests/ch38.rs`, where an unscoped secret read is the error and the secret stays out of the prompt.
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -41,17 +39,15 @@ Rust, at the map: the store is a struct built once, the profile is an owned pers
 
 ## What this chapter decides
 
-`get_secret` with multiplex on and `scope` unset returns `Err(UnscopedSecretError)` named for the env var. It does not return the process map.
+`get_secret` with multiplex on and `scope` unset returns `Err(UnscopedSecretError)` named for the env var, and it leaves the process map unread. With a scope set, the lookup is that scope's map, and another profile's value stays invisible. Under multiplex a missing name is `Ok(None)`. With multiplex off, a missing name falls through to the process map. With multiplex off and no scope at all, `get_secret` reads the process map directly.
 
-With a scope set, the lookup is that profile's map. Another profile's value is not visible. Under multiplex a missing name is `Ok(None)`. With multiplex off, a missing name falls through to the process map. With multiplex off and no scope at all, `get_secret` reads the process map.
+`prompt` and `resolve` hand out the persona `Arc`. `resolve` sets `has_secret` from whether `get_secret` returned a string, then drops that string, and the secret read follows `self.scope` rather than the profile argument, which is why the tests set those two names to the same string. `secret_leaked_into_prompt` is true only when a non-empty secret value is a substring of that persona. The demo's persona is `you write`, and the key stays in the map.
 
-`prompt` and `resolve` hand out the persona `Arc`. `resolve` sets `has_secret` from whether `get_secret` returned a string, then drops that string. `secret_leaked_into_prompt` is true only if a non-empty secret value is a substring of that persona. The demo's persona is `you write`. The key stays in the map.
-
-`demo` scopes `writer`, resolves `API_KEY`, calls `FakeModel`, and returns `profile: writer`. No key is printed.
+`demo` scopes `writer`, resolves `API_KEY`, calls the scripted model, and returns `profile: writer`. No key is printed.
 
 ## 38.1 The error types
 
-E4's failure is a type with one public field.
+E4's failure is a struct with one public field, and the value of the secret never enters it.
 
 ```rust
 /// Hermes `UnscopedSecretError`: multiplex is on and no profile scope is installed.
@@ -61,9 +57,9 @@ pub struct UnscopedSecretError {
 }
 ```
 
-Hermes's class subclasses `RuntimeError` and builds a sentence that tells the operator to run `hermes gateway restart`. This struct stores the name and derives `Debug`, `Clone`, `PartialEq`, and `Eq`. It does not implement `std::error::Error`, and it does not implement `Display`. Tests compare the struct. `multiplex_without_scope_fails_closed` expects `name` to be `"API_KEY"`. The secret value is not a field. Asking for `API_KEY` and failing cannot leak `sk-process` through the error, because the error never received the value.
+Hermes's class subclasses `RuntimeError` and builds a sentence that tells the operator to run `hermes gateway restart`. This struct stores the name and derives `Debug`, `Clone`, `PartialEq`, and `Eq`. It doesn't implement `std::error::Error`, and it doesn't implement `Display`, because the tests compare the struct itself. `multiplex_without_scope_fails_closed` expects `name` to be `"API_KEY"`. The secret value isn't a field, so asking for `API_KEY` and failing can't leak `sk-process` through the error, because the error never received the value.
 
-`ResolveError` is the error `resolve` returns.
+`ResolveError` is the error `resolve` returns when the profile is missing or the secret read is refused.
 
 ```rust
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -73,15 +69,15 @@ pub enum ResolveError {
 }
 ```
 
-`Unscoped` wraps the secret error. `UnknownProfile` means the profile name passed to `resolve` is not in the map. The two variants are different failures. An unknown profile is reported before `get_secret` runs. A known profile with multiplex on and no scope becomes `Unscoped`, because `get_secret` fails and `map_err` wraps it. There is no third variant for "secret missing". A missing name under a legal scope is `Ok` with `has_secret: false`.
+`Unscoped` wraps the secret error, and `UnknownProfile` means the profile name passed to `resolve` isn't in the map. The two variants are different failures. An unknown profile is reported before `get_secret` runs, and a known profile with multiplex on and no scope becomes `Unscoped`, because `get_secret` fails and `map_err` wraps it. There is no third variant for a missing secret. A missing name under a legal scope is `Ok` with `has_secret: false`, so absence and refusal stay different results.
 
 > **Rust sidebar: `Result` instead of a raise**
 >
-> - Hermes raises `UnscopedSecretError`. Rust returns `Result<Option<String>, UnscopedSecretError>` from `get_secret`. The caller writes `?` or `unwrap_err`.
-> - `Option` and `Result` are nested here. `Ok(None)` means "this read was allowed, and the name is not set". `Err(...)` means "this read is not allowed". Collapsing those into one `None` would hide E4.
-> - `ResolveError` is a separate enum because `resolve` can also fail by profile name. `map_err(ResolveError::Unscoped)` turns the inner error into the outer one. The `Ok` path of `get_secret` is untouched by `map_err`.
+> Hermes raises `UnscopedSecretError`, and Rust returns `Result<Option<String>, UnscopedSecretError>` from `get_secret`, so the caller writes `?` or `unwrap_err`. `Option` and `Result` are nested here, `Ok(None)` means the read was allowed and the name isn't set, and `Err(...)` means the read isn't allowed, so collapsing both into one `None` would hide E4. `ResolveError` is a separate enum because `resolve` can also fail by profile name. `map_err(ResolveError::Unscoped)` turns the inner error into the outer one, and the `Ok` path of `get_secret` is left alone by `map_err`.
 
 ## 38.2 `Profile` owns the persona and the map
+
+The profile keeps the persona and the secrets private, and a secret leaves only through the store.
 
 ```rust
 pub struct Profile {
@@ -91,7 +87,7 @@ pub struct Profile {
 }
 ```
 
-All three fields are private. There is no `secrets()` getter. A secret leaves the profile only through `Profiles::get_secret`, which looks up by the installed scope. `name` and `persona` have accessors. For the writer profile in the tests, `name()` is `writer` and `persona()` is `you write`. `persona()` borrows the `Arc<str>` as `&str`. It does not clone the characters. The tests never call the accessors. They go through `resolve`, which clones the `Arc` instead of returning a borrow, so the prompt can outlive the `&Profile` lookup.
+All three fields are private, and there is no `secrets()` getter. A secret leaves the profile only through `Profiles::get_secret`, which looks up by the installed scope. `name` and `persona` have accessors. For the writer profile in the tests, `name()` is `writer` and `persona()` is `you write`. `persona()` borrows the `Arc<str>` as `&str`, and it doesn't clone the characters. The tests never call the accessors. They go through `resolve`, which clones the `Arc` instead of returning a borrow, so the prompt can outlive the `&Profile` lookup.
 
 ```rust
 impl Profile {
@@ -120,11 +116,11 @@ impl Profile {
 }
 ```
 
-`new` accepts anything convertible into `String` for the name and the persona, and any iterator of pairs for the secrets. The tests pass a name, a persona, and an array of one pair: `[("API_KEY", "sk-writer")]`. Each pair is mapped into owned strings and collected into the `HashMap`.
+`new` accepts anything convertible into `String` for the name and the persona, and any iterator of pairs for the secrets. The tests pass a name, a persona, and an array of one pair, `[("API_KEY", "sk-writer")]`. Each pair is mapped into owned strings and collected into the `HashMap`, so the profile owns every key and every value.
 
-The persona is stored as `Arc<str>`, not as `String`. `Arc::<str>::from(persona.into())` allocates the text once and puts it behind a reference count. Later clones of the `Arc` bump the count and share the bytes. `persona()` returns `&str`, which the `Arc<str>` derefs to. The secret map stays a `HashMap<String, String>`. Cloning the `Arc` does not clone the map.
+The persona is stored as `Arc<str>`, not as `String`. `Arc::<str>::from(persona.into())` allocates the text once and puts it behind a reference count, and later clones of the `Arc` bump the count and share the bytes. `persona()` returns `&str`, which the `Arc<str>` derefs to. The secret map stays a `HashMap<String, String>`, and cloning the `Arc` doesn't clone the map, which is why handing out the persona is cheap next to a model call.
 
-`Resolved` is the success value of `resolve`.
+`Resolved` is the success value of `resolve`, and it is deliberately smaller than the profile.
 
 ```rust
 pub struct Resolved {
@@ -133,15 +129,15 @@ pub struct Resolved {
 }
 ```
 
-Both fields are public. `prompt` is the persona pointer. `has_secret` is a bool. There is no `secret: String` field. A caller who only has a `Resolved` can print the prompt and can branch on the bool. They cannot format the key, because this struct never held it.
+Both fields are public. `prompt` is the persona pointer, and `has_secret` is a bool. There is no `secret: String` field, so a caller who only has a `Resolved` can print the prompt and can branch on the bool, and they can't format the key, because this struct never held it.
 
 > **Rust sidebar: `Arc<str>`**
 >
-> - `Arc<str>` is a shared, immutable string. `clone` copies the pointer and the count, not the characters. `resolve` does that clone. The bench includes it.
-> - `HashMap<String, String>` owns each key and each value. `get` returns `Option<&String>`. `cloned()` on that option allocates a new `String` for the caller. That allocation is inside `get_secret`, and `resolve` drops it after reading `is_some()`.
-> - Private fields are the boundary. `Profile` can be constructed with `new` and inspected with `name` and `persona`. The map is not part of the public shape.
+> `Arc<str>` is a shared, immutable string, and `clone` copies the pointer and the count rather than the characters. `resolve` does that clone, which the bench includes. `HashMap<String, String>` owns each key and each value, `get` returns `Option<&String>`, and `cloned()` on that option allocates a new `String` for the caller. That allocation sits inside `get_secret`, and `resolve` drops it after reading `is_some()`. Private fields are the boundary: `Profile` can be constructed with `new` and inspected with `name` and `persona`, and the map stays off the public shape.
 
 ## 38.3 Building the store
+
+One store holds the persona table, a stand-in for the process environment, the multiplex flag, and a single scope.
 
 ```rust
 pub struct Profiles {
@@ -152,7 +148,7 @@ pub struct Profiles {
 }
 ```
 
-`profiles` is the persona table, keyed by profile name. `process_env` stands in for `os.environ`. `multiplex` is fixed at construction. `scope` starts as `None` and changes through `set_scope`. One store has one scope. Hermes keeps the scope in a `ContextVar`, so two tasks can install two mappings. This struct cannot. A second profile is a second entry in the map, visible only when `scope` is set to that name.
+`profiles` is the persona table, keyed by profile name. `process_env` stands in for `os.environ`. `multiplex` is fixed at construction, and `scope` starts as `None` and changes through `set_scope`. One store has one scope. Hermes keeps the scope in a `ContextVar`, so two tasks can install two mappings. This struct can't, because a second profile is only a second entry in the map, visible when `scope` is set to that name.
 
 ```rust
 impl Profiles {
@@ -179,13 +175,13 @@ impl Profiles {
 }
 ```
 
-`new(true)` is the multiplex store the fail-closed test and the bench use. `new(false)` is the single-profile store. Nothing in the file flips `multiplex` after `new`. `add` clones the profile's name for the key and moves the profile into the map. `insert` replaces a previous profile of the same name. The tests add `writer` and `reader` once each. `set_process` inserts one process value. There is no method that deletes a process key. `set_scope(Some("writer"))` stores `Some("writer".to_string())`. `set_scope(None)` stores `None`, which is the cleared scope. `Option<&str>` is the argument so the caller can pass a literal or `None` without building a `String` at the call. `map(str::to_string)` allocates only for the `Some` arm.
+`new(true)` is the multiplex store the fail-closed test and the bench use, and `new(false)` is the single-profile store. Nothing in the file flips `multiplex` after `new`. `add` clones the profile's name for the key and moves the profile into the map, and `insert` replaces a previous profile of the same name. The tests add `writer` and `reader` once each. `set_process` inserts one process value, and there is no method that deletes a process key. `set_scope(Some("writer"))` stores `Some("writer".to_string())`, and `set_scope(None)` stores `None`, which is the cleared scope. `Option<&str>` is the argument so the caller can pass a literal or `None` without building a `String` at the call, and `map(str::to_string)` allocates only for the `Some` arm.
 
-`add`, `set_process`, and `set_scope` take `&mut self`. `get_secret`, `prompt`, `resolve`, and `secret_leaked_into_prompt` take `&self`. The bench builds the store, then calls `resolve` inside `iter`, which only needs the shared borrow. The maps are not rebuilt per sample.
+`add`, `set_process`, and `set_scope` take `&mut self`. `get_secret`, `prompt`, `resolve`, and `secret_leaked_into_prompt` take `&self`. The bench builds the store, then calls `resolve` inside `iter`, which only needs the shared borrow, so the maps aren't rebuilt on each sample.
 
 ## 38.4 `get_secret` fails closed
 
-This is the E4 function.
+The function below is the E4 check, and the branches run in the order the source tries them.
 
 ```rust
 pub fn get_secret(&self, name: &str) -> Result<Option<String>, UnscopedSecretError> {
@@ -209,21 +205,19 @@ pub fn get_secret(&self, name: &str) -> Result<Option<String>, UnscopedSecretErr
 }
 ```
 
-The branches, in the order the source tries them:
+A scope is installed, and the lookup is `profiles.get(scope)`, then that profile's `secrets.get(name)`, then `cloned()` so the result is `Option<String>`. The scope string is the map key, not the `name` argument of `resolve`. If the scope names a profile that isn't in the map, `get` is `None`, `and_then` stays `None`, and `value` is `None`. If the profile exists and the secret name doesn't, `value` is also `None`. Those two misses look the same to this function, so a bad scope and a missing key share one arm.
 
-A scope is installed. The lookup is `profiles.get(scope)`, then that profile's `secrets.get(name)`, then `cloned()` so the result is `Option<String>`. The scope string is the map key, not the `name` argument of `resolve`. If the scope names a profile that is not in the map, `get` is `None`, `and_then` is `None`, and `value` is `None`. If the profile exists and the secret name does not, `value` is also `None`. Those two misses look the same to this function.
+If `value` is `Some`, or multiplex is on, the function returns `Ok(value)` immediately. A hit returns the string, and a multiplex miss returns `Ok(None)` without reading `process_env`. That is the rule the Hermes notes state: under multiplexing, a miss doesn't fall through to another profile's environment. `scope_reads_only_that_profile` sets the process map to `sk-process`, scopes `writer`, and reads `API_KEY` as `sk-writer`. It then scopes `reader` and reads `sk-reader`, then asks for `MISSING` and gets `None`, not `sk-process`. Writer's key isn't reader's key.
 
-If `value` is `Some`, or multiplex is on, the function returns `Ok(value)` immediately. A hit returns the string. A multiplex miss returns `Ok(None)` and does not read `process_env`. That is the Hermes rule the docstring states: under multiplexing a miss does not fall through to another profile's environment. `scope_reads_only_that_profile` sets the process map to `sk-process`, scopes `writer`, and reads `API_KEY` as `sk-writer`. It then scopes `reader` and reads `sk-reader`. It then asks for `MISSING` and gets `None`, not `sk-process`. Writer's key is not reader's key.
+If a scope is installed, the value is absent, and multiplex is off, the function falls through to `process_env`. `single_profile_scope_falls_through_on_a_miss` scopes `writer`, whose map has `API_KEY` and not `OTHER`, and `get_secret("OTHER")` returns `from-process`. The scope was consulted, and the miss was allowed to continue because this store was built with `Profiles::new(false)`.
 
-If a scope is installed, the value is absent, and multiplex is off, the function falls through to `process_env`. `single_profile_scope_falls_through_on_a_miss` scopes `writer`, whose map has `API_KEY` and not `OTHER`, and `get_secret("OTHER")` returns `from-process`. The scope was consulted. The miss was allowed to continue because this store was built with `Profiles::new(false)`.
+No scope is installed. If multiplex is on, the function returns `Err` with `name` set to the requested env var, and it consults neither `profiles` nor `process_env`. `multiplex_without_scope_fails_closed` adds a writer profile that holds `sk-writer`, sets the process map to `sk-process`, and calls `get_secret("API_KEY")` with the scope still unset. The result is the error named `API_KEY`, and neither stored value comes back. This is the branch Hermes raises on. Hermes would still serve a global name such as `PATH` from `os.environ` before that raise, because `_is_global_env` runs first, and this function has no such list, so every name fails closed here. `API_KEY` isn't one of those global names, so for the test's key both sides agree: no scope, multiplex on, and an error.
 
-No scope is installed. If multiplex is on, the function returns `Err` with `name` set to the requested env var. It does not look at `profiles` and it does not look at `process_env`. `multiplex_without_scope_fails_closed` adds a writer profile that holds `sk-writer`, sets the process map to `sk-process`, and calls `get_secret("API_KEY")` with the scope still unset. The result is the error named `API_KEY`. Neither stored value comes back. This is the branch Hermes raises on. Hermes would still have served a global name such as `PATH` from `os.environ` before that raise, because `_is_global_env` runs first. This function has no such list. Every name, including names Hermes treats as process settings, fails closed on this branch. `API_KEY` is not a global name in the set I read, so for the test's key the two implementations agree: no scope, multiplex on, error.
+No scope, and multiplex off. The last line reads `process_env` and wraps the option in `Ok`. A missing process key is `Ok(None)`. `inactive_multiplex_reads_the_process_map` checks this line first, before any profile is added, and gets `sk-process`.
 
-No scope, multiplex off. The last line reads `process_env` and wraps it in `Ok`. A missing process key is `Ok(None)`. `inactive_multiplex_reads_the_process_map` checks this line first, before any profile is added, and gets `sk-process`.
+`get_secret` clones the value out, the map keeps its own `String`, and the clone belongs to the caller. `resolve` is the caller that drops it after the bool is set.
 
-`get_secret` clones the value out. The map keeps its own `String`. The clone is the caller's. `resolve` is the caller that drops it.
-
-The same five inputs, written as a table, are the tests. `P` is the process map. `W` is writer's map. Scope is the installed name.
+The same five inputs, written as a table, are the tests. `P` is the process map, `W` is writer's map, and the scope column is the installed name.
 
 | Store | Scope | Name | Result |
 |---|---|---|---|
@@ -234,23 +228,17 @@ The same five inputs, written as a table, are the tests. `P` is the process map.
 | multiplex off, `P` holds `sk-process`, no profile yet | unset | `API_KEY` | `Ok(Some("sk-process"))` |
 | multiplex off, writer scoped, `P` holds `OTHER=from-process` | `writer` | `OTHER` | `Ok(Some("from-process"))` |
 
-The fourth row is the one that protects the other profile. `MISSING` is not in writer's map, multiplex is on, and the function returns `Ok(None)` while `sk-process` sits unused in `process_env`. The last row is the same miss with multiplex off, and the process value comes back. The flag on `Profiles::new` is the whole difference between those two rows.
+The fourth row is the one that protects the other profile. `MISSING` isn't in writer's map, multiplex is on, and the function returns `Ok(None)` while `sk-process` sits unused in `process_env`. The last row is that same miss with multiplex off, and the process value comes back, so the flag passed to `Profiles::new` is the whole difference between those two rows.
 
-Hermes's `get_secret` is the function this table adapts. I read it at lines 219–247 of `agent/secret_scope.py`. The body is short enough to follow branch for branch. First, if `_is_global_env(name)` then return `os.environ` or the default. This Rust function has no matching first branch. Second, if a scope is bound, read `bound.mapping.get(name)`. A hit returns the value. A miss returns `default` when `serves_routed_profile()` is true, and otherwise `_environ_or`. `serves_routed_profile` returns true immediately when `is_multiplex_active()` is true, so a multiplex miss returns `default` and does not call `_environ_or`. That is the `Ok(None)` row, with Hermes's `default` of `None` when the caller omitted one. Third, if no scope is bound and `is_multiplex_active()`, raise `UnscopedSecretError` with the name and a developer sentence. The sentence says the read must run inside `set_secret_scope`, and that reading `os.environ` here would risk leaking another profile's value. Fourth, no scope and multiplex inactive: `_environ_or`. The Rust `Err` is the third branch. The Rust process-map reads are the second branch's fall-through and the fourth branch.
-
-The developer sentence is not stored on `UnscopedSecretError` here. Hermes puts the user sentence in the exception message and the developer sentence on `__notes__` via `add_note`. The constructor also has a compatibility quirk I read at lines 125–130: if the first argument contains whitespace and no developer detail was passed, it treats that argument as the detail and clears the secret name. A secret name, the comment says, never contains whitespace. The Rust struct has one field, `name`, and the tests pass `API_KEY`, which has no whitespace. There is no second string to mis-classify.
-
-`_GLOBAL_ENV_EXACT` is the list the first Hermes branch consults. I read the names. Runtime settings include `HERMES_HOME`, `HERMES_PROFILE`, `HERMES_MAX_ITERATIONS`, `HERMES_REDACT_SECRETS`, and `_HERMES_GATEWAY`. OS settings include `PATH`, `HOME`, `USER`, `LANG`, `SHELL`, `TMPDIR`. The API-server block includes `API_SERVER_ENABLED`, `API_SERVER_HOST`, `API_SERVER_PORT`, and `API_SERVER_CORS_ORIGINS`, and the comment says `API_SERVER_KEY` is a credential and is not in the set. Prefixes cover `HERMES_KANBAN_`, `HERMES_TELEGRAM_`, and `TERMINAL_`. `API_KEY` matches neither the exact set nor a prefix. On the Hermes function, an unscoped multiplex read of `API_KEY` raises. On this function, the same read returns `Err`. An unscoped multiplex read of `PATH` would still return `os.environ` in Hermes and would return `Err` here. That gap is the missing allowlist, not a disagreement about `API_KEY`.
-
-`set_secret_scope(None)` clears the `ContextVar`. `set_scope(None)` clears the field. Both put the next read on the no-scope path. The difference is who else can see the installation. A `ContextVar` is visible to the task that set it and to a context copied onto a worker. The field is visible to every caller of this `Profiles` value until the next `set_scope`. `inactive_multiplex_reads_the_process_map` relies on that: it sets the scope, reads writer's key, clears the scope, and reads the process key, all on one store, in order. Two overlapping calls would share that same field. The file does not add a lock around it. The tests run on one thread.
+Hermes and this function share the scoped miss and the unscoped failure, and they split where an allowlist would have saved a name. There is no global-env allowlist here, so an unscoped multiplex read of `PATH` returns `Err` and would still read `os.environ` in Hermes. `API_KEY` isn't in that allowlist, so both sides fail closed for the test's key, and the gap is the missing list rather than a fight over that name. Hermes can treat a first argument that contains whitespace as developer detail and clear the secret name. The Rust struct has one field, `name`, and the tests pass `API_KEY`, so nothing here has whitespace to mis-classify. Hermes parks a developer sentence on `__notes__`, and this error keeps only the name. Two overlapping calls share the one field, the file adds no lock around it, and the tests run on one thread.
 
 > **Rust sidebar: `if let Some(scope)`**
 >
-> - `self.scope` is `Option<String>`. `if let Some(scope) = &self.scope` borrows the inner string when it is present. The `else` of this pattern is the rest of the function, the no-scope path. There is no `else` keyword. Code after the `if let` block runs only when the scope was `None`, because both arms inside the block `return`.
-> - `and_then` chains optional lookups. `profiles.get(scope)` yields `Option<&Profile>`. The closure's `secrets.get(name)` yields `Option<&String>`. `and_then` flattens that into one option. `cloned()` turns `&String` into `String`.
-> - `value.is_some() || self.multiplex` returns the option as `Ok` when either side is true. A multiplex miss is `Ok(None)`, which is still `Ok`. The `Err` path is not this line.
+> `self.scope` is `Option<String>`, and `if let Some(scope) = &self.scope` borrows the inner string when it is present. The rest of the function is the no-scope path, there is no `else` keyword, and code after the `if let` block runs only when the scope was `None`, because both arms inside the block return. `and_then` chains the optional lookups, `profiles.get(scope)` yields `Option<&Profile>`, the closure's `secrets.get(name)` yields `Option<&String>`, and `and_then` flattens that into one option before `cloned()` turns `&String` into `String`. `value.is_some() || self.multiplex` returns the option as `Ok` when either side is true. A multiplex miss is `Ok(None)`, which is still `Ok`, and the `Err` path is a later branch.
 
 ## 38.5 The prompt is the persona
+
+The prompt is a clone of the persona, and the secret string is allowed to exist only long enough to set a bool.
 
 ```rust
 pub fn prompt(&self, profile: &str) -> Option<Arc<str>> {
@@ -273,11 +261,11 @@ pub fn resolve(&self, profile: &str, secret_name: &str) -> Result<Resolved, Reso
 }
 ```
 
-`prompt` looks up the profile by the argument and clones the persona `Arc`. An unknown name is `None`. It does not read secrets. `resolve` uses the same lookup and fails with `UnknownProfile` when the name is absent. That check happens before `get_secret`. An unknown profile on a multiplex store with no scope is `UnknownProfile`, not `Unscoped`. The fail-closed test calls `resolve("writer", "API_KEY")` after `add` of writer, so the profile exists, `get_secret` runs, and the error is `Unscoped`.
+`prompt` looks up the profile by the argument and clones the persona `Arc`, and an unknown name is `None`. It doesn't read secrets. `resolve` uses the same lookup and fails with `UnknownProfile` when the name is absent, and that check happens before `get_secret`. An unknown profile on a multiplex store with no scope is `UnknownProfile`, not `Unscoped`. The fail-closed test calls `resolve("writer", "API_KEY")` after adding writer, so the profile exists, `get_secret` runs, and the error is `Unscoped`.
 
-`get_secret` uses `self.scope`, not the `profile` argument. `resolve("writer", "API_KEY")` attaches writer's persona as the prompt, and the secret bool comes from whatever scope is installed. The tests set the scope to the same name they resolve. A scope of `reader` combined with `resolve("writer", ...)` would put writer's persona on the prompt and reader's secret in the bool. The source allows it. The tests do not combine them that way.
+`get_secret` uses `self.scope`, not the `profile` argument. `resolve("writer", "API_KEY")` attaches writer's persona as the prompt, and the secret bool comes from whatever scope is installed. The tests set the scope to the same name they resolve. A scope of `reader` combined with `resolve("writer", ...)` would put writer's persona on the prompt and reader's secret in the bool. The source allows that pairing, and the tests don't combine the names that way.
 
-On the `Ok` path, `secret` is `Option<String>`. `has_secret` stores `secret.is_some()`. The `String`, when there was one, drops at the end of `resolve`. It is not assigned to `Resolved`. `prompt` is `Arc::clone` of the persona. For the demo profile that persona is `you write`. `sk-writer` is not a substring of `you write`.
+On the `Ok` path, `secret` is `Option<String>`, and `has_secret` stores `secret.is_some()`. The `String`, when there was one, drops at the end of `resolve`, and it isn't assigned to `Resolved`. `prompt` is `Arc::clone` of the persona. For the demo profile that persona is `you write`, and `sk-writer` isn't a substring of `you write`.
 
 ```rust
 pub fn secret_leaked_into_prompt(&self, profile: &str) -> bool {
@@ -291,17 +279,17 @@ pub fn secret_leaked_into_prompt(&self, profile: &str) -> bool {
 }
 ```
 
-An unknown profile returns false. For a known profile, every secret value is tested. An empty string does not count, because `!secret.is_empty()` fails and `contains("")` would have been true for every persona. A non-empty value that appears anywhere in the persona makes the function true. The check is a substring, not the chapter 20 redactor. A persona of `you write` and a secret of `sk-writer` returns false. A persona that had been written as `you write with sk-writer` would return true. The function does not remove the substring. It reports it. `prompt_does_not_carry_the_secret` asserts the bool is false, and also asserts `resolved.prompt` does not contain `sk-writer` and does not contain `sk-`.
+An unknown profile returns false. For a known profile, every secret value is tested, and an empty string doesn't count, because `!secret.is_empty()` fails and `contains("")` would have been true for every persona. A non-empty value that appears anywhere in the persona makes the function true. The check is a substring, not the chapter 20 redactor. A persona of `you write` and a secret of `sk-writer` returns false, and a persona written as `you write with sk-writer` would return true. The function reports the substring, and it doesn't remove it. `prompt_does_not_carry_the_secret` asserts the bool is false, and it also asserts that `resolved.prompt` contains neither `sk-writer` nor `sk-`.
 
-`resolve` of a scoped writer with `API_KEY` returns `has_secret: true` and a prompt of `you write`. The bool says the key was present. The prompt does not contain it. That split is the point of `Resolved`.
+`resolve` of a scoped writer with `API_KEY` returns `has_secret: true` and a prompt of `you write`. The bool says the key was present, and the prompt doesn't contain it, which is the point of `Resolved`.
 
 > **Rust sidebar: `let Some` and `?`**
 >
-> - `let Some(found) = ... else { return Err(...) }` is the same idea as `if let`, written so the `Some` binding lives for the rest of the function. `found` is `&Profile`. The `Arc` clone at the bottom borrows `found.persona` before `found` goes out of scope.
-> - `?` after `map_err` returns the `ResolveError` on failure. On success, `secret` is `Option<String>`. The question mark unwraps the `Result`, not the `Option`.
-> - `contains` on `Arc<str>` uses the `str` inside. It does not clone the persona. The substring search is over the shared bytes.
+> `let Some(found) = ... else { return Err(...) }` is the same idea as `if let`, written so the `Some` binding lives for the rest of the function, and `found` is `&Profile`. The `Arc` clone at the bottom borrows `found.persona` before `found` goes out of scope. `?` after `map_err` returns the `ResolveError` on failure, and on success `secret` is `Option<String>`, because the question mark unwraps the `Result` and leaves the `Option` in place. `contains` on `Arc<str>` uses the `str` inside and doesn't clone the persona, and the substring search runs over the shared bytes.
 
 ## 38.6 `FakeModel` and `demo`
+
+The binary's line is a profile name, and the model call is there so a test can watch the prompt.
 
 ```rust
 pub struct FakeModel {
@@ -331,39 +319,35 @@ pub fn demo() -> String {
 }
 ```
 
-`FakeModel` holds a `'static` reply. `complete` takes the prompt, binds it to `_`, and returns `reply.to_string()`. The model does not echo the prompt. It does not read `API_KEY`. The test calls `complete` and expects `"ok"`, and it checks the prompt again after the call. The prompt is unchanged because `complete` does not write it. `resolved.prompt` is an `Arc<str>`, and the argument is `&str`.
+`FakeModel` echoes a scripted reply and ignores the prompt, so a test can see the secret didn't ride along.
 
-`demo` builds a multiplex store, adds writer, and installs the writer scope before `resolve`. That order is the difference between this function and the fail-closed test. The test never calls `set_scope`. `demo` does. `resolve` succeeds. `has_secret` would be true. `demo` does not read the bool and does not read the prompt into the return value. It discards `complete`'s string with `let _`. The return is the literal `"profile: writer"`. The characters `sk-writer` do not appear in that literal. They remain in the profile map, which drops when `demo` returns.
+`demo` builds a multiplex store and adds writer with persona `you write` and key `sk-writer`. It installs the writer scope before `resolve`, which is why `expect` returns. The return is the literal `"profile: writer"`. `demo` drops the model's string with `let _`, and it never copies `has_secret` into that literal, so the characters `sk-writer` stay in the profile map until `demo` returns and the map drops. `expect("writer is in scope")` would panic if `resolve` returned `Err`, and with this input it doesn't. The chapter 36 supervision code is still in the crate, and `demo` doesn't call `is_stale` or `restart_child`.
 
-`expect("writer is in scope")` panics if `resolve` returned `Err`. With this input it does not. No key is printed. The chapter 36 supervision code is still in the crate. `demo` does not call `is_stale` or `restart_child`.
+Put the demo and the fail-closed test next to each other. Both start with `Profiles::new(true)` and both add a writer whose persona is `you write` and whose map holds `API_KEY` set to `sk-writer`. The test also calls `set_process("API_KEY", "sk-process")` and then calls `get_secret` and `resolve` immediately. While the demo never calls `set_process` and calls `set_scope(Some("writer"))` before `resolve`. The process map doesn't decide the demo, because the scope hits, and that `set_scope` is why the demo's `expect` returns. Remove that line and `resolve` takes the same path as the test, since profile `writer` exists, so the error is `Unscoped` rather than `UnknownProfile`, and `expect` panics. The printed line wouldn't happen. The test asserts that path without a panic, and the demo exists so the binary has a line to print once the scope is installed.
 
-Put the demo and the fail-closed test next to each other. Both start with `Profiles::new(true)` and both `add` a writer whose persona is `you write` and whose map holds `API_KEY` = `sk-writer`. The test also calls `set_process("API_KEY", "sk-process")` and then calls `get_secret` and `resolve` immediately. The demo never calls `set_process`. It calls `set_scope(Some("writer"))` and then `resolve`. The process map is irrelevant to the demo because the scope hits. The scope is the whole reason the demo's `expect` returns. Remove that `set_scope` line and `resolve` takes the same path as the test: profile `writer` exists, so the error is `Unscoped`, not `UnknownProfile`, and `expect` panics. The printed line would not happen. The test exists so that path is asserted without a panic. The demo exists so the binary has a line to print when the scope is installed.
+`name()` and `persona()` borrow the profile when the caller doesn't want a `Resolved`, and neither accessor takes a secret name, so a secret value leaves only through `get_secret`.
 
-`name()` and `persona()` are the borrows a caller uses when they do not want a `Resolved`. `persona()` on writer is `you write`, the same characters `resolve` will wrap in an `Arc` clone. Neither accessor accepts a secret name. There is no way, through them, to format `sk-writer` into a prompt. The only public function that reads a secret value and returns it to the caller is `get_secret`. `resolve` reads it and keeps the bool. `secret_leaked_into_prompt` reads every value and keeps a bool. `demo` calls `resolve` and then throws away even the bool, by not naming `resolved.has_secret`. The model call receives `&resolved.prompt`, which is `you write`. `FakeModel::complete` binds that reference to `_` and returns `ok`. The test after the model call checks the prompt again, because a model that wrote into the prompt would be a different `complete`. This `complete` cannot write into an `&str`.
-
-Chapter 36's `is_stale` is still public as `harness_core::supervision::is_stale`, with the same 15 and 40. This chapter does not change those constants and does not pass a profile name into a pulse. A child running as `writer` does not, in this crate, automatically install `writer` as the secret scope. The two modules are neighbors. The binary for this chapter calls `profiles::demo` only.
+Chapter 36's `is_stale` is still public as `harness_core::supervision::is_stale`, with the same thresholds of 15 and 40. This chapter doesn't change those constants, and it doesn't pass a profile name into a pulse. A child running as `writer` doesn't install `writer` as the secret scope anywhere in this crate. The two modules are neighbors, and the binary for this chapter calls `profiles::demo` only.
 
 > **Rust sidebar: `let _` drops the reply**
 >
-> - `complete` returns a `String`. `let _ = ...` drops it immediately. The demo's return value is a different string, built by `"profile: writer".to_string()`.
-> - `reply: &'static str` means the script lives for the whole program. `"ok"` is a literal. `to_string` allocates the returned `String` from it.
-> - `expect` is the demo's assertion that the scope was installed. A library caller uses `?` or a `match`. The demo is allowed to panic because a missing scope here would be a bug in these four statements, and the fail-closed path is the test, not this function.
+> `complete` returns a `String`, and `let _ = ...` drops it immediately, while the demo's return value is a different string built by `"profile: writer".to_string()`. `reply: &'static str` means the script lives for the whole program, `"ok"` is a literal, and `to_string` allocates the returned `String` from it. `expect` is the demo's check that the scope was installed, and a library caller uses `?` or a `match`. The demo may panic because a missing scope here would be a bug in these few statements, while the fail-closed path stays in the test.
 
 ## Tests
 
-`tests/profiles.rs` is the new file. The package also carries the earlier harness suites, because the crate is a copy of chapter 36. The assertions for this chapter are the functions in that file. I am not going to invent a package-wide total.
+`tests/profiles.rs` is the new file. The package also carries the earlier harness suites, because the crate is a copy of chapter 36, and the assertions for this chapter are the functions named below.
 
-`multiplex_without_scope_fails_closed` builds `Profiles::new(true)`, adds writer with persona `you write` and `API_KEY` of `sk-writer`, and sets the process value to `sk-process`. It does not call `set_scope`. `get_secret("API_KEY")` is `Err(UnscopedSecretError { name: "API_KEY" })`. `resolve("writer", "API_KEY")` matches `Err(ResolveError::Unscoped(_))`. The secret strings are in the maps. They are not in the error.
+`multiplex_without_scope_fails_closed` is the unset-scope path set beside the demo above, and it expects an `Err` named `API_KEY` from both `get_secret` and `resolve`.
 
-`scope_reads_only_that_profile` adds writer (`sk-writer`, persona `you write`) and reader (`sk-reader`, persona `you read`) on a multiplex store, with the process map set to `sk-process`. Scope `writer` reads `sk-writer`. Scope `reader` reads `sk-reader`. `MISSING` reads `None`.
+`scope_reads_only_that_profile` adds writer, with `sk-writer` and persona `you write`, and reader, with `sk-reader` and persona `you read`. The store is multiplex, and its process map is `sk-process`. Scope `writer` reads `sk-writer`, scope `reader` reads `sk-reader`, and `MISSING` reads `None`.
 
-`prompt_does_not_carry_the_secret` scopes writer and resolves `API_KEY`. `has_secret` is true. The prompt does not contain `sk-writer`. `secret_leaked_into_prompt("writer")` is false. `FakeModel { reply: "ok" }` returns `ok`. The prompt also does not contain `sk-`.
+`prompt_does_not_carry_the_secret` scopes writer and resolves `API_KEY`. `has_secret` is true, the prompt contains neither `sk-writer` nor `sk-`, `secret_leaked_into_prompt("writer")` is false, and the scripted reply the test asks for is `ok`.
 
-`inactive_multiplex_reads_the_process_map` uses `Profiles::new(false)`. Before any profile is added, `get_secret("API_KEY")` is `sk-process`. After writer is added and the scope is set, the same name is `sk-writer`. After `set_scope(None)`, it is `sk-process` again. Clearing the scope returns to the last branch of `get_secret`.
+`inactive_multiplex_reads_the_process_map` uses `Profiles::new(false)`. Before any profile is added, `get_secret("API_KEY")` returns `sk-process`. After writer is added and the scope is set, the same name is `sk-writer`, and after `set_scope(None)` it is `sk-process` again, because clearing the scope returns to the last branch of `get_secret`.
 
-`single_profile_scope_falls_through_on_a_miss` uses multiplex off, writer scoped, process key `OTHER` set to `from-process`. `get_secret("OTHER")` is `from-process`. The profile map does not contain `OTHER`. The fall-through is the non-multiplex miss under a scope.
+`single_profile_scope_falls_through_on_a_miss` uses multiplex off, with writer scoped and the process key `OTHER` set to `from-process`. `get_secret("OTHER")` returns `from-process`, the profile map doesn't contain `OTHER`, and the fall-through is the non-multiplex miss under a scope.
 
-`demo_names_the_profile` expects `demo()` to equal `profile: writer`.
+`demo_names_the_profile` expects `demo()` to equal `profile: writer`, which is the line the binary prints once the writer scope is installed.
 
 ## Build, run, and benchmark
 
@@ -384,7 +368,7 @@ cargo run -p ch38-profiles --bin ch38-profiles --offline
 profile: writer
 ```
 
-The package has more than one binary, so the run names `ch38-profiles`. That binary is `src/bin/chapter_demo.rs`. It prints the profile name. No key.
+The package has more than one binary, so the run names `ch38-profiles`. That binary is `src/bin/chapter_demo.rs`, it prints the profile name, and it prints no key.
 
 ```bash
 cargo bench -p ch38-profiles --bench profiles --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
@@ -394,19 +378,19 @@ cargo bench -p ch38-profiles --bench profiles --locked -- --warm-up-time 1 --mea
 |---|---|---|---|
 | `resolve_profile` | 96.7 ns | one scoped resolve | the persona `Arc` plus one secret lookup |
 
-`resolve_profile` is `benches/profiles.rs`. It builds the multiplex store, the `writer` profile, and the scope before the bench.
+`resolve_profile` is `benches/profiles.rs`. It builds the multiplex store, the `writer` profile, and the scope before the timed loop, and the mean above is that scoped resolve.
 
-The means are `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `38`. Bench ids: `38/resolve_profile`, `36/resolve_profile`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
+The means are `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `38`, and the bench ids are `38/resolve_profile` and `36/resolve_profile`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
-The bench is the scoped hit. A measurement that builds the `HashMap` inside the sample, or that takes the `UnscopedSecretError` path, times a different question. The fail-closed path is the test `multiplex_without_scope_fails_closed`.
+The bench is the scoped hit. A measurement that builds the `HashMap` inside the sample, or that takes the `UnscopedSecretError` path, times a different question. The fail-closed path is the test `multiplex_without_scope_fails_closed`, which is why the bench installs a scope before it starts.
 
-`has_secret` is a bool. Printing the `String` from `get_secret` would put the key in the log. `demo` does not print it. `Resolved` has nowhere to put it.
+`has_secret` is a bool. Printing the `String` from `get_secret` would put the key in the log, `demo` doesn't print it, and `Resolved` has nowhere to store it.
 
-A multiplex miss returns `Ok(None)` on purpose. Falling through to the process map on that path is the leak the Hermes docstring refuses. The fall-through line in this file runs only when a scope is set, the value is absent, and `multiplex` is false.
+A multiplex miss returns `Ok(None)` on purpose. Falling through to the process map on that path would be the leak the Hermes notes refuse, and the fall-through line in this file runs only when a scope is set, the value is absent, and `multiplex` is false.
 
-Hermes serves `_is_global_env` names from `os.environ` even when multiplex is on and no scope is installed. This `get_secret` has no allowlist. A later port of `PATH` or `HERMES_HOME` through this function, under multiplex with no scope, will get `UnscopedSecretError`. `API_KEY` is outside that allowlist in the file I read, so the milestone's key is the fail-closed case on both sides.
+Hermes serves `_is_global_env` names from `os.environ` even when multiplex is on and no scope is installed. This `get_secret` has no allowlist, so a later port of `PATH` or `HERMES_HOME` through this function, under multiplex with no scope, gets `UnscopedSecretError`. `API_KEY` sits outside that allowlist, so the milestone's key is the fail-closed case on both sides.
 
 ## Guardrails in this chapter
 
@@ -422,7 +406,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
 ## What you implement
 
-`my-harness/tests/ch38.rs` is the milestone. The stub stays `todo!`.
+`my-harness/tests/ch38.rs` is the milestone, and the stub stays `todo!` until the reader fills the function in.
 
 ```rust
 use my_harness::chapter_38_unscoped_secret_in_prompt;
@@ -433,9 +417,9 @@ fn an_unscoped_secret_is_the_error_and_stays_out_of_the_prompt() {
 }
 ```
 
-The test wants `chapter_38_unscoped_secret_in_prompt()` to be false. An unscoped secret read is the error, and the secret is not in the prompt. A function that returns the secret inside the prompt text, or that returns the process-map value instead of the error, is the case the assertion rejects.
+The test wants `chapter_38_unscoped_secret_in_prompt()` to be false. An unscoped secret read is the error, and the secret stays out of the prompt. A function that returns the secret inside the prompt text, or that returns the process-map value instead of the error, is the case the assertion rejects.
 
-The stub panics.
+The stub is the panic the reader replaces.
 
 ```rust
 pub fn chapter_38_unscoped_secret_in_prompt() -> bool {
@@ -443,16 +427,16 @@ pub fn chapter_38_unscoped_secret_in_prompt() -> bool {
 }
 ```
 
-`todo!("chapter 38")` is the panic. Filling the function in is the reader's work. Copying `steps/ch38-profiles` into `my-harness/` is not the milestone.
+`todo!("chapter 38")` panics when the test calls it. Filling the function in is the reader's work, and copying `steps/ch38-profiles` into `my-harness/` isn't the milestone the assertion is checking.
 
 ## Chapter summary
 
-- **Personas.** Several profiles, one process. The prompt is the persona `Arc`.
-- **Fail closed.** Multiplex and no scope is `UnscopedSecretError`. `resolve` surfaces it as `ResolveError::Unscoped`.
-- **Scope.** The installed profile's map. A multiplex miss is `Ok(None)`. A single-profile miss can fall through to the process map.
-- **Prompt.** The secret `String` is not stored on `Resolved`. `demo` prints `profile: writer`.
-- **Bench.** `resolve_profile` mean `96.7 ns`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573).
+- **Personas.** Several profiles share one process, and the prompt the caller receives is the persona `Arc`.
+- **Fail closed.** Multiplex with no scope is `UnscopedSecretError`, and `resolve` surfaces that failure as `ResolveError::Unscoped`.
+- **Scope.** The installed profile's map is what `get_secret` reads, a multiplex miss is `Ok(None)`, and a single-profile miss can fall through to the process map.
+- **Prompt.** The secret `String` isn't stored on `Resolved`, and `demo` prints `profile: writer`.
+- **Bench.** The `resolve_profile` mean is `96.7 ns`, taken as `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573).
 
 ## What's next
 
-Chapter 39 is the chat gateway, back on this harness. It knows which persona is speaking only after this chapter. It decides which person is allowed to speak. A stranger is denied. A pairing code is eight characters and expires. A platform message is a push onto the session inbox.
+Chapter 39 is the chat gateway, back on this harness, and it is the first caller that needs more than one persona. A platform session is bound to a user, which is why this map has to exist before that gateway asks who is speaking.

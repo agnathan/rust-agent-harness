@@ -1,4 +1,4 @@
-//! Book chapter 23. A prediction is installed before the request.
+//! Book chapter 42. The learned gateway is vendored here: a prediction is installed before the request.
 //! `session_tools` only reads that set. Composite and macro tools expand
 //! to names. Code mode runs a line script against an allowlist.
 
