@@ -5,8 +5,6 @@ Copy this shape. The Hermes box is filled only after the files have been read. S
 ```markdown
 # Chapter N: Title
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Two or three paragraphs: what the previous chapter cannot do, what this one adds, what it leaves for later.
 
 | Section | Step | What it adds |
@@ -18,8 +16,6 @@ Two or three paragraphs: what the previous chapter cannot do, what this one adds
 > Cite `path/in/hermes-agent`. **Adopted:** … **Adapted:** … **Deferred:** … (and the chapter that will take it).
 
 > **Guardrails.** Layer from [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md): which catalog ids this chapter guards, and which it leaves for a later chapter.
-
-[personal note: …]
 
 ## What this chapter decides
 
@@ -44,4 +40,4 @@ A real command, the real nextest summary, the real demo output, the Criterion sl
 ## What's next
 ```
 
-Social drafts live in `book/social/chapter-NN.md` and end the personal beat with `[personal note]`.
+Social drafts live in `book/social/chapter-NN.md`.

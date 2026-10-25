@@ -1,10 +1,8 @@
 # Chapter 47: The Message Bus
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 46's processes can claim a card. They cannot publish a sentence to whoever is listening. A peer that wants to say "the build failed" without knowing the subscriber's inbox needs a bus: a topic, a bounded channel per subscriber, and a rule for what happens when one subscriber is slow. This chapter adds that bus. The crate is `steps/ch47-message-bus`, a copy of chapter 46 plus `bus`. The package is `ch47-message-bus`.
 
-`Envelope` is the message. `Sub` is a subscriber. `Bus` holds them. `subscribe` registers a name on a topic. The channel bound is `BUS_CAP`, 64, the same number as the agent inbox, so "slow" means the same thing in both places. `publish` fans the envelope out. `deliver` calls chapter 20's `redact_for_egress` before `try_send`. The narrow scrubber that used to sit beside the bus is gone. There is one egress function, and this chapter calls it. A published envelope that contains a key is scrubbed. `send_to` is the direct path and does not scrub, which the chapter treats as a hole you have to know about: publishers use `publish`. `publish_bot` counts toward the bot-loop guard, 20 delivered events and then `Cooldown`. There is no clock. Ordinary `publish` does not count. A full channel returns `Slow` instead of allocating a 65th slot. A different topic returns `Delivered(0)`.
+`Envelope` is the message. `Sub` is a subscriber. `Bus` holds them. `subscribe` registers a name on a topic. The channel bound is `BUS_CAP`, 64, the same number as the agent inbox, so "slow" means the same thing in both places. `publish` fans the envelope out. `deliver` calls chapter 20's `redact_for_egress` before `try_send`. `bus.rs` does not define its own scrubber. A published envelope that contains a key is scrubbed. `send_to` is the direct path and does not scrub, which the chapter treats as a hole you have to know about: publishers use `publish`. `publish_bot` counts toward the bot-loop guard, 20 delivered events and then `Cooldown`. There is no clock. Ordinary `publish` does not count. A full channel returns `Slow` instead of allocating a 65th slot. A different topic returns `Delivered(0)`.
 
 Chapter 48's workers call `skill_propose`, which publishes on this bus. They do not write the team store themselves. Chapter 49's external call is not this bus. It is a call to an agent outside the process, and it uses the same egress scrub on the way out. Keeping the scrub in one function is why a new channel cannot forget it. Forgetting it is how a key in a tool result becomes a key on the wire.
 
@@ -13,16 +11,6 @@ The bus is also how a learning team stays loosely coupled. An agent finishes a t
 Rust, at the fan-out: each subscriber has an `mpsc` sender, `try_send` is the non-blocking publish, and `Full` stops the loop. The envelope is cloned per subscriber, so one slow receiver does not share a buffer with a fast one. The scrub returns a new string. The cooldown is an enum the publisher matches on.
 
 `cargo run -p ch47-message-bus --bin ch47-message-bus` runs the demo. The exercise is `my-harness/tests/ch47.rs`: a published envelope that contains a key is scrubbed, and a slow subscriber hits the bound.
-
-**In this chapter**
-
-- 47.1 `BUS_CAP`, `MAX_BOT_EVENTS`, `Envelope`, and `Sub`
-- 47.2 `Bus`, `subscribe`, `bot_events`, and `Default`
-- 47.3 `Publish`, `publish`, and `publish_bot`
-- 47.4 `deliver` and the chapter 20 scrub
-- 47.5 `send_to` and `submit`
-- 47.6 `FakeModel` and `demo`
-- 47.7 The notify cursor, the bot-loop guard, and the one egress scrub
 
 | Section | What it walks |
 |---|---|
@@ -44,7 +32,7 @@ Rust, at the fan-out: each subscriber has an `mpsc` sender, `try_send` is the no
 >
 > `redact_for_egress` at line 1164 is the one scrub for text leaving the process. The docstring names chat platforms, A2A peers, and telemetry. The body calls `redact_sensitive_text(text, force=True)`, then, if `"earer"` remains in the text, replaces `_BEARER_RESIDUE_RE` with `Bearer [redacted]`. The regex wants a bracket token or 20 or more opaque characters. The comment above it says the 20-character floor is there so the English word "bearer" does not turn "the bearer of bad news" into `Bearer [redacted]`. The function fails closed. An exception returns `"[redaction-unavailable]"` and never the raw text.
 >
-> `bus.rs` does not define a function named `redact_for_egress`. I looked. `deliver` calls `crate::redact::redact_for_egress` before `try_send`. That is the chapter 20 function in `redact.rs`, re-exported from `lib.rs`. An earlier draft of this chapter described a second, narrower scrubber that only knew a bearer residue and an `sk-` token. That scrubber is gone. This file does not keep one.
+> `bus.rs` does not define a function named `redact_for_egress`. `deliver` calls `crate::redact::redact_for_egress` before `try_send`. That is the chapter 20 function in `redact.rs`, re-exported from `lib.rs`.
 >
 > **Adopted.** A bounded `sync_channel` of 64. The 21st bot publish is `Cooldown` and is not sent. Every body that `publish` and `publish_bot` hand to `deliver` goes through the real egress function before `try_send`.
 >
@@ -52,9 +40,7 @@ Rust, at the fan-out: each subscriber has an `mpsc` sender, `try_send` is the no
 >
 > **Deferred.** The 300 second window and the notify cursor. A real socket is not this file. Chapter 49 is the call that leaves the process.
 
-> **Guardrails.** E2 is called here. The name in the catalog is egress scrub. The narrow scrubber is gone. The full box is [Guardrails in this chapter](#guardrails-in-this-chapter).
-
-[personal note: a full channel that had to say slow]
+> **Guardrails.** E2 is called here. The name in the catalog is egress scrub. The full box is [Guardrails in this chapter](#guardrails-in-this-chapter).
 
 ## What this chapter decides
 
@@ -253,9 +239,9 @@ struct Sub {
 
 `Sub` is private. A caller cannot build one. The only constructor is `subscribe`. The name is the string `Slow` and `Disconnected` return. The topic is the filter. The `SyncSender` is the writing half. The `Receiver` is what `subscribe` returns to the caller, so the bus does not keep a way to read the queue. A subscriber that drops its receiver makes the next `try_send` on that sender return `Disconnected`.
 
-### Rust: a private subscriber and a public envelope
-
-`Sub` has no `pub`. `Envelope` does. The channel's type is `Envelope`, so the receiver the caller holds can read `topic` and `body`. The caller cannot reach into `Bus.subs` and rename a peer. `SyncSender<Envelope>` is `Clone` as well, but this file never clones the sender. It clones the envelope. One sender lives inside one `Sub` for the life of the bus.
+> **Rust sidebar: a private subscriber and a public envelope**
+>
+> `Sub` has no `pub`. `Envelope` does. The channel's type is `Envelope`, so the receiver the caller holds can read `topic` and `body`. The caller cannot reach into `Bus.subs` and rename a peer. `SyncSender<Envelope>` is `Clone` as well, but this file never clones the sender. It clones the envelope. One sender lives inside one `Sub` for the life of the bus.
 
 ## 47.2 `Bus`, `subscribe`, `bot_events`, and `Default`
 
@@ -307,11 +293,11 @@ impl Default for Bus {
 
 `Default` calls `new`. Nothing in `bus.rs` calls `Bus::default`. The tests call `Bus::new`. The impl is there so a `Bus` can be built the same way as other zero-state types in the crate.
 
-### Rust: `sync_channel` and `try_send`
-
-`std::sync::mpsc::sync_channel` is a bounded queue. `send` waits when the queue is full. `try_send` does not wait. It returns `Ok(())`, `Err(TrySendError::Full(value))`, or `Err(TrySendError::Disconnected(value))`. This file uses `try_send` on every path that writes. A slow subscriber is a `Publish` value, not a parked publisher. The `Full` and `Disconnected` arms drop the envelope that the error gave back. The `_` is that value. It is not queued somewhere else.
-
-The receiver has to stay alive for `Ok`. The bench keeps the 100 receivers in the batched value until after `publish` returns. Dropping them first would be `Disconnected` for each matching name, and `deliver` would return on the first of those.
+> **Rust sidebar: `sync_channel` and `try_send`**
+>
+> `std::sync::mpsc::sync_channel` is a bounded queue. `send` waits when the queue is full. `try_send` does not wait. It returns `Ok(())`, `Err(TrySendError::Full(value))`, or `Err(TrySendError::Disconnected(value))`. This file uses `try_send` on every path that writes. A slow subscriber is a `Publish` value, not a parked publisher. The `Full` and `Disconnected` arms drop the envelope that the error gave back. The `_` is that value. It is not queued somewhere else.
+>
+> The receiver has to stay alive for `Ok`. The bench keeps the 100 receivers in the batched value until after `publish` returns. Dropping them first would be `Disconnected` for each matching name, and `deliver` would return on the first of those.
 
 ## 47.3 `Publish`, `publish`, and `publish_bot`
 
@@ -351,11 +337,11 @@ When the counter is still under 20, `publish_bot` calls `deliver` and then looks
 
 Hermes `admit` would have returned `"tripped"` on the call that filled the window, and `"cooldown"` on a later call. This enum has one variant for the refusal. The call that finds the counter already at 20 is `Cooldown`. There is no separate `Tripped`. The message that would have been the 21st delivery is the one that is not sent. The previous 20 were sent.
 
-### Rust: `matches!` and a counter that skips failures
-
-`matches!` borrows `result` and does not move it. The function can still `return result` afterward. An `if let Publish::Delivered(_) = result` would also work. `matches!` is the form in the file. The `_` ignores the count. `Delivered(0)` and `Delivered(100)` both count as one bot event. The guard is "a delivery result," not "at least one peer."
-
-The increment is `+= 1` on a `u32`. It happens after `deliver` returns, so a panic inside `try_send` would not leave the counter ahead of the channels. `try_send` does not panic on `Full`. It returns the error this match already handles.
+> **Rust sidebar: `matches!` and a counter that skips failures**
+>
+> `matches!` borrows `result` and does not move it. The function can still `return result` afterward. An `if let Publish::Delivered(_) = result` would also work. `matches!` is the form in the file. The `_` ignores the count. `Delivered(0)` and `Delivered(100)` both count as one bot event. The guard is "a delivery result," not "at least one peer."
+>
+> The increment is `+= 1` on a `u32`. It happens after `deliver` returns, so a panic inside `try_send` would not leave the counter ahead of the channels. `try_send` does not panic on `Full`. It returns the error this match already handles.
 
 ## 47.4 `deliver` and the chapter 20 scrub
 
@@ -450,9 +436,9 @@ def redact_for_egress(text: str) -> str:
 
 `REDACTION_UNAVAILABLE` is `"[redaction-unavailable]"`. The `except` returns that marker. The chapter 20 Rust function has no `except`. A regex replace that finishes returns the scrubbed string. I am not going to pretend `bus.rs` added the fail-closed branch. It calls the Rust function that already exists.
 
-### Rust: one replace, then the clones
-
-The shadowing `let envelope = Envelope { ... }` drops the unscrubbed body when the new value is bound. The topic `String` is moved into the new struct. After that line, the only body in scope is the scrubbed one. `clone` on `Envelope` clones both strings. Topic `work` is four characters, cloned once per matching subscriber. Body `ping` is four characters, already scrubbed, cloned the same way. A secret would have been replaced before the first clone. Later subscribers cannot observe the raw body, because the raw body is gone before the loop.
+> **Rust sidebar: one replace, then the clones**
+>
+> The shadowing `let envelope = Envelope { ... }` drops the unscrubbed body when the new value is bound. The topic `String` is moved into the new struct. After that line, the only body in scope is the scrubbed one. `clone` on `Envelope` clones both strings. Topic `work` is four characters, cloned once per matching subscriber. Body `ping` is four characters, already scrubbed, cloned the same way. A secret would have been replaced before the first clone. Later subscribers cannot observe the raw body, because the raw body is gone before the loop.
 
 ## 47.5 `send_to` and `submit`
 
@@ -489,9 +475,9 @@ When the name is present, `try_send` moves the caller's envelope. There is no cl
 
 `submit` is the small wrapper `demo` uses. It copies `topic` and `body` into an `Envelope` and calls `publish`. `publish` calls `deliver`. `deliver` scrubs. `submit` itself does not mention `redact`. Putting the scrub in `submit` and a different scrub in `publish` was the old shape. This file has one call, inside `deliver`.
 
-### Rust: `let` `else` on the find
-
-`let Some(sub) = ... else { return ... }` is a refutable binding. The `None` path leaves the function. The `Some` path binds `sub` for the `try_send`. `find` returns `Option<&Sub>`. `sub` is a shared reference. `try_send` only needs `&self` on the sender. `name.to_string()` on the missing path copies the `&str` the caller still owns. The caller's `Envelope` is not in that string.
+> **Rust sidebar: `let` `else` on the find**
+>
+> `let Some(sub) = ... else { return ... }` is a refutable binding. The `None` path leaves the function. The `Some` path binds `sub` for the `try_send`. `find` returns `Option<&Sub>`. `sub` is a shared reference. `try_send` only needs `&self` on the sender. `name.to_string()` on the missing path copies the `&str` the caller still owns. The caller's `Envelope` is not in that string.
 
 ## 47.6 `FakeModel` and `demo`
 
@@ -536,9 +522,9 @@ fn main() {
 
 `cargo run` needs `--bin ch47-message-bus`. The package also builds `ch47_mcp_fixture`, `sandbox-worker`, and `ch47_kanban_claim`. The example binary prints eval lines. No key is read. `recv` in `demo` is the blocking receive. The publish path that the bench measures is `try_send`, which does not block. `demo` is allowed to wait because it is the only receiver and the send already happened.
 
-### Rust: the format of the demo line
-
-`format!("bus: {} {reply}", mail.body)` is the whole return value. The colon and the spaces are literal. `mail.body` is the scrubbed body. For `ping` that is the same four characters. `{reply}` inserts `ok` with no extra punctuation. The test compares the full string. A change to the `Publish` count does not change the line if the assert still passes. A change to the reply changes the line. The bus is dropped at the end of `demo`. The receiver is dropped with it. The printed line is the only thing `main` keeps.
+> **Rust sidebar: the format of the demo line**
+>
+> `format!("bus: {} {reply}", mail.body)` is the whole return value. The colon and the spaces are literal. `mail.body` is the scrubbed body. For `ping` that is the same four characters. `{reply}` inserts `ok` with no extra punctuation. The test compares the full string. A change to the `Publish` count does not change the line if the assert still passes. A change to the reply changes the line. The bus is dropped at the end of `demo`. The receiver is dropped with it. The printed line is the only thing `main` keeps.
 
 ## 47.7 The notify cursor, the bot-loop guard, and the one egress scrub
 
@@ -560,11 +546,11 @@ The egress function is the one in section 47.4. Hermes names it the one scrub fo
 
 `inbox.rs` is still the chapter 2 queue. `INBOX_BOUND` is 64. `SessionInbox::submit` returns `InboxError::Full` when that queue is at the bound. `bus.rs` does not call `SessionInbox::submit`. A published envelope is not an inbox mail. The numbers match. The types do not.
 
-### Rust: `&mut` publish, shared deliver
-
-`publish` and `publish_bot` take `&mut Bus`. `deliver` and `send_to` take `&Bus`. The split matches what they mutate. `deliver` only reads `subs` and writes through `SyncSender`, which is safe from a shared reference. `publish_bot` writes `bot_events`, so it needs `&mut`. A caller who has published cannot call `bot_events` until that mutable borrow ends. The tests do the call after the publish expression has finished. The bench holds `&mut bus` only inside the timed closure.
-
-`Envelope` is not `Copy`. Every send moves or clones it. `publish_bot` on the cooldown path moves the envelope into the function and drops it without cloning. That drop is the "not sent." The test does not recv after the cooldown call. The counter staying at 20 is the evidence the 21st did not increment, and the early return is the evidence it did not send.
+> **Rust sidebar: `&mut` publish, shared deliver**
+>
+> `publish` and `publish_bot` take `&mut Bus`. `deliver` and `send_to` take `&Bus`. The split matches what they mutate. `deliver` only reads `subs` and writes through `SyncSender`, which is safe from a shared reference. `publish_bot` writes `bot_events`, so it needs `&mut`. A caller who has published cannot call `bot_events` until that mutable borrow ends. The tests do the call after the publish expression has finished. The bench holds `&mut bus` only inside the timed closure.
+>
+> `Envelope` is not `Copy`. Every send moves or clones it. `publish_bot` on the cooldown path moves the envelope into the function and drops it without cloning. That drop is the "not sent." The test does not recv after the cooldown call. The counter staying at 20 is the evidence the 21st did not increment, and the early return is the evidence it did not send.
 
 ## Tests
 
@@ -607,8 +593,6 @@ The binary publishes one envelope and prints the line. No key.
 |---|---|---|---|
 | `publish_to_agents` | 47.98 µs | one small publish under 1 ms at 100 agents | `redact_for_egress` of `ping`, then `try_send` to 100 empty channels |
 
-The function name is `publish_to_agents`. The bench id is `47/publish_to_agents`. The old ids `45/publish_to_agents` and `43/publish_to_agents` are aliases in `benchmarks/descriptions.json`. The function name did not change when the id moved.
-
 ```rust
 fn publish_to_agents(c: &mut Criterion) {
     c.bench_function("publish_to_agents", |b| {
@@ -637,27 +621,15 @@ fn publish_to_agents(c: &mut Criterion) {
 }
 ```
 
-`iter_batched` runs the setup closure outside the timer. That closure builds a `Bus`, subscribes `a0` through `a99` on topic `work`, and keeps the 100 receivers. It is not timed. The timed routine calls `publish` with the envelope passed through `black_box`, then `black_box` of the result and the receivers. `redact_for_egress` of the body `ping` runs inside `deliver` before the 100 clones and the 100 `try_send` calls. `publish_bot` and `FakeModel` are not called. The `Slow` path is not taken. Every channel is empty, so the result is `Delivered(100)`. The bot-event counter stays 0. The descriptions file says the budget is under a millisecond, and that a number that fills 64 first would be the slow-subscriber test.
+`iter_batched` runs the setup closure outside the timer. That closure builds a `Bus`, subscribes `a0` through `a99` on topic `work`, and keeps the 100 receivers.
 
-The mean is 47.98 µs. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196), section `47`. The id is `47/publish_to_agents`. The old ids `45/publish_to_agents` and `43/publish_to_agents` are aliases in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. `.github/scripts/run_bench_section.sh` runs `cargo bench -p ch47-message-bus --bench bus --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10` for that section. The same flags are in `steps/ch47-message-bus/README.md`. The Criterion `time:` line is the slope, not the mean.
-
-### Milestone demo
-
-The `cargo run` above. The line is `bus: ping ok`.
+The means are `mean.point_estimate` from [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196), section `47`. Bench ids: `47/publish_to_agents`, `45/publish_to_agents`, `43/publish_to_agents`. Command: `cargo bench -p ch47-message-bus --bench bus --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
 The bench is 100 successful sends of a body that scrubs to itself. `redact_for_egress` is inside the sample. A number that fills 64 first is the slow-subscriber test, not this one. A number that called `publish_bot` 21 times would return `Cooldown` and would not be this sample.
 
-`publish` does not trip the cooldown. The counter moves only in `publish_bot`, and only on `Delivered`. A `Slow` bot publish leaves the counter where it was. Filling one subscriber and then calling `publish_bot` does not advance you toward `Cooldown`.
-
 The receivers are part of the batched value so they are not dropped before `try_send`. Dropping them first would be `Disconnected`, which is a different result. `let _ = rx` in the cooldown test drops the receiver after the asserts. Moving that line above the loop would disconnect the channel, `deliver` would return `Disconnected`, and the counter would stay 0 because only `Delivered` increments. The 21st call would then still try to send.
-
-`deliver` returns on the first `Full`. Earlier matching subscribers already received a clone. The return value does not say how many. Callers that need all-or-nothing will not get it from this loop.
-
-`send_to` does not call `crate::redact::redact_for_egress`. A direct send of a secret queues the raw body. `publish` and `publish_bot` do not have that hole. The test's direct body is `"direct"`.
-
-`Delivered(0)` is a different topic, or a bus with no subscribers. It is not backpressure. `Cooldown` is not backpressure either. The channel never saw the 21st bot body.
 
 `demo` uses `recv`, which waits. The bench uses `try_send`, which does not. Measuring `demo` would include a receive and a format. This sample does not.
 
@@ -667,7 +639,7 @@ The Rust egress function does not return `"[redaction-unavailable]"`. Hermes's d
 
 The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
-**Egress scrub (E2).** The catalog row is E2. The name is egress scrub. One stricter scrub for remote readers, and it also strips a bearer residue. The Hermes function is `agent/redact.py` `redact_for_egress`. This chapter calls the chapter 20 Rust function of that name, from `deliver`, before `try_send`. The narrow scrubber that used to live beside it is gone. `bus.rs` does not define one. The header `Authorization: Bearer sk-live-0123456789abcdef now` becomes a line that contains `Authorization: ***` and does not contain `sk-live`, and it does not become `Bearer [redacted]`, because the header replace consumes the scheme before the residue sweep. A bare `Bearer` plus 32 opaque characters does become `Bearer [redacted]`.
+**Egress scrub (E2).** The catalog row is E2. The name is egress scrub. One stricter scrub for remote readers, and it also strips a bearer residue. The Hermes function is `agent/redact.py` `redact_for_egress`. This chapter calls the chapter 20 Rust function of that name, from `deliver`, before `try_send`. `bus.rs` does not define its own scrubber. The header `Authorization: Bearer sk-live-0123456789abcdef now` becomes a line that contains `Authorization: ***` and does not contain `sk-live`, and it does not become `Bearer [redacted]`, because the header replace consumes the scheme before the residue sweep. A bare `Bearer` plus 32 opaque characters does become `Bearer [redacted]`.
 
 **Bot loop (J5).** The catalog row is J5, the gateway bot-loop guard. Hermes counts 20 bot messages in 300 seconds and then cools down for 600 seconds. `admit` returns `"tripped"` on the call that fills the window and `"cooldown"` while that deadline still holds. This crate counts 20 delivered `publish_bot` results and then returns `Cooldown`. There is no clock. Ordinary `publish` does not count.
 
@@ -699,7 +671,7 @@ pub fn chapter_47_published(body: &str) -> String {
 }
 ```
 
-`todo!("chapter 47")` is the panic. The test passes `see sk-live-0123456789abcdef` and wants a string that does not contain `sk-live` and does contain `sk-***`. In the step crate that is `publish` of an envelope whose body is that text, then the body a subscriber receives. `deliver` has already called `crate::redact::redact_for_egress`. The `sk-` prefix stays, the rest of the token becomes `***`. The stub stays `todo!`. Do not paste `bus.rs` into `my-harness/`.
+`todo!("chapter 47")` is the panic. The test passes `see sk-live-0123456789abcdef` and wants a string that does not contain `sk-live` and does contain `sk-***`. In the step crate that is `publish` of an envelope whose body is that text, then the body a subscriber receives. `deliver` has already called `crate::redact::redact_for_egress`. The `sk-` prefix stays, the rest of the token becomes `***`. The stub stays `todo!`. 
 
 ## Chapter summary
 
@@ -708,9 +680,7 @@ pub fn chapter_47_published(body: &str) -> String {
 - **Bots.** `MAX_BOT_EVENTS` is 20. The 21st `publish_bot` is `Cooldown` and is not sent.
 - **Egress.** E2. `deliver` calls `crate::redact::redact_for_egress`. There is no second scrubber in this file.
 - **Model.** `FakeModel` answers `ok`. The demo line is `bus: ping ok`.
-- **Time.** `publish_to_agents` mean 47.98 µs. That is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196). The Criterion `time:` line is the slope.
-
-[personal note: a channel that stayed at 64]
+- **Time.** `publish_to_agents` mean 47.98 µs. That is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196).
 
 ## What's next
 

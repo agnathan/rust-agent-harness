@@ -1,31 +1,16 @@
 # Chapter 13: Sandboxed Execution
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
-Chapter 11 can deny a dangerous shell command. Chapter 12 can watch a call. Neither of them runs a model-written script outside the harness process. `execute_code` that simply `eval`s in-process is the harness trusting the model with its own address space. This chapter adds the boundary. The crate is `steps/ch13-sandbox`, a copy of chapter 12 plus a `sandbox` module. The package is `ch13-sandbox`. The worker binary stays named `sandbox-worker`, because the tests and the bench compile `CARGO_BIN_EXE_sandbox-worker`. Later copies keep that name.
+Chapter 11 can deny a dangerous shell command. Chapter 12 can watch a call. Neither of them runs a model-written script outside the harness process. `execute_code` that `eval`s in-process is the harness trusting the model with its own address space. This chapter adds the boundary. The crate is `steps/ch13-sandbox`, a copy of chapter 12 plus a `sandbox` module. The package is `ch13-sandbox`. The worker binary stays named `sandbox-worker`, because the tests and the bench compile `CARGO_BIN_EXE_sandbox-worker`. Later copies keep that name.
 
 `deny_tool` now calls `sandbox::check_execute_code` for `execute_code`. The default loop path passes interactive presence, mode off false, yolo false, and `whole_script` false, so a local interactive script is approved here and its `terminal` calls still hit chapter 11. Cron, single-query, and unattended deny a local script. An isolated `env_type` — anything other than `local` — approves. `whole_script` asks once, not once per line. That is the script gate Hermes calls `check_execute_code_guard`, deferred from chapter 11 and closed here.
 
 `Backend` describes how a job would be launched. The Docker argv drops capabilities, sets `no-new-privileges`, and sets a pid limit, and the default backend is still local: the sandbox is the real boundary, and it can be off. `scrub_env` builds the child environment from an allowlist plus declared passthrough, so the child does not inherit the parent's keys. `Worker` is the child process. `run_until` is the deadline, the process-tree timeout chapter 1 deferred. Checkpoints snapshot a manifest of paths, and rewind restores it. A warm worker accepts a job without starting a process per call.
 
-The harness keeps growing by copy, and this module stays on that line. Chapter 17's terminal runs through the approval floor and then this worker, rather than growing a second sandbox. Chapter 36 will restart a child that stops making progress. The heartbeat that decides "stopped" is not this chapter. What this chapter contributes to a self-improving agent is the right to run a procedure it just wrote without handing that procedure the parent's environment. A skill that contains a script is still a script. The scanner for that text arrives in chapter 25. The place it runs, if it runs as code, is this worker.
+Chapter 17's terminal runs through this worker rather than growing a second sandbox. A skill that contains a script is still a script. The place it runs is this worker. The scanner for that text is chapter 25.
 
 Rust, in the sidebars: a child process is `std::process`, and the worker is a binary so the tests can kill it. A checkpoint is a list of paths and bytes, not a filesystem snapshot library. `Result` is every branch of `check_execute_code`, written out so a cron session cannot fall through to allow.
 
 `cargo run -p ch13-sandbox` runs the demo. The exercise is `my-harness/tests/ch13.rs`: cron cannot run a local script, a container env approves, and a whole-script ask is one prompt.
-
-**In this chapter**
-
-- 13.1 `sandbox` is public, and the loop calls one function in it
-- 13.2 `Backend` and the Docker argv
-- 13.3 `scrub_env`
-- 13.4 `Worker`
-- 13.5 `run_until`
-- 13.6 Checkpoints
-- 13.7 `check_execute_code`, every branch
-- 13.8 The worker binary and the demo
-- 13.9 What each test locks
-- 13.10 What the three benches time
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -42,8 +27,6 @@ Rust, in the sidebars: a child process is `std::process`, and the worker is a bi
 > **Adapted.** Nothing calls Docker. `docker_run_args` returns the argv a test can read. The worker is one process this crate compiles, not a container. `run_until` kills that direct child. Hermes's `kill_process_tree` also walks descendants (`taskkill /F /T` on Windows, a process-group kill on POSIX). This chapter does not. The checkpoint is a manifest of path and content, not a shadow git repo. Rewind copies the manifest back.
 >
 > **Deferred.** Credential-file mounts (D5) and per-child git worktrees (D6, chapter 29). This chapter does not parse Python. A2 is the script gate above, not a source scan.
-
-[personal note: a job you thought was sandboxed, and which backend it actually used]
 
 ## What this chapter decides
 
@@ -189,10 +172,12 @@ impl Backend {
 ```
 
 > **Rust sidebar: an enum is one variant, and `Copy` duplicates it**
-> - `Backend` is either `Local` or `Docker`. A value is one of those. It has no fields.
-> - `PartialEq` is what `assert_eq!(Backend::from_name("local"), Backend::Local)` uses. `Debug` is the `{:?}` print. `Clone` is an explicit copy. `Copy` means the copy is implicit: assigning the value, or passing it to `is_sandboxed(self)`, still leaves the original in place.
-> - `eq_ignore_ascii_case` compares ASCII letters without allocating. `"docker"`, `"Docker"`, and `"DOCKER"` all take the `Docker` arm. `""`, `"local"`, and `"docker "` take the `else` and return `Local`. The space fails the equality. The function does not trim.
+>
+> - `Backend` is either `Local` or `Docker`.
+> - `PartialEq` is what `assert_eq!(Backend::from_name("local"), Backend::Local)` uses. `Copy` means the copy is implicit: assigning the value, or passing it to `is_sandboxed(self)`, still leaves the original in place.
+> - `eq_ignore_ascii_case` compares ASCII letters without allocating. `"docker"`, `"Docker"`, and `"DOCKER"` all take the `Docker` arm. `""`, `"local"`, and `"docker "` take the `else` and return `Local`.
 > - `matches!(self, Self::Docker)` is true only for the `Docker` variant. `Self` here is `Backend`. `is_sandboxed` takes `self` by value. Because of `Copy`, `Backend::Local.is_sandboxed()` does not consume a variable you still need.
+> - `Option`, `Result`, enums, and `Arc` are taught in [chapter 1](chapter-01-first-contact.md).
 
 `from_name("local")` and `from_name("")` are what the test calls. Both are `Local`, and `Backend::Local.is_sandboxed()` is false. `Backend::Docker.is_sandboxed()` is true. The test constructs that `Docker` as the variant. It does not call `from_name("docker")`. The `if` is still the mapping: any ASCII-case spelling of `docker` is the sandboxed variant, and every other string is local.
 
@@ -783,7 +768,7 @@ fn main() {
 
 ## 13.9 What each test locks
 
-Eight tests are the new surface. Seven are in `tests/sandbox.rs`. One is in `tests/execute_code.rs`. A private helper is locked only by what a public function returns.
+Eight tests are the new surface. Seven are in `tests/sandbox.rs`.
 
 `the_default_backend_is_local_and_docker_argv_is_hardened` locks `from_name("local")`, `from_name("")`, both `is_sandboxed` results, the three flag pairs, and the absence of `docker-run-executed`.
 
@@ -791,7 +776,7 @@ Eight tests are the new surface. Seven are in `tests/sandbox.rs`. One is in `tes
 
 `a_warm_worker_accepts_a_job` locks `["ok ping"]`. `a_timeout_kills_the_child` locks `Err(Timeout)` in under two seconds.
 
-`checkpoints_are_off_until_enabled_and_rewind_restores` locks a disabled `take` of `None`, rewind of `one`, and length 20. `a_thousand_path_manifest_round_trips` locks length 1,000 and `f0.txt`. `a_directory_snapshot_rewinds_one_file` locks `note.txt` reading `before`.
+`checkpoints_are_off_until_enabled_and_rewind_restores` locks a disabled `take` of `None`, rewind of `one`, and length 20. `a_thousand_path_manifest_round_trips` locks length 1,000 and `f0.txt`.
 
 `a_local_script_is_denied_for_cron_and_approved_in_a_container` locks the cron denial, the container approval, the mode-off approval, and the `whole_script` ask.
 
@@ -881,11 +866,7 @@ The binary spawns `sandbox-worker`, sends `ping`, and prints the line it read. N
 
 `rewind_1000` builds the snapshot before the bench. Each sample starts from an empty live vec and `clone_from`s the snapshot into it. That copy is the sample.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `13`.
-
-### Milestone demo
-
-The `cargo run` above. The reply is `ok ping`.
+The means are `mean.point_estimate` from [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `13`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -896,8 +877,6 @@ Local is the default. Printing Docker argv does not put the process in a contain
 `run_until` kills the process it spawned. A grandchild the worker started would survive. That is the gap next to Hermes's `kill_process_tree`.
 
 Checkpoints are off. `take` on a disabled store returns `None` and does not remember the files. A caller that ignores `None` will rewind nothing and think it restored.
-
-The 10 MB skip drops the file from the manifest. Rewind will not put it back, because it was never saved.
 
 ## Guardrails in this chapter
 
@@ -926,11 +905,9 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Laye
 - **Gate.** The loop's local interactive `execute_code` is `Approved`. Cron on `local` is `Denied` when you call `check_execute_code`.
 - **Time.** A warm accept measured **30.49 µs**. Checkpoint of 1,000 paths measured **50.37 µs**. Rewind measured **83.79 µs**.
 
-[personal note: the first time the worker stayed up after the test, and which drop killed it]
-
 ## What you implement
 
-`my-harness/tests/ch13.rs` is the milestone. It compiles, then panics in `todo!("chapter 13")` until `chapter_13_execute_code` returns `"deny"` when the presence is cron and the env is local, and `"allow"` when the presence is cron and the env is not local. The step crate is the reference. Do not copy it into `my-harness/`.
+`my-harness/tests/ch13.rs` is the milestone. It compiles, then panics in `todo!("chapter 13")` until `chapter_13_execute_code` returns `"deny"` when the presence is cron and the env is local, and `"allow"` when the presence is cron and the env is not local. 
 
 ## What's next
 

@@ -1,7 +1,5 @@
 # Chapter 7: Dynamic Catalog
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 5 can list the tools it was given at startup. A gateway that only does that cannot pick up a plugin, or a second server's tools, without a restart. Chapter 6 already measured what a 10,000-tool list costs when the client holds the index: the search is fast, and it still runs inside the agent. This chapter moves the catalog into the server. The step crate is `steps/ch07-catalog`, package `ch07-catalog`. It binds no socket. A live connection to an upstream MCP server waits until chapter 37.
 
 `Gateway` holds a `Snapshot` behind `RwLock<Arc<Snapshot>>`. The snapshot is the merged list: native tools, a `PluginSet`, and an in-memory `Upstream`. `Origin` says which of those a card came from. `Bm25Index` ranks the way chapter 6 did, with the same k1 and b, and an exact name match ranks first. `Embedder` is the trait chapter 6 introduced, and `HashEmbedder` is the stand-in that does not call a network. `reload` builds a new index, then replaces the `Arc`. A caller that already cloned the old `Arc` keeps it. `call` clones the `Arc` before it reads the card, so a reload during the body does not change that call's tool. A duplicate name is `CatalogError`, and the previous snapshot stays.
@@ -39,8 +37,6 @@ Rust, for a new reader: `Arc` is a shared pointer with a count. Cloning it is ch
 >
 > **Deferred.** A real embedder, a real upstream MCP connection, and hot reload across replicas wait. Federation of live servers is chapter 37. Per-session views are chapter 8. The 7-query and 10-describe caps are chapter 8.
 
-[personal note: a reload that surprised a call still in flight]
-
 ## What this chapter decides
 
 `Load` has three lists: `native`, `plugins`, and `upstreams`. `Snapshot::build` walks them in that order. The first time a name appears, it is kept, and its `Origin` is `Native`, `Plugin`, or `Upstream`. The second time, `reload` returns `Duplicate` and the gateway's current `Arc` is unchanged.
@@ -63,9 +59,9 @@ pub fn reload(&self, load: Load) -> Result<(), CatalogError> {
 
 `Snapshot::build` runs before the write lock is taken. The lock is held only for the pointer store. A `call` that already holds an `Arc` does not take that lock again.
 
-### Rust: cloning an `Arc` is not cloning the index
-
-`Arc::clone` increments a count and copies a pointer. The index stays where it is. Two calls can hold two different snapshots after a reload. The old index is freed when the last `Arc` drops. You do not lock the index for the whole search. You lock long enough to clone the pointer, then search the clone.
+> **Rust sidebar: cloning an `Arc` is not cloning the index**
+>
+> `Arc::clone` increments a count and copies a pointer. The index stays where it is. Two calls can hold two different snapshots after a reload. The old index is freed when the last `Arc` drops. You do not lock the index for the whole search. You lock long enough to clone the pointer, then search the clone.
 
 ## Tests
 
@@ -105,11 +101,7 @@ The binary loads one native tool and one upstream tool and searches `rename a fi
 
 `catalog_search_10k` builds the gateway and the 10,000-card index outside the sample. The timed closure is `search("rename a file", 8)` and `black_box` of the hits. No embedder is installed. `catalog_reload_10k` clones the 10,000 cards and rebuilds the index inside the sample. That clone is part of the reload the caller pays. `catalog_arc_swap` times a reload of one card while an `Arc` from before the reload is still held. The search number is the server. Chapter 6's client search of 10,000 tools was 146.8 µs. This server search measured 299.0 µs on the Benchmarks runner. They are different crates and different machines.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38863938100](https://github.com/agnathan/rust-agent-harness/actions/runs/38863938100), section `7` (recorded as `gw7`).
-
-### Milestone demo
-
-The `cargo run` above is the demo.
+The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38863938100](https://github.com/agnathan/rust-agent-harness/actions/runs/38863938100), section `7` (recorded as `gw7`). How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -139,8 +131,6 @@ Context-file injection scanning (F2) and the 20,000-character cap (F3) are chapt
 - **Search.** BM25, exact name first. 10,000 tools, top 8, measured **299.0 µs**.
 - **Reload.** The index is built, then the `Arc` is stored. Rebuilding 10,000 tools measured **27.42 ms**. Swapping a one-tool snapshot while holding the old `Arc` measured **2.467 µs**.
 - **Embedder.** Optional. Ranking does not use it.
-
-[personal note: whether the reload or the index was the part you had to reread]
 
 ## What's next
 

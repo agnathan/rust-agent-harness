@@ -1,29 +1,14 @@
 # Chapter 9: The Agent Loop
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 The earlier chapters can each do one piece of a turn. Chapter 1 can ask a model. Chapter 2 can hold the messages and a session inbox. Chapter 3 can run tools, reads together and a write alone. Chapter 4 can run those tools in another process. Chapter 6 can keep a huge catalog off the prompt. None of them yet asks the model, runs what it asked for, and asks again. This chapter is that loop, in ten copies under `steps/ch09-*`. The section numbers stay 9.1 through 9.10 so they match the crate names. The finished loop, the one chapter 10 copies, is `steps/ch09-10-evals`. The library there is `harness_core`, package `ch09-10-harness-core`. The mock stays the default. `--live` is an opt-in that calls OpenRouter with two real tools, `echo` and `note`. CI does not pass that flag and does not set a key.
 
 `run_loop` is the function. It calls the provider, dispatches the tool calls through chapter 3's scheduler, appends the results, and calls the provider again. A hard cancel aborts the in-flight model call or tool call and drops a pending steer. A soft stop lets the current work finish, then makes one model call and does not dispatch tools from that reply. Validation repairs a close unknown name, retries broken JSON, and leaves after three bad batches with the partial transcript. A stall is an identical call or a short cycle. An iteration warning fires at half the budget, and a wrap-up notice lands once the time budget is 80 percent spent. A tool result is capped. A steer from the session inbox is appended onto the newest tool result, so the cached prefix stays put. Tool-call arguments are sent as stable JSON. `TurnOutcome` is the enum every exit returns. A saved eval set and four stress tasks run on the mock.
 
-Chapter 10 will take this same loop and make it walk a table of legal moves, so a chapter 9 outcome the table cannot name fails a test instead of drifting. Chapter 11 puts an approval denial in front of dispatch. Chapter 14 picks up the empty-response retry, the length continuation, and the repetition guard this chapter defers. Chapter 19 is where a tool call can start before the buffered reply is finished. Chapter 34 is where preflight compression runs before the model call. Chapter 52 re-runs this chapter's saved tasks on a much later copy of `run_loop`. The loop is the thing those chapters grow. A self-improving agent is still this loop: the learning, the memory write, and the skill patch happen beside it, not instead of it. If the loop cannot say why it stopped, later reflection has nothing honest to review.
+Chapter 10 makes this same loop walk a table of legal moves. Empty-response retries, length continuation, and the repetition guard wait for chapter 14. A self-improving agent is still this loop: the learning, the memory write, and the skill patch happen beside it, not instead of it.
 
 Rust, beside the code: `TurnOutcome` and the scripted reply are enums, so every exit is named. `CancellationToken` is a flag you race against the call. `Arc<dyn Tool>` is how a native tool and an MCP tool share one dispatch path. The worker bound of 8 is the semaphore from chapter 3.
 
 `cargo run -p ch09-10-harness-core --example demo --locked --offline --quiet` runs the finished mock. `cargo run -p ch09-10-harness-cli --locked --offline --quiet -- evals` runs the saved set. `--live-evals` is the opt-in I am not treating as the default.
-
-**In this chapter**
-
-- 9.1 A live call, and the mock that stays the default
-- 9.2 Prompt cancellation
-- 9.3 Tool-call validation
-- 9.4 Stall detection
-- 9.5 Budget warnings and wrap-up
-- 9.6 A per-tool output cap
-- 9.7 Steering
-- 9.8 Stable request formatting
-- 9.9 A typed turn outcome
-- 9.10 Stronger evals
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -40,15 +25,13 @@ Rust, beside the code: `TurnOutcome` and the scripted reply are enums, so every 
 
 > **How Hermes does it**
 >
-> I read the current `main` of [Hermes Agent](https://github.com/NousResearch/hermes-agent) before rewriting this chapter, and I checked those paths again at `e5eb6b36` (2026-10-16) while writing chapters 5, 7, 8, and 10. `run_conversation` is still in `agent/conversation_loop.py`. `validate_tool_calls` still calls `agent._repair_tool_call`. `HEAD_RATIO` is still 0.4 in `tools/tool_output_truncate.py`. `_MAX_TOOL_WORKERS` is still 8 in `agent/tool_executor.py`. The measured numbers below are unchanged. The once-per-turn prologue is `build_turn_context` in `agent/turn_context.py`.
+> I read the current `main` of [Hermes Agent](https://github.com/NousResearch/hermes-agent) before rewriting this chapter, and I checked those paths again at `e5eb6b36` (2026-10-16). `run_conversation` is still in `agent/conversation_loop.py`. `validate_tool_calls` still calls `agent._repair_tool_call`. `HEAD_RATIO` is still 0.4 in `tools/tool_output_truncate.py`. `_MAX_TOOL_WORKERS` is still 8 in `agent/tool_executor.py`. The measured numbers below are unchanged. The once-per-turn prologue is `build_turn_context` in `agent/turn_context.py`.
 >
 > **Adopted.** `validate_tool_calls` in `agent/turn_tool_validation.py` uniquifies duplicate tool-call ids, repairs a close name through `agent._repair_tool_call` before the name check, advances the invalid-name strike only when the batch has no valid call, and stops at 3. Malformed JSON is retried up to 3 times without appending, then closed with a tool-role error so the roles still alternate. Arguments that do not end in `}` or `]` are treated as truncated and refused, with no retry. `_invalid_tool_name_error_content` in `conversation_loop.py` lists the catalog for a nonempty unknown name and withholds it when the name is blank. `IterationBudget` in `agent/iteration_budget.py` is a consume/refund counter: the parent cap and each subagent cap are separate, and `execute_code` is the documented refund. `normalize_budget_warning_ratio` keeps a finite ratio strictly between 0 and 1. The warning sentence in `agent/turn_iteration_prep.py` (`ITERATION_BUDGET_WARNING_TEMPLATE`) and the time-budget sentence in `conversation_loop.py` (`RUN_BUDGET_WRAPUP_NOTICE`, appended by `_maybe_inject_run_budget_wrapup` once elapsed time passes `0.8 * run_budget_seconds`) both land on the newest `role: "tool"` message. `tools/tool_output_truncate.py` keeps 40% of the head and the rest of the tail (`HEAD_RATIO = 0.4`) and puts the omitted-count notice on top. `_canonicalize_tool_call_arguments` sorts keys and emits compact JSON (`separators=(",", ":")`, `sort_keys=True`) on a send-path copy (`_clone_message_for_send`), so the stored transcript is left alone. `agent/interrupt_control.py` distinguishes a hard stop, which drops a pending steer, from a soft clear, which must not. `agent/tool_guardrails.py` stubs a long byte-identical result from the second repeat (`STALL_GUARD` stub at length 512) and notices an identical streak at 3. Its cycle detector uses period 2 through 4 and a history of 64. Concurrent tool calls go through a pool capped at `_MAX_TOOL_WORKERS = 8` in `agent/tool_executor.py`. The developer guide (`website/docs/developer-guide/agent-loop.md`) says a batch runs on a `ThreadPoolExecutor` and the results are restored in the original order.
 >
 > **Adapted.** Hermes's parent `max_iterations` default is 500, and `budget_warning_ratio` defaults to off (`None`). This chapter's parent cap is 8, the same bound the rest of the book uses for in-flight work, and the warning defaults to 0.5 so the demo can show the sentence. Hermes inserts a steer as its own user row (`_inject_steer_after_newest_tool_result`). This chapter appends the steer text onto the newest tool result, the same site as the two budget notices, so the cached prefix stays put and the next role stays assistant. Hermes halts an identical streak at `no_progress_block_after` (default 5) when hard stops are enabled, and it halts a cycle at that same config. This chapter notices at streak 3 and halts at streak 4, and it halts a cycle at 3 laps. The stub wording drops the product name: `[note: this result is byte-identical to the {tool} result earlier this turn. ...]`. Hermes's blank-name error is a longer anti-priming paragraph. This chapter keeps the split (no catalog when the name is blank) and uses one line, `error: tool name is empty`. A single Hermes tool call stays on the calling thread. A single read here still takes a permit from the bound of 8. This chapter's `repair_name` is a unique prefix of length at least 2, or a unique Levenshtein distance of at most 2. A tie does not repair. Hermes performs that repair by calling `agent._repair_tool_call` at the validation site. The Rust rule is the one this chapter states. The canonicalizer has no memo cache. Hermes keeps one (`_CANON_ARGS_CACHE`, 4096 entries). The 1024-character tool cap is this chapter's. Hermes stores its limits in `tools/tool_output_limits.py`, and I did not copy a number from there. The subagent tool in this chapter is named `delegate`. Hermes intercepts `delegate_task`.
 >
 > **Deferred.** Empty-response retries after tool calls (`_EMPTY_TOOL_RESPONSE_NUDGE` in `conversation_loop.py`), length continuation (`agent/turn_truncation.py`, `recover_from_truncation`), and the repetition guard (`agent/repetition_guard.py`, `is_runaway_repetition`) wait for chapter 14, When Things Fail. Preflight compression inside `build_turn_context` (`agent/turn_context.py`, `agent/context_compressor.py`) waits for chapter 34, Managing Context. `apply_stop_gates` in `agent/turn_stop_gates.py` can keep a turn going after a candidate answer: verify-on-stop, the `pre_verify` hook, and the kanban terminal-tool guard. Those nudges wait until the chapters that have a verifier and a board. The poller exemption in `tool_guardrails.py` (`process_manage`, and names ending in `_get_result` or `_poll`) waits until this harness has a poller. The idea I did take from the stop gates is the smaller one: a stop can continue the turn or return, and a candidate answer is kept for the budget-exhaustion fallback.
-
-[personal note: the first time a loop kept calling the model after you had meant to stop it]
 
 ## What this chapter decides
 
@@ -179,7 +162,7 @@ event: error missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 ```
 
-The `time:` lines are Criterion's slope. The means are `mean.point_estimate` from that run's `estimates.json`. Machine: 4 vCPU, sample size 10, warm-up 1 s, measurement 2 s.
+The means are `mean.point_estimate` from that run's `estimates.json`. Machine: [bench host](appendix-benchmark-method.md).
 
 ```text
 gate_check              time:   [2.7475 ns 2.8672 ns 2.9507 ns]
@@ -616,11 +599,7 @@ A final text reply returns `Finished` even when the token count is over the cap.
 
 A time cap that is already spent, with `usage.calls == 0`, returns `Budget` and does not call the provider. The wrap-up is only for a turn that has already spent a call.
 
-Eight identical reads in one batch do not stall. They share an iteration, and the cycle detector requires the window to span two iterations. A stall is the same call on the next model round.
-
 A steer submitted before any tool result stays in the inbox. `append_steers` does not pop until a tool message exists. Draining it early would drop the line.
-
-Canonical JSON is the send-path copy. The stored `raw_arguments` stay unsorted. A test that looks at the transcript and expects sorted keys is looking at the wrong string.
 
 The [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/) charts section 9.1 and section 9.10 separately. Seeded history for the shared names is the section 9.10 mean, 608.0 ns for `loop_iteration`, because those artifacts stored one row per function name under `6.10/loop_iteration`. Quoting the section 9.1 mean of 248.5 ns as the finished loop would hide the checks.
 

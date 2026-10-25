@@ -20,8 +20,6 @@ HashEmbedder is eight buckets of byte counts. Ranking does not use it.
 5/
 No socket and no API key. The demo loads two tools and searches "rename a file".
 
-[personal note]
-
 6/
 Next, each session sees only the names it revealed.
 
@@ -37,8 +35,6 @@ Hermes Agent rebuilds its tool-search catalog from the live definitions on every
 Plugins and upstreams in this chapter are lists in the load. Nothing is dialed. A duplicate name aborts the reload.
 
 On the Benchmarks runner, search over 10,000 synthetic tools measured 299.0 µs. The rebuild measured 27.42 ms.
-
-[personal note: one takeaway from writing this chapter]
 
 Next: session toolsets. Read Chapter 7: [link]
 

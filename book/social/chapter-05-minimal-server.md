@@ -20,8 +20,6 @@ The gate accepts 32 calls and runs 8. The 33rd is Saturated. A permit round trip
 5/
 There is no model here, so there is no API key. cargo run registers echo and prints hello.
 
-[personal note]
-
 6/
 Next, the catalog moves into this process: BM25, plugins, and a reload that swaps an Arc.
 
@@ -37,8 +35,6 @@ Chapter 4 can call an MCP server. It cannot be one. Hermes Agent's mcp_serve.py 
 The Rust in this chapter is two semaphores. One caps accepted calls at 32, including calls waiting to run. The other caps the tool body at 8. A permit is a value. Dropping it gives the slot back. Holding a mutex across the body would pin a worker. The permit does not.
 
 The keyless demo registers echo and returns hello. A permit round trip measured 45.53 ns. Eight 1 ms sleeps measured 2.129 ms.
-
-[personal note: one takeaway from writing this chapter]
 
 Next: a server-side catalog. Read Chapter 5: [link]
 

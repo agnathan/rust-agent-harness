@@ -1,27 +1,16 @@
 # Chapter 37: Balancing and Federation
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 36 can restart a child that stopped making progress. That child may be waiting on a tool that lives on another MCP server, and the gateway still treats every backend for a tool as one call. If three upstreams offer `search`, the gateway should pick one that is not already busy, and it should not open a connection to all of them while it decides. This chapter adds the pool and the federation map. It is the server line, not the harness line. The crate is `steps/ch37-balancing`. It vendors chapter 23, library name `balancing`, new module `federation`. It binds no socket. Chapter 38 copies chapter 36. It does not copy this directory.
 
 `Policy` is least-outstanding or power-of-two choices. `Backend` is one upstream in the pool. `pick` chooses without opening a connection, which is the property the bench locks. `call` formats a string and puts the counter back, so a finished call decrements the outstanding count the next pick will see. `federate` and `pool_for` group one tool name to the server names that provide it. `discover` counts overlap and connects at most 4, the discovery concurrency Hermes uses. `0` as "unlimited" stays unimplemented. A live socket to those upstreams stays unimplemented too. The pool is in memory.
 
-The server stays a separate program because the pool is a property of the upstreams, and every harness client should share it. If each agent balanced for itself, two agents would both pick the same idle backend and then both discover it was busy. The gateway is the place that can see every in-flight call. The harness remains the client: it asks for a tool by name, and the server chooses the backend. Chapter 42 vendors this crate and adds routing, drain, and quotas. Chapter 15's breaker still sits under the call. A pool that ignores an open breaker would send traffic at a backend the limits chapter already decided to leave alone.
+The server stays a separate program because the pool is a property of the upstreams, and every harness client should share it. `pick` reads the counters and returns an index. `call` then does `fetch_add`. Those two steps are not one critical section, so two threads can both `pick` the same index before either increment is visible. The counters live on the gateway. This chapter does not close that race. The harness remains the client: it asks for a tool by name, and the server chooses the backend. Chapter 42 vendors this crate and adds routing, drain, and quotas. Chapter 15's breaker still sits under the call. A pool that ignores an open breaker would send traffic at a backend the limits chapter already decided to leave alone.
 
 Nothing here learns a skill. The connection to the self-improving harness is indirect and real: a team of agents calling tools only works if the catalog stays up. Federation is how the catalog grows to include tools the gateway does not contain, which is the same split chapter 4 drew for a single server, now with more than one upstream and a cap on how many you ask at once.
 
 Rust, at the pick: the outstanding count is an integer you increment and decrement. Power of two is "sample two, take the quieter one," a few lines, not a load-balancer framework. The discovery cap is a semaphore of 4. `Result` is a pool that has no backend for that name.
 
 `cargo run -p ch37-balancing --offline` prints the demo line. The exercise is `my-harness/tests/ch37.rs`: a least-outstanding pick does not open a connection.
-
-**In this chapter**
-
-- 37.1 The crate around the new module
-- 37.2 `Policy`, `Backend`, and `pick`
-- 37.3 `call` formats a string and puts the counter back
-- 37.4 `federate` and `pool_for` group one tool
-- 37.5 `discover` counts overlap, capped at 4
-- 37.6 `FakeModel` and the demo line
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -38,19 +27,25 @@ Rust, at the pick: the outstanding count is an integer you increment and decreme
 >
 > I read `tools/mcp_tool_discovery.py` and the `mcp` block in `hermes_cli/config_defaults.py`.
 >
-> ```text
+> 
+
+```text
 > 25  # Default max concurrent MCP server connections per discovery pass
 > 27  # ``mcp.discovery_concurrency`` overrides it, 0 = unlimited (#117373).
 > 28  _DISCOVERY_CONNECT_CONCURRENCY = 4
 > ```
+
 >
 > `_discovery_connect_concurrency` reads `mcp.discovery_concurrency`. A non-integer, a bool, or a negative value warns and returns 4. The comment on the constant says 0 means unlimited. `config_defaults.py` sets that key to 4, in the `mcp` object, and the comment there says the same thing: max servers connected at once per discovery pass, and 0 means unlimited. `_discover_all` builds the bound:
 >
-> ```text
+> 
+
+```text
 > 442  # Flat cap for all transports; 0 (unlimited) keeps the original unbounded gather.
 > 443  cap = _discovery_connect_concurrency()
 > 444  semaphore = asyncio.Semaphore(cap) if cap > 0 else None
 > ```
+
 >
 > A positive cap is an `asyncio.Semaphore`. Zero leaves `semaphore` as `None`, and `_connect_bounded` then awaits the connect with no semaphore. That is the unlimited setting.
 >
@@ -59,8 +54,6 @@ Rust, at the pick: the outstanding count is an integer you increment and decreme
 > **Adapted.** Least outstanding, and the quieter of two indexes, are this chapter's pool. I did not find them in the MCP client. Federation is a `HashMap` from tool name to server names, built from an in-memory list. Outstanding is an `AtomicUsize`. `pick` only loads it. `call` adds one, formats `reply via server`, and subtracts one. `discover` is threads, a mutex, and a condvar. The test's `hold` is a `thread::sleep` so the workers overlap. It is not a TCP connect. `0` as unlimited is not implemented. The gate always uses 4.
 >
 > **Deferred.** A live upstream connection, the unlimited override, and session routing. Chapter 42 is the service that routes by session id. The pick stays a local read.
-
-[personal note: a tool that had one backend until a second server offered the same name]
 
 ## What this chapter decides
 
@@ -461,13 +454,11 @@ cargo bench -p ch37-balancing --bench balancing --locked -- --warm-up-time 1 --m
 |---|---|---|---|
 | `pick_least` | 3.74 ns | a local pick among a pool | the quietest of four backends |
 
-`pick_least` is `benches/balancing.rs`. It builds four backends before the bench, with outstanding counts 3, 1, 4, and 2. The timed closure is `b.iter`. Inside: `pick(Policy::LeastOutstanding)` passed through `black_box`, then `black_box` of the index. Each sample loads four atomics and returns index 1. `call` is not used, so the counters do not change and the `via` string is not allocated. No thread is started. `discover` is not called. No socket is opened. `FakeModel` is not constructed. `LearnedGateway` is not constructed. The prediction path is not on this bench.
+The line is `pick: echo via alpha`. The milestone is the pick itself: least outstanding does not open a connection. The index is a `usize` into a vec of strings and atomics.
 
-The mean is `3.74 ns`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `37`. The id is `37/pick_least`. The old id `35/pick_least` is an alias in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The Criterion `time:` line is the slope, not the mean.
+`pick_least` is `benches/balancing.rs`. It builds four backends before the bench, with outstanding counts 3, 1, 4, and 2.
 
-### Milestone demo
-
-The `cargo run` above. The line is `pick: echo via alpha`. The milestone is the pick itself: least outstanding does not open a connection. The index is a `usize` into a vec of strings and atomics.
+The means are `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `37`. Bench ids: `37/pick_least`, `35/pick_least`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -478,12 +469,6 @@ The `cargo run` above. The line is `pick: echo via alpha`. The milestone is the 
 Power of two is only as random as the indexes the caller passes. This crate does not draw them.
 
 Discovery with a zero hold can show a max below 4, because the threads may not overlap. The test holds for 40 milliseconds so they do. The cap is still 4 when they overlap. It does not raise the count above 4.
-
-Hermes treats `discovery_concurrency: 0` as unlimited, by skipping the semaphore. This gate does not. Four is the constant. There is no parameter to pass 0.
-
-`lib.rs`'s `demo` and `federation::demo` are different functions. The binary prints the federation line. A test that calls `balancing::demo()` is on the learned-tools tuple, not on `pick: echo via alpha`.
-
-`catalog::Upstream` will not compile in a `federate` call. The federation struct is `balancing::federation::Upstream`.
 
 ## Guardrails in this chapter
 
@@ -501,7 +486,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
 ## What you implement
 
-`my-harness/tests/ch37.rs` is the milestone. The step crate is the reference. The stub stays `todo!`.
+`my-harness/tests/ch37.rs` is the milestone. The stub stays `todo!`.
 
 ```rust
 use my_harness::chapter_37_pick_opens_connection;
@@ -532,8 +517,6 @@ pub fn chapter_37_pick_opens_connection() -> bool {
 - **Federation.** A map from tool name to server names. `echo` on `alpha` and `beta` picks `alpha` when both counters are 0.
 - **Discovery.** Four at a time. Unlimited `0` stays unimplemented.
 - **Demo.** `pick: echo via alpha`. The bench is `pick`, not `call`.
-
-[personal note: four atomic loads, and a name that came back without a handshake]
 
 ## What's next
 

@@ -35,8 +35,6 @@ Section 1.4 adds one request timeout. It does not retry. That waits for a later 
 
 Tests talk to a local wiremock server. I did not paste a live API transcript.
 
-[personal note]
-
 7/
 Next, Chapter 2: conversations and a chat REPL.
 
@@ -56,8 +54,6 @@ So I started there, in four steps:
 • a single request timeout, plus the model id and token counts the response actually carried
 
 I'm new to Rust, so the chapter explains each language feature in a short sidebar right when it's needed. The runs in the chapter are the mock and a local fake server.
-
-[personal note: one takeaway from writing this chapter]
 
 Next up: conversations and a chat REPL. Read Chapter 1: [link]
 

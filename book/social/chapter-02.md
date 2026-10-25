@@ -48,8 +48,6 @@ In this chapter I encoded those rules in Rust's type system. The `Conversation` 
 
 One lesson I didn't expect: writing a test for a failed API call exposed a subtle bug, where the unanswered user turn would break alternation on retry. The fix is a rollback, and the test now guards it.
 
-[personal note: one takeaway from this chapter]
-
 Next up: tools. Read Chapter 2: [link]
 
 #Rust #AIAgents #LearningInPublic #SoftwareEngineering

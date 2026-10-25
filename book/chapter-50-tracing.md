@@ -1,27 +1,16 @@
 # Chapter 50: Seeing Inside
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 49 can call an external agent and cancel the call. When a team run goes wrong, the transcript says what the model said. It does not say which span was open, which field was safe to log, or whether the hundred agents in a research team finished. This chapter adds spans on the events the harness already emits, and it adds the research team that uses them. The crate is `steps/ch50-tracing`, a copy of chapter 49 plus `spans`. The package is `ch50-tracing`. Chapter 51 is not this team. Chapter 51 is the server's load and token comparison. Chapter 52 copies this harness, not chapter 51.
 
 `CountingSubscriber` counts the spans a test opened, so the bench can compare a turn with tracing and a turn without it. `safe_field` decides what may be attached to a span. A secret is not a span field. `emit` records one event. `mock_turn` runs the scripted model under that subscriber. `Memory` is the small store the research team reads across runs, the harness memory, not a new database. `research_team` runs 100 mock agents and then one more. `demo` prints the team. A span per event still finishes the mock turn, which is the requirement: tracing is not allowed to change the outcome, and it is not allowed to blow the chapter 1 budget of a millisecond of overhead once the model is excluded.
 
-The research team is the place the book shows the pieces working as one harness. Sessions, memory, skills, and the team patterns are already modules in this copy, because every harness chapter copied the previous one. The team runs them under spans so a later reader can see a run. It does not replace chapter 26's reviewer or chapter 48's librarian. Learning stays those modules. Tracing watches them. A span that included the raw prompt would undo chapter 20's scrub by writing the secret to a collector. `safe_field` is that refusal.
+`research_team` runs 100 threads that each append the scripted reply, then one more call that can see those notes. The demo prints `trace: ok events=3 spans=5 team=101`. Sessions, memory, skills, and the team patterns are modules in this copy because every harness chapter copied the previous one. This demo does not drive them, and it does not replace chapter 26's reviewer or chapter 48's librarian. What this chapter locks is the span field. A span that included the raw prompt would undo chapter 20's scrub by writing the secret to a collector. `safe_field` is that refusal.
 
 Chapter 52 re-runs chapter 9's saved evals on this copy of `run_loop`, with the spans still in the crate. The evals do not require a trace to pass. They require the loop to still return the outcomes chapter 9 named. Tracing that changed a verdict would make the suite measure the tracer.
 
 Rust, at the subscriber: the `tracing` crate's subscriber is a trait you implement, and the counting one is a few atomics. A field is a key and a value you filter before it is recorded. The team is a loop of tasks, the same fan the earlier chapters bounded, now with a span entered and exited around the mock turn.
 
 `cargo run -p ch50-tracing --bin ch50-tracing` runs the demo. The exercise is `my-harness/tests/ch50.rs`: a span per event still finishes the mock turn.
-
-**In this chapter**
-
-- 50.1 `CountingSubscriber`
-- 50.2 `safe_field` and `emit`
-- 50.3 `FakeModel` and `mock_turn`
-- 50.4 `Memory`
-- 50.5 `research_team`
-- 50.6 `demo`
 
 | Section | What it walks |
 |---|---|
@@ -38,7 +27,9 @@ Rust, at the subscriber: the `tracing` crate's subscriber is a trait you impleme
 >
 > The module doc on `otlp_exporter.py` says it maps gateway monitoring events to OTel spans for the operator-configured `monitoring.export.otlp` endpoint, and that no default destination ships. The OTel SDK is an optional extra (`hermes-agent[otlp]`) imported lazily. `headers_env` values are read at export time and never logged or stored. The streaming subscriber runs fail-isolated on the emitter thread. `event_filter` keeps other planes off it. The first lines are:
 >
-> ```python
+> 
+
+```python
 > """Export monitoring events to an OpenTelemetry Collector over OTLP/HTTP.
 >
 > Maps gateway monitoring events to OTel spans for the operator-configured ``monitoring.export.otlp``
@@ -48,10 +39,13 @@ Rust, at the subscriber: the `tracing` crate's subscriber is a trait you impleme
 > subscriber runs fail-isolated on the emitter thread; ``event_filter`` keeps other planes off it.
 > """
 > ```
+
 >
 > `redact_bounded` in `agent/monitoring/redaction.py` is:
 >
-> ```python
+> 
+
+```python
 > def redact_bounded(raw: Any, *, limit: int = 500, empty: str = "[redacted]", unavailable: str = UNAVAILABLE) -> str:
 >     """Redact ``str(raw or "")`` and length-bound it; ``empty`` replaces an empty
 >     result, ``unavailable`` is returned if redaction itself raises."""
@@ -60,12 +54,15 @@ Rust, at the subscriber: the `tracing` crate's subscriber is a trait you impleme
 >     except Exception:
 >         return unavailable
 > ```
+
 >
 > The module doc above that function says every string that leaves the process passes through `redact_for_export`: secrets via `agent/redact.py::redact_for_egress`, then PII. `redact_bounded` calls `redact_for_export` on `str(raw or "")`, slices to `limit`, and returns `unavailable` if redaction raises.
 >
 > `agent/moa_trace.py` is opt-in via `moa.save_traces`. The module doc says it is off by default, and that when it is off the only overhead is the config read. A turn that runs appends one JSON line to `<hermes_home>/moa-traces/<session_id>.jsonl`. The same doc says the side channel never enters the `messages` table, history, or replay. `_traces_enabled_and_dir` returns `None` when the flag is off:
 >
-> ```python
+> 
+
+```python
 > def _traces_enabled_and_dir() -> Optional[Path]:
 >     """Trace directory if ``moa.save_traces`` is on, else None. Reads config per
 >     call (once per cache-MISS turn); ``moa.trace_dir`` overrides the default."""
@@ -77,6 +74,7 @@ Rust, at the subscriber: the `tracing` crate's subscriber is a trait you impleme
 >     if not moa_cfg.get("save_traces"):
 >         return None
 > ```
+
 >
 > The side channel is a file under the trace dir. I am not claiming the prompt is stored in the model messages. The module doc says the trace never enters the `messages` table.
 >
@@ -87,8 +85,6 @@ Rust, at the subscriber: the `tracing` crate's subscriber is a trait you impleme
 > **Deferred.** A collector. Headers. `moa.save_traces` files.
 
 > **Guardrails.** The prompt is not a span field. No socket. Memory notes are the mock reply, which is `ok` or `kept`, not the user prompt, because `FakeModel` ignores the prompt. The full box is [Guardrails in this chapter](#guardrails-in-this-chapter).
-
-[personal note: a span that held a name]
 
 ## What this chapter decides
 
@@ -170,15 +166,15 @@ The module comment says a span per event, and that the field is the event name, 
 
 `#[derive(Default)]` is on the struct. `new` is what `demo` and the tests call, and `new` sets the counter to 1. `Default` would also build the struct. `AtomicU64`'s `Default` is 0, and `Arc`'s `Default` is a new allocation of that default. `demo` does not call `Default::default()`. It calls `new`, so the first id is 1 and `Id::from_u64` receives 1. `id.max(1)` still forces a 0 up to 1 if a counter ever handed one out.
 
-### Rust: `Subscriber` and `Id`
-
-`tracing::Subscriber` is the trait the `tracing` macros call on the current subscriber. `with_default` installs one for a closure. Outside that closure the macros have whatever subscriber the process already had, which in these tests is none until `with_default` runs. `mock_turn` is called inside `with_default` in the test and in `demo`. The bench installs the subscriber once around both bench functions.
-
-`new_span` must return an `Id`. The `Attributes` are the span's metadata and fields at creation. This impl discards them. A field that `info_span!` built is not stored. `record` is the later path for values recorded after creation. That method is empty, so a value recorded there is not stored either.
-
-`fetch_add` on `AtomicU64` is one atomic increment. Two threads opening spans get different ids because each `fetch_add` returns a distinct previous value. `research_team` does not open spans. `mock_turn` runs on the calling thread in `demo`. The five ids are 1 through 5 in order.
-
-`Ordering::Relaxed` is what this subscriber writes. Chapter 49's pool uses `SeqCst`. This counter is a tally. `spans_opened` is read after `with_default` returns, on the same thread that opened the spans, in `demo`. The test reads it after `with_default` returns too.
+> **Rust sidebar: `Subscriber` and `Id`**
+>
+> `tracing::Subscriber` is the trait the `tracing` macros call on the current subscriber. `with_default` installs one for a closure. Outside that closure the macros have whatever subscriber the process already had, which in these tests is none until `with_default` runs. `mock_turn` is called inside `with_default` in the test and in `demo`. The bench installs the subscriber once around both bench functions.
+>
+> `new_span` must return an `Id`. The `Attributes` are the span's metadata and fields at creation. This impl discards them. A field that `info_span!` built is not stored. `record` is the later path for values recorded after creation. That method is empty, so a value recorded there is not stored either.
+>
+> `fetch_add` on `AtomicU64` is one atomic increment. Two threads opening spans get different ids because each `fetch_add` returns a distinct previous value. `research_team` does not open spans. `mock_turn` runs on the calling thread in `demo`. The five ids are 1 through 5 in order.
+>
+> `Ordering::Relaxed` is what this subscriber writes. Chapter 49's pool uses `SeqCst`. This counter is a tally. `spans_opened` is read after `with_default` returns, on the same thread that opened the spans, in `demo`. The test reads it after `with_default` returns too.
 
 ## 50.2 `safe_field` and `emit`
 
@@ -206,11 +202,11 @@ The doc comment says the field is content-free and that the prompt is not a span
 
 Hermes `redact_bounded` redacts `str(raw or "")` and slices it to 500 characters by default. `safe_field` does not call it. The prompt is discarded. The field is `"request"`.
 
-### Rust: `info_span!` and a guard
-
-`tracing::info_span!("event", name)` builds a span at info level. The first argument is the span name. `name` in field position is shorthand for a field named `name` whose value is the variable `name`. The macro looks up the current subscriber and calls `new_span`. `let _entered = span.enter()` calls `enter` and keeps the guard in a local. The underscore means the function does not read the guard. The drop at the end of the scope calls `exit`. Renaming the local to `_` would drop the guard at the end of the statement, which would exit the span before `emit` returns. The file binds `_entered` so the enter lasts for the rest of the function. The rest of the function is the end of the function. The span is open for no further work. The count still increments, because `new_span` ran.
-
-`sink.push(name)` stores the `&'static str` itself. The vec does not allocate a `String` for the name. The three pushes in `mock_turn` are three statics. `format!("{sink:?}")` in the test prints those statics. The test asserts that debug text does not contain `sk-`.
+> **Rust sidebar: `info_span!` and a guard**
+>
+> `tracing::info_span!("event", name)` builds a span at info level. The first argument is the span name. `name` in field position is shorthand for a field named `name` whose value is the variable `name`. The macro looks up the current subscriber and calls `new_span`. `let _entered = span.enter()` calls `enter` and keeps the guard in a local. The underscore means the function does not read the guard. The drop at the end of the scope calls `exit`. Renaming the local to `_` would drop the guard at the end of the statement, which would exit the span before `emit` returns. The file binds `_entered` so the enter lasts for the rest of the function. The rest of the function is the end of the function. The span is open for no further work. The count still increments, because `new_span` ran.
+>
+> `sink.push(name)` stores the `&'static str` itself. The vec does not allocate a `String` for the name. The three pushes in `mock_turn` are three statics. `format!("{sink:?}")` in the test prints those statics. The test asserts that debug text does not contain `sk-`.
 
 ## 50.3 `FakeModel` and `mock_turn`
 
@@ -260,13 +256,13 @@ The sink is `["request", "response", "gateway"]`. Three names. The prompt is not
 
 The doc comment says these are chapter 1 events, then a gateway child span, and that no prompt text is stored.
 
-### Rust: a field binding in the macro
-
-`event = safe_field(prompt)` is a field named `event` set to the expression. The expression runs in the caller, before the subscriber sees the span. `safe_field` has already returned `"request"` when `new_span` is invoked. `CountingSubscriber::new_span` drops the attributes, so the string `"request"` is not saved by the subscriber. It was still the value the macro put in the field. The prompt was not that value.
-
-`event = "dispatch"` is the same form with a literal. The gateway span's field is the word `dispatch`. It is not the prompt and it is not the sink name `"gateway"`. The sink name `"gateway"` comes from `emit("gateway", sink)`, which is a different span, the one named `event`.
-
-`_root` and `_gateway` both live until the end of `mock_turn`. Two spans are entered at the return. Their `exit` calls run on drop. Those methods are empty. The ids were allocated at `new_span` and stay allocated from the counter's point of view. The counter does not go backwards on exit.
+> **Rust sidebar: a field binding in the macro**
+>
+> `event = safe_field(prompt)` is a field named `event` set to the expression. The expression runs in the caller, before the subscriber sees the span. `safe_field` has already returned `"request"` when `new_span` is invoked. `CountingSubscriber::new_span` drops the attributes, so the string `"request"` is not saved by the subscriber. It was still the value the macro put in the field. The prompt was not that value.
+>
+> `event = "dispatch"` is the same form with a literal. The gateway span's field is the word `dispatch`. It is not the prompt and it is not the sink name `"gateway"`. The sink name `"gateway"` comes from `emit("gateway", sink)`, which is a different span, the one named `event`.
+>
+> `_root` and `_gateway` both live until the end of `mock_turn`. Two spans are entered at the return. Their `exit` calls run on drop. Those methods are empty. The ids were allocated at `new_span` and stay allocated from the counter's point of view. The counter does not go backwards on exit.
 
 ## 50.4 `Memory`
 
@@ -312,11 +308,11 @@ impl Default for Memory {
 
 `last` clones so the lock guard can drop before the caller uses the string. The `String` the caller holds is a copy. A later `push` does not invalidate it. `research_team` reads `last` on the parent thread and moves that `Option<String>` into the scoped thread.
 
-### Rust: `Mutex<Vec<String>>` and `Option`
-
-`lock` returns `Result<MutexGuard<Vec<String>>, PoisonError<_>>`. `expect` unwraps the guard. `last()` on the vec returns `Option<&String>`. `cloned` turns that into `Option<String>` by cloning the inner string. `None` stays `None`. The guard drops at the end of the statement, which unlocks. `push` needs the guard only for the `Vec::push`. The note is moved into the vec.
-
-Two threads can call `push` on the same `Memory`. The mutex serializes the pushes. `research_team` shares one `Memory` across the scoped threads. The length after `thread::scope` returns is the number of pushes that finished, which is `n` for a single call that pushes once per index.
+> **Rust sidebar: `Mutex<Vec<String>>` and `Option`**
+>
+> `lock` returns `Result<MutexGuard<Vec<String>>, PoisonError<_>>`. `expect` unwraps the guard. `last()` on the vec returns `Option<&String>`. `cloned` turns that into `Option<String>` by cloning the inner string. `None` stays `None`. The guard drops at the end of the statement, which unlocks. `push` needs the guard only for the `Vec::push`. The note is moved into the vec.
+>
+> Two threads can call `push` on the same `Memory`. The mutex serializes the pushes. `research_team` shares one `Memory` across the scoped threads. The length after `thread::scope` returns is the number of pushes that finished, which is `n` for a single call that pushes once per index.
 
 ## 50.5 `research_team`
 
@@ -351,13 +347,13 @@ The test `one_hundred_agents_learn_across_two_runs` uses `FakeModel { reply: "fo
 
 Within one `research_team(100)` call, each parent `last()` can observe pushes from threads spawned on earlier iterations, or it can still see `None` if those threads have not pushed yet. The test does not assert which prompt each of the hundred threads received. It asserts the length. The second call is the one the doc comment describes. It runs after the first scope, so `last` sees the earlier notes. `FakeModel` ignores the prompt it is given. The new note is still the reply.
 
-### Rust: `thread::scope`
-
-`thread::scope` borrows `memory` and `model` for the life of the scope. The spawned closures can use those references because the scope joins them before the references would end. A `thread::spawn` that outlived `research_team` could not borrow `memory`. `scope.spawn` can. `move` moves `known` and `index` into the closure. `index` is `usize`, which is `Copy`. `known` is `Option<String>` and moves. `memory` and `model` are references captured from the environment. The signature takes `&Memory` and `&FakeModel`, so the pushes share one vec and one reply.
-
-`as_deref` on `Option<String>` borrows the string as `&str` without cloning it again. `unwrap_or("first")` does not allocate. `format!` allocates the note that `push` stores. The reply `ok` becomes a note like `0:ok`. The reply `kept` becomes `0:kept` on the follow-up, whose index range is `0..1`.
-
-`thread::scope` returns when every spawned thread has returned. A panic in a scoped thread panics the scope. These threads call `complete` and `push`. `complete` does not panic. `push` panics if the mutex is poisoned. The tests get `100` and `101` back.
+> **Rust sidebar: `thread::scope`**
+>
+> `thread::scope` borrows `memory` and `model` for the life of the scope. The spawned closures can use those references because the scope joins them before the references would end. A `thread::spawn` that outlived `research_team` could not borrow `memory`. `scope.spawn` can. `move` moves `known` and `index` into the closure. `index` is `usize`, which is `Copy`. `known` is `Option<String>` and moves. `memory` and `model` are references captured from the environment. The signature takes `&Memory` and `&FakeModel`, so the pushes share one vec and one reply.
+>
+> `as_deref` on `Option<String>` borrows the string as `&str` without cloning it again. `unwrap_or("first")` does not allocate. `format!` allocates the note that `push` stores. The reply `ok` becomes a note like `0:ok`. The reply `kept` becomes `0:kept` on the follow-up, whose index range is `0..1`.
+>
+> `thread::scope` returns when every spawned thread has returned. A panic in a scoped thread panics the scope. These threads call `complete` and `push`. `complete` does not panic. `push` panics if the mutex is poisoned. The tests get `100` and `101` back.
 
 ## 50.6 `demo`
 
@@ -394,11 +390,11 @@ The notes in this demo are `ok` and `kept`. They are the mock replies. They are 
 
 The binary prints that line. No key. No socket. No file under a trace directory.
 
-### Rust: `with_default` and a cloned counter
-
-`tracing::subscriber::with_default(subscriber, closure)` sets the thread-local subscriber for the closure and restores the previous one afterward. The subscriber is moved in. The clone `opened` is how `demo` reads the count after the closure. Without the clone, the `Arc` would have moved and `spans_opened` would be unreachable. `Clone` on `CountingSubscriber` is derived, and the only field is `Arc<AtomicU64>`, so the clone is a new subscriber struct pointing at the same atomic.
-
-`format!` uses `{reply}` by name and `{}` for `sink.len()` and `opened.spans_opened()` in order. `team={again}` interpolates the length from the second `research_team`. The spaces in the format string are the spaces in `trace: ok events=3 spans=5 team=101`.
+> **Rust sidebar: `with_default` and a cloned counter**
+>
+> `tracing::subscriber::with_default(subscriber, closure)` sets the thread-local subscriber for the closure and restores the previous one afterward. The subscriber is moved in. The clone `opened` is how `demo` reads the count after the closure. Without the clone, the `Arc` would have moved and `spans_opened` would be unreachable. `Clone` on `CountingSubscriber` is derived, and the only field is `Arc<AtomicU64>`, so the clone is a new subscriber struct pointing at the same atomic.
+>
+> `format!` uses `{reply}` by name and `{}` for `sink.len()` and `opened.spans_opened()` in order. `team={again}` interpolates the length from the second `research_team`. The spaces in the format string are the spaces in `trace: ok events=3 spans=5 team=101`.
 
 ## The turn, walked with the secret from the test
 
@@ -488,29 +484,21 @@ Subscriber install is outside both samples. `CountingSubscriber::new` and `with_
 
 `descriptions.json` says a span per event has to add less than 0.1 milliseconds, and the chapter 1 budget of 1 millisecond still has to hold with tracing on. It says the 100-agent team is not in the sample. It says around 100 nanoseconds above `event_without_span` is the span tax the reading expects, and that one millisecond would still meet the chapter 1 budget. Those sentences are the file's reading of the sample. They are not a measured mean. The means are `18.1 ns` and `236.4 ns`. They are `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196), section `50`.
 
-`.github/scripts/run_bench_section.sh` runs `cargo bench -p ch50-tracing --bench spans --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10` for section 50. The same flags are in `steps/ch50-tracing/README.md`. The Criterion `time:` line is the slope, not the mean.
+`.github/scripts/run_bench_section.sh` runs `cargo bench -p ch50-tracing --bench spans --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10` for section 50. The same flags are in `steps/ch50-tracing/README.md`.
 
 ### Milestone demo
 
-The `cargo run` above. The line is `trace: ok events=3 spans=5 team=101`.
+The line is `trace: ok events=3 spans=5 team=101`.
 
 ## Pitfalls
 
 The bench is one `complete` and one `mock_turn`. `research_team(100)` is the test and the demo. A number that spawns 100 threads is not `span_per_event`.
 
-`event_without_span` still runs under `with_default`. The subscriber is installed. The sample does not enter a span. Quoting only `span_per_event` hides the floor. Both means are the comparison. The install is outside both.
-
 `safe_field` returns `"request"` for every prompt. A later edit that puts `text` into the span field would put the secret into the attributes. `new_span` currently drops attributes. The test also checks the sink, which `emit` fills with names. The secret test fails if the sink debug text contains `sk-`.
-
-`spans_opened` subtracts 1 from a counter that starts at 1. Reading it before any `new_span` returns 0. `demo` reads it after `mock_turn`, which opens five. The test bound is `>= 3`.
-
-`research_team` reads `last` on the parent, inside the spawn loop. Sibling threads may already have pushed. The test does not assert those prompts. It asserts lengths, and it asserts that the note after the second call ends with `kept`. The second call is sequenced after the first `thread::scope` returns.
 
 `FakeModel` ignores the prompt. A note that equaled the user prompt would be a different function. `format!("{index}:{note}")` stores the reply. In `demo` the replies are `ok` and `kept`.
 
 `CountingSubscriber` does not export. Pointing it at a collector would be a socket this file does not open. `headers_env` in the Hermes exporter is read at export time and never logged or stored. This subscriber has no header map.
-
-`moa.save_traces` writes a file under the trace dir when the flag is on, and `_traces_enabled_and_dir` returns `None` when the flag is off. `demo` does not read that flag and does not write that file. The sink is a `Vec` of three names on the stack of `demo`.
 
 ## Guardrails in this chapter
 
@@ -545,7 +533,7 @@ pub fn chapter_50_span_finishes_turn() -> bool {
 }
 ```
 
-`todo!("chapter 50")` is the panic. The test asserts `chapter_50_span_finishes_turn()` is true. In the step crate that is `mock_turn` under `CountingSubscriber` returning the fake reply after the request, response, and gateway names are in the sink. The stub stays `todo!`. Do not paste `spans.rs` into `my-harness/`.
+`todo!("chapter 50")` is the panic. The test asserts `chapter_50_span_finishes_turn()` is true. In the step crate that is `mock_turn` under `CountingSubscriber` returning the fake reply after the request, response, and gateway names are in the sink. The stub stays `todo!`. 
 
 ## Chapter summary
 
@@ -554,9 +542,7 @@ pub fn chapter_50_span_finishes_turn() -> bool {
 - **Turn.** The sink holds `request`, `response`, and `gateway`. Five spans open: turn, request event, response event, gateway, gateway event.
 - **Team.** `research_team(100)` then `research_team(1)` leaves 101 notes. The second call sees the earlier notes. The note text is the mock reply.
 - **Model.** `FakeModel` answers `ok` or `kept` in `demo`. The line is `trace: ok events=3 spans=5 team=101`.
-- **Time.** `event_without_span` mean `18.1 ns`. `span_per_event` mean `236.4 ns`. Those cells are `mean.point_estimate`. The Criterion `time:` line is the slope.
-
-[personal note: five spans, and the sink held three names]
+- **Time.** `event_without_span` mean `18.1 ns`. `span_per_event` mean `236.4 ns`. Those cells are `mean.point_estimate`.
 
 ## What's next
 

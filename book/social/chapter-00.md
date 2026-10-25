@@ -48,8 +48,6 @@ So I put together a test-driven path in six parts, chapters 0 through 52. It sta
 
 I'll share each chapter as I write it. Chapter 0 explains the why and gives a tour of Hermes's architecture: [link]
 
-[personal note: one sentence on why this matters to you professionally]
-
 #Rust #AIAgents #SoftwareArchitecture #LearningInPublic
 
 ## Blog teaser

@@ -1,7 +1,5 @@
 # Chapter 33: Composing Patterns
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 The team patterns now exist as separate modules: a pipeline, a supervisor with a pool of eight, a filtered handoff, a fan-out of 100, and a critic with one permit. A real task uses more than one of them. A supervisor fans out, and it hands off only when ownership should move. A nested fan-out that ignores the pool will schedule a width the machine never agreed to. This chapter composes the patterns and puts the limits in front of the scheduling. The crate is `steps/ch33-composition`, a copy of chapter 32. The new module is `composition`. The package is `ch33-composition`. It does not path-depend on four older crates. The sources are copied, which is the rule from chapter 10 on.
 
 `nested_fanout` refuses a width of 9 before `schedule` is called. Eight is the pool. The refusal happens before any task starts, so a too-wide request does not leave orphan work. `dispatch` moves ownership only for `Route::Move`. Any other route keeps the parent, which is how a fan-out result stays a result instead of becoming a handoff. `wait_target` reads a session, then a pid, then seconds, the wait chapter 30 deferred. `Gate` records shell exits for the quality gate, also deferred from chapter 30. The loop runs the gates, then the critic from chapter 32. `limits` returns the four numbers the composition actually enforces, and the demo stays inside them. `FakeModel` pops a scripted line.
@@ -11,16 +9,6 @@ Composition is what makes the patterns a harness instead of a menu. Chapter 34 w
 Rust, at the refusal: the route is an enum, so "move" and "stay" are not booleans you can mix with a width. The width check is a comparison before any spawn. `Result` is the refusal. The gate's exit codes are a small struct you record, not a shell the test has to launch.
 
 `cargo run -p ch33-composition --bin ch33-composition --offline` stays inside the limits. The exercise is `my-harness/tests/ch33.rs`: nested width 9 is refused before any task starts.
-
-**In this chapter**
-
-- 33.1 Four constants, and the enums that carry a stop
-- 33.2 `Gate` records exits, and `FakeModel` pops a line
-- 33.3 `nested_fanout` refuses before `schedule`
-- 33.4 `dispatch` moves ownership only for `Route::Move`
-- 33.5 `wait_target` reads a session, then a pid, then seconds
-- 33.6 The loop runs the gates, then the critic
-- 33.7 `limits` returns the four numbers, and the demo stays
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -34,7 +22,7 @@ Rust, at the refusal: the route is an enum, so "move" and "stay" are not boolean
 
 > **How Hermes does it**
 >
-> I read `hermes_cli/goals.py` (`DEFAULT_MAX_TURNS`, `DEFAULT_JUDGE_TIMEOUT`, `DEFAULT_GATE_TIMEOUT_SECONDS`, `DEFAULT_GATE_MAX_RETRIES`, `_parse_judge_response`) and `tools/delegate_tool_config.py` (`MAX_DEPTH`, `_DEFAULT_MAX_CONCURRENT_CHILDREN`, `_get_max_concurrent_children`, `_get_max_async_children`) on Hermes `main` at `9e01b44`.
+> I read `hermes_cli/goals.py` (`DEFAULT_MAX_TURNS`, `DEFAULT_JUDGE_TIMEOUT`, `DEFAULT_GATE_TIMEOUT_SECONDS`, `DEFAULT_GATE_MAX_RETRIES`, `_parse_judge_response`) and `tools/delegate_tool_config.py` (`MAX_DEPTH`, `_DEFAULT_MAX_CONCURRENT_CHILDREN`, `_get_max_concurrent_children`, `_get_max_async_children`) on Hermes `main` at `9e01b44`. Chapters 23 through 32 cite `ab3fe9dffb0a`. From here the citations are `9e01b44`, a later commit of the same tree.
 >
 > `DEFAULT_MAX_TURNS` is 20. `DEFAULT_JUDGE_TIMEOUT` is 30.0. `DEFAULT_GATE_TIMEOUT_SECONDS` is 300. `DEFAULT_GATE_MAX_RETRIES` is 3. The comment above the gate constants says a failed gate short-circuits the judge. `_parse_judge_response` prefers a session, then a pid, then seconds. The session keys it reads are `wait_on_session`, then `session_id`, then `wait_session`. The pid keys are `wait_on_pid`, `pid`, `wait_pid`. The seconds keys are `wait_for_seconds`, `seconds`, `wait_seconds`. A `wait` with none of those returns `"continue"`. `MAX_DEPTH` is 1. `_DEFAULT_MAX_CONCURRENT_CHILDREN` is 10. `_get_max_concurrent_children` reads `delegation.max_concurrent_children`, then the env var `DELEGATION_MAX_CONCURRENT_CHILDREN`, then 10. The floor is 1. The docstring says there is no ceiling. `_get_max_async_children` uses that same cap, and its docstring says a new async dispatch at capacity is rejected.
 >
@@ -43,8 +31,6 @@ Rust, at the refusal: the route is an enum, so "move" and "stay" are not boolean
 > **Adapted.** The nested bound is `pool.limit()`. The tests build that pool with `WORKER_BOUND`, which is 8 in the copied supervisor. Hermes's default concurrent-children cap is 10. `held.saturating_add(width)` is compared with the limit before `FanBoard::new`. A refusal returns `ComposeError::ExceedsBound` and leaves `max_seen` at 0. The gate is a `VecDeque` of scripted exit codes. This file does not spawn a shell and does not sleep 300 or 30. `wait_target` scans the three names `wait_on_session`, `wait_on_pid`, and `wait_for_seconds`. `FakeModel::complete` pops a scripted line. `dispatch` returns `Ok(None)` for `Route::Stay`.
 >
 > **Deferred.** The alias keys `session_id`, `wait_session`, `pid`, `wait_pid`, `seconds`, and `wait_seconds`. A JSON object parse. Spawning the gate command. Heartbeats, which stay in chapter 36. Context-file scan, truncation, and the untrusted wrap, which are chapter 34. `MAX_DEPTH` stays the copied supervisor's depth check. This chapter does not call `child_call`.
-
-[personal note: a width that looked small until I added the workers I already held]
 
 ## What this chapter decides
 
@@ -217,7 +203,8 @@ pub fn nested_fanout_holding(
 > - `Result<String, ComposeError>` is either `Ok(summary)` or `Err(ComposeError)`.
 > - `return Err(...)` leaves the function immediately. The lines after the `if` do not run.
 > - The tests use `unwrap_err()` on a refusal and `unwrap()` on a width that fits. `unwrap` panics on `Err`. `unwrap_err` panics on `Ok`.
-> - `?` is not used here. The `schedule` call uses `expect`, which panics with that string if the queue returns `FanError::Full`.
+> - The `schedule` call uses `expect`, which panics with that string if the queue returns `FanError::Full`.
+> - `Option`, `Result`, enums, and `Arc` are taught in [chapter 1](chapter-01-first-contact.md).
 
 > **Rust sidebar: `saturating_add`**
 >
@@ -306,9 +293,10 @@ pub fn wait_target(raw: &str) -> Option<WaitTarget> {
 > **Rust sidebar: `Option`**
 >
 > - `Option<&str>` is `Some(slice)` or `None`. `split_once` returns `None` when the needle is absent, and `?` then returns `None` from `field`.
-> - `if let Some(session) = ...` runs the block only when the value is present. A missing session falls through to the pid check.
-> - `and_then` chains another `Option`. `text.parse().ok()` is `Some(number)` when the slice parses as the inferred integer type, and `None` when it does not. A failed parse skips that arm.
+> - `if let Some(session) = ...` runs the block only when the value is present.
+> - `and_then` chains another `Option`. `text.parse().ok()` is `Some(number)` when the slice parses as the inferred integer type, and `None` when it does not.
 > - The lifetime `'a` on `field` means the returned `&str` points into `raw`. `wait_target` calls `session.to_string()` before returning, so `WaitTarget::Session` owns its id after `raw` is gone.
+> - `Option`, `Result`, enums, and `Arc` are taught in [chapter 1](chapter-01-first-contact.md).
 
 The needle is a quoted key: `"wait_on_session"`, with the quote characters included. `split_once` splits on the first match. The suffix is trimmed of leading whitespace, then of a prefix made of `:`, space, `"`, and `=`. The value ends at the next `"`, comma, `}`, or whitespace. An empty slice becomes `None`.
 
@@ -520,11 +508,7 @@ The binary fans out two children, stays with the supervisor, and judges one scri
 |---|---|---|---|
 | `nested_eight` | 271.87 µs | eight children on the pool of 8 | `nested_fanout` with held 0 and width 8 |
 
-The pool is built before `b.iter`. The timed closure schedules eight `n{index}` tasks and gathers them on that pool with a zero hold. Width 9 is not in the sample. The mean is `271.87 µs`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `33`. The id is `33/nested_eight`. The old id `31/nested_eight` is an alias in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The printed Criterion `time:` line is the slope, not the mean.
-
-### Milestone demo
-
-The `cargo run` above. The line is `fan n0 | n1; owner supervisor; done`.
+The means are `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `33`. Bench ids: `33/nested_eight`, `31/nested_eight`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -533,16 +517,6 @@ The `cargo run` above. The line is `fan n0 | n1; owner supervisor; done`.
 `saturating_add` compares the sum with `pool.limit()`. A pool built with `WORKER_BOUND` has limit 8. `WORKER_BOUND + 1` is the width 9 the refusal test asks for. `Pool::new` can be given another limit. The check uses whatever `limit()` returns.
 
 `schedule`'s `expect` panics if the fan-out queue is already at 100. The bound check does not know `QUEUE_CAP`. It knows `pool.limit()`. The tests stay at 8.
-
-`Route::Stay` returns `Ok(None)`. A reader who treats `None` as a failure will mis-read a successful stay. `Err` is `HandoffError`, and `Stay` does not produce it. `Move` can produce `Empty` or `Limit` from the copied board.
-
-`wait_target` returns on the first session hit. A later pid in the same string is not parsed. The alias keys in `_parse_judge_response` are not needles in `field`. A zero pid fails `pid > 0` and the function continues to seconds.
-
-A red gate consumes the model line and skips `as_tool`. The line can say `verdict: done` and still be ignored. `attempts` resets to 0 on a later exit code of 0, so the field after a recovered gate is 0, not the number of earlier failures. Pause happens when `attempts` becomes 4, because the comparison is `>` 3. Three failures return `Retry`.
-
-`LoopStop::Turns` is decided at the top of the loop. The twentieth `Continue` is judged. The next iteration returns before another `complete`. `Parked` does not increment `turns`. A `Wait` that parks still called `as_tool` when the gates were clear, so that path takes one permit. The pause path does not.
-
-`DEFAULT_JUDGE_TIMEOUT_SECS` and `DEFAULT_GATE_TIMEOUT_SECONDS` are returned by `limits`. `thread::sleep` is not called with them in `run_continuation`. The 40 millisecond hold in the overlap test is an argument to `nested_fanout_holding`, and the sleep is in the copied `gather_holding`.
 
 `demo` uses `assert!` on the stay result. A `Stay` that returned `Some` would panic inside `demo` before the string was built. The test expects the string, which is only built when that assertion passes.
 
@@ -581,7 +555,7 @@ pub fn chapter_33_refuses_width_nine_before_tasks_start() -> bool {
 }
 ```
 
-`todo!("chapter 33")` is the panic. The test wants the function to return true only when a nested fan-out of width 9 against a pool whose limit is 8 is refused before any task is scheduled. The step crate is the reference. Do not copy it into `my-harness/`.
+`todo!("chapter 33")` is the panic. The test wants the function to return true only when a nested fan-out of width 9 against a pool whose limit is 8 is refused before any task is scheduled. 
 
 ## Chapter summary
 
@@ -592,9 +566,7 @@ pub fn chapter_33_refuses_width_nine_before_tasks_start() -> bool {
 - **Gates.** A failing gate does not call `as_tool`. Three retries, then `GatePaused`. The timeouts 30 and 300 are stored and are not slept in the loop.
 - **Cap.** Twenty turns return `LoopStop::Turns`.
 - **Demo.** `fan n0 | n1; owner supervisor; done`.
-- **Time.** `nested_eight` mean `271.87 µs`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The Criterion `time:` line is the slope.
-
-[personal note: the moment the ninth child was the bug]
+- **Time.** `nested_eight` mean `271.87 µs`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573).
 
 ## What's next
 

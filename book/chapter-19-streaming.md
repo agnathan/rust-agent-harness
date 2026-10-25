@@ -1,7 +1,5 @@
 # Chapter 19: Streaming
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 18 can choose an adapter and a route. The reply it handles is still buffered: the whole message arrives, then the harness looks at it. A user watching a long answer, and a loop that could overlap a safe tool with the rest of the reply, both want the tokens as they come. They also want a thinking block, split across chunks, not to leak into the text the user sees or the transcript the next turn sends. This chapter folds a stream into the `Event` values chapter 1 already defined. The module is `stream`, on a copy of chapter 18. The crate is `steps/ch19-streaming`. The package is `ch19-streaming`. `drive_loop` does not call it yet. The tests do.
 
 `Delta` is one chunk. `Assembler` folds chunks into the text and the tool calls. `ThinkScrubber` has `feed`, `flush`, and `reset`. It watches for the think tags, and a tag that arrives split across two chunks stays buffered until the scrubber can see the whole token. A partial tag is not emitted as text. Folding plain chunks matches joining them in a buffer, which is the test that the scrubber is a filter and not a rewriter of ordinary prose. The nine tags are the vocabulary the scrubber recognizes. The demo folds a scripted stream. Overlap with a safe tool is the shape chapter 9 described and left for here: a read can run while later chunks arrive. A write still waits.
@@ -38,8 +36,6 @@ Rust, at the fold: a stream is an iterator of deltas you do not have to collect 
 > **Adapted.** The newline-boundary flag and the orphan-close regex are not ported. Case folding is ASCII, which covers the English tags. The CJK tags do not change under that fold. Overlap is a rule on the delta: a read-only tool is recorded while text is still arriving, and a write is stored until `finish`. Hermes starts safe tools from the stream in the tool executor. This chapter does not call that executor.
 >
 > **Deferred.** The streaming repetition watch from chapter 14's guard stays a full-string check. Provider SSE parsers stay out, with the socket.
-
-[personal note: a think tag that arrived in two chunks, and what leaked before the hold]
 
 ## What this chapter decides
 
@@ -500,15 +496,15 @@ fn main() {
 
 Five tests, all through the public functions.
 
-`a_closed_think_block_is_removed_and_a_split_tag_does_not_leak` feeds `"<think>secret</think>hello"`, flushes, and expects `"hello"`. On a second scrubber it feeds `"<thi"` and then `"nk>secret</think>ok"`, flushes, and expects `"ok"`. It also asserts `!out.contains("secret")`. The first call is a pair in one chunk. The second is the hold: the first `feed` contributes nothing visible, and the secret is gone after the close tag arrives.
+`a_closed_think_block_is_removed_and_a_split_tag_does_not_leak` feeds `"<think>secret</think>hello"`, flushes, and expects `"hello"`. On a second scrubber it feeds `"<thi"` and then `"nk>secret</think>ok"`, flushes, and expects `"ok"`.
 
-`cjk_tags_are_stripped_and_an_inline_mention_is_kept_until_it_closes` feeds `"<思考>秘密</思考>ok"`, flushes, and expects `"ok"`. It feeds `"see <think> later"`, flushes, and expects that same string back. It feeds `"\n<think>secret"`, ignores that return value, and expects `flush()` to be `""`. The function name says an inline mention is kept until it closes. The asserts cover an unclosed inline mention. A closed pair in the same buffer is removed wherever it sits, which is `find_closed_pair` running before the boundary check. This test does not feed `see <think>secret</think>ok`.
+`cjk_tags_are_stripped_and_an_inline_mention_is_kept_until_it_closes` feeds `"<思考>秘密</思考>ok"`, flushes, and expects `"ok"`. It feeds `"see <think> later"`, flushes, and expects that same string back.
 
-`a_read_starts_during_the_stream_and_a_write_waits` pushes `Text("hi")`, a read-only `echo`, and a write named `write`. Before `finish`, `started` must equal `["echo"]`. `finish` must return `"hi"`. After `finish`, `started` must equal `["echo", "write"]`. The write was stored on `deferred` and moved by `append`.
+`a_read_starts_during_the_stream_and_a_write_waits` pushes `Text("hi")`, a read-only `echo`, and a write named `write`. Before `finish`, `started` must equal `["echo"]`.
 
 `the_demo_drops_the_split_think_block` expects `demo_reply()` to be `("hello", ["echo"])`.
 
-`folding_plain_chunks_matches_a_buffer` builds `(0..100).map(|_| "hello ".into())`. The range is an iterator. `map` turns each integer into the same six-character string. The integer itself is unused, which is what `_` means. `collect` builds the `Vec`. `fold_text` and `buffer_join` must return equal strings. One hundred copies of `hello ` are 600 characters, no `<`, so every `feed` takes the fast path and `flush` adds nothing.
+`folding_plain_chunks_matches_a_buffer` builds `(0..100).map(|_| "hello ".into())`. The range is an iterator.
 
 ## 19.8 What the two benches time
 
@@ -581,11 +577,9 @@ The binary is the split think block plus one read-only tool. No key.
 
 The budget is the difference. Assembling the streamed reply should add less than 1 ms over the buffered join. Both numbers exclude model time. There is no SSE parser in the sample.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `17`.
+The reply is `hello`. `echo` started.
 
-### Milestone demo
-
-The `cargo run` above. The reply is `hello`. `echo` started.
+The means are `mean.point_estimate` from [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `19`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -614,11 +608,9 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Laye
 - **Overlap.** `echo` starts. `write` waits for `finish`.
 - **Time.** Folding 100 plain chunks measured **2.67 µs**. Joining them measured **689.3 ns**.
 
-[personal note: a stream that showed the thought before the close tag arrived]
-
 ## What you implement
 
-`my-harness/tests/ch19.rs` is the milestone. It compiles, then panics in `todo!("chapter 19")` until `chapter_19_fold_matches_buffer(&["hel", "lo"])` is true. Folding those two plain chunks has to produce the same text as joining them. The step crate is the reference. Do not copy it into `my-harness/`.
+`my-harness/tests/ch19.rs` is the milestone. It compiles, then panics in `todo!("chapter 19")` until `chapter_19_fold_matches_buffer(&["hel", "lo"])` is true. Folding those two plain chunks has to produce the same text as joining them. 
 
 ## What's next
 

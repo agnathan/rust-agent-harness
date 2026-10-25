@@ -68,7 +68,7 @@ Chapters 0 through 52, in six parts. Eight chapters are a standalone MCP gateway
 | 2 | Conversations | `steps/ch02-conversations` | a real conversation, a cache-stable system prompt, a `chat` REPL, and the session inbox |
 | 3 | Tools | `steps/ch03-1-registry`, `ch03-2-toolsets`, `ch03-3-dispatch` | an MCP-shaped tool trait, named toolsets gated on env and checks, concurrent reads and exclusive writes |
 | 4 | MCP Client | `steps/ch04-1-stdio`, `ch04-2-http`, `ch04-3-registry`, `ch04-4-cache` | `rmcp` over stdio and streamable HTTP; MCP and native tools share one scheduler; a cached `tools/list` |
-| 5 | A Minimal MCP Server *(server)* | `steps/ch05-minimal-server` | a fixed tool list, `echo`, and a 34/8 gate; no socket |
+| 5 | A Minimal MCP Server *(server)* | `steps/ch05-minimal-server` | a fixed tool list, `echo`, and a 32/8 gate; no socket |
 | 6 | Thousands of Tools | `steps/ch06-1-schema-cost`, `ch06-2-tool-index`, `ch06-3-search-tool`, `ch06-4-routing`, `ch06-5-lazy-list` | the client half: schema cost, a search index, `search_tools`, routing, a cached list. Crates stay `ch06-*` |
 | 7 | Dynamic Catalog *(server)* | `steps/ch07-catalog` | server-side BM25 plus embeddings, and a catalog reload |
 | 8 | Session Toolsets *(server)* | `steps/ch08-session-toolsets` | per-session toolsets, `set_task`, compact schemas, token telemetry |
@@ -171,7 +171,7 @@ The workflow installs `cargo-nextest` and runs `cargo nextest run -p my-harness 
 
 | Input | Values |
 |---|---|
-| `chapters` | `all` (default), `1`, `1-50`, or `9,12,14`. Chapters 1–50 are the plan; a chapter runs only after its `tests/chNN.rs` exists (today: the chapter 1 sections, chapter 2, and chapters 11–32). Those tests panic on `todo!` until the stubs are filled |
+| `chapters` | `all` (default), `1`, `1-52`, or `9,12,14`. The book is an introduction plus chapters 1–52; a chapter runs only after its `tests/chNN.rs` exists (today: the chapter 1 sections, chapter 2, and chapters 11–32). Those tests panic on `todo!` until the stubs are filled |
 | `os` | `all` (default), `ubuntu`, `macos`, or `windows` |
 
 A manual run fails if any selected chapter fails.

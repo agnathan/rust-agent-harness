@@ -1,7 +1,5 @@
 # Chapter 25: Writing Skills
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 24 can list skills and view one. It cannot create a skill, patch one, or refuse a dangerous one. An agent that only reads procedures never closes the loop Hermes is built around: notice a correction, write it down as a skill, and have it there next time. Writing is also how a poisoned page becomes a permanent instruction, so the write has a scanner and a gate. This chapter adds both. The crate is `steps/ch25-skill-writing`, a copy of chapter 24 plus `skill_write`. The package is `ch25-skill-writing`.
 
 `Writer` holds the gate in a mutex. `create` and `install` share `write_skill`. The policy table is five rules and then the full match: who is asking, where the skill came from, whether it is pinned, whether the scan said dangerous. A community skill that scans as dangerous is blocked, and `force` does not override that. Caution can be overridden. That is the pattern half of the plugin rule chapter 12 left for here. The structural caps stayed in chapter 12. `scan_text` is the function chapter 48's team library will call. It does not grow a second scanner.
@@ -13,17 +11,6 @@ Chapter 26's forked reviewer gets only the skill and memory tools, and this chap
 Rust, at the policy: the actor, the origin, and the verdict are enums, and the policy is a match, so a new combination is a compiler error or an explicit arm. The mutex is the gate. The hash is a string you compare before `rename`. `Result` is the block, with the reason in the error so the model can read why force did not work.
 
 `cargo run --locked -p ch25-skill-writing --bin ch25-skill-writing` runs the safe demo. The exercise is `my-harness/tests/ch25.rs`: a dangerous community skill is blocked even with force.
-
-**In this chapter**
-
-- 25.1 The enums the policy matches on
-- 25.2 `Writer` holds the gate in a `Mutex`
-- 25.3 Pin, the background queue, and `view`
-- 25.4 `create` and `install` share `write_skill`
-- 25.5 Five rules, then the full policy table
-- 25.6 Patch and `write_file` are the reviewer path
-- 25.7 `delete` checks the pin and the origin
-- 25.8 The write is a temp file, and the demo is `safe`
 
 | Section | What it walks |
 |---|---|
@@ -49,8 +36,6 @@ Rust, at the policy: the actor, the origin, and the verdict are enums, and the p
 > **Deferred.** The content-hash scan cache. `.skillignore`.
 
 > **Guardrails.** H1 is the scan and the policy table. A dangerous community or trusted skill stays blocked when `force` is true. A9 is the approval flag, and it starts off. A reviewer patch requires a prior `view` whose hash still matches the file. A pin blocks delete. An origin of `bundled`, `hub`, or `team` blocks delete. Supporting files are capped at 1,048,576 bytes. `enqueue_background` does not write a skill.
-
-[personal note: a skill the model tried to write that you wanted to read first]
 
 ## What this chapter decides
 
@@ -717,11 +702,9 @@ The binary writes one skill under a temp directory and prints the verdict. No ke
 
 `enqueue_unsolicited` opens a `Writer` on a temp directory before the bench. The timed closure is `b.iter`. Inside it: `enqueue_background` of `create notes`, passed through `black_box`. The queue drops the oldest job at 64. No skill directory is created.
 
-The Mean cells are `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `25`. The ids are `25/scan_one_skill` and `25/enqueue_unsolicited`. The old ids `23/scan_one_skill` and `23/enqueue_unsolicited` are aliases in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. Criterion also prints a `time:` line. That line is the slope. It is not the mean.
+The scan is `safe`. The created skill is `rename`.
 
-### Milestone demo
-
-The `cargo run` above. The scan is `safe`. The created skill is `rename`.
+The means are `mean.point_estimate` from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `25`. Bench ids: `25/scan_one_skill`, `25/enqueue_unsolicited`, `23/scan_one_skill`, `23/enqueue_unsolicited`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -732,12 +715,6 @@ The approval flag and the ask label are different holds. Turning the flag off do
 `patch` fails when the find string matches twice. The error is `Missing` with the count. The file is unchanged.
 
 `enqueue_background` drops the oldest job at 64. The queue is a `VecDeque` in the process. It is not a file.
-
-`delete` ignores the actor. A foreground user hits the same pin and the same origin check as a reviewer.
-
-`find_skill_dir` keeps the last directory whose frontmatter name matches. Chapter 24's `find_dir` returns the first. One skill with that name makes them the same directory.
-
-The five rules are a subset of `THREAT_PATTERNS`. A pattern that exists only in the full list is `Safe` here.
 
 ## Guardrails in this chapter
 
@@ -755,7 +732,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). This
 
 **Off the request path.** `enqueue_background` does not scan and does not create a skill. The scan of a real write runs at the write.
 
-**Left for later.** `.skillignore` is deferred. `_guard_agent_created_enabled` defaults off in Hermes. This crate calls `scan_text` on create, patch, write, and install. E1 and E2 are still absent. Chapter 27 calls `scan_text` and `should_allow_install` from the curator, and that call stays off the request path.
+**Left for later.** `.skillignore` is deferred. `_guard_agent_created_enabled` defaults off in Hermes. This crate calls `scan_text` on create, patch, write, and install. E1 and E2 are chapter 20, already in this crate. This chapter's scan is `scan_text`, not that redactor. Chapter 27 calls `scan_text` and `should_allow_install` from the curator, and that call stays off the request path.
 
 ## Chapter summary
 
@@ -766,13 +743,11 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). This
 - **Delete.** A pin, and origin `bundled`, `hub`, or `team`, are refused.
 - **Queue.** An unsolicited write is `enqueue_background`. Scanning one skill measured **155.3 ns**. Enqueue measured **17.4 ns**. Those are the means.
 
-[personal note: a write you were glad the gate held]
-
 ## What you implement
 
 `my-harness/tests/ch25.rs` is the milestone. The test is `a_dangerous_community_skill_is_blocked_even_with_force`. It asserts `chapter_25_force_installs_dangerous()` is false. Force does not install a dangerous skill.
 
-The function in `my-harness` is a stub. It ends in `todo!("chapter 25")` and panics until the assertion can pass. The step crate is the reference. Do not copy it into `my-harness/`.
+The function in `my-harness` is a stub. It ends in `todo!("chapter 25")` and panics until the assertion can pass. 
 
 ## What's next
 

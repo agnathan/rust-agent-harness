@@ -15,8 +15,6 @@ Enqueue pushes the word curate. It does not scan or move a directory. The pass s
 4/
 Enqueue measured 25.5 ns ([run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589)). That figure is the mean. The demo marks one skill stale. No key.
 
-[personal note]
-
 5/
 Next is a pipeline of four stages that share one Arc. The next stage does not copy the transcript.
 
@@ -30,8 +28,6 @@ Chapter 27 is out: Curation.
 Unused skills should leave the working set, and that decision should stay off the turn the user is waiting on. Hermes Agent's apply_automatic_transitions uses 14 days, 30 days, a 24*7 hour interval, and 2 idle hours. DEFAULT_CONSOLIDATE is false. I kept those day counts and took a snapshot before the move. Consolidate stays off. There is no clock and no scheduler thread. The caller passes the age.
 
 The request path only enqueues the pass. That enqueue measured 25.5 ns ([run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589)). That figure is the mean. The scan and the approval gate run when the pass runs.
-
-[personal note: one takeaway from writing this chapter]
 
 Next: four stages in a row, sharing one context. Read Chapter 27: [link]
 

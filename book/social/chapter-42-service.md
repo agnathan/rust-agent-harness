@@ -15,8 +15,6 @@ tools/osv_check.py sets _TIMEOUT to 10 and _CACHE_TTL_S from OSV_CHECK_CACHE_TTL
 4/
 The demo prints "route: a". The bench id is 42/route_session. The old ids 40/route_session and 38/route_session are aliases. The mean is 19.7 ns, mean.point_estimate from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573).
 
-[personal note]
-
 5/
 Next is chapter 43, cron: claim a job once, scan the prompt, and keep the lifecycle check on the job.
 
@@ -32,8 +30,6 @@ This is the server track. The crate vendors chapter 37 and adds a service. Herme
 The service routes a session id to a replica name, moves those sessions when the replica is killed, swaps config with an Arc, counts a per-tenant concurrent quota, writes an audit line and a span name, and drains by finishing in-flight calls. It does not bind a socket.
 
 The demo prints "route: a". The bench id is 42/route_session, and 40/route_session and 38/route_session remain aliases.
-
-[personal note]
 
 Next: chapter 43, cron. Read Chapter 42: [link]
 

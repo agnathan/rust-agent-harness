@@ -15,8 +15,6 @@ The terminal calls the same deny_tool as chapter 11, then the chapter 13 worker.
 4/
 todo is a list in memory, merged by id, with a revision that rejects a stale writer. clarify pauses the turn for one queued reply. A child agent may not call it. `17/patch_apply` measured 255.1 µs. `17/todo_merge` measured 131.2 ns. No key. No prompt.
 
-[personal note]
-
 5/
 Next is provider adapters: an Anthropic body, a Bedrock body, an OpenRouter route, and key rotation on the same client.
 
@@ -30,8 +28,6 @@ Chapter 17 is out: Built-in Tools II, Files, Terminal, Todo, and Clarify.
 Search was not enough. The harness needed to read a workspace without walking out of it, and to run a command without growing a second approval path. A write of a file this task has not read is `stale_write_blocked`. The terminal calls `deny_tool` first. `rm -rf /` comes back blocked, and the worker is not spawned.
 
 Hermes Agent keeps the todo list as agent state and refuses `clarify` for a child. Both landed here. Tests use a scripted model and a queued reply, not a person at a keyboard. `17/patch_apply` measured 255.1 µs. `17/todo_merge` measured 131.2 ns.
-
-[personal note: one takeaway from writing this chapter]
 
 Next: native provider adapters and key rotation. Read Chapter 17: [link]
 

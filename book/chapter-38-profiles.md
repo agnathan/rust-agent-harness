@@ -1,7 +1,5 @@
 # Chapter 38: Profiles
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 36's harness can supervise a child. It still has one persona and one pile of secrets. A process that serves more than one user, or more than one role, needs several personas in one config, and it needs a secret that stays out of the system prompt. This chapter adds that map. The crate is `steps/ch38-profiles`, a copy of chapter 36 plus `profiles`. The package is `ch38-profiles`. It is the harness line. Chapter 37, the balancer, is not copied in.
 
 `Profile` owns the persona text and the secret map. The store is built from config. `get_secret` fails closed when no scope is installed: the error is the unscoped-secret error, and the secret is not in the prompt. That is the multiplex rule. A profile that is selected resolves in well under the cost of a model call, and the resolved persona is what the prompt receives. The map stays beside it. `FakeModel` echoes the persona, so a test can see the secret did not ride along in the string.
@@ -13,15 +11,6 @@ A self-improving agent makes this sharper. Memory and skills are written by the 
 Rust, at the map: the store is a struct built once, the profile is an owned persona plus a map, and `get_secret` returns `Result` so the unscoped case is an error rather than an empty string that looks like a value. The prompt builder takes the persona by reference and never the map.
 
 `cargo run -p ch38-profiles --bin ch38-profiles --offline` prints the persona. The exercise is `my-harness/tests/ch38.rs`: an unscoped secret read is the error, and the secret is not in the prompt.
-
-**In this chapter**
-
-- 38.1 The error types
-- 38.2 `Profile` owns the persona and the map
-- 38.3 Building the store
-- 38.4 `get_secret` fails closed
-- 38.5 The prompt is the persona
-- 38.6 `FakeModel` and `demo`
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -49,8 +38,6 @@ Rust, at the map: the store is a struct built once, the profile is an owned pers
 > **Adapted.** The maps are `HashMap`s. The error is a `Result`, not a raise. There is no `ContextVar`: one `Profiles` value holds one `scope` field. There is no global-env allowlist, so a name Hermes would still read from `os.environ` also fails closed here when multiplex is on and no scope is installed. The process environment is a `HashMap` filled by `set_process`, not `os.environ`. The prompt is an `Arc<str>` of the persona. `resolve` reports `has_secret` and drops the `String`. `secret_leaked_into_prompt` is a substring check. `FakeModel` ignores the prompt bytes and returns its scripted reply.
 >
 > **Deferred.** `_is_global_env`, the `.env` parser further down `secret_scope.py`, task-local scope, and the multiplexed gateway process. Chapter 39 is the chat gateway. The copied harness already contains chapter 20's redaction module. `profiles.rs` does not call it.
-
-[personal note: two personas in one process, and a key that never showed up in the prompt]
 
 ## What this chapter decides
 
@@ -407,13 +394,9 @@ cargo bench -p ch38-profiles --bench profiles --locked -- --warm-up-time 1 --mea
 |---|---|---|---|
 | `resolve_profile` | 96.7 ns | one scoped resolve | the persona `Arc` plus one secret lookup |
 
-`resolve_profile` is `benches/profiles.rs`. It builds the multiplex store, the `writer` profile, and the scope before the bench. The timed closure is `b.iter`. Inside: `resolve` of `writer` and `API_KEY`, both passed through `black_box`, then `black_box` of the `Resolved`. The `HashMap` lookup, the secret clone, and the `Arc` clone are inside the sample. Building the profile is outside it. `FakeModel` is not constructed. The fail-closed path is not taken. `secret_leaked_into_prompt` is not called. The sample is the scoped hit.
+`resolve_profile` is `benches/profiles.rs`. It builds the multiplex store, the `writer` profile, and the scope before the bench.
 
-The mean is `96.7 ns`. It is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `38`. The id is `38/resolve_profile`. The old id `36/resolve_profile` is an alias in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The Criterion `time:` line is the slope, not the mean.
-
-### Milestone demo
-
-The `cargo run` above. The line is `profile: writer`.
+The means are `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `38`. Bench ids: `38/resolve_profile`, `36/resolve_profile`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -423,13 +406,7 @@ The bench is the scoped hit. A measurement that builds the `HashMap` inside the 
 
 A multiplex miss returns `Ok(None)` on purpose. Falling through to the process map on that path is the leak the Hermes docstring refuses. The fall-through line in this file runs only when a scope is set, the value is absent, and `multiplex` is false.
 
-`resolve` checks the profile argument, then reads the secret from the scope field. They are the same string in the tests and in `demo`. They are two lookups in the source.
-
-The persona is trusted text. This function does not scan it for the threats chapter 34 scans in context files. A secret pasted into the persona makes `secret_leaked_into_prompt` true and is still sitting in the `Arc`. The check reports the leak. It does not redact it. `profiles.rs` does not call the chapter 20 redactor that this copied crate already contains.
-
 Hermes serves `_is_global_env` names from `os.environ` even when multiplex is on and no scope is installed. This `get_secret` has no allowlist. A later port of `PATH` or `HERMES_HOME` through this function, under multiplex with no scope, will get `UnscopedSecretError`. `API_KEY` is outside that allowlist in the file I read, so the milestone's key is the fail-closed case on both sides.
-
-`set_scope` is one field. Two tasks that need two profiles at the same time need two `Profiles` values, or they need to take turns with `&mut self`. The `ContextVar` in `secret_scope.py` is the piece this struct does not have.
 
 ## Guardrails in this chapter
 
@@ -445,7 +422,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
 ## What you implement
 
-`my-harness/tests/ch38.rs` is the milestone. The step crate is the reference. The stub stays `todo!`.
+`my-harness/tests/ch38.rs` is the milestone. The stub stays `todo!`.
 
 ```rust
 use my_harness::chapter_38_unscoped_secret_in_prompt;
@@ -474,9 +451,7 @@ pub fn chapter_38_unscoped_secret_in_prompt() -> bool {
 - **Fail closed.** Multiplex and no scope is `UnscopedSecretError`. `resolve` surfaces it as `ResolveError::Unscoped`.
 - **Scope.** The installed profile's map. A multiplex miss is `Ok(None)`. A single-profile miss can fall through to the process map.
 - **Prompt.** The secret `String` is not stored on `Resolved`. `demo` prints `profile: writer`.
-- **Bench.** `resolve_profile` mean `96.7 ns`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The Criterion `time:` line is the slope.
-
-[personal note: a key that resolved, and a prompt that did not contain it]
+- **Bench.** `resolve_profile` mean `96.7 ns`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573).
 
 ## What's next
 
