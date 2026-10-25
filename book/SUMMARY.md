@@ -47,7 +47,7 @@ Server-track chapters are marked *(server)*. They are interleaved with the harne
 - [Chapter 30: Handoffs](chapter-30-handoffs.md)
 - [Chapter 31: Fan-out and Gather](chapter-31-fan-out.md)
 - [Chapter 32: The Critic](chapter-32-critic.md)
-- [Chapter 33: Composing Patterns](chapter-33-composition.md)
+- [Chapter 33: Composition and the Goal Loop](chapter-33-composition.md)
 
 # Part IV: Making it robust
 
