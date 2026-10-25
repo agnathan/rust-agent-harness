@@ -1,6 +1,6 @@
 # Chapter 14: When Things Fail
 
-An empty reply that costs $0.30 is the turn spending money on nothing. The first empty drops the retry budget from three to one, because $0.30 is past the $0.25 line, and a second empty from the same model, the same provider, and zero output tokens gives that model up. The next model answers `hello`. Chapter 9's loop could already stop, stall, and wrap up, but it still treated every failure as one outcome, so an empty reply, a cut-off reply, a repeated paragraph, and a timeout all looked like the same kind of stop. Naming them is what lets a continuously improving harness spend the rest of the turn on a model that still has something to say, instead of burning the budget on a blank one.
+An empty reply that costs $0.30 is the turn spending money on nothing. The first empty drops the retry budget from three to one, because $0.30 is past the $0.25 line, and a second empty from the same model, the same provider, and zero output tokens gives that model up. The next model answers `hello`. I expected chapter 9's stops to name an empty reply. They still treated every failure as one outcome, so an empty reply, a cut-off reply, a repeated paragraph, and a timeout all looked like the same kind of stop. Naming them is what lets a continuously improving harness spend the rest of the turn on a model that still has something to say, instead of burning the budget on a blank one.
 
 The other half is the approval floor. YOLO can wave a lot of commands through, and it still can't delete the binary that is running or `git reset --hard` the checkout this process was built from. An agent that is learning inside a tree, and that can rewrite that tree, destroys the session it was supposed to learn from. Both denials are hardline, and both run before the fast path, so the cheap allow never gets a vote.
 
@@ -32,17 +32,17 @@ I kept `Kind` and `Reply` as enums rather than strings, because a missed arm fai
 
 `Kind` is `Empty`, `Truncated`, `Repeated`, `Timeout`, `RateLimit`, `Transport`, or `Crash`.
 
-`retry_budget(None)` is 3. `retry_budget(Some(0.25))` is still 3. `retry_budget(Some(0.26))` is 1. The threshold is exceeded, not met.
+`retry_budget(None)` is 3; `retry_budget(Some(0.25))` is still 3; `retry_budget(Some(0.26))` is 1; the threshold is exceeded, not met.
 
-`deterministic_empty` needs two attempts. Both must have usage, both must have zero output, and the model, provider, and finish reason must match. Missing usage does not count. The fake turn then keeps going until the budget is spent. Three unclear empties and then the text `ok` stay on the first model.
+`deterministic_empty` needs two attempts; both must have usage, both must have zero output, and the model, provider, and finish reason must match. Missing usage does not count; the fake turn then keeps going until the budget is spent. Three unclear empties and then the text `ok` stay on the first model.
 
-Two zero-output empties skip the rest of that model, including a later text reply, and the next model answers. The demo is that case with a cost of $0.30, so the reduced budget and the deterministic rule agree. The second model says `hello`. `fallbacks` is 1.
+Two zero-output empties skip the rest of that model, including a later text reply, and the next model answers. The demo is that case with a cost of $0.30, so the reduced budget and the deterministic rule agree; the second model says `hello`. `fallbacks` is 1.
 
-`is_repetition_dominated` returns false under 400 characters. `"abcdefghij"` repeated to 800 characters returns true. `length_verdict("length", that)` is `StopRepeated`, and `run_models` stores the interrupted-loop sentence. A short length reply is `Continue`. A `stop` finish is `Finished`.
+`is_repetition_dominated` returns false under 400 characters; `"abcdefghij"` repeated to 800 characters returns true. `length_verdict("length", that)` is `StopRepeated`, and `run_models` stores the interrupted-loop sentence; a short length reply is `Continue`; a `stop` finish is `Finished`.
 
-`call_with_timeout` holds one permit from a semaphore of 8 and drops it when a 30 millisecond timer beats a 5 second sleep. `retry_in_bound` peaks at one permit. `FakeMcp::new(1)` reconnects once and returns `pong`.
+`call_with_timeout` holds one permit from a semaphore of 8 and drops it when a 30 millisecond timer beats a 5 second sleep. `retry_in_bound` peaks at one permit; `FakeMcp::new(1)` reconnects once and returns `pong`.
 
-`floor_runtime_and_repo` runs before `fast_safe` and before YOLO. The runtime path is `std::env::current_exe()`. The source root is `env!("CARGO_MANIFEST_DIR")`. A hit is `Deny` with `hardline: true`. `echo hello` stays `Allow`.
+`floor_runtime_and_repo` runs before `fast_safe` and before YOLO; the runtime path is `std::env::current_exe()`; the source root is `env!("CARGO_MANIFEST_DIR")`. A hit is `Deny` with `hardline: true`; `echo hello` stays `Allow`.
 
 ## 14.1 `Kind`
 
@@ -106,7 +106,7 @@ impl EmptyAttempt {
 }
 ```
 
-`signature` is private. It clones three strings into a tuple so `==` can compare them. The bools stay outside the tuple, so two attempts can share a signature and still disagree on `zero_output`.
+`signature` is private; it clones three strings into a tuple so `==` can compare them. The bools stay outside the tuple, so two attempts can share a signature and still disagree on `zero_output`.
 
 ## 14.3 `retry_budget`
 
@@ -178,13 +178,13 @@ pub fn is_repetition_dominated(text: &str) -> bool {
 }
 ```
 
-`text.len()` is bytes. Under 400 the function returns false and does not build the map. `"ab"` repeated 10 times is 20 bytes. The test expects false. A one-line stutter stays under the floor.
+`text.len()` is bytes; under 400 the function returns false and does not build the map; `"ab"` repeated 10 times is 20 bytes. The test expects false; a one-line stutter stays under the floor.
 
 `needed` is the larger of 5 and the ceiling of `n * 0.5 / 60`. For 800 bytes that ceiling is 7, so a 60-byte window has to show up at least 7 times. Just over 400 bytes, half the text divided by 60 is under 5, and the floor of 5 is what binds.
 
-The map key is `&str`, borrowed from `text`. The window is not an owned `String`. `entry` then `or_insert(0)` returns `&mut usize`, and `*count += 1` writes through it. The first window that reaches `needed` returns true. The scan stops there.
+The map key is `&str`, borrowed from `text`; the window is not an owned `String`. `entry` then `or_insert(0)` returns `&mut usize`, and `*count += 1` writes through it; the first window that reaches `needed` returns true. The scan stops there.
 
-`is_char_boundary` keeps the slice from panicking on a byte in the middle of a UTF-8 character. The loop steps one byte. ASCII starts are all boundaries. `"abcdefghij"` repeated 80 times is the 800-byte string `repeated_fragment` builds. The same 60-byte slice lines up every 10 bytes, the count crosses 7, and the function returns true. The bench calls `repetition_probe`, a one-line forward to this function, on a string built before the timer.
+`is_char_boundary` keeps the slice from panicking on a byte in the middle of a UTF-8 character; the loop steps one byte. ASCII starts are all boundaries; `"abcdefghij"` repeated 80 times is the 800-byte string `repeated_fragment` builds. The same 60-byte slice lines up every 10 bytes, the count crosses 7, and the function returns true. The bench calls `repetition_probe`, a one-line forward to this function, on a string built before the timer.
 
 ## 14.6 `length_verdict`
 
@@ -212,11 +212,11 @@ pub fn length_verdict(finish_reason: &str, text: &str) -> LengthVerdict {
 }
 ```
 
-A finish reason other than `"length"` is `Finished`. The test passes `"stop"` and a short sentence. A `"length"` finish that fails the repetition check is `Continue`, and `kept` owns a copy of the fragment. A `"length"` finish that passes is `StopRepeated`. The loop text is not what we keep.
+A finish reason other than `"length"` is `Finished`; the test passes `"stop"` and a short sentence. A `"length"` finish that fails the repetition check is `Continue`, and `kept` owns a copy of the fragment. A `"length"` finish that passes is `StopRepeated`. The loop text is not what we keep.
 
 ## 14.7 `Reply` and `OrderedF64`
 
-The fake model has to store a cost the tests can match on. `f64` is not `Eq`.
+The fake model has to store a cost the tests can match on; `f64` is not `Eq`.
 
 ```rust
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -255,7 +255,7 @@ impl OrderedF64 {
 >
 > `PartialEq` for `f64` exists, and `Eq` doesn't, because `NaN` isn't equal to itself. `Reply` derives `Eq`, so a field of type `f64` would make that derive fail. `OrderedF64` stores `micros`, an `i64`: `usd` multiplies by one million and rounds, and `as_f64` divides back.
 
-The comment above the struct says cents. The field is `micros`, and `usd` multiplies by `1_000_000.0`. A comment and a field that disagree can't both be the spec, and the tests match `usd`, so I follow the field.
+The comment above the struct says cents; the field is `micros`, and `usd` multiplies by `1_000_000.0`. A comment and a field that disagree can't both be the spec, and the tests match `usd`, so I follow the field.
 
 ## 14.8 `run_models`
 

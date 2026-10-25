@@ -1,16 +1,16 @@
 # Chapter 46: The Kanban Board
 
-Process A creates `board.lock`. Process B tries the same path and gets `Busy`. There's no version integer: `transact` locks, reads, checks status and owner, writes, and unlocks, and the lock is a sibling file opened with `create_new`. A sees status `ready` and owner `None`, writes `running`, and `Drop` deletes the lock, so B, once it can read, sees `running` and returns `Lost`. The claim binary prints `claimed` and `lost`, the in-process demo is one claim and then a complete, and that demo prints `kanban: done`. Hermes's SQLite board is the compare-and-swap, and this chapter's board is the JSON file and the lock.
+Process A creates `board.lock`. Process B tries the same path and gets `Busy`. There's no version integer: `transact` locks, reads, checks status and owner, writes, and unlocks. The lock is a sibling file opened with `create_new`. A sees status `ready` and owner `None`, writes `running`. `Drop` deletes the lock, so B, once it can read, sees `running` and returns `Lost`. The claim binary prints `claimed` and `lost`, the in-process demo is one claim and then a complete. That demo prints `kanban: done`. Hermes's SQLite board is the compare-and-swap, and this chapter's board is the JSON file and the lock.
 
-Inside one process, chapter 45's board is enough, because a mutex doesn't cross a process boundary and two processes that both want the same task would each think they own it. This chapter adds that board in `steps/ch46-kanban`, a copy of chapter 45 plus `kanban`, and the package is `ch46-kanban`. Pause is a field on the JSON, and it isn't the process-wide emergency stop.
+Inside one process, chapter 45's board is enough. A mutex doesn't cross a process boundary and two processes that both want the same task would each think they own it. This chapter adds that board in `steps/ch46-kanban`, a copy of chapter 45 plus `kanban`. The package is `ch46-kanban`. Pause is a field on the JSON, and it isn't the process-wide emergency stop.
 
-A card is a `Task` on a `Board`, an `Op` is claim, complete, review, or block, and `apply` checks `parents_done` before a dependent task can be claimed. `Unlock` releases the sibling lock, and paths stay inside the board file the test created.
+A card is a `Task` on a `Board`, an `Op` is claim, complete, review, or block. `apply` checks `parents_done` before a dependent task can be claimed. `Unlock` releases the sibling lock, and paths stay inside the board file the test created.
 
-Chapter 47 adds a message bus on this harness. The kanban board stays the durable task list, and the bus is how agents talk, because a card has an owner and a status while a message has a topic and a subscriber. Chapter 48 keeps a skill proposal on its own queue. A skill is a procedure and a card is a unit of work, so the proposal isn't a kanban card, and `skill_propose` doesn't call `publish`.
+Chapter 47 adds a message bus on this harness. The kanban board stays the durable task list. The bus is how agents talk. A card has an owner and a status while a message has a topic and a subscriber. Chapter 48 keeps a skill proposal on its own queue. A skill is a procedure and a card is a unit of work. So the proposal isn't a kanban card, and `skill_propose` doesn't call `publish`.
 
-The durable claim is what lets a team keep learning across crashes, which is the piece a continuously improving harness needs from a board on disk. A process that dies mid-task doesn't take the task with it, another process claims it, and reflection on the parent can see that the task finished once. A claim both processes think they won would run the task twice, and the transaction is why the task finishes once.
+The durable claim is what lets a team keep learning across crashes, which is the piece a continuously improving harness needs from a board on disk. A process that dies mid-task doesn't take the task with it, another process claims it. Reflection on the parent can see that the task finished once. A claim both processes think they won would run the task twice. The transaction is why the task finishes once.
 
-At the file, the board is serialized JSON, and the write is a temp file plus a rename so a reader never sees a half board. The lock is a sibling file, not a version field. `TxError` is the conflict, and the two-process test spawns the claim binary and checks what it prints.
+At the file, the board is serialized JSON. The write is a temp file plus a rename so a reader never sees a half board. The lock is a sibling file, not a version field. `TxError` is the conflict, and the two-process test spawns the claim binary and checks what it prints.
 
 Running `cargo run -p ch46-kanban --bin ch46-kanban` runs the in-process demo. The exercise is `my-harness/tests/ch46.rs`, where two claims of one task must come back as one win.
 
@@ -30,8 +30,7 @@ Running `cargo run -p ch46-kanban --bin ch46-kanban` runs the in-process demo. T
 > I looked at the kanban database. On Hermes `main` at `9e01b44`, `hermes_cli/kanban_db.py` opens with this module docstring:
 >
 > 
-
-```python
+> ```python
 > """SQLite-backed Kanban board shared across profiles (the cross-profile coordination primitive).
 >
 > Lives under the shared Hermes root: ``default`` board DB at ``<root>/kanban.db`` (pre-boards
@@ -53,8 +52,7 @@ Running `cargo run -p ch46-kanban --bin ch46-kanban` runs the in-process demo. T
 > `_claim_and_open_run` at line 2143 is that swap. The docstring says it does CAS from `source_status` to `running`, opens a run row, emits `claimed`, and returns `None` when the CAS lost. The caller holds the transaction. The update I read:
 >
 > 
-
-```python
+> ```python
 > def _claim_and_open_run(
 >     conn: sqlite3.Connection, task_id: str, source_status: str, lock: str, expires: int, now: int,
 >     *, event_extra: Optional[dict] = None,
@@ -91,9 +89,9 @@ Running `cargo run -p ch46-kanban --bin ch46-kanban` runs the in-process demo. T
 
 ## What this chapter decides
 
-`transact` creates `board.lock` with `create_new`, reads `board.json`, applies one op, writes the file back, and deletes the lock in `Drop`. `acquire` closes the file handle before it returns the `Unlock`, and the delete runs when `transact` returns, including when a later step returns an error, because `_lock` drops on the way out.
+`transact` creates `board.lock` with `create_new`, reads `board.json`, applies one op, writes the file back, and deletes the lock in `Drop`. `acquire` closes the file handle before it returns the `Unlock`. The delete runs when `transact` returns, including when a later step returns an error. `_lock` drops on the way out.
 
-A claim requires status `ready`, owner `None`, parents `done`, and a board that isn't paused, and it sets `running` and the owner. A card that isn't `ready`, or that already has an owner, returns `Lost`.
+A claim requires status `ready`, owner `None`, parents `done`, and a board that isn't paused. It sets `running` and the owner. A card that isn't `ready`, or that already has an owner, returns `Lost`.
 
 Complete requires `running`, the same owner, and a non-empty result, `trim` decides empty, and whitespace is `Empty`. The success path sets `done`, stores the result, and clears the owner. Review requires the owner and a non-empty summary, then sets `review` and clears the owner, and block does the same on the way to `blocked`, with the reason stored in `result`.
 
@@ -103,7 +101,7 @@ The demo uses a temp directory, claims `t1` for `worker`, checks the lock file i
 
 ## 46.1 `Task` and `Board`
 
-The new module is `kanban.rs`, the chapter 45 copy is `blackboard.rs`, and `pub mod kanban` is what `chapter_demo.rs` and `kanban_claim.rs` import.
+The new module is `kanban.rs`, the chapter 45 copy is `blackboard.rs`. `pub mod kanban` is what `chapter_demo.rs` and `kanban_claim.rs` import.
 
 ```rust
 //! Book chapter 46. One JSON board. A lock file is the transaction.
@@ -158,9 +156,9 @@ impl Board {
 }
 ```
 
-A task is one card: `id` and `status` are required strings, `owner` and `result` are optional, and `parents` is a vec of parent ids, with `serde(default)` on those three so a missing JSON field becomes `None`, `None`, and an empty vec while a present field deserializes as written. `ready` builds a card whose status is the string `ready`, whose owner and result are `None`, and whose parents vec is empty, and the id comes from `Into<String>`, so `Task::ready("t1")` stores `t1`. Status is a `String` rather than an enum, and `apply` compares it with `!=` to `"ready"`, `"running"`, and the other literals.
+A task is one card: `id` and `status` are required strings, `owner` and `result` are optional. `parents` is a vec of parent ids, with `serde(default)` on those three so a missing JSON field becomes `None`, `None`, and an empty vec while a present field deserializes as written. `ready` builds a card whose status is the string `ready`, whose owner and result are `None`. Whose parents vec is empty, and the id comes from `Into<String>`. So `Task::ready("t1")` stores `t1`. Status is a `String` rather than an enum, and `apply` compares it with `!=` to `"ready"`, `"running"`, and the other literals.
 
-The board is the file: `paused` defaults to false when the JSON omits it, `tasks` is a vec in file order, and `new` stores that vec with `paused` false. There's no `Default` impl in this file, so callers pass the tasks they want, and `demo` passes `vec![Task::ready("t1")]`. The derives include `Serialize` and `Deserialize`, which only `write_board` and `read_board` use, and the tests compare status strings and `TxError` values rather than whole boards.
+The board is the file: `paused` defaults to false when the JSON omits it, `tasks` is a vec in file order. `new` stores that vec with `paused` false. There's no `Default` impl in this file, so callers pass the tasks they want. `demo` passes `vec![Task::ready("t1")]`. The derives include `Serialize` and `Deserialize`, which only `write_board` and `read_board` use. The tests compare status strings and `TxError` values rather than whole boards.
 
 > **Rust sidebar: `#[serde(default)]` on `Option` and `Vec`**
 >
@@ -189,7 +187,7 @@ pub enum TxError {
 }
 ```
 
-`Op` is the one verb `transact` applies: each variant carries the owner, `Complete` also carries `result`, `Review` carries `summary`, and `Block` carries `reason`, and those three strings are the evidence `apply` trims. Claim has no evidence string; `transact` takes `Op` by value, the caller moves the owner string in, and `apply` borrows the op as `&Op` and clones the owner into the task only on the success path of `Claim`.
+`Op` is the one verb `transact` applies: each variant carries the owner, `Complete` also carries `result`, `Review` carries `summary`, and `Block` carries `reason`. Those three strings are the evidence `apply` trims. Claim has no evidence string; `transact` takes `Op` by value, the caller moves the owner string in. `apply` borrows the op as `&Op` and clones the owner into the task only on the success path of `Claim`.
 
 | Variant | When it is returned |
 |---|---|
@@ -201,7 +199,7 @@ pub enum TxError {
 | `Missing` | the id isn't in `tasks` |
 | `Io` | filesystem or JSON error this file maps |
 
-`Busy` is the lock file giving up after retries; `Lost` is the status or owner check inside the lock, and they aren't the same failure. There's no `Display` impl and no `thiserror` derive in this file; the claim binary prints `{error:?}` on the variants it doesn't map to `lost`, and the variants carry no path and no errno, which is why the tests can write `Err(TxError::Empty)`.
+`Busy` is the lock file giving up after retries. `Lost` is the status or owner check inside the lock, and they aren't the same failure. There's no `Display` impl and no `thiserror` derive in this file; the claim binary prints `{error:?}` on the variants it doesn't map to `lost`, and the variants carry no path and no errno, which is why the tests can write `Err(TxError::Empty)`.
 
 > **Rust sidebar: a closed error set**
 >
@@ -247,13 +245,13 @@ fn read_board(dir: &Path) -> Result<Board, TxError> {
 }
 ```
 
-`Unlock` is private, and its only field is the lock path. `Drop` calls `fs::remove_file` and ignores the error with `let _`, so a missing lock file at drop time doesn't panic and doesn't change the `Result` `transact` is about to return. That remove is the end of the transaction, which is what the comment on `transact` means when it says the lock file is gone before the function returns.
+`Unlock` is private, and its only field is the lock path. `Drop` calls `fs::remove_file` and ignores the error with `let _`. So a missing lock file at drop time doesn't panic and doesn't change the `Result` `transact` is about to return. That remove is the end of the transaction, which is what the comment on `transact` means when it says the lock file is gone before the function returns.
 
-`board_path` joins `board.json` and `lock_path` joins `board.lock`, and both are pure: they don't create anything. The demo and the model test both look at `board.lock` after `transact`, and `task_status` reads `board.json` through `read_board`.
+`board_path` joins `board.json` and `lock_path` joins `board.lock`, and both are pure: they don't create anything. The demo and the model test both look at `board.lock` after `transact`. `task_status` reads `board.json` through `read_board`.
 
-`write_board` is public because the tests and the bench build the starting file with it. `create_dir_all` makes the directory, `to_vec` serializes the board, the bytes go to `board.json.tmp`, and `rename` moves that temp onto `board.json`. If the rename fails, the function removes `board.json` and renames again, and the second failure is `TxError::Io`, while the first failure isn't returned on its own. `read_board` is private, it reads `board.json` and deserializes, and either a missing file or a bad payload is `Io`. Callers that want a status without taking the lock use `task_status`, which calls `read_board`.
+`write_board` is public because the tests and the bench build the starting file with it. `create_dir_all` makes the directory, `to_vec` serializes the board, the bytes go to `board.json.tmp`. `rename` moves that temp onto `board.json`. If the rename fails, the function removes `board.json` and renames again. The second failure is `TxError::Io`, while the first failure isn't returned on its own. `read_board` is private, it reads `board.json` and deserializes, and either a missing file or a bad payload is `Io`. Callers that want a status without taking the lock use `task_status`, which calls `read_board`.
 
-`map_err(|_| TxError::Io)` drops the underlying error, so a permission error and a JSON syntax error look the same to the caller, and the claim binary then prints `Io` if it hasn't already mapped the variant to `lost`.
+`map_err(|_| TxError::Io)` drops the underlying error. So a permission error and a JSON syntax error look the same to the caller. The claim binary then prints `Io` if it hasn't already mapped the variant to `lost`.
 
 > **Rust sidebar: `Drop` as the unlock**
 >
@@ -286,11 +284,11 @@ fn acquire(path: &Path) -> Result<Unlock, TxError> {
 }
 ```
 
-The loop is `0..2_000`, two thousand attempts, and each attempt opens `path` with `write(true)` and `create_new(true)`. `create_new` succeeds only when the file didn't exist, that success is the winner of the lock file, and `drop(file)` closes the handle before `Unlock` is returned so the later `remove_file` can delete it. `Unlock` remembers the path and doesn't hold the `File`.
+The loop is `0..2_000`, two thousand attempts, and each attempt opens `path` with `write(true)` and `create_new(true)`. `create_new` succeeds only when the file didn't exist, that success is the winner of the lock file. `drop(file)` closes the handle before `Unlock` is returned so the later `remove_file` can delete it. `Unlock` remembers the path and doesn't hold the `File`.
 
-`AlreadyExists` means another process, or another call in this process, already created `board.lock`. `PermissionDenied` is the case the comment names: Windows can report a sharing violation while the other process deletes the lock file, and the comment says that is a retry, not a loss, so both kinds sleep `Duration::from_micros(100)` and try again. Any other `ErrorKind` returns `Io` immediately, without sleeping and without burning the rest of the attempts.
+`AlreadyExists` means another process, or another call in this process, already created `board.lock`. `PermissionDenied` is the case the comment names: Windows can report a sharing violation while the other process deletes the lock file. The comment says that is a retry, not a loss, so both kinds sleep `Duration::from_micros(100)` and try again. Any other `ErrorKind` returns `Io` immediately, without sleeping and without burning the rest of the attempts.
 
-If all 2000 attempts hit `AlreadyExists` or `PermissionDenied`, the function returns `Busy`. It doesn't create the file, and it doesn't return `Lost`, because `Lost` is the status and owner check inside `apply` while `Busy` is the lock file, the split from the opening. The descriptions file says the 100 microsecond retry runs only when the lock file already exists, and an uncontended `transact`, which is the bench, takes the `Ok(file)` arm on the first open so the sleep doesn't run. `acquire` is private, tests reach it through `transact`, the two-process test is what contends, and the bench writes a fresh directory so `board.lock` is absent when `transact` starts.
+If all 2000 attempts hit `AlreadyExists` or `PermissionDenied`, the function returns `Busy`. It doesn't create the file, and it doesn't return `Lost`. `Lost` is the status and owner check inside `apply` while `Busy` is the lock file, the split from the opening. The descriptions file says the 100 microsecond retry runs only when the lock file already exists. An uncontended `transact`, which is the bench, takes the `Ok(file)` arm on the first open so the sleep doesn't run. `acquire` is private, tests reach it through `transact`, the two-process test is what contends. The bench writes a fresh directory so `board.lock` is absent when `transact` starts.
 
 > **Rust sidebar: `create_new` and a match guard**
 >
@@ -369,17 +367,17 @@ fn apply(board: &mut Board, id: &str, op: &Op) -> Result<(), TxError> {
 }
 ```
 
-`parents_done` is true when every parent id is a task on this board whose status is `done`. `all` on an empty iterator is true, so a task with no parents passes, `find` locates the parent by id, and `is_some_and` requires the parent to exist and to be `done`. A missing parent id fails the check, a parent in `ready`, `running`, `review`, or `blocked` fails the check, and the function doesn't look through grandparents.
+`parents_done` is true when every parent id is a task on this board whose status is `done`. `all` on an empty iterator is true. So a task with no parents passes, `find` locates the parent by id. `is_some_and` requires the parent to exist and to be `done`. A missing parent id fails the check, a parent in `ready`, `running`, `review`, or `blocked` fails the check. The function doesn't look through grandparents.
 
-`apply` finds the task index by id, and no match is `Missing`. The pause check is next, and only for `Op::Claim`: `matches!(op, Op::Claim { .. })` ignores the owner, and a paused board returns `Paused` before parents are considered and before the status is read for the claim. `Complete`, `Review`, and `Block` don't take that branch, so a paused board still accepts those three when the rest of their checks pass. Pause blocks a new claim and still allows complete.
+`apply` finds the task index by id, and no match is `Missing`. The pause check is next, and only for `Op::Claim`: `matches!(op, Op::Claim { .. })` ignores the owner. A paused board returns `Paused` before parents are considered and before the status is read for the claim. `Complete`, `Review`, and `Block` don't take that branch, so a paused board still accepts those three when the rest of their checks pass. Pause blocks a new claim and still allows complete.
 
-`parents_ok` is computed before the mutable borrow of the task, because the parent walk needs to read `board.tasks` while `let task = &mut board.tasks[index]` borrows one element. The bool is a copy, and the borrow of the slice ends when `parents_done` returns.
+`parents_ok` is computed before the mutable borrow of the task. The parent walk needs to read `board.tasks` while `let task = &mut board.tasks[index]` borrows one element. The bool is a copy, and the borrow of the slice ends when `parents_done` returns.
 
-Claim returns `Parents` when `parents_ok` is false, before it writes status or owner, and it returns `Lost` when status isn't `ready` or owner is `Some`. Those two checks are the status and owner test inside the lock. The Hermes update required `status = source` and `claim_lock IS NULL`, and here the source is the string `ready` and the empty owner is `owner.is_none()`, written as `is_some()` in the failure condition. On success the status becomes `running` and the owner becomes `Some` of a clone of the op's owner.
+Claim returns `Parents` when `parents_ok` is false, before it writes status or owner. It returns `Lost` when status isn't `ready` or owner is `Some`. Those two checks are the status and owner test inside the lock. The Hermes update required `status = source` and `claim_lock IS NULL`. Here the source is the string `ready` and the empty owner is `owner.is_none()`, written as `is_some()` in the failure condition. On success the status becomes `running` and the owner becomes `Some` of a clone of the op's owner.
 
-Complete trims `result`, an empty trim is `Empty` before the owner check, and the test uses `"  "`, which trims to empty. A non-empty result then requires status `running` and `owner.as_deref() == Some(owner)`, a stranger's owner fails that equality and returns `Lost`, and success writes `done`, stores the result, and sets owner to `None`. Review is the same shape with `summary` and status `review`, block is the same shape with `reason` and status `blocked`, and all three clear the owner. A later claim can take the card only from `ready`, so moving to `review` or `blocked` or `done` makes a second claim return `Lost`, and this file has no op that moves `review` back to `ready`.
+Complete trims `result`, an empty trim is `Empty` before the owner check. The test uses `"  "`, which trims to empty. A non-empty result then requires status `running` and `owner.as_deref() == Some(owner)`, a stranger's owner fails that equality and returns `Lost`. Success writes `done`, stores the result, and sets owner to `None`. Review is the same shape with `summary` and status `review`, block is the same shape with `reason` and status `blocked`, and all three clear the owner. A later claim can take the card only from `ready`. So moving to `review` or `blocked` or `done` makes a second claim return `Lost`. This file has no op that moves `review` back to `ready`.
 
-`Ok(())` means the in-memory board was updated, and `transact` still has to write it, because `apply` doesn't touch the disk.
+`Ok(())` means the in-memory board was updated, and `transact` still has to write it. `apply` doesn't touch the disk.
 
 > **Rust sidebar: `is_some_and` and `as_deref`**
 >
@@ -417,11 +415,11 @@ pub fn task_status(dir: &Path, id: &str) -> Result<Option<String>, TxError> {
 
 `transact` is the public transaction, and the doc comment says the lock file is gone before the function returns. The order is fixed: acquire `board.lock`, read `board.json`, apply the op, read the status string back out of the mutated board, write the board, and return that status. `_lock` drops at the final brace, and it also drops if `read_board`, `apply`, the status find, or `write_board` returns an error through `?`.
 
-The status find after `apply` is a second lookup by id. `apply` already found the id or returned `Missing`, a successful `apply` leaves the task in the vec so `find` succeeds, and `ok_or(TxError::Missing)` is the arm if it doesn't. The cloned status is what the caller sees, `running`, `done`, `review`, or `blocked`, depending on the op, and a claim of `t1` in the tests expects `running`.
+The status find after `apply` is a second lookup by id. `apply` already found the id or returned `Missing`, a successful `apply` leaves the task in the vec so `find` succeeds. `ok_or(TxError::Missing)` is the arm if it doesn't. The cloned status is what the caller sees, `running`, `done`, `review`, or `blocked`, depending on the op. A claim of `t1` in the tests expects `running`.
 
-`write_board` rewrites the whole file, not a single field, so every task on the board is serialized again. The bench has one task; a board with a parent and a child rewrites both when a claim of the child succeeds, and it doesn't rewrite when the claim fails, because `apply` returns `Parents` before `write_board`.
+`write_board` rewrites the whole file, not a single field, so every task on the board is serialized again. The bench has one task; a board with a parent and a child rewrites both when a claim of the child succeeds. It doesn't rewrite when the claim fails. `apply` returns `Parents` before `write_board`.
 
-`task_status` doesn't acquire the lock: it reads `board.json` and clones the status, or returns `Ok(None)` when the id is absent, and `Ok(None)` and `Err(Missing)` are different: `transact` uses `Missing` for an id it was asked to change, while `task_status` uses `None` for an id it was asked to read. A missing file is `Io` for both, because both go through `read_board`. The two-process test calls `task_status` after both children have exited and expects `Some("running")`.
+`task_status` doesn't acquire the lock: it reads `board.json` and clones the status, or returns `Ok(None)` when the id is absent. `Ok(None)` and `Err(Missing)` are different: `transact` uses `Missing` for an id it was asked to change, while `task_status` uses `None` for an id it was asked to read. A missing file is `Io` for both, because both go through `read_board`. The two-process test calls `task_status` after both children have exited and expects `Some("running")`.
 
 > **Rust sidebar: `ok_or` and a lock that isn't a data guard**
 >
@@ -473,7 +471,7 @@ pub fn demo() -> String {
 
 `FakeModel` is the same shape as the blackboard fake, and it is a different type. `complete` discards the prompt and returns `reply`, the bench doesn't construct it, and `descriptions.json` says `FakeModel` isn't constructed in the sample.
 
-The demo builds a directory named `ch46-kanban-` plus the process id, under the temp dir. `remove_dir_all` clears a leftover from a previous run of the same process, and the error is ignored. `write_board` creates the directory and writes one ready task `t1`, `transact` claims it for `worker`, and `expect("claim")` panics if the claim fails. `assert!(!lock_path(&dir).exists())` runs before `FakeModel`, because the lock file from the claim is already gone once `transact` has returned and `Drop` has removed it, which is the release the opening walked. `complete("t1")` returns `ok`, `let _` drops that string, and the prompt is the task id rather than a provider prompt. The second `transact` completes as `worker` with result `shipped`, the status comes back `done`, `remove_dir_all` deletes the directory, and `format!("kanban: {status}")` is `kanban: done`, which the chapter binary prints.
+The demo builds a directory named `ch46-kanban-` plus the process id, under the temp dir. `remove_dir_all` clears a leftover from a previous run of the same process, and the error is ignored. `write_board` creates the directory and writes one ready task `t1`, `transact` claims it for `worker`. `expect("claim")` panics if the claim fails. `assert!(!lock_path(&dir).exists())` runs before `FakeModel`. The lock file from the claim is already gone once `transact` has returned and `Drop` has removed it, which is the release the opening walked. `complete("t1")` returns `ok`, `let _` drops that string, and the prompt is the task id rather than a provider prompt. The second `transact` completes as `worker` with result `shipped`, the status comes back `done`, `remove_dir_all` deletes the directory. `format!("kanban: {status}")` is `kanban: done`, which the chapter binary prints.
 
 ```rust
 use harness_core::kanban::demo;
@@ -485,7 +483,7 @@ fn main() {
 
 Running the package needs `--bin ch46-kanban`, because the example binary prints eval lines, and no key is read.
 
-The claim binary is `src/bin/kanban_claim.rs`, and the test points at it with `env!("CARGO_BIN_EXE_ch46_kanban_claim")`, which Cargo sets from the bin name `ch46_kanban_claim`.
+The claim binary is `src/bin/kanban_claim.rs`. The test points at it with `env!("CARGO_BIN_EXE_ch46_kanban_claim")`, which Cargo sets from the bin name `ch46_kanban_claim`.
 
 > **Gotcha.** The claim binary is `ch46_kanban_claim`, not the demo binary `ch46-kanban`. Cargo turns hyphens into underscores in `CARGO_BIN_EXE_...`, and a shared name would collide with `CARGO_BIN_EXE_ch46_kanban`.
 
@@ -538,9 +536,9 @@ fn main() -> ExitCode {
 }
 ```
 
-Args are `claim`, the directory, the id, and the owner. A missing command prints the usage line and exits 2, a command other than `claim` does the same, and a missing directory, id, or owner exits 2 without the usage line. `transact` of `Op::Claim` is the whole body: `Ok` prints `claimed` and exits 0, and `Lost`, `Parents`, `Paused`, and `Busy` print `lost` and exit 0. The two-process test looks at stdout for those two words and doesn't check the exit code. Any other error prints `Debug` to stderr and exits 1, and the test message includes stderr if the stdout words are wrong, which is how a surprise `Io` shows up.
+Args are `claim`, the directory, the id, and the owner. A missing command prints the usage line and exits 2, a command other than `claim` does the same. A missing directory, id, or owner exits 2 without the usage line. `transact` of `Op::Claim` is the whole body: `Ok` prints `claimed` and exits 0. `Lost`, `Parents`, `Paused`, and `Busy` print `lost` and exit 0. The two-process test looks at stdout for those two words and doesn't check the exit code. Any other error prints `Debug` to stderr and exits 1. The test message includes stderr if the stdout words are wrong, which is how a surprise `Io` shows up.
 
-The two-process test spawns two threads, and each thread runs `Command::new` on that executable with args `claim`, the same directory, `t1`, and owner `a` or `b`, which is the race the opening walked. One `create_new` wins, that process's `apply` sees `ready` and owner `None`, writes `running`, and prints `claimed`, and the other process either retries the lock and then sees status `running` and returns `Lost`, or loses as `Busy`, and both of those print `lost`. The test asserts the two stdout lines contain both words, in either order, and that `task_status` is `running`.
+The two-process test spawns two threads. Each thread runs `Command::new` on that executable with args `claim`, the same directory, `t1`, and owner `a` or `b`, which is the race the opening walked. One `create_new` wins, that process's `apply` sees `ready` and owner `None`, writes `running`, and prints `claimed`. The other process either retries the lock and then sees status `running` and returns `Lost`, or loses as `Busy`, and both of those print `lost`. The test asserts the two stdout lines contain both words, in either order. That `task_status` is `running`.
 
 > **Rust sidebar: `env!` and `ExitCode`**
 >
@@ -548,21 +546,21 @@ The two-process test spawns two threads, and each thread runs `Command::new` on 
 
 ## 46.8 The SQLite compare-and-swap
 
-If the board were a database, the rule would be the one in Hermes: WAL, `BEGIN IMMEDIATE`, and a compare-and-swap on status. This file retries the lock and doesn't retry a `Lost`.
+If the board were a database, the rule would be the one in Hermes: WAL, `BEGIN IMMEDIATE`. A compare-and-swap on status. This file retries the lock and doesn't retry a `Lost`.
 
-The module docstring in `hermes_cli/kanban_db.py` states that rule in one sentence, and it adds that SQLite serializes writers, one claimer wins, losers see zero rows, and there are no retries and no distributed locks in that sentence. A `Lost` returns to the caller; the claim binary prints `lost` and exits 0, and it doesn't loop back into `transact`.
+The module docstring in `hermes_cli/kanban_db.py` states that rule in one sentence, and it adds that SQLite serializes writers, one claimer wins, losers see zero rows. There are no retries and no distributed locks in that sentence. A `Lost` returns to the caller; the claim binary prints `lost` and exits 0. It doesn't loop back into `transact`.
 
-`_claim_and_open_run` updates one row to `status = 'running'` and sets `claim_lock`, `claim_expires`, and `started_at`, and only where `id` matches, `status` is the source status, and `claim_lock IS NULL`. `rowcount != 1` returns `None` before it inserts a `task_runs` row, and the winner then inserts the run, stores `current_run_id`, and appends a `claimed` event. This crate's `apply` has the status check and the empty-owner check, and it doesn't insert a run row, set an expiry, or append an event. Those are the deferred pieces: WAL, `task_runs`, and claim expiry.
+`_claim_and_open_run` updates one row to `status = 'running'` and sets `claim_lock`, `claim_expires`, and `started_at`. Only where `id` matches, `status` is the source status, and `claim_lock IS NULL`. `rowcount != 1` returns `None` before it inserts a `task_runs` row. The winner then inserts the run, stores `current_run_id`, and appends a `claimed` event. This crate's `apply` has the status check and the empty-owner check. It doesn't insert a run row, set an expiry, or append an event. Those are the deferred pieces: WAL, `task_runs`, and claim expiry.
 
-`claim_task` calls `_claim_and_open_run` with source `ready`, and parents are checked first. `_parents_satisfied` is false when any direct parent isn't in `done` or `archived`, and on that failure `claim_task` updates the card from `ready` to `todo` and returns `None`. `parents_done` in this file requires status `done` only, `archived` isn't a status `apply` writes, and a parent that isn't `done` makes `Claim` return `Parents` without changing the child. `write_board` is skipped, the child stays `ready` on disk, and Hermes demotes where this crate refuses and leaves the status.
+`claim_task` calls `_claim_and_open_run` with source `ready`. Parents are checked first. `_parents_satisfied` is false when any direct parent isn't in `done` or `archived`. On that failure `claim_task` updates the card from `ready` to `todo` and returns `None`. `parents_done` in this file requires status `done` only, `archived` isn't a status `apply` writes. A parent that isn't `done` makes `Claim` return `Parents` without changing the child. `write_board` is skipped, the child stays `ready` on disk, and Hermes demotes where this crate refuses and leaves the status.
 
-The demo asserts the lock file is absent and then constructs `FakeModel`, because the model is the subscriber that must not run under the lock. Chapter 45 did that with `try_lock` after `tick`, and this chapter does it with `Drop` of `Unlock` before `complete`, the assertion `!lock_path(&dir).exists()`. The complete op is a second transaction, after the model, with its own lock file that is also gone before `demo` formats the line.
+The demo asserts the lock file is absent and then constructs `FakeModel`. The model is the subscriber that must not run under the lock. Chapter 45 did that with `try_lock` after `tick`. This chapter does it with `Drop` of `Unlock` before `complete`, the assertion `!lock_path(&dir).exists()`. The complete op is a second transaction, after the model, with its own lock file that is also gone before `demo` formats the line.
 
-The blackboard module is still in the crate; `kanban.rs` doesn't call `tick` or `post`, the chapter 45 tests are copied forward and still run, and the kanban tests don't construct a `Board` from `blackboard`.
+The blackboard module is still in the crate. `kanban.rs` doesn't call `tick` or `post`, the chapter 45 tests are copied forward and still run. The kanban tests don't construct a `Board` from `blackboard`.
 
-The race test `two_processes_cannot_hold_the_same_task` doesn't read the owner field, so it doesn't assert whether `a` or `b` won, only that stdout was `claimed` and `lost` and the card was left `running`.
+The race test `two_processes_cannot_hold_the_same_task` doesn't read the owner field. So it doesn't assert whether `a` or `b` won, only that stdout was `claimed` and `lost` and the card was left `running`.
 
-The bench is one uncontended claim of `t1`, with the setup directory outside the sample and `remove_dir_all` inside the sample after `transact`, and there's no second process and no `FakeModel`.
+The bench is one uncontended claim of `t1`, with the setup directory outside the sample and `remove_dir_all` inside the sample after `transact`. There's no second process and no `FakeModel`.
 
 > **Rust sidebar: `rowcount` has no twin here**
 >
@@ -570,19 +568,19 @@ The bench is one uncontended claim of `t1`, with the setup directory outside the
 
 ## Tests
 
-The new tests live in `steps/ch46-kanban/crates/harness-core/tests/kanban.rs`, and the package also builds the copied harness tests, including `blackboard.rs`.
+The new tests live in `steps/ch46-kanban/crates/harness-core/tests/kanban.rs`. The package also builds the copied harness tests, including `blackboard.rs`.
 
 `fresh` builds a directory under the temp dir, named `ch38-` plus the label, the process id, and the current time in nanoseconds, and it `remove_dir_all`s that path before returning it. The `ch38-` prefix is the string in the source, and the bench uses `ch38-bench-` plus the process id and a counter.
 
-One status per verb is `claim_complete_review_and_block_are_one_status_each`, which uses three directories from `fresh("verbs")`, `fresh("block")`, and `fresh("done")`. On the first, a claim of `t1` by `worker` returns `running` and a review with summary `look` returns `review`; on the second, claim then block with reason `needs a human` returns `blocked`; on the third, claim then complete with result `shipped` returns `done`. The last line removes `fresh("noop")`, which is a new empty directory rather than one of the three boards, and each successful `transact` returns the status it cloned after `apply`.
+One status per verb is `claim_complete_review_and_block_are_one_status_each`, which uses three directories from `fresh("verbs")`, `fresh("block")`, and `fresh("done")`. On the first, a claim of `t1` by `worker` returns `running` and a review with summary `look` returns `review`. On the second, claim then block with reason `needs a human` returns `blocked`. On the third, claim then complete with result `shipped` returns `done`. The last line removes `fresh("noop")`, which is a new empty directory rather than one of the three boards. Each successful `transact` returns the status it cloned after `apply`.
 
-Empty evidence and a stranger both lose in `an_empty_result_and_a_stranger_lose`, which claims `t1` for `worker`. Complete with result `"  "` equals `Err(TxError::Empty)`, complete with owner `other` and result `shipped` equals `Err(TxError::Lost)`, and `task_status` is `Some("running")`. The empty check runs first, so the whitespace result never reaches the owner compare, the stranger passes the trim check and fails the owner compare, and the owner on the card stays `worker` because `Lost` returns before the assignment. The test checks the status, not the owner field.
+Empty evidence and a stranger both lose in `an_empty_result_and_a_stranger_lose`, which claims `t1` for `worker`. Complete with result `"  "` equals `Err(TxError::Empty)`, complete with owner `other` and result `shipped` equals `Err(TxError::Lost)`, and `task_status` is `Some("running")`. The empty check runs first, so the whitespace result never reaches the owner compare, the stranger passes the trim check and fails the owner compare. The owner on the card stays `worker` because `Lost` returns before the assignment. The test checks the status, not the owner field.
 
-A parent that isn't done blocks the claim in `a_parent_that_is_not_done_blocks_the_claim`, which builds a child whose `parents` vec holds `parent` and a parent from `Task::ready("parent")`, so the parent status is `ready`. Claim of `child` by `worker` equals `Err(TxError::Parents)`, `apply` returns before it writes, and `transact` skips `write_board` on that error, so the child stays `ready` in the file `write_board` wrote at the start.
+A parent that isn't done blocks the claim in `a_parent_that_is_not_done_blocks_the_claim`, which builds a child whose `parents` vec holds `parent` and a parent from `Task::ready("parent")`. So the parent status is `ready`. Claim of `child` by `worker` equals `Err(TxError::Parents)`, `apply` returns before it writes. `transact` skips `write_board` on that error, so the child stays `ready` in the file `write_board` wrote at the start.
 
-Pause refuses a new claim in `pause_refuses_a_new_claim_and_complete_still_runs`, which writes a ready `t1`, claims it, then builds a paused board in memory with `t1` still `running` and owned by `worker`, and writes that file. Claim of `t2` on that directory equals `Err(TxError::Missing)`, because `t2` isn't in `tasks`. A second directory from `fresh("pause-claim")` holds a paused board whose only task is ready `t2`, and claim of `t2` by `other` equals `Err(TxError::Paused)`. The function name says complete still runs, and the body doesn't call `Op::Complete`. The pause split is in `apply`, which returns `Paused` only for `Op::Claim`, so this test locks the `Paused` return and the `Missing` return.
+Pause refuses a new claim in `pause_refuses_a_new_claim_and_complete_still_runs`, which writes a ready `t1`, claims it, then builds a paused board in memory with `t1` still `running` and owned by `worker`, and writes that file. Claim of `t2` on that directory equals `Err(TxError::Missing)`, because `t2` isn't in `tasks`. A second directory from `fresh("pause-claim")` holds a paused board whose only task is ready `t2`, and claim of `t2` by `other` equals `Err(TxError::Paused)`. The function name says complete still runs, and the body doesn't call `Op::Complete`. The pause split is in `apply`, which returns `Paused` only for `Op::Claim`. So this test locks the `Paused` return and the `Missing` return.
 
-Two processes can't hold the same task in `two_processes_cannot_hold_the_same_task`: `fresh("race")`, one ready `t1`, two threads, one executable from `env!("CARGO_BIN_EXE_ch46_kanban_claim")`, and args `claim`, the directory, `t1`, and owner `a` or `b`. Stdout must contain `claimed` and `lost`, the assertion message includes both stderr strings, and `task_status` is `Some("running")`.
+Two processes can't hold the same task in `two_processes_cannot_hold_the_same_task`: `fresh("race")`, one ready `t1`, two threads, one executable from `env!("CARGO_BIN_EXE_ch46_kanban_claim")`. Args `claim`, the directory, `t1`, and owner `a` or `b`. Stdout must contain `claimed` and `lost`, the assertion message includes both stderr strings. `task_status` is `Some("running")`.
 
 The model runs after the lock file is gone in `the_model_runs_after_the_lock_file_is_gone`, which claims `t1` for `worker`, asserts `board.lock` doesn't exist, and expects `FakeModel { reply: "ok" }.complete("t1")` to equal `ok`.
 
@@ -662,19 +660,19 @@ fn claim_transaction(c: &mut Criterion) {
 >
 > `n` is captured mutably by the setup closure, `iter_batched` calls that closure before it starts timing the routine, and the increment and the directory creation are on the untimed side. The routine takes `PathBuf` by value, so the path moves into the timed closure and the setup doesn't keep a second owner. `remove_dir_all` inside the routine deletes the directory the next setup will not reuse, because `n` has moved on, and `expect("claim")` panics the bench if `transact` returns an error. An uncontended claim of a ready card returns `running`.
 
-The setup closure runs outside the timer, and the counter `n` gives each sample its own directory, `ch38-bench-` plus the process id plus `n`.
+The setup closure runs outside the timer. The counter `n` gives each sample its own directory, `ch38-bench-` plus the process id plus `n`.
 
-The means are `mean.point_estimate` from [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196), the bench ids are `46/claim_transaction`, `44/claim_transaction`, and `42/claim_transaction`, and the command is `cargo bench -p ch46-kanban --bench kanban --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
+The means are `mean.point_estimate` from [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196), the bench ids are `46/claim_transaction`, `44/claim_transaction`, and `42/claim_transaction`. The command is `cargo bench -p ch46-kanban --bench kanban --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
-The bench is one uncontended claim, plus `remove_dir_all` of the temp directory, so a number that includes two processes and the 100 microsecond retry is `two_processes_cannot_hold_the_same_task` rather than this sample. The descriptions file says the retry loop runs only when the lock file already exists, and the bench's setup creates a fresh directory and doesn't create `board.lock`.
+The bench is one uncontended claim, plus `remove_dir_all` of the temp directory. So a number that includes two processes and the 100 microsecond retry is `two_processes_cannot_hold_the_same_task` rather than this sample. The descriptions file says the retry loop runs only when the lock file already exists. The bench's setup creates a fresh directory and doesn't create `board.lock`.
 
 The lock file is removed in `Drop`, so a crash between `create_new` and that drop leaves `board.lock` behind. The next `acquire` retries 2000 times at 100 microseconds and returns `Busy`, and this crate doesn't delete a stale lock based on age. Hermes stores `claim_expires` on the row inside `_claim_and_open_run`, and that expiry isn't here.
 
 On Windows, `PermissionDenied` is a retry, per the comment in `acquire`, and an immediate `Io` on that kind would skip the sleep. `AlreadyExists` is the other retry kind, and every other kind is `Io` on the first sighting.
 
-Complete from a process that isn't the owner is `Lost`, the card stays `running`, and an empty or whitespace result is `Empty`, with that check before the owner check. Clearing the owner on review and on block is what the success arms do, a later claim still needs status `ready`, and this file never writes `ready` except in `Task::ready` at construction.
+Complete from a process that isn't the owner is `Lost`, the card stays `running`. An empty or whitespace result is `Empty`, with that check before the owner check. Clearing the owner on review and on block is what the success arms do, a later claim still needs status `ready`. This file never writes `ready` except in `Task::ready` at construction.
 
 ## Guardrails in this chapter
 
@@ -690,7 +688,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). The 
 
 ## What you implement
 
-The milestone the reader implements is `my-harness/tests/ch46.rs`, and the test below is what has to pass.
+The milestone the reader implements is `my-harness/tests/ch46.rs`. The test below is what has to pass.
 
 ```rust
 use my_harness::chapter_46_claims_won;
@@ -710,7 +708,7 @@ pub fn chapter_46_claims_won(attempts: usize) -> usize {
 }
 ```
 
-The panic is `todo!("chapter 46")`, and the test passes `2` and wants `1` back: two claims, one winner. In the step crate that is `two_processes_cannot_hold_the_same_task`, where two processes call `transact` of `Op::Claim` on one ready task, one stdout line is `claimed`, the other is `lost`, and the status is `running`, while the stub stays `todo!`.
+The panic is `todo!("chapter 46")`, and the test passes `2` and wants `1` back: two claims, one winner. In the step crate that is `two_processes_cannot_hold_the_same_task`, where two processes call `transact` of `Op::Claim` on one ready task, one stdout line is `claimed`, the other is `lost`. The status is `running`, while the stub stays `todo!`.
 
 ## Chapter summary
 

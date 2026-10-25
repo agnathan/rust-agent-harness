@@ -40,11 +40,11 @@ The step is chapter 26's harness plus `curation`, at `steps/ch27-curation`, pack
 
 `enqueue` pushes the string `curate` onto a queue of 64, but it doesn't call `pass`, `snapshot`, `install`, or `scan_text`.
 
-`pass` calls `snapshot`, then walks the slice. A pinned skill, a cron skill, a hub skill, or a bundled skill is skipped, and bundled is skipped because `PRUNE_BUILTINS` is false, as the opening said. An agent skill at 14 days or more, and under 30, becomes `State::Stale` and stays in its directory. At 30 days it is archived: the directory moves to `.archive/<name>` unless the approval flag stages the label `archive {name}`. `consolidate` false leaves `consolidated` at 0.
+`pass` calls `snapshot`, then walks the slice. A pinned skill, a cron skill, a hub skill, or a bundled skill is skipped, and bundled is skipped because `PRUNE_BUILTINS` is false, as the opening said. An agent skill at 14 days or more, and under 30, becomes `State::Stale` and stays in its directory. At 30 days it is archived: the directory moves to `.archive/<name>` unless the approval flag stages the label `archive {name}`, and `consolidate` false leaves `consolidated` at 0.
 
 `snapshot` writes `.curator_backups/NNNN-skills.tar.gz`. A path component in the exclude list is omitted, and after the write, files beyond `KEEP_SNAPSHOTS` (2) are deleted, oldest names first.
 
-`install` scans with chapter 25. `Decision::Allow` continues. `Ask` and `Block` are `CuratorError::Scan`, and the approval flag can still stage `install {name}` after an allow. The write is `SKILL.md` under `<root>/<name>`.
+`install` scans with chapter 25; `Decision::Allow` continues, and `Ask` and `Block` are `CuratorError::Scan`, and the approval flag can still stage `install {name}` after an allow. The write is `SKILL.md` under `<root>/<name>`.
 
 `demo` writes `notes`, ages it 14 days, runs `pass`, and returns `stale: 1`. No key.
 
@@ -72,7 +72,7 @@ const EXCLUDE: &[&str] = &[
 ];
 ```
 
-`STALE_AFTER_DAYS` is `DEFAULT_STALE_AFTER_DAYS`. `ARCHIVE_AFTER_DAYS` is `DEFAULT_ARCHIVE_AFTER_DAYS`. `INTERVAL_HOURS` is `24 * 7`, which is 168, the same expression as `DEFAULT_INTERVAL_HOURS`. `MIN_IDLE_HOURS` is 2. `CONSOLIDATE` is false, which is `DEFAULT_CONSOLIDATE`. `PRUNE_BUILTINS` is false. Hermes's curator block includes the key `prune_builtins`, and this crate stores the bool as a constant. There is no setter for it. `KEEP_SNAPSHOTS` is 2. Hermes names the keep count `DEFAULT_KEEP`, and `QUEUE_CAP` matches the background queue in chapter 25.
+`STALE_AFTER_DAYS` is `DEFAULT_STALE_AFTER_DAYS`, and `ARCHIVE_AFTER_DAYS` is `DEFAULT_ARCHIVE_AFTER_DAYS`. `INTERVAL_HOURS` is `24 * 7`, which is 168, the same expression as `DEFAULT_INTERVAL_HOURS`; `MIN_IDLE_HOURS` is 2, and `CONSOLIDATE` is false, which is `DEFAULT_CONSOLIDATE`. `PRUNE_BUILTINS` is false, and hermes's curator block includes the key `prune_builtins`, and this crate stores the bool as a constant, and there is no setter for it. `KEEP_SNAPSHOTS` is 2; Hermes names the keep count `DEFAULT_KEEP`, and `QUEUE_CAP` matches the background queue in chapter 25.
 
 `EXCLUDE` is the list `add_tree` consults, and the names are `.curator_backups`, `.hub`, `.locks`, `.git`, `.archive`, and `.curator_ledger.jsonl`. Hermes's list is `_EXCLUDE_TOP_LEVEL`, and these are the names this file skips. A component match anywhere in the path is enough, and `.git/config` is skipped because `.git` is a component. The backup directory is skipped, so a snapshot doesn't contain the previous snapshot, and `.archive` is skipped, so a second pass doesn't tar the skills the first pass moved.
 
@@ -113,7 +113,7 @@ pub struct Counts {
 
 `Origin` and `State` are `Copy`, but `Skill` isn't, because of `name: String`. The pass takes `&mut [Skill]` and writes `state` in place, and `age_days` is the caller's number. Nothing in `pass` adds one to it or reads `SystemTime`.
 
-`Counts` derives `Default`, so every field starts at 0, and `Copy` means `pass` can keep a local `counts` and return it by copy. The fields are `usize`, and `checked` counts every record, including the skipped ones. `marked_stale` counts the stale transition, and `archived` counts a move that happened. A staged archive doesn't increment it, and `skipped` counts pin, cron, and non-candidates. `consolidated` stays 0.
+`Counts` derives `Default`, so every field starts at 0, and `Copy` means `pass` can keep a local `counts` and return it by copy. The fields are `usize`, and `checked` counts every record, including the skipped ones. `marked_stale` counts the stale transition, and `archived` counts a move that happened. A staged archive doesn't increment it, and `skipped` counts pin, cron, and non-candidates; `consolidated` stays 0.
 
 ```rust
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -181,9 +181,9 @@ impl Curator {
     }
 ```
 
-`open` matches `Writer::open` from chapter 25, and `impl Into<PathBuf>` accepts the `&Path` the demo passes. `create_dir_all` creates the root, and the approval flag starts false. That is the same off-until-set rule as `skills.write_approval`, but this struct doesn't call `Writer`. It has its own `Mutex<bool>` and its own staged vec, and the scan functions are shared. The gate object isn't.
+`open` matches `Writer::open` from chapter 25, and `impl Into<PathBuf>` accepts the `&Path` the demo passes. `create_dir_all` creates the root, and the approval flag starts false. That is the same off-until-set rule as `skills.write_approval`, but this struct doesn't call `Writer`. It has its own `Mutex<bool>` and its own staged vec, and the scan functions are shared, and the gate object isn't.
 
-`set_write_approval` takes `&self` because the `Mutex` is interior mutability, and `expect("approval")` panics if the lock is poisoned. `set_consolidate` takes `&mut self` because `consolidate` is a plain `bool`, not a `Mutex`, but a shared `&Curator` can flip the approval flag and cannot flip consolidate. `open` copies `CONSOLIDATE`, which is false, and the test reads `consolidate()` after a pass and expects false. `consolidated` on the counts is 0.
+`set_write_approval` takes `&self` because the `Mutex` is interior mutability, and `expect("approval")` panics if the lock is poisoned. `set_consolidate` takes `&mut self` because `consolidate` is a plain `bool`, not a `Mutex`, but a shared `&Curator` can flip the approval flag and cannot flip consolidate. `open` copies `CONSOLIDATE`, which is false, and the test reads `consolidate()` after a pass and expects false; `consolidated` on the counts is 0.
 
 `staged` clones the vec under the lock and returns the clone, and `queue_len` copies the `usize` out.
 
@@ -193,7 +193,7 @@ fn io(err: impl ToString) -> CuratorError {
 }
 ```
 
-`io` is the mapper `map_err(io)` uses. The argument is `impl ToString`, so an `std::io::Error` works, and the tar error works, because both implement `ToString` through `Display`. The stored value is the string, but the original error type isn't in the enum.
+`io` is the mapper `map_err(io)` uses; the argument is `impl ToString`, so an `std::io::Error` works, and the tar error works, because both implement `ToString` through `Display`. The stored value is the string, but the original error type isn't in the enum.
 
 > **Rust sidebar: two ways to mutate `Curator`**
 >
@@ -225,7 +225,7 @@ The doc comment is the contract, and `enqueue` locks the deque. At length 64 it 
 
 The test `enqueue_does_not_run_the_pass_and_the_clock_is_injected` writes a skill named `old`, calls `enqueue`, and expects `queue_len() == 1`. `old/SKILL.md` is still a file, but `.archive` doesn't exist. The pass didn't run.
 
-`due` is an associated function, and it has no `self`. It doesn't read `Curator` and it doesn't read a clock, and both comparisons have to hold. `MIN_IDLE_HOURS` is 2. `INTERVAL_HOURS` is `24 * 7`. The test expects `due(MIN_IDLE_HOURS, INTERVAL_HOURS)` to be true, `due(MIN_IDLE_HOURS - 1, INTERVAL_HOURS)` to be false, and `due(MIN_IDLE_HOURS, INTERVAL_HOURS - 1)` to be false. One hour short of idle is false, and one hour short of the interval is false. The function is the whole scheduler this crate has, and nothing spawns a thread to call it.
+`due` is an associated function, and it has no `self`. It doesn't read `Curator` and it doesn't read a clock, and both comparisons have to hold, and `MIN_IDLE_HOURS` is 2, and `INTERVAL_HOURS` is `24 * 7`. The test expects `due(MIN_IDLE_HOURS, INTERVAL_HOURS)` to be true, `due(MIN_IDLE_HOURS - 1, INTERVAL_HOURS)` to be false, and `due(MIN_IDLE_HOURS, INTERVAL_HOURS - 1)` to be false. One hour short of idle is false, and one hour short of the interval is false. The function is the whole scheduler this crate has, and nothing spawns a thread to call it.
 
 The bench `enqueue_curation` opens a curator, then times `enqueue` followed by `queue_len` inside `black_box`, and the snapshot and the scan are outside that closure. They are not in the closure at all.
 
@@ -306,11 +306,11 @@ Age is checked after the skip, and `>= ARCHIVE_AFTER_DAYS` is the first age arm.
 
 The archive arm builds `archive {name}`, and `hold` returns false when the approval flag is off, and the move runs. `hold` returns true when the flag is on, and it has pushed the label. The `continue` leaves `state` alone and doesn't increment `archived`. The test with the gate on expects `old` to stay `Active`, the file to remain at `old/SKILL.md`, and `staged()` to equal `["archive old"]`.
 
-`archive_dir` joins `root` and `name`, and a missing directory returns `Ok(())`. The caller still sets `Archived` and increments the count, and the tests write the directory first, so the rename runs. `create_dir_all` makes `.archive`. `fs::rename` moves the skill directory to `.archive/<name>`, and the test expects `.archive/old/SKILL.md` to exist and `old` to be gone.
+`archive_dir` joins `root` and `name`, and a missing directory returns `Ok(())`. The caller still sets `Archived` and increments the count, and the tests write the directory first, so the rename runs; `create_dir_all` makes `.archive`. `fs::rename` moves the skill directory to `.archive/<name>`, and the test expects `.archive/old/SKILL.md` to exist and `old` to be gone.
 
 `consolidate` is read after the loop, and the true branch sets `consolidated` to 0. The false branch doesn't touch the field, and `Default` already set it to 0. Either way the count is 0, but the true branch doesn't call a model and doesn't rewrite `SKILL.md`. `set_consolidate(true)` changes the flag and still produces a consolidated count of 0, and the adaptation is that consolidate stays off. The body of the true branch is the same number.
 
-The test `stale_then_archive_and_the_exemptions_hold` builds six records, and `quiet` is agent, age `STALE_AFTER_DAYS`, and ends `Stale`, still in place. `old` is agent, age `ARCHIVE_AFTER_DAYS`, and ends `Archived`, under `.archive`, and `kept` is pinned at 40 days and stays `Active`. `job` is cron at 40 days and stays `Active`, and `shipped` is bundled at 40 days and stays `Active`. `from-hub` is hub at 40 days and stays `Active`. `marked_stale` is 1. `archived` is 1. `consolidate()` is false. `consolidated` is 0.
+The test `stale_then_archive_and_the_exemptions_hold` builds six records, and `quiet` is agent, age `STALE_AFTER_DAYS`, and ends `Stale`, still in place. `old` is agent, age `ARCHIVE_AFTER_DAYS`, and ends `Archived`, under `.archive`, and `kept` is pinned at 40 days and stays `Active`. `job` is cron at 40 days and stays `Active`, and `shipped` is bundled at 40 days and stays `Active`. `from-hub` is hub at 40 days and stays `Active`, and `marked_stale` is 1; `archived` is 1; `consolidate()` is false; `consolidated` is 0.
 
 > **Rust sidebar: `&mut [Skill]` writes the caller's records**
 >
@@ -355,7 +355,7 @@ use crate::skill_write::{scan_text, should_allow_install, Decision, Trust};
 
 After an allow, `front_name` looks for a `name` key, and a missing name becomes the string `skill`. The label is `install {name}`, and `hold` stages it when the approval flag is on and returns `Staged` without creating the directory. The test's safe skill `extra`, community, force false, with the gate on, is `Staged`, and `extra` doesn't exist. The gate was turned on before `pass` in that test, and it is still on for `install`.
 
-`fs::write` writes the raw string, but this path doesn't use chapter 25's `atomic_write`. A crash during `fs::write` can leave a partial `SKILL.md`. The snapshot path is the one that writes to a side file and renames through the tar builder's finish. The install path is a direct write.
+`fs::write` writes the raw string, but this path doesn't use chapter 25's `atomic_write`. A crash during `fs::write` can leave a partial `SKILL.md`. The snapshot path is the one that writes to a side file and renames through the tar builder's finish; the install path is a direct write.
 
 The scan sits on `install`, and the approval flag on an archive sits on `pass`. `enqueue` calls neither, which is why this work stays beside the request, as the opening said.
 
@@ -376,7 +376,7 @@ fn front_name(raw: &str) -> Option<String> {
 }
 ```
 
-This is the same line scan as chapter 25's `front_value`, narrowed to the key `name`. The first non-empty `name` wins. `to_string` copies the trimmed value while `raw` is still borrowed, and the `String` that returns doesn't borrow `raw`, so the function can hand it back after that line is done.
+This is the same line scan as chapter 25's `front_value`, narrowed to the key `name`, and the first non-empty `name` wins. `to_string` copies the trimmed value while `raw` is still borrowed, and the `String` that returns doesn't borrow `raw`, so the function can hand it back after that line is done.
 
 ## 27.6 `snapshot` writes a gzip and keeps two
 
@@ -406,7 +406,7 @@ The opening's scene is this function. A pass that might archive something you st
 
 `next_snapshot` starts at 0, and the block locks, copies the id, increments, and drops the guard at the end of the block. The id 0 formats as `0000-skills.tar.gz`, and the next call is `0001`. The format `04` is zero-padded to four digits, but the lock isn't held across `add_tree`. Two snapshots on one `Curator` get sequential ids because the mutex serializes the increment, and the tests call `snapshot` three times on one curator.
 
-`File::create` creates the gzip path, and `GzEncoder::new` wraps the file with `Compression::fast`. `tar::Builder::new` wraps the encoder. `add_tree` appends files. `into_inner` finishes the tar builder and returns the encoder, and `finish` writes the gzip trailer. `prune_snapshots` then deletes older gzip files beyond two.
+`File::create` creates the gzip path, and `GzEncoder::new` wraps the file with `Compression::fast`; `tar::Builder::new` wraps the encoder, and `add_tree` appends files. `into_inner` finishes the tar builder and returns the encoder, and `finish` writes the gzip trailer. `prune_snapshots` then deletes older gzip files beyond two.
 
 `pass` calls this every time, and a pass that only marks a skill stale still produces a tarball. The demo's stale mark is that kind of pass.
 
@@ -458,7 +458,7 @@ fn prune_snapshots(dir: &Path) -> Result<(), CuratorError> {
 }
 ```
 
-`add_tree` reads `dir`. The first call passes the skill root as both `root` and `dir`, and `excluded` looks at every component. A hit `continue`s, so a skipped directory isn't recursed, but `.git` isn't entered. `.curator_backups` isn't entered, and files elsewhere are appended. `strip_prefix(root)` makes the name inside the archive relative to the skill root, and `unwrap_or(&path)` keeps the full path if the prefix is absent. The tests' files are under the root, so the prefix strips, and directories themselves are not archive entries. The function recurses and stores files, and `notes/SKILL.md` is the entry the test looks for. The test also accepts `notes\\SKILL.md` in the joined names.
+`add_tree` reads `dir`; the first call passes the skill root as both `root` and `dir`, and `excluded` looks at every component. A hit `continue`s, so a skipped directory isn't recursed, but `.git` isn't entered. `.curator_backups` isn't entered, and files elsewhere are appended. `strip_prefix(root)` makes the name inside the archive relative to the skill root, and `unwrap_or(&path)` keeps the full path if the prefix is absent. The tests' files are under the root, so the prefix strips, and directories themselves are not archive entries. The function recurses and stores files, and `notes/SKILL.md` is the entry the test looks for. The test also accepts `notes\\SKILL.md` in the joined names.
 
 `append_path_with_name` reads the file from disk and writes it into the tar under `name`, and `map_err(io)` turns the tar error into `CuratorError::Io`.
 
@@ -493,7 +493,7 @@ pub fn demo(root: &Path) -> Result<String, CuratorError> {
 }
 ```
 
-`open` creates the root, and the function then creates `notes` and writes `SKILL.md`. The record's age is `STALE_AFTER_DAYS`, 14, and pin and cron are false. Origin is `Agent`. State starts `Active`. `pass` snapshots, then takes the stale arm because 14 isn't `>= 30` and 14 is `>= 14`. `marked_stale` is 1. The format string is `stale: 1`, and the directory `notes` stays. `.archive` isn't created by the stale arm, and `.curator_backups` is created by the snapshot.
+`open` creates the root, and the function then creates `notes` and writes `SKILL.md`. The record's age is `STALE_AFTER_DAYS`, 14, and pin and cron are false, and origin is `Agent`, and state starts `Active`. `pass` snapshots, then takes the stale arm because 14 isn't `>= 30` and 14 is `>= 14`; `marked_stale` is 1. The format string is `stale: 1`, and the directory `notes` stays. `.archive` isn't created by the stale arm, and `.curator_backups` is created by the snapshot.
 
 The binary prints that string.
 
@@ -508,9 +508,9 @@ The test `a_snapshot_skips_git_and_keeps_two` calls `demo` on a nested directory
 
 ## Tests
 
-Four tests, in `steps/ch27-curation/crates/harness-core/tests/curation.rs`, and the package is the copied harness plus these tests. The nextest line is 143 passed.
+Four tests, in `steps/ch27-curation/crates/harness-core/tests/curation.rs`, and the package is the copied harness plus these tests; the nextest line is 143 passed.
 
-`stale_then_archive_and_the_exemptions_hold` expects `quiet` to be `Stale` with `SKILL.md` still in place, `old` to be `Archived` under `.archive` with the original directory gone, and the pinned, cron, bundled, and hub records to stay `Active`. `marked_stale` is 1. `archived` is 1. `consolidate()` is false. `consolidated` is 0. The stale file still contains `Body.`
+`stale_then_archive_and_the_exemptions_hold` expects `quiet` to be `Stale` with `SKILL.md` still in place, `old` to be `Archived` under `.archive` with the original directory gone, and the pinned, cron, bundled, and hub records to stay `Active`. `marked_stale` is 1; `archived` is 1, and `consolidate()` is false. `consolidated` is 0. The stale file still contains `Body.`
 
 `the_gate_stages_an_archive_and_a_dangerous_install_is_blocked` turns the flag on, runs `pass` on a 30-day `old`, and expects the state to stay `Active`, the file to stay put, and `staged()` to equal `["archive old"]`. The dangerous community install with force is `CuratorError::Scan`, and `bad` is absent, and the safe install with the gate on is `Staged`, and `extra` is absent.
 
@@ -561,11 +561,11 @@ The age is the `i64` on the record, and a record that says 30 archives a skill t
 
 ## Guardrails in this chapter
 
-The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Curation sits on L8. It reuses H1 and A9 from chapter 25.
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md), and curation sits on L8; it reuses H1 and A9 from chapter 25.
 
-**A9.** `set_write_approval` starts false. `hold` is the gate on an archive and on an install. Off, the move and the write proceed. On, the label is staged and the directory stays. The scan is a different check. A dangerous install returns `Scan` before `hold`.
+**A9.** `set_write_approval` starts false; `hold` is the gate on an archive and on an install, and off, the move and the write proceed. On, the label is staged and the directory stays. The scan is a different check. A dangerous install returns `Scan` before `hold`.
 
-**H1.** `install` calls `crate::skill_write::scan_text` and `should_allow_install`. The policy table is chapter 25's table. `force` does not turn a dangerous community skill into an allow. `enqueue` does not call `install`. The scan stays off the request path.
+**H1.** `install` calls `crate::skill_write::scan_text` and `should_allow_install`; the policy table is chapter 25's table. `force` does not turn a dangerous community skill into an allow. `enqueue` does not call `install`. The scan stays off the request path.
 
 **Exempt.** Pin and cron skip the age checks. `Origin::Hub` is not a candidate. `Origin::Bundled` follows `PRUNE_BUILTINS`, which is false. `Origin::Agent` is the candidate that can go stale and then archived.
 

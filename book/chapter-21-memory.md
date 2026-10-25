@@ -1,6 +1,6 @@
 # Chapter 21: Memory Files
 
-Add `likes tea` while the session is still open, and the file on disk changes while the system prompt stays on the snapshot `open` already handed out. That pointer is an `Arc` taken once, and `add` never replaces it, so a prefix the provider has already cached keeps the same bytes until a later session opens the directory again. A continuously improving harness can store a durable fact on this turn and still keep the prefix it has already paid for.
+Add `likes tea` while the session is still open, and the file on disk changes while the system prompt stays on the snapshot `open` already handed out. That pointer is an `Arc` taken once, and `add` never replaces it, so a prefix the provider has already cached keeps the same bytes until a later session opens the directory again. I expected `likes tea` to show up in the prompt as soon as `add` returned. The file changes. The snapshot stays. A continuously improving harness can store a durable fact on this turn and still keep the prefix it has already paid for.
 
 The fact belongs in a small file, rather than in a transcript you would have to search. `MEMORY.md` holds notes that are true every session, and `USER.md` holds the profile. Entries are whole lines joined by a newline, a section sign, and a newline. The tests write one memory entry, `likes tea`, and one profile line, `name is Ada`. Five entries in the same shape look like this:
 

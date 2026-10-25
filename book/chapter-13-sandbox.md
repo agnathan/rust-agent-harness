@@ -1,14 +1,14 @@
 # Chapter 13: Sandboxed Execution
 
-Local is the default, and printing a Docker command doesn't put the process in a container. The loop's only sandbox call is `check_execute_code`, inside `deny_tool`. A local interactive script is approved there, and its `terminal` calls still hit chapter 11. Cron on that same local env is denied. A container env is approved even when the presence is cron, because the env check returns before presence is considered. `Worker::spawn` doesn't call `scrub_env`, so the child inherits the parent's keys unless a caller builds the list first.
+Local is the default, and printing a Docker command doesn't put the process in a container. The loop's only sandbox call is `check_execute_code`, inside `deny_tool`. A local interactive script is approved there, and its `terminal` calls still hit chapter 11; cron on that same local env is denied. A container env is approved even when the presence is cron, because the env check returns before presence is considered. `Worker::spawn` doesn't call `scrub_env`, so the child inherits the parent's keys unless a caller builds the list first.
 
-What this chapter delivers, each piece tested on its own, is that gate, the argv a Docker run would use, the scrub function, a warm worker, a timeout that kills the child it started, and a checkpoint you can rewind. The crate is `steps/ch13-sandbox`, a copy of chapter 12 plus a `sandbox` module. The package is `ch13-sandbox`. The worker binary stays named `sandbox-worker`, because the tests and the bench compile `CARGO_BIN_EXE_sandbox-worker`, and later copies keep that name.
+What this chapter delivers, each piece tested on its own, is that gate, the argv a Docker run would use, the scrub function, a warm worker, a timeout that kills the child it started, and a checkpoint you can rewind. The crate is `steps/ch13-sandbox`, a copy of chapter 12 plus a `sandbox` module; the package is `ch13-sandbox`. The worker binary stays named `sandbox-worker`, because the tests and the bench compile `CARGO_BIN_EXE_sandbox-worker`, and later copies keep that name.
 
 Chapter 11 can deny a dangerous shell command, and chapter 12 can watch a call. Neither of them runs a model-written script outside this process. `execute_code` that evals in-process would be the harness trusting the model with its own address space, so the boundary is the child. `whole_script` asks once, not once per line, which is the script gate Hermes calls `check_execute_code_guard`, deferred from chapter 11 and closed here.
 
-`Backend` describes how a job would be launched. The Docker argv drops capabilities, sets `no-new-privileges`, and sets a pid limit, and nothing in this chapter spawns Docker. `scrub_env` builds the child environment from an allowlist plus declared passthrough. `run_until` is the deadline, the timeout chapter 1 deferred, and it kills the process it spawned. A grandchild that worker started would survive, which is the gap beside Hermes's `kill_process_tree`. A warm worker accepts a job without starting a process per call.
+`Backend` describes how a job would be launched; the Docker argv drops capabilities, sets `no-new-privileges`, and sets a pid limit, and nothing in this chapter spawns Docker. `scrub_env` builds the child environment from an allowlist plus declared passthrough. `run_until` is the deadline, the timeout chapter 1 deferred, and it kills the process it spawned. A grandchild that worker started would survive, which is the gap beside Hermes's `kill_process_tree`. A warm worker accepts a job without starting a process per call.
 
-Chapter 17 sends the terminal through this worker after the approval floor, instead of growing a second sandbox. A skill that contains a script is still a script, the scanner for that text is chapter 25, and chapter 36 restarts a failed child agent from a heartbeat without adopting this worker.
+Chapter 17 sends the terminal through this worker after the approval floor, instead of growing a second sandbox. A skill that contains a script is still a script, the scanner for that text is chapter 25, and chapter 36 restarts a failed child agent from a heartbeat without adopting this worker. The boundary belongs to the continuously improving harness, because a procedure it keeps is still code another process must run. The keys stay off that child, and a timeout can still kill the process this chapter started.
 
 A child process is `std::process`, and the worker is a binary so the tests can kill it. A checkpoint is a list of paths and bytes, rather than a filesystem snapshot library. `check_execute_code` returns an enum, so a cron session can't fall through to allow by forgetting an arm.
 
@@ -32,19 +32,19 @@ A child process is `std::process`, and the worker is a binary so the tests can k
 
 ## What this chapter decides
 
-`Backend::from_name` maps `"docker"` to `Docker` and everything else, including `""`, to `Local`. `Local.is_sandboxed()` is false. `Docker.is_sandboxed()` is true.
+`Backend::from_name` maps `"docker"` to `Docker` and everything else, including `""`, to `Local`; `Local.is_sandboxed()` is false; `Docker.is_sandboxed()` is true.
 
-`docker_run_args("hermes-sandbox")` is the hardened `docker run` line. The tests look for `--cap-drop ALL`, `--security-opt no-new-privileges`, and `--pids-limit 2048`. They do not spawn Docker.
+`docker_run_args("hermes-sandbox")` is the hardened `docker run` line. The tests look for `--cap-drop ALL`, `--security-opt no-new-privileges`, and `--pids-limit 2048`; they do not spawn Docker.
 
 `scrub_env` walks the pairs you pass in. A provider credential is dropped even if it is on the passthrough list. Anything else on that list is kept, which is how `TENOR_API_KEY` survives and `RANDOM_SECRET` does not. `PATH` and `HOME` stay because they are on the allowlist.
 
-`Worker` is the warm child. `accept` writes one line and reads one `ok` line. `run_script` is the fake model: a list of jobs, no key. The demo job is `ping`.
+`Worker` is the warm child; `accept` writes one line and reads one `ok` line. `run_script` is the fake model: a list of jobs, no key; the demo job is `ping`.
 
-`run_until` writes one job and polls. If the child is still alive when the timeout passes, it kills the child and returns `Timeout`. The test uses `sleep-ms 5000` and an 80 millisecond timeout. The child does not get to finish the sleep.
+`run_until` writes one job and polls; if the child is still alive when the timeout passes, it kills the child and returns `Timeout`. The test uses `sleep-ms 5000` and an 80 millisecond timeout. The child does not get to finish the sleep.
 
-`Checkpoints::new(false)` is the default shape. `take` returns `None` until you pass `true`. A store keeps `MAX_SNAPSHOTS` (20) and drops the oldest. `Manifest::checkpoint` copies up to `MAX_FILES` entries and skips a file whose content is longer than 10 MB. `rewind_into` replaces the live vec with that copy. `snapshot_dir` / `restore_dir` do the same thing for a real directory. The test uses one file in a temp dir.
+`Checkpoints::new(false)` is the default shape; `take` returns `None` until you pass `true`. A store keeps `MAX_SNAPSHOTS` (20) and drops the oldest. `Manifest::checkpoint` copies up to `MAX_FILES` entries and skips a file whose content is longer than 10 MB. `rewind_into` replaces the live vec with that copy. `snapshot_dir` / `restore_dir` do the same thing for a real directory. The test uses one file in a temp dir.
 
-`check_execute_code` ignores the script text. A non-local `env_type` is `Approved`. YOLO or mode off is `Approved`. Cron, single-query, and unattended on `local` are `Denied`. `whole_script` is `Ask`. Anything left is `Approved`. The loop calls it with `"local"`, `Presence::Interactive`, and the three flags false, so that call is `Approved`. The cron denial is a direct call in `tests/execute_code.rs`.
+`check_execute_code` ignores the script text; a non-local `env_type` is `Approved`; YOLO or mode off is `Approved`. Cron, single-query, and unattended on `local` are `Denied`; `whole_script` is `Ask`; anything left is `Approved`. The loop calls it with `"local"`, `Presence::Interactive`, and the three flags false, so that call is `Approved`. The cron denial is a direct call in `tests/execute_code.rs`.
 
 ## 13.1 One call from the loop
 
@@ -55,7 +55,7 @@ The file is `steps/ch13-sandbox/crates/harness-core/src/sandbox.rs`. Its module 
 //! not executed. The default backend is local, which is not a sandbox.
 ```
 
-`lib.rs` declares `pub mod sandbox;`. The module is public, so an integration test can write `harness_core::sandbox::Worker`. The `pub use` list at the bottom of `lib.rs` does not re-export these names. You go through the module. `approval` is also `pub mod`, which is how `deny_tool` can call `crate::sandbox::check_execute_code` and how the sandbox signature can name `crate::approval::Presence`.
+`lib.rs` declares `pub mod sandbox;`; the module is public, so an integration test can write `harness_core::sandbox::Worker`. The `pub use` list at the bottom of `lib.rs` does not re-export these names; you go through the module. `approval` is also `pub mod`, which is how `deny_tool` can call `crate::sandbox::check_execute_code` and how the sandbox signature can name `crate::approval::Presence`.
 
 `Worker`, `docker_run_args`, `scrub_env`, `run_until`, and `Checkpoints` aren't in `agent.rs`. The loop's only sandbox call is inside `deny_tool`, and that call is `check_execute_code`. The child, the argv, the scrub, and the checkpoint are what the tests, the bench, and `chapter_demo` construct. When `deny_tool` returns `None`, the inherited turn still runs tools in this process.
 
@@ -112,11 +112,11 @@ pub fn deny_tool(
 > - The first `if` returns `None` for every name except `terminal` and `execute_code`. `echo` and `delegate` take that arm.
 > - `get("code")` is `Option<&Value>`. `and_then` with `as_str` keeps the arm only when the JSON value is a string. `unwrap_or("")` turns a missing key, or a number, into an empty script. That empty string is still passed into `check_execute_code`. The gate does not read it.
 
-The six arguments on the loop's call are fixed literals. `command` is the only value that comes from the tool call, and the gate ignores it. `env_type` is `"local"`. `presence` is `Presence::Interactive`. `mode_off` is `false`. `yolo` is `false`. `whole_script` is `false`. Section 13.7 walks what each of those does. With this combination the function returns `CodeDecision::Approved`, the match arm returns `None`, and the script is not refused.
+The six arguments on the loop's call are fixed literals. `command` is the only value that comes from the tool call, and the gate ignores it; `env_type` is `"local"`; `presence` is `Presence::Interactive`. `mode_off` is `false`; `yolo` is `false`; `whole_script` is `false`. Section 13.7 walks what each of those does. With this combination the function returns `CodeDecision::Approved`, the match arm returns `None`, and the script is not refused.
 
-The `Denied` and `Ask` arms are in the match because `CodeDecision` has three variants and a `match` has to name every one. They do not run for these literals. Cron, mode off, yolo, and `whole_script` are tested by calling `check_execute_code` directly. `deny_tool` has no parameter for them.
+The `Denied` and `Ask` arms are in the match because `CodeDecision` has three variants and a `match` has to name every one; they do not run for these literals. Cron, mode off, yolo, and `whole_script` are tested by calling `check_execute_code` directly; `deny_tool` has no parameter for them.
 
-`drive_loop` calls `deny_tool` before it builds a `ToolCall`. A `Some` is stored and skipped. A `None` is pushed into `allowed` and later handed to `run_raced`.
+`drive_loop` calls `deny_tool` before it builds a `ToolCall`; a `Some` is stored and skipped. A `None` is pushed into `allowed` and later handed to `run_raced`.
 
 ```rust
         let mut approval_session = crate::approval::Session::new();
@@ -138,9 +138,9 @@ The `Denied` and `Ask` arms are in the match because `CodeDecision` has three va
         }
 ```
 
-`if let Some(message)` is the `Option` from `deny_tool`. For an interactive local `execute_code` the `if let` fails and the call is moved into `allowed`. The result walk looks a denial up by id and `continue`s before `ran.next()`, so a real denial stays aligned with the zip. This call is not in that vec. The dispatcher output is what gets pushed.
+`if let Some(message)` is the `Option` from `deny_tool`. For an interactive local `execute_code` the `if let` fails and the call is moved into `allowed`. The result walk looks a denial up by id and `continue`s before `ran.next()`, so a real denial stays aligned with the zip. This call is not in that vec; the dispatcher output is what gets pushed.
 
-The demo imports `harness_core::sandbox::run_script`. The turn table, the approval fake model, and the hooks fake model each have their own `run_script`. The sandbox one is the function that talks to a `Worker`.
+The demo imports `harness_core::sandbox::run_script`; the turn table, the approval fake model, and the hooks fake model each have their own `run_script`. The sandbox one is the function that talks to a `Worker`.
 
 ## 13.2 `Backend` and the Docker argv
 
@@ -181,7 +181,7 @@ impl Backend {
 > - `matches!(self, Self::Docker)` is true only for the `Docker` variant. `Self` here is `Backend`. `is_sandboxed` takes `self` by value. Because of `Copy`, `Backend::Local.is_sandboxed()` does not consume a variable you still need.
 > - `Option`, `Result`, enums, and `Arc` are taught in [chapter 1](chapter-01-first-contact.md).
 
-`from_name("local")` and `from_name("")` are what the test calls. Both are `Local`, and `Backend::Local.is_sandboxed()` is false, while `Backend::Docker.is_sandboxed()` is true. The test constructs that `Docker` as the variant. Any ASCII-case spelling of `docker` is the sandboxed variant, and every other string, including `"docker "` with a trailing space, is local.
+`from_name("local")` and `from_name("")` are what the test calls. Both are `Local`, and `Backend::Local.is_sandboxed()` is false, while `Backend::Docker.is_sandboxed()` is true; the test constructs that `Docker` as the variant. Any ASCII-case spelling of `docker` is the sandboxed variant, and every other string, including `"docker "` with a trailing space, is local.
 
 ```rust
 pub fn docker_run_args(image: &str) -> Vec<String> {
@@ -210,7 +210,7 @@ pub fn docker_run_args(image: &str) -> Vec<String> {
 > - A string literal is `&str`. `Vec<String>` needs an owned `String` in each slot. `.into()` is `Into<String>`, and for a literal that allocates a copy. `image.into()` copies the caller's `&str`. The caller keeps its own string.
 > - The vec owns sixteen strings. This function does not build a `Command` and does not call `spawn`. Returning the vec is the end of the work.
 
-`--cap-drop` is followed by `ALL`. Three `--cap-add` entries put `DAC_OVERRIDE`, `CHOWN`, and `FOWNER` back. `--security-opt` is followed by `no-new-privileges`. `--pids-limit` is followed by `DEFAULT_PIDS_LIMIT`, the string `"2048"`. `--rm` is in the vec. The image is last. The test passes `"hermes-sandbox"`. The function does not inspect the image.
+`--cap-drop` is followed by `ALL`; three `--cap-add` entries put `DAC_OVERRIDE`, `CHOWN`, and `FOWNER` back; `--security-opt` is followed by `no-new-privileges`. `--pids-limit` is followed by `DEFAULT_PIDS_LIMIT`, the string `"2048"`; `--rm` is in the vec. The image is last. The test passes `"hermes-sandbox"`; the function does not inspect the image.
 
 `the_default_backend_is_local_and_docker_argv_is_hardened` locks three adjacent pairs and one absence:
 
@@ -225,7 +225,7 @@ assert!(args
 assert!(!args.iter().any(|arg| arg == "docker-run-executed"));
 ```
 
-`windows(2)` yields each adjacent pair, and `String` compares equal to `&str`, so the pair matches the array of literals. The three asserts fail if a flag is renamed or split from its value. `--rm` and the three `--cap-add` lines (`DAC_OVERRIDE`, `CHOWN`, `FOWNER`) are in the vec the function returns. The test locks the three pairs above, plus the absence of `docker-run-executed`, which records that the function returned the vec. `Command` appears later, and it starts `sandbox-worker`.
+`windows(2)` yields each adjacent pair, and `String` compares equal to `&str`, so the pair matches the array of literals. The three asserts fail if a flag is renamed or split from its value. `--rm` and the three `--cap-add` lines (`DAC_OVERRIDE`, `CHOWN`, `FOWNER`) are in the vec the function returns. The test locks the three pairs above, plus the absence of `docker-run-executed`, which records that the function returned the vec; `Command` appears later, and it starts `sandbox-worker`.
 
 ## 13.3 `scrub_env`
 
@@ -241,9 +241,9 @@ pub fn is_provider_credential(name: &str) -> bool {
 }
 ```
 
-`to_ascii_uppercase` allocates, and the comparisons read that copy. `"openai_api_key"` matches the equality. The test calls `is_provider_credential` on `AUXILIARY_OPENAI_API_KEY` and `GATEWAY_RELAY_TOKEN`. The auxiliary name is true because it starts with `AUXILIARY_` and contains `API_KEY`. A name that only has the prefix, with neither `API_KEY` nor `BASE_URL`, is false. `GATEWAY_RELAY_` is true from the prefix alone, so the `TOKEN` in the test's name isn't what that clause reads.
+`to_ascii_uppercase` allocates, and the comparisons read that copy; `"openai_api_key"` matches the equality. The test calls `is_provider_credential` on `AUXILIARY_OPENAI_API_KEY` and `GATEWAY_RELAY_TOKEN`. The auxiliary name is true because it starts with `AUXILIARY_` and contains `API_KEY`. A name that only has the prefix, with neither `API_KEY` nor `BASE_URL`, is false. `GATEWAY_RELAY_` is true from the prefix alone, so the `TOKEN` in the test's name isn't what that clause reads.
 
-The allowlist and the secret substrings are private. `scrub_env` is what tests call.
+The allowlist and the secret substrings are private; `scrub_env` is what tests call.
 
 ```rust
 const SECRET_PARTS: &[&str] = &[
@@ -324,7 +324,7 @@ The test builds five pairs and a passthrough of `TENOR_API_KEY` and `OPENAI_API_
 
 `OPENAI_API_KEY` hits the provider `continue` even though the passthrough list names it. `TENOR_API_KEY` is pushed because it is on that list. It contains `KEY`, so `secret_name` would have dropped it, and that check never runs because of the `continue`. `RANDOM_SECRET` is not passed through, `secret_name` sees `SECRET`, and it is dropped. `PATH` and `HOME` reach `safe_name` and are in `EXACT`.
 
-`safe_name` does not uppercase. `"path"` misses `EXACT` and is dropped unless it was passed through. `secret_name` does uppercase, so `"random_secret"` is still a secret. The test asserts names only. The kept values are `"/usr/bin"`, `"tenor"`, and `"/tmp/me"`.
+`safe_name` does not uppercase; `"path"` misses `EXACT` and is dropped unless it was passed through. `secret_name` does uppercase, so `"random_secret"` is still a secret; the test asserts names only. The kept values are `"/usr/bin"`, `"tenor"`, and `"/tmp/me"`.
 
 `LC_`, `XDG_`, and `CONDA` are prefixes on the original spelling. `CONDA_TOKEN` starts with `CONDA` and contains `TOKEN`, and `secret_name` is the earlier `continue`, so the prefix doesn't save it. `safe_name` also keeps `USER`, `TMPDIR`, and the Windows names in `EXACT` when the spelling matches.
 
@@ -332,7 +332,7 @@ The child inherits the parent's environment, because `Worker::spawn` doesn't cal
 
 ## 13.4 `Worker`
 
-The child is one struct. Stdin and stdout are taken off the `Child` so the parent can write a job and read a line. Stderr is discarded.
+The child is one struct; stdin and stdout are taken off the `Child` so the parent can write a job and read a line. Stderr is discarded.
 
 ```rust
 #[derive(Debug)]
@@ -396,11 +396,11 @@ impl Drop for Worker {
 > - `line.is_empty()` is true when the child closed stdout without a byte. That becomes `Err` with kind `UnexpectedEof` and the message `"worker closed"`. A line that is only `"\n"` is not empty. `trim_end` makes it `""`, and the function returns `Ok("")`.
 > - `quit` takes `self` by value. `let _ =` discards the write, the flush, and the `wait`. The function still returns `Ok(())`.
 
-`Drop` runs when the `Worker` goes out of scope, including at the end of `quit`, because `quit` owns `self`. `kill` signals the child and `wait` collects the exit. Both results are discarded. The warm-worker test never calls `quit`. The `Worker` drops at the end of the test, and that `kill` is what ends `sandbox-worker`. The bench calls `quit` after the samples so the child sees the `quit` line and leaves its read loop. `Drop` still runs afterwards.
+`Drop` runs when the `Worker` goes out of scope, including at the end of `quit`, because `quit` owns `self`. `kill` signals the child and `wait` collects the exit; both results are discarded; the warm-worker test never calls `quit`. The `Worker` drops at the end of the test, and that `kill` is what ends `sandbox-worker`. The bench calls `quit` after the samples so the child sees the `quit` line and leaves its read loop; `Drop` still runs afterwards.
 
-`accept` blocks in `read_line` until a newline arrives or the pipe closes. Stdout on a pipe is block-buffered, so a child that writes a line and never flushes leaves the parent in that read. The worker binary flushes every reply. The parent's `flush` puts `ping\n` into the pipe before the read.
+`accept` blocks in `read_line` until a newline arrives or the pipe closes. Stdout on a pipe is block-buffered, so a child that writes a line and never flushes leaves the parent in that read. The worker binary flushes every reply; the parent's `flush` puts `ping\n` into the pipe before the read.
 
-`a_warm_worker_accepts_a_job` spawns the worker, sends one `ScriptJob` whose line is `ping`, and expects `vec!["ok ping"]`. `run_script` is the loop around `accept`.
+`a_warm_worker_accepts_a_job` spawns the worker, sends one `ScriptJob` whose line is `ping`, and expects `vec!["ok ping"]`; `run_script` is the loop around `accept`.
 
 ```rust
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -417,7 +417,7 @@ pub fn run_script(worker: &mut Worker, jobs: &[ScriptJob]) -> io::Result<Vec<Str
 }
 ```
 
-`&mut Worker` is required because `accept` needs `&mut self`. Jobs run in order. The first `Err` returns through `?`. The test and the demo each pass one job. An empty slice returns an empty vec and never calls `accept`. No test passes zero jobs.
+`&mut Worker` is required because `accept` needs `&mut self`; jobs run in order. The first `Err` returns through `?`. The test and the demo each pass one job. An empty slice returns an empty vec and never calls `accept`; no test passes zero jobs.
 
 ## 13.5 `run_until`
 
@@ -458,19 +458,19 @@ pub fn run_until(bin: &Path, job: &str, timeout: Duration) -> Result<String, San
 }
 ```
 
-`map_err` stores `err.to_string()` in `SandboxError::Io`. `io::Error` does not implement `PartialEq`. A `String` does, which is why the enum derives `Eq`. Spawn failure, a failed write, a failed flush, and `try_wait` returning `Err` are the four `Io` paths. The timeout test hits none of them.
+`map_err` stores `err.to_string()` in `SandboxError::Io`; `io::Error` does not implement `PartialEq`. A `String` does, which is why the enum derives `Eq`. Spawn failure, a failed write, a failed flush, and `try_wait` returning `Err` are the four `Io` paths; the timeout test hits none of them.
 
-`started.elapsed() > timeout` is the first check in the loop. An elapsed time equal to `timeout` still polls. Then `try_wait` reports the process, not the pipe.
+`started.elapsed() > timeout` is the first check in the loop; an elapsed time equal to `timeout` still polls. Then `try_wait` reports the process, not the pipe.
 
-`Ok(Some(_))` means the process has exited. The status is ignored. One line is read and returned. A read error is discarded, and an empty buffer becomes `Ok("")`. This arm runs only after the child is gone.
+`Ok(Some(_))` means the process has exited; the status is ignored; one line is read and returned. A read error is discarded, and an empty buffer becomes `Ok("")`. This arm runs only after the child is gone.
 
-`Ok(None)` means the process is still running. The function sleeps 5 milliseconds and loops. It does not read stdout on this arm. A finished `ok ping` sitting in the pipe stays there.
+`Ok(None)` means the process is still running; the function sleeps 5 milliseconds and loops; it does not read stdout on this arm. A finished `ok ping` sitting in the pipe stays there.
 
 The worker reads until the line is `quit` or stdin closes. `run_until` holds the `Worker`, so stdin stays open, and it never writes `quit`. `ping` makes the child write `ok ping` and block on the next read, and `try_wait` stays `Ok(None)` until the timeout. The success arm is for a child that exits, which this worker does on `quit` (no reply) or when the parent drops stdin.
 
-`a_timeout_kills_the_child` sends `sleep-ms 5000` with `Duration::from_millis(80)`. The child is inside that sleep when the timeout arm kills it, before `ok slept` is written. The test matches `Err(SandboxError::Timeout)` and asserts the elapsed time is under two seconds. `Drop` then kills and waits again. Those errors are discarded.
+`a_timeout_kills_the_child` sends `sleep-ms 5000` with `Duration::from_millis(80)`. The child is inside that sleep when the timeout arm kills it, before `ok slept` is written. The test matches `Err(SandboxError::Timeout)` and asserts the elapsed time is under two seconds; `Drop` then kills and waits again; those errors are discarded.
 
-The kill is `worker.child.kill()` on the process `spawn` started, and a grandchild would keep running. `drive_loop` doesn't call `run_until`. The function is synchronous, `thread::sleep` blocks the caller, and the timeout test is a plain `#[test]`.
+The kill is `worker.child.kill()` on the process `spawn` started, and a grandchild would keep running; `drive_loop` doesn't call `run_until`. The function is synchronous, `thread::sleep` blocks the caller, and the timeout test is a plain `#[test]`.
 
 ## 13.6 Checkpoints
 
@@ -543,11 +543,11 @@ impl Checkpoints {
 
 `Checkpoints::new(false)` sets `enabled` to false and `snaps` to an empty deque, and there is no setter. `take` returns `None` before `pop_front` and before `push_back`, so the files stay unsaved. The test calls that with `a.txt` / `one` and asserts `is_none()`.
 
-On an enabled store, `len() == MAX_SNAPSHOTS` (20) means full: `pop_front` drops the oldest, `push_back` adds the new one, and the length stays 20. Fewer than 20 skips the pop. `take` is the only push, so the deque does not grow past 20. `VecDeque` is what makes dropping the front cheap. The returned `back()` borrows the store. The test `expect`s it and drops that borrow before `latest()`.
+On an enabled store, `len() == MAX_SNAPSHOTS` (20) means full: `pop_front` drops the oldest, `push_back` adds the new one, and the length stays 20. Fewer than 20 skips the pop; `take` is the only push, so the deque does not grow past 20; `VecDeque` is what makes dropping the front cheap. The returned `back()` borrows the store; the test `expect`s it and drops that borrow before `latest()`.
 
-`Manifest::checkpoint` walks `files.iter().take(MAX_FILES)`, so anything after the first 50,000 entries is never examined. An oversized file inside that window is skipped and does not free a slot past the window. `content.len()` is bytes. `<= MAX_FILE_BYTES` keeps a file of exactly `10 * 1024 * 1024` bytes. One byte more is omitted. The clones are the snapshot. The caller's slice stays as it was.
+`Manifest::checkpoint` walks `files.iter().take(MAX_FILES)`, so anything after the first 50,000 entries is never examined. An oversized file inside that window is skipped and does not free a slot past the window; `content.len()` is bytes. `<= MAX_FILE_BYTES` keeps a file of exactly `10 * 1024 * 1024` bytes; one byte more is omitted; the clones are the snapshot. The caller's slice stays as it was.
 
-`rewind_into` is `live.clone_from(&self.files)`. Paths that existed only in `live` disappear. The test takes `a.txt` / `one`, sets live to `changed`, rewinds, and expects `"one"`. Then it takes `MAX_SNAPSHOTS + 5` more snapshots. The length is 20. The snapshot that held `one` has been popped. The rewind already ran, so `live` still has `one`. `latest` is `back()`. The test calls it on the enabled store before that overflow loop.
+`rewind_into` is `live.clone_from(&self.files)`; paths that existed only in `live` disappear. The test takes `a.txt` / `one`, sets live to `changed`, rewinds, and expects `"one"`; then it takes `MAX_SNAPSHOTS + 5` more snapshots. The length is 20. The snapshot that held `one` has been popped. The rewind already ran, so `live` still has `one`. `latest` is `back()`. The test calls it on the enabled store before that overflow loop.
 
 The 1,000-path helper builds the vec the bench and the round-trip test share.
 
@@ -559,9 +559,9 @@ pub fn thousand_files() -> Vec<(String, String)> {
 }
 ```
 
-`(0..1_000)` is the indexes `0` through `999`. `a_thousand_path_manifest_round_trips` expects length 1,000 and `live[0].0 == "f0.txt"` after a rewind that started from `gone.txt`. `checkpoint` keeps caller order. Every body fits, so nothing is skipped. `gone.txt` is gone because `clone_from` replaced the vec.
+`(0..1_000)` is the indexes `0` through `999`. `a_thousand_path_manifest_round_trips` expects length 1,000 and `live[0].0 == "f0.txt"` after a rewind that started from `gone.txt`. `checkpoint` keeps caller order; every body fits, so nothing is skipped. `gone.txt` is gone because `clone_from` replaced the vec.
 
-A directory is a second pair of functions. `Checkpoints` is not involved.
+A directory is a second pair of functions; `Checkpoints` is not involved.
 
 ```rust
 pub fn snapshot_dir(dir: &Path) -> io::Result<Manifest> {
@@ -605,13 +605,13 @@ pub fn restore_dir(dir: &Path, snap: &Manifest) -> io::Result<()> {
 }
 ```
 
-`snapshot_dir` recurses into directories and reads each file as a string. `strip_prefix(root)` makes the path relative, `unwrap_or(&path)` keeps the original if the prefix is missing, and backslashes become slashes. `read_to_string` failure becomes `""`, and that empty string is kept when it is under the cap. A longer file is left out. `collect` does not stop at `MAX_FILES`. That cap is on `Manifest::checkpoint`, which this function does not call. `files.sort()` then orders by path, then content. `checkpoint` does not sort.
+`snapshot_dir` recurses into directories and reads each file as a string. `strip_prefix(root)` makes the path relative, `unwrap_or(&path)` keeps the original if the prefix is missing, and backslashes become slashes. `read_to_string` failure becomes `""`, and that empty string is kept when it is under the cap; a longer file is left out. `collect` does not stop at `MAX_FILES`. That cap is on `Manifest::checkpoint`, which this function does not call. `files.sort()` then orders by path, then content. `checkpoint` does not sort.
 
-`restore_dir` creates the directory and writes each manifest entry, creating parents along the way. It leaves files that are absent from the manifest. `rewind_into` replaces a vec. `restore_dir` overwrites the paths it has.
+`restore_dir` creates the directory and writes each manifest entry, creating parents along the way. It leaves files that are absent from the manifest. `rewind_into` replaces a vec; `restore_dir` overwrites the paths it has.
 
 `a_directory_snapshot_rewinds_one_file` uses a temp directory named with the process id. `note.txt` goes from `before` to `after` and back to `before`, and the directory is removed before the test and again at the end.
 
-The 500 MB total cap is Hermes's. This manifest is in memory. `take` caps the count at 20. It does not add up bytes.
+The 500 MB total cap is Hermes's; this manifest is in memory. `take` caps the count at 20. It does not add up bytes.
 
 ## 13.7 Which scripts the gate allows
 
@@ -764,7 +764,7 @@ fn main() {
 }
 ```
 
-`current_exe` is the `ch13-sandbox` binary. `pop` drops that file name. `cfg!(windows)` is false on ubuntu, so the pushed name is `sandbox-worker`. `cargo run` puts both binaries in one directory. The print is `reply: ok ping`, then `assert_eq` checks that line, then `quit` writes `quit` and waits. No API key. No Docker. The tests and the bench skip `worker_path` and pass `env!("CARGO_BIN_EXE_sandbox-worker")` to `spawn` or `run_until`.
+`current_exe` is the `ch13-sandbox` binary. `pop` drops that file name. `cfg!(windows)` is false on ubuntu, so the pushed name is `sandbox-worker`. `cargo run` puts both binaries in one directory. No API key is read, and Docker is not started. The tests and the bench skip `worker_path` and pass `env!("CARGO_BIN_EXE_sandbox-worker")` to `spawn` or `run_until`.
 
 ## 13.9 What each test locks
 
@@ -870,7 +870,7 @@ The means are `mean.point_estimate` from [run 39104733918](https://github.com/ag
 
 ## Pitfalls
 
-Local is the default. Printing Docker argv does not put the process in a container. `is_sandboxed` is the bit a later chapter should check before it tells the model the command is isolated.
+`is_sandboxed` is the bit a later chapter should check before it tells the model the command is isolated.
 
 `accept` deadlocks if the child does not flush. The worker flushes every line. A child you write later has to do the same.
 

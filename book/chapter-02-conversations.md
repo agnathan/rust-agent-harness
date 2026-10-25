@@ -33,6 +33,10 @@ Rust, for a new reader: ownership is why the conversation is a value the session
 >
 > Hermes also has one place a new turn arrives, rather than each client calling the model itself. This chapter's `SessionInbox` is that place. `harness chat` and `harness ask` submit a line, the session pops it, then the provider runs. Later chapters keep the cap of 64. The gateway and the editor each hold a queue of their own, cron chains onto the actor mailbox, and none of them call `SessionInbox::submit`.
 
+## What this chapter decides
+
+The program keeps one list and sends it again, and the system prompt is a prefix the history cannot rewrite. `push` refuses two user turns in a row and two assistant turns in a row. A trim drops the oldest exchange and leaves that prefix and the newest message in place. The inbox holds 64 turns, and the provider runs only after a pop. A memory line and a skill land beside that prefix. That is how a continuously improving harness learns a fact without dropping the cache. JSON is the save format in this chapter, and the SQLite session waits until chapter 20.
+
 ## What Hermes taught me about conversations
 
 Before writing code I went back to Hermes Agent to see what rules it follows for its message list. It turns out a conversation has more rules than "a list of strings", and Hermes writes them down. The developer guide for its agent core (`agent/AGENTS.md`) has a section called "Message-flow invariants". Three of them shaped this chapter.

@@ -1,12 +1,12 @@
 # Chapter 10: The Turn State Machine
 
-An `execute_code` refund can put the iteration counter back to zero after the model has already been called. If that moment used the same budget row as a turn that hasn't started, the loop would take a wrap-up it isn't owed. The table splits them. `BudgetAbort` ends the turn, and `BudgetHit` is the row that still gets one more call. Nineteen pairs are legal. Every other combination of phase and event is `Illegal`, and the loop panics when it and the table disagree.
+An `execute_code` refund can put the iteration counter back to zero after the model has already been called. If that moment used the same budget row as a turn that hasn't started, the loop would take a wrap-up it isn't owed. The table splits them; `BudgetAbort` ends the turn, and `BudgetHit` is the row that still gets one more call; nineteen pairs are legal. Every other combination of phase and event is `Illegal`, and the loop panics when it and the table disagree.
 
-Chapter 9 returns one `TurnOutcome`. The checks that produce it, cancel and steer and budget and stall and validation and wrap-up, are a nest, and you can read them without being able to name which combinations are allowed. This chapter pulls those combinations into `step`, then makes the same loop walk the table before it calls the model. The step isn't a second demo beside the loop. It's chapter 9's finished harness, `steps/ch09-10-evals`, copied to `steps/ch10-turn-state`, plus a `turn` module. The package is `ch10-turn-state`, the library is `harness_core`, and the CLI package is `ch10-harness-cli`.
+Chapter 9 returns one `TurnOutcome`. The checks that produce it, cancel and steer and budget and stall and validation and wrap-up, are a nest, and you can read them without being able to name which combinations are allowed. This chapter pulls those combinations into `step`, then makes the same loop walk the table before it calls the model. It's chapter 9's finished harness, `steps/ch09-10-evals`, copied to `steps/ch10-turn-state`, plus a `turn` module. The package is `ch10-turn-state`, the library is `harness_core`, and the CLI package is `ch10-harness-cli`.
 
-`Phase` is where the turn is, and a terminal phase accepts no further event. `TurnEvent` is what just happened. `step` maps the pair to the next phase or to `Illegal`. `Driver` remembers which wrap is in progress, and `drive_loop` calls `advance` at every observation. Two more events exist because the live loop has moves the first rows didn't name. `NoDone` is a provider batch with no `Done`, and `SoftWrapIgnoredTools` is a soft-stop wrap-up that asked for tools or returned no text. Those tools stay unrun. Soft stop and a spent budget both pass through a wrap-up, and they end as different phases, which is chapter 9's split, now refused by the type when a caller mixes them.
+`Phase` is where the turn is, and a terminal phase accepts no further event; `TurnEvent` is what just happened. `step` maps the pair to the next phase or to `Illegal`. `Driver` remembers which wrap is in progress, and `drive_loop` calls `advance` at every observation. Two more events exist because the live loop has moves the first rows didn't name. `NoDone` is a provider batch with no `Done`, and `SoftWrapIgnoredTools` is a soft-stop wrap-up that asked for tools or returned no text. Those tools stay unrun. Soft stop and a spent budget both pass through a wrap-up, and they end as different phases, which is chapter 9's split, now refused by the type when a caller mixes them.
 
-Every later harness chapter copies this crate and asks the table before it calls the model. `run_script` stays a fake model, with no HTTP and no key. Empty-response retries and the repetition guard stay in chapter 14.
+Every later harness chapter copies this crate and asks the table before it calls the model. A chapter that keeps a skill still leaves the turn through these rows. A continuously improving harness adds stores and still leaves through this table. `run_script` stays a fake model, with no HTTP and no key. Empty-response retries and the repetition guard stay in chapter 14.
 
 `cargo run -p ch10-turn-state` runs the scripted demo.
 
@@ -35,7 +35,7 @@ Every later harness chapter copies this crate and asks the table before it calls
 
 ## What this chapter decides
 
-`Phase` is `Idle`, `CallingModel`, `Dispatching`, `WrappingUp`, and the terminals `Finished`, `Cancelled`, `SoftStopped`, `Budget`, `Partial`, `InvalidToolCalls`, `Stalled`. A terminal phase accepts no event.
+`Phase` is `Idle`, `CallingModel`, `Dispatching`, `WrappingUp`, and the terminals `Finished`, `Cancelled`, `SoftStopped`, `Budget`, `Partial`, `InvalidToolCalls`, `Stalled`; a terminal phase accepts no event.
 
 `step` is the whole policy:
 
@@ -61,7 +61,7 @@ Every later harness chapter copies this crate and asks the table before it calls
 | `CallingModel` | `BudgetAbort` | `Budget` |
 | `WrappingUp` | `SoftWrapIgnoredTools` | `SoftStopped` |
 
-Anything else is `Illegal { from, event }`. A budget that hits before the first model call goes `Idle` to `Budget` and never enters `CallingModel`. That matches chapter 9: a time cap already spent, with zero calls, returns `Budget` and does not call the provider.
+Anything else is `Illegal { from, event }`; a budget that hits before the first model call goes `Idle` to `Budget` and never enters `CallingModel`. That matches chapter 9: a time cap already spent, with zero calls, returns `Budget` and does not call the provider.
 
 `finish_wrap` maps a text wrap-up to `SoftStopped` or `Budget`. `run_script` does that when a wrap-up was the reason for `WrappingUp`. A wrap-up that still wants tools becomes `Partial` and does not call `finish_wrap`. Chapter 9's budget wrap-up that asks for tools returns `Partial`. Same split.
 
@@ -86,7 +86,7 @@ pub enum Phase {
 }
 ```
 
-`Copy` is the derive I rely on. `Phase` owns no `String` and no `Vec`. Assignment copies the bits. `is_terminal` takes `self` by value, and the `Driver` that called it still holds its phase, because the call received a copy.
+`Copy` is the derive I rely on; `Phase` owns no `String` and no `Vec`; assignment copies the bits. `is_terminal` takes `self` by value, and the `Driver` that called it still holds its phase, because the call received a copy.
 
 ```rust
 impl Phase {
@@ -98,7 +98,7 @@ impl Phase {
     }
 ```
 
-`matches!` is a `match` that yields a `bool`. The pattern lists the four phases that still have a legal exit: `Idle`, `CallingModel`, `Dispatching`, `WrappingUp`. The `!` flips the bool. `Finished`, `Cancelled`, `SoftStopped`, `Budget`, `Partial`, `InvalidToolCalls`, and `Stalled` are terminal. `Idle` is not terminal. A turn that has not started can still accept `Start`, and it can still accept `BudgetHit`.
+`matches!` is a `match` that yields a `bool`; the pattern lists the four phases that still have a legal exit: `Idle`, `CallingModel`, `Dispatching`, `WrappingUp`. The `!` flips the bool; `Finished`, `Cancelled`, `SoftStopped`, `Budget`, `Partial`, `InvalidToolCalls`, and `Stalled` are terminal; `Idle` is not terminal. A turn that has not started can still accept `Start`, and it can still accept `BudgetHit`.
 
 > **Rust sidebar: `enum` and `Copy`**
 >
@@ -108,7 +108,7 @@ impl Phase {
 > - `Driver` does not get this derive.
 > - `Option`, `Result`, enums, and `Arc` are taught in [chapter 1](chapter-01-first-contact.md).
 
-`all` is the slice the grid test iterates. The reference is `'static`: the array lives in the binary, and the test borrows it instead of allocating a `Vec` per run.
+`all` is the slice the grid test iterates; the reference is `'static`: the array lives in the binary, and the test borrows it instead of allocating a `Vec` per run.
 
 ```rust
     pub fn all() -> &'static [Phase] {
@@ -129,9 +129,9 @@ impl Phase {
 }
 ```
 
-Eleven phases. If I add a twelfth and forget to put it in this array, `step` still compiles, because `step` ends in `_`. The new phase would never appear in `every_pair_is_in_the_table`. `all` is the list that test trusts.
+Eleven phases. If I add a twelfth and forget to put it in this array, `step` still compiles, because `step` ends in `_`. The new phase would never appear in `every_pair_is_in_the_table`; `all` is the list that test trusts.
 
-`TurnEvent` is the observation. It is `Copy` for the same reason `Phase` is. The loop detects the condition. This enum only names it.
+`TurnEvent` is the observation; it is `Copy` for the same reason `Phase` is; the loop detects the condition; this enum only names it.
 
 ```rust
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -162,7 +162,7 @@ pub enum TurnEvent {
 }
 ```
 
-`Start` is the way into `CallingModel`. The loop emits it once on the way in, or once on the way out when a hard cancel or a soft stop arrives before the model call. `ModelText` is an assistant whose `tool_calls` list is empty, `ModelToolCalls` is a batch `classify` left runnable, and `ToolsDone` is the dispatcher returning without a stall, so the loop can call the model again. `HardCancel` is the token. `SoftStop` is the soft flag, and that path still owes one `complete`. `BudgetHit` is a spent cap, taken from `Idle` or from `CallingModel`. `Truncated` is an argument string cut off before it parsed, `InvalidStrikeout` is three batches with nothing runnable, and `Stall` is `StallGuard::observe` returning `halt`.
+`Start` is the way into `CallingModel`. The loop emits it once on the way in, or once on the way out when a hard cancel or a soft stop arrives before the model call. `ModelText` is an assistant whose `tool_calls` list is empty, `ModelToolCalls` is a batch `classify` left runnable, and `ToolsDone` is the dispatcher returning without a stall, so the loop can call the model again. `HardCancel` is the token; `SoftStop` is the soft flag, and that path still owes one `complete`. `BudgetHit` is a spent cap, taken from `Idle` or from `CallingModel`. `Truncated` is an argument string cut off before it parsed, `InvalidStrikeout` is three batches with nothing runnable, and `Stall` is `StallGuard::observe` returning `halt`.
 
 `WrapUpText` is a wrap-up completion with no tool calls, and `WrapUpToolCalls` is a budget wrap-up that asked for tools. The three comments on the enum are the moves the first table didn't name. `NoDone` is a batch `absorb` couldn't turn into a message, and the turn ends `Budget` without a wrap-up. `BudgetAbort` is a spent budget whose call counter is already zero while the phase is already `CallingModel`, which is what an `execute_code` refund can do, and it must not take the `BudgetHit` row into `WrappingUp`. `SoftWrapIgnoredTools` keeps a soft wrap-up that asked for tools, or returned no `Done`, on the soft-stop outcome. `TurnEvent::all` is a `'static` slice of all fourteen variants, in this order.
 
@@ -174,11 +174,11 @@ pub struct Illegal {
 }
 ```
 
-`Illegal` is a struct of the pair that failed. Both fields are `Copy`, so the error is `Copy`. `every_pair_is_in_the_table` asserts `err.from` and `err.event` with `assert_eq!`. The fields are public so that test, which lives in another crate, can read them. Eleven phases times fourteen events is 154 pairs. Nineteen of those pairs are `Ok`. Every other pair is this struct.
+`Illegal` is a struct of the pair that failed. Both fields are `Copy`, so the error is `Copy`. `every_pair_is_in_the_table` asserts `err.from` and `err.event` with `assert_eq!`. The fields are public so that test, which lives in another crate, can read them; eleven phases times fourteen events is 154 pairs. Nineteen of those pairs are `Ok`; every other pair is this struct.
 
 ## 10.2 Walking every legal move
 
-`step` is the policy. It takes the phase and the event by value, which is legal because both are `Copy`, and it returns a `Result`.
+`step` is the policy; it takes the phase and the event by value, which is legal because both are `Copy`, and it returns a `Result`.
 
 > **Rust sidebar: `Result`**
 >
@@ -217,7 +217,7 @@ pub fn step(from: Phase, event: TurnEvent) -> Result<Phase, Illegal> {
 }
 ```
 
-The `match` is on a tuple. Each arm is one legal pair. The value of a successful arm is the next `Phase`, bound to `next`, and the function returns `Ok(next)` after the match. The `_` arm does not produce a `next`. It `return`s. That `return` leaves the function before `Ok`, so an unnamed pair cannot become a phase.
+The `match` is on a tuple; each arm is one legal pair. The value of a successful arm is the next `Phase`, bound to `next`, and the function returns `Ok(next)` after the match; the `_` arm does not produce a `next`. It `return`s. That `return` leaves the function before `Ok`, so an unnamed pair cannot become a phase.
 
 > **Rust sidebar: `match` and `_`**
 > - `match` is exhaustive. The compiler accepts this one because `_` covers every pair the named arms do not.
@@ -225,9 +225,9 @@ The `match` is on a tuple. Each arm is one legal pair. The value of a successful
 > - The arm's block returns from `step`, not from the match. If it fell through with a dummy phase, `Ok` would report a move the table does not list.
 > - A refutable pattern such as `(Phase::Idle, TurnEvent::Start)` is one arm. Order does not matter here: the patterns do not overlap.
 
-`Idle` plus `Start` is `CallingModel`. `Idle` plus `BudgetHit` is `Budget`, and `tests/driven.rs` locks that with `max_iterations: 0`: outcome `Budget`, zero provider calls. `Idle` plus `HardCancel` has no arm, so a cancel before `Start` emits `Start` first. The provider is not called.
+`Idle` plus `Start` is `CallingModel`; `Idle` plus `BudgetHit` is `Budget`, and `tests/driven.rs` locks that with `max_iterations: 0`: outcome `Budget`, zero provider calls. `Idle` plus `HardCancel` has no arm, so a cancel before `Start` emits `Start` first. The provider is not called.
 
-`CallingModel` plus `SoftStop` and `CallingModel` plus `BudgetHit` are both `WrappingUp`. The caller stores a `WrapKind` so the endings can differ. `Truncated` ends `Partial` and dispatches nothing. `InvalidStrikeout` fires when `invalid_strikes` reaches `MAX_INVALID_STRIKES` (3). `Dispatching` plus `Start` has no arm. `dispatch_cannot_start` asserts that `Err`.
+`CallingModel` plus `SoftStop` and `CallingModel` plus `BudgetHit` are both `WrappingUp`. The caller stores a `WrapKind` so the endings can differ; `Truncated` ends `Partial` and dispatches nothing. `InvalidStrikeout` fires when `invalid_strikes` reaches `MAX_INVALID_STRIKES` (3). `Dispatching` plus `Start` has no arm. `dispatch_cannot_start` asserts that `Err`.
 
 `WrappingUp` plus `WrapUpText` calls `match_wrap_text`, which returns `Finished` for both wrap kinds.
 
@@ -241,7 +241,7 @@ fn match_wrap_text(from: Phase) -> Phase {
 }
 ```
 
-`from` is named because the arm passes it. The body does not branch on it. `let _ = from` reads the parameter, and the next phase is always `Finished`. `Driver::advance` and `run_script` call `finish_wrap` when they see that `Finished` and still remember a `WrapKind`. A caller that stops at `step` reports a soft stop as a normal finish.
+`from` is named because the arm passes it; the body does not branch on it. `let _ = from` reads the parameter, and the next phase is always `Finished`. `Driver::advance` and `run_script` call `finish_wrap` when they see that `Finished` and still remember a `WrapKind`. A caller that stops at `step` reports a soft stop as a normal finish.
 
 `WrappingUp` plus `WrapUpToolCalls` is `Partial`, so `finish_wrap` does not run and the tools are not dispatched. `NoDone` ends `Budget` and does not start a wrap-up. A soft wrap-up uses `SoftWrapIgnoredTools` for that same missing `Done`, so the stop stays soft. `BudgetAbort` is the spent budget that must not enter `WrappingUp`. Section 10.5 is the three `if`s that pick the event. `a_soft_wrap_up_that_asks_for_tools_does_not_run_them` locks the soft path: one provider call, no tool-role message.
 
@@ -860,7 +860,7 @@ The means are `mean.point_estimate` from [run 39104733918](https://github.com/ag
 
 `finish_wrap` is a second function. `step(WrappingUp, WrapUpText)` returns `Finished` either way. Forgetting to call `finish_wrap` reports a soft stop as `Finished`. The script helper does it. A caller that uses `step` alone has to do it too.
 
-An unmatched script step returns `Illegal` with `event: Start`, which is the wrong event. The grid test doesn't go through `run_script`. A script the match doesn't recognize is a bug in the script, and the error's event field isn't a real `Start`: the walk was already sitting in some phase, and the helper reports a `Start` that never happened. I'd rather it returned the phase it was already in, so a bad script showed where the walk stopped. The tests in this chapter only use scripts the match knows, so that wrong field never shows up in the suite.
+An unmatched script step returns `Illegal` with `event: Start`, which is the wrong event. The grid test doesn't go through `run_script`. A script the match doesn't recognize is a bug in the script, and the error's event field isn't a real `Start`: the walk was already sitting in some phase, and the helper reports a `Start` that never happened. The tests in this chapter only use scripts the match knows, so that wrong field never shows up in the suite.
 
 ## Guardrails in this chapter
 

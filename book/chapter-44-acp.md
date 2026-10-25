@@ -1,12 +1,12 @@
 # Chapter 44: Editor Integration
 
-Two front doors, one mailbox, one agent task. An editor that learned the turn table, the approval floor, and the memory files would duplicate the harness inside the editor, so chat and the editor both become mail on the inbox the harness already runs. A steer typed in the editor and a steer typed in chat then share that mailbox, so the two can't fill separate queues and race.
+Two front doors, one mailbox, one agent task. An editor that learned the turn table, the approval floor, and the memory files would duplicate the harness inside the editor. So chat and the editor both become mail on the inbox the harness already runs. A steer typed in the editor and a steer typed in chat then share that mailbox. So the two can't fill separate queues and race.
 
-A correction typed in the editor is a steer, reflection sees the turn after it finishes, and `translate` must not call the model, which is why this adapter matters to a continuously improving harness. The adapter's job is to deliver the update once and to keep a provider call off the translation path. A translate that invoked the provider would hide a model call inside a protocol function, and the turn table would never record it.
+A correction typed in the editor is a steer, reflection sees the turn after it finishes. `translate` must not call the model, which is why this adapter matters to a continuously improving harness. The adapter's job is to deliver the update once and to keep a provider call off the translation path. A translate that invoked the provider would hide a model call inside a protocol function, and the turn table would never record it.
 
-The crate is `steps/ch44-acp`, a copy of chapter 43 plus `acp`, the package is `ch44-acp`, and chapter 45 copies this harness onward. `cargo run -p ch44-acp --bin ch44-acp` runs the demo and prints `acp: end_turn`. The exercise is `my-harness/tests/ch44.rs`, where one ACP update becomes one inbox submit.
+The crate is `steps/ch44-acp`, a copy of chapter 43 plus `acp`, the package is `ch44-acp`. Chapter 45 copies this harness onward. `cargo run -p ch44-acp --bin ch44-acp` runs the demo and prints `acp: end_turn`. The exercise is `my-harness/tests/ch44.rs`, where one ACP update becomes one inbox submit.
 
-The editor sends an `Update`, and `translate` turns it into a `Mail` that carries only the text, the same mailbox chapter 35 fills with a turn, a steer, or an interrupt, and the cancelled flag stays off that mail. `map_permission` turns an editor option id into the approval vocabulary chapter 11 already returns, so the editor doesn't grow a second allow or deny. `Inbox::submit` accepts that mail until 64, `Streams` writes the result and a log line back on separate vecs, and `stop_reason` maps the outcome onto the reason the editor shows. `FakeModel` completes one turn after the mail is queued. The MCP server stays the other program: an editor that wants tools connects as an MCP client, or it asks the harness, which already is one, and this adapter doesn't register tools.
+The editor sends an `Update`, and `translate` turns it into a `Mail` that carries only the text, the same mailbox chapter 35 fills with a turn, a steer, or an interrupt. The cancelled flag stays off that mail. `map_permission` turns an editor option id into the approval vocabulary chapter 11 already returns. So the editor doesn't grow a second allow or deny. `Inbox::submit` accepts that mail until 64, `Streams` writes the result and a log line back on separate vecs. `stop_reason` maps the outcome onto the reason the editor shows. `FakeModel` completes one turn after the mail is queued. The MCP server stays the other program: an editor that wants tools connects as an MCP client, or it asks the harness, which already is one, and this adapter doesn't register tools.
 
 At the translate, the update and the mail are separate types, and the submit is the bounded send from chapter 35. A stream is a writer the test replaces with a buffer.
 
@@ -48,13 +48,13 @@ The demo submits one mail, discards a fake reply, logs `session started` on stde
 
 ## 44.1 `INBOX_CAP`, `StopReason`, and `stop_reason`
 
-The new module is `acp.rs`, `cron.rs` is the chapter 43 copy, `vision.rs` is still the chapter 41 copy, and `pub mod acp` is what `chapter_demo.rs` imports. The constant sits above the types:
+The new module is `acp.rs`, `cron.rs` is the chapter 43 copy, `vision.rs` is still the chapter 41 copy. `pub mod acp` is what `chapter_demo.rs` imports. The constant sits above the types:
 
 ```rust
 pub const INBOX_CAP: usize = 64;
 ```
 
-`inbox.rs` in the same crate defines `INBOX_BOUND` as 64, the bound chapter 2 and chapter 35 used for `SessionInbox`. Both `INBOX_CAP` and `INBOX_BOUND` are 64, and they aren't aliases. The adapter defines its own constant instead of using `crate::inbox::INBOX_BOUND`, so changing one leaves the other, and that smell is left in the file. The test and the bench both pass `INBOX_CAP` into `Inbox::new`.
+`inbox.rs` in the same crate defines `INBOX_BOUND` as 64, the bound chapter 2 and chapter 35 used for `SessionInbox`. Both `INBOX_CAP` and `INBOX_BOUND` are 64, and they aren't aliases. The adapter defines its own constant instead of using `crate::inbox::INBOX_BOUND`, so changing one leaves the other. That smell is left in the file. The test and the bench both pass `INBOX_CAP` into `Inbox::new`.
 
 ```rust
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -81,9 +81,9 @@ pub fn stop_reason(cancelled: bool) -> StopReason {
 }
 ```
 
-The strings from `as_str` are what the JSON result inserts, and the two reasons differ, `end_turn` against `cancelled`. They aren't the ACP SDK's identifiers, because that SDK isn't linked. The test `cancel_and_end_turn_are_different_reasons` expects `stop_reason(false).as_str()` to be `end_turn` and `stop_reason(true).as_str()` to be `cancelled`, so a cancelled turn doesn't report `end_turn`.
+The strings from `as_str` are what the JSON result inserts, and the two reasons differ, `end_turn` against `cancelled`. They aren't the ACP SDK's identifiers, because that SDK isn't linked. The test `cancel_and_end_turn_are_different_reasons` expects `stop_reason(false).as_str()` to be `end_turn` and `stop_reason(true).as_str()` to be `cancelled`. So a cancelled turn doesn't report `end_turn`.
 
-`Update` stores the same bool, the demo passes `update.cancelled` into `stop_reason` after `translate`, and `translate` doesn't read the flag, so the stop reason and the mail are two outputs of one update.
+`Update` stores the same bool, the demo passes `update.cancelled` into `stop_reason` after `translate`. `translate` doesn't read the flag, so the stop reason and the mail are two outputs of one update.
 
 ## 44.2 `Approval` and `map_permission`
 
@@ -110,11 +110,11 @@ pub fn map_permission(option_id: &str) -> Approval {
 }
 ```
 
-The three allow ids keep three outcomes, `deny` and `deny_always` share `Deny` through a `|` pattern, and the `_` arm is also `Deny`. `allow_forever` is the test's unknown id and it denies, an empty string denies, and `Allow_once` denies, because the match is case-sensitive. The allow arms stay first, since putting `_` ahead of them would make those arms unreachable, and a typo in an editor's option id hits `_` and denies. Returning `Once` from `_` would let an unrecognized id run the tool once.
+The three allow ids keep three outcomes, `deny` and `deny_always` share `Deny` through a `|` pattern, and the `_` arm is also `Deny`. `allow_forever` is the test's unknown id and it denies, an empty string denies. `Allow_once` denies, because the match is case-sensitive. The allow arms stay first, since putting `_` ahead of them would make those arms unreachable. A typo in an editor's option id hits `_` and denies. Returning `Once` from `_` would let an unrecognized id run the tool once.
 
-The Copilot client answers `session/request_permission` with outcome `cancelled` and doesn't look at an option id. This function is the adapter's local map, so a later UI can pass an option id and get a closed set of answers, and the ids it names are `allow_once`, `allow_session`, `allow_always`, `deny`, and `deny_always`. `map_permission` isn't called by `translate`, `submit`, or `demo`, so the permission decision and the inbox submit stay separate. The test `unknown_permissions_deny` lists those five ids and `allow_forever`.
+The Copilot client answers `session/request_permission` with outcome `cancelled` and doesn't look at an option id. This function is the adapter's local map. So a later UI can pass an option id and get a closed set of answers. The ids it names are `allow_once`, `allow_session`, `allow_always`, `deny`, and `deny_always`. `map_permission` isn't called by `translate`, `submit`, or `demo`, so the permission decision and the inbox submit stay separate. The test `unknown_permissions_deny` lists those five ids and `allow_forever`.
 
-After the call, the caller can't tell `deny` from `deny_always` from `allow_forever`, because `Deny` is one variant for two input strings plus the default arm, and the distinction lives only in the input `&str`. `Once`, `Session`, and `Always` stay three variants because a later caller might persist an always differently from a once, and this file doesn't persist them.
+After the call, the caller can't tell `deny` from `deny_always` from `allow_forever`. `Deny` is one variant for two input strings plus the default arm. The distinction lives only in the input `&str`. `Once`, `Session`, and `Always` stay three variants because a later caller might persist an always differently from a once, and this file doesn't persist them.
 
 ## 44.3 `Update`, `Mail`, and `translate`
 
@@ -141,7 +141,7 @@ pub fn translate(update: &Update) -> Mail {
 
 The test builds `Update { text: "hello", cancelled: false }`, translates it, and expects `Mail { text: "hello" }`. A cancelled update with the same text would produce the same mail, and the cancel is visible only to `stop_reason`.
 
-The Copilot client does the other shape. Each `session/update` chunk is appended, and `_run_prompt` returns `"".join(text_parts)` after the prompt request finishes, so several chunks become one string there. Here, one `Update` is already one string, and `translate` doesn't join a list. A caller who has ten chunks and calls `translate` ten times gets ten mails, if the inbox has room.
+The Copilot client does the other shape. Each `session/update` chunk is appended, and `_run_prompt` returns `"".join(text_parts)` after the prompt request finishes. So several chunks become one string there. Here, one `Update` is already one string. `translate` doesn't join a list. A caller who has ten chunks and calls `translate` ten times gets ten mails, if the inbox has room.
 
 > **Rust sidebar: borrow the update, own the mail**
 >
@@ -193,13 +193,13 @@ impl Inbox {
 
 `new` stores the cap and reserves that much space, `with_capacity` doesn't fill the deque, `len` starts at 0, and `is_empty` is true. A cap of 0 would make the first `submit` return `Full`, and the tests use `INBOX_CAP`.
 
-`submit` compares `len` to `cap` before `push_back`, so at 64 the 65th mail isn't stored, `Full` is the only signal, and the function doesn't drop the oldest mail to make room. The caller moved the `Mail` in, so on the `Full` path that mail is dropped when the function returns, because the parameter goes out of scope without being pushed. A caller who needs the text after a refusal has to clone it before `submit`.
+`submit` compares `len` to `cap` before `push_back`. So at 64 the 65th mail isn't stored, `Full` is the only signal. The function doesn't drop the oldest mail to make room. The caller moved the `Mail` in, so on the `Full` path that mail is dropped when the function returns. The parameter goes out of scope without being pushed. A caller who needs the text after a refusal has to clone it before `submit`.
 
-`front` borrows the oldest mail, `SessionInbox::submit` in `inbox.rs` pushes a `String` and returns `Result<(), InboxError>`, and this `submit` pushes a `Mail` and returns `Submit`. The names match and the types don't, and one ACP update becomes one of these submits. The milestone `chapter_44_update_submits_once(1)` asserts the count equals 1, and the step crate's path for one update is `translate` then a single `submit` that returns `Accepted` on an empty inbox.
+`front` borrows the oldest mail, `SessionInbox::submit` in `inbox.rs` pushes a `String` and returns `Result<(), InboxError>`. This `submit` pushes a `Mail` and returns `Submit`. The names match and the types don't, and one ACP update becomes one of these submits. The milestone `chapter_44_update_submits_once(1)` asserts the count equals 1. The step crate's path for one update is `translate` then a single `submit` that returns `Accepted` on an empty inbox.
 
-The test `an_update_lands_on_the_inbox` translates `hello`, expects the mail, submits it, and reads `front` as `hello`. It then submits `INBOX_CAP - 1` more mails, each `Accepted`, then one more `Mail { text: "more" }` and expects `Full`, so `len` stays `INBOX_CAP`, `is_empty` is false, and the first mail is still `hello`, because `Full` didn't push and nothing popped. The fill loop is `for n in 0..(INBOX_CAP - 1)`, which is 0 through 62, sixty-three integers, so 1 + 63 = 64, and those strings sit behind `hello`. `front` still returns `hello` until some other function, not written here, removes the head.
+The test `an_update_lands_on_the_inbox` translates `hello`, expects the mail, submits it, and reads `front` as `hello`. It then submits `INBOX_CAP - 1` more mails, each `Accepted`, then one more `Mail { text: "more" }` and expects `Full`. So `len` stays `INBOX_CAP`, `is_empty` is false. The first mail is still `hello`. `Full` didn't push and nothing popped. The fill loop is `for n in 0..(INBOX_CAP - 1)`, which is 0 through 62, sixty-three integers. So 1 + 63 = 64, and those strings sit behind `hello`. `front` still returns `hello` until some other function, not written here, removes the head.
 
-`push_back` adds at the tail and `front` reads the head, so a queue of edits stays in arrival order. `VecDeque::with_capacity` allocates the buffer up front so the first 64 pushes don't reallocate when the cap is 64, and the `Full` path doesn't use that spare capacity, because length, not capacity, is the guard.
+`push_back` adds at the tail and `front` reads the head, so a queue of edits stays in arrival order. `VecDeque::with_capacity` allocates the buffer up front so the first 64 pushes don't reallocate when the cap is 64. The `Full` path doesn't use that spare capacity. Length, not capacity, is the guard.
 
 ## 44.5 `Streams`, `write_result`, and `log_line`
 
@@ -228,11 +228,11 @@ pub fn log_line(streams: &mut Streams, line: &str) {
 {"jsonrpc":"2.0","result":{"stopReason":"end_turn"}}
 ```
 
-For `Cancelled` the stop reason field is `cancelled`. The raw string `r#"..."#` keeps the braces, each doubled `{{` or `}}` becomes one brace in the output, and `{}` is the format placeholder for `reason.as_str()`. Nothing appends a newline, and the line has no `id` field and no usage object. `as_str` returns a spelling with no quote in it, so the inserted text doesn't break the JSON for these two reasons, and neither `end_turn` nor `cancelled` contains a quote.
+For `Cancelled` the stop reason field is `cancelled`. The raw string `r#"..."#` keeps the braces, each doubled `{{` or `}}` becomes one brace in the output. `{}` is the format placeholder for `reason.as_str()`. Nothing appends a newline, and the line has no `id` field and no usage object. `as_str` returns a spelling with no quote in it, so the inserted text doesn't break the JSON for these two reasons. Neither `end_turn` nor `cancelled` contains a quote.
 
 `log_line` copies the argument onto stderr and doesn't look at stdout. The test `logs_stay_off_stdout` logs `session started`, writes an end-turn result, and expects stderr to be that one line, while stdout has length 1, contains `end_turn`, and doesn't contain `session started`. A second `write_result` of the cancelled reason makes `stdout[1]` contain `cancelled`. The two vecs stay separate, so an editor that parsed every stdout line as JSON would see two result objects and wouldn't see the log.
 
-`copilot_acp_client.py` pumps `proc.stdout` into the JSON inbox and `proc.stderr` into `stderr_tail`, and this struct is the in-memory picture of that split. Nothing here writes a process handle, and `println!` isn't called. A later chapter that writes the real handles has to keep the log on stderr, because mixing them would put `session started` on the protocol stream. The fields are public, so a test can read `streams.stdout[0]` without a getter, and the demo starts from `Streams::default()`.
+`copilot_acp_client.py` pumps `proc.stdout` into the JSON inbox and `proc.stderr` into `stderr_tail`, and this struct is the in-memory picture of that split. Nothing here writes a process handle, and `println!` isn't called. A later chapter that writes the real handles has to keep the log on stderr. Mixing them would put `session started` on the protocol stream. The fields are public, so a test can read `streams.stdout[0]` without a getter, and the demo starts from `Streams::default()`.
 
 ## 44.6 `FakeModel` and `demo`
 
@@ -265,9 +265,9 @@ pub fn demo() -> String {
 }
 ```
 
-The order is fixed: the demo builds the streams and an inbox of 64, builds an update whose text is `hello` and whose flag is false, translates it, and submits the mail. It asks `FakeModel` for a reply and drops `ok`, logs on stderr, computes the stop reason from the flag, which is `EndTurn`, writes the JSON, and returns `acp: end_turn`, because `format!("acp: {}", reason.as_str())` inserts `end_turn`.
+The order is fixed: the demo builds the streams and an inbox of 64, builds an update whose text is `hello` and whose flag is false, translates it, and submits the mail. It asks `FakeModel` for a reply and drops `ok`, logs on stderr, computes the stop reason from the flag, which is `EndTurn`, writes the JSON, and returns `acp: end_turn`. `format!("acp: {}", reason.as_str())` inserts `end_turn`.
 
-The `Submit` value from `submit` isn't checked, so on an empty inbox the result is `Accepted`, the demo doesn't read `front`, and the printed line is the stop reason rather than the mail text. If `cancelled` were true, the same function would still submit one mail and would return `acp: cancelled`. The test `demo_ends_the_turn` locks the false flag's line, so `demo()` equals `acp: end_turn`. A change to the JSON line doesn't change that return value, because `demo` drops `streams` at the end of the function, and `logs_stay_off_stdout` builds its own `Streams`.
+The `Submit` value from `submit` isn't checked. So on an empty inbox the result is `Accepted`, the demo doesn't read `front`. The printed line is the stop reason rather than the mail text. If `cancelled` were true, the same function would still submit one mail and would return `acp: cancelled`. The test `demo_ends_the_turn` locks the false flag's line, so `demo()` equals `acp: end_turn`. A change to the JSON line doesn't change that return value, because `demo` drops `streams` at the end of the function. `logs_stay_off_stdout` builds its own `Streams`.
 
 `chapter_demo.rs` prints that string:
 
@@ -290,11 +290,11 @@ from acp_adapter.entry import main as acp_main
 acp_main([flag for attr, flag in _ACP_FLAGS if getattr(args, attr, False)])
 ```
 
-The `except ImportError` prints `The ACP server can't start: its protocol packages are missing from this install.` and exits 1. The directory `/tmp/hermes/acp_adapter` isn't in the tree, so that import is the path a checkout of this commit would take. `pyproject.toml` still has `hermes-acp = "acp_adapter.entry:main"` and still lists `"acp_adapter"` in `[tool.setuptools.packages.find]`. The package name is declared and the sources aren't in the tree, so there is no `permissions.py` and no `PromptResponse` there to quote.
+The `except ImportError` prints `The ACP server can't start: its protocol packages are missing from this install.` and exits 1. The directory `/tmp/hermes/acp_adapter` isn't in the tree, so that import is the path a checkout of this commit would take. `pyproject.toml` still has `hermes-acp = "acp_adapter.entry:main"` and still lists `"acp_adapter"` in `[tool.setuptools.packages.find]`. The package name is declared and the sources aren't in the tree. So there is no `permissions.py` and no `PromptResponse` there to quote.
 
 `hermes_cli/subcommands/acp.py` attaches the subcommand, with the help string `Run Hermes Agent as an ACP (Agent Client Protocol) server`, a description that names VS Code, Zed, and JetBrains, and the flags `--version`, `--check`, `--setup`, `--setup-browser`, and `--yes`. None of those flags map an option id or write a stop reason.
 
-The ACP code in the tree that reads a session update is the Copilot client `agent/copilot_acp_client.py`, a client of the `copilot --acp` process, so an editor has no server in this file to connect to. `_session` spawns the process, starts a thread that JSON-decodes each stdout line into a `queue.Queue` named `inbox`, and starts another thread that appends stderr lines to a `deque` of maxlen 40. The word `inbox` there is the queue of protocol messages, not a session prompt queue, and `_request` writes one JSON-RPC object to the process stdin and waits on that queue. The Copilot client appends chunks, and `_handle_server_message` reads `params.update`, then `content.text`, then `sessionUpdate`:
+The ACP code in the tree that reads a session update is the Copilot client `agent/copilot_acp_client.py`, a client of the `copilot --acp` process. So an editor has no server in this file to connect to. `_session` spawns the process, starts a thread that JSON-decodes each stdout line into a `queue.Queue` named `inbox`, and starts another thread that appends stderr lines to a `deque` of maxlen 40. The word `inbox` there is the queue of protocol messages, not a session prompt queue. `_request` writes one JSON-RPC object to the process stdin and waits on that queue. The Copilot client appends chunks, and `_handle_server_message` reads `params.update`, then `content.text`, then `sessionUpdate`:
 
 ```python
 if method == "session/update":
@@ -307,11 +307,11 @@ if method == "session/update":
     return True
 ```
 
-Each chunk is appended, and `_run_prompt` joins `text_parts` after `session/prompt` returns, so many updates become one string. This chapter's `translate` does the opposite, because the `Update` already holds one `text` and one call returns one `Mail`. A thought chunk and a message chunk aren't two types here. For `session/request_permission` the same function writes back `{"outcome": {"outcome": "cancelled"}}` and doesn't read an option id, which is why section 44.2 keeps a local table, and the Copilot client has no `Once`.
+Each chunk is appended, and `_run_prompt` joins `text_parts` after `session/prompt` returns, so many updates become one string. This chapter's `translate` does the opposite, because the `Update` already holds one `text` and one call returns one `Mail`. A thought chunk and a message chunk aren't two types here. For `session/request_permission` the same function writes back `{"outcome": {"outcome": "cancelled"}}` and doesn't read an option id, which is why section 44.2 keeps a local table. The Copilot client has no `Once`.
 
-`gateway/session_acp_lifecycle.py` covers a different gap: ACP v0.9 has no per-session destroy, so the last viewer leaving an idle ACP session ends it, and `ACP_END_REASON` is `acp_disconnect`. `end_idle_acp_session` returns false when the session still has subscribers, when the receipt isn't a local session, or when `policy.source` isn't `acp`, and otherwise it calls `end_idle_local_session` with that reason. `end_idle_viewer_session` keeps the ACP reason for ACP rows and uses the viewer's reason for everyone else. None of these functions call `translate` or push a prompt, so ending a session isn't an inbox submit.
+`gateway/session_acp_lifecycle.py` covers a different gap: ACP v0.9 has no per-session destroy. So the last viewer leaving an idle ACP session ends it. `ACP_END_REASON` is `acp_disconnect`. `end_idle_acp_session` returns false when the session still has subscribers, when the receipt isn't a local session, or when `policy.source` isn't `acp`, and otherwise it calls `end_idle_local_session` with that reason. `end_idle_viewer_session` keeps the ACP reason for ACP rows and uses the viewer's reason for everyone else. None of these functions call `translate` or push a prompt, so ending a session isn't an inbox submit.
 
-`SessionInbox` in `inbox.rs` is the chapter 2 queue, and its `submit` takes `impl Into<String>`, locks a `Mutex<VecDeque<String>>`, and returns `Err(InboxError::Full { bound })` when the length is at the bound, while `new` caps the allocation with `bound.min(64)`. `acp::Inbox` is a different type from `SessionInbox`: its `submit` takes a `Mail` by value, needs `&mut self`, returns `Submit::Full` with no bound field, and doesn't lock, and `acp.rs` doesn't call `SessionInbox::submit`. The cap it passes is the adapter's own constant from section 44.1, `demo` never mentions `SessionInbox`, and a later wiring could take `mail.text` and call `SessionInbox::submit`, which this file doesn't.
+`SessionInbox` in `inbox.rs` is the chapter 2 queue. Its `submit` takes `impl Into<String>`, locks a `Mutex<VecDeque<String>>`, and returns `Err(InboxError::Full { bound })` when the length is at the bound, while `new` caps the allocation with `bound.min(64)`. `acp::Inbox` is a different type from `SessionInbox`: its `submit` takes a `Mail` by value, needs `&mut self`, returns `Submit::Full` with no bound field, and doesn't lock. `acp.rs` doesn't call `SessionInbox::submit`. The cap it passes is the adapter's own constant from section 44.1, `demo` never mentions `SessionInbox`, and a later wiring could take `mail.text` and call `SessionInbox::submit`, which this file doesn't.
 
 The demo builds that result and then drops the streams. After `translate` and `submit`, the ignored `Submit` on an empty inbox was `Accepted`, and the line `write_result` pushed is:
 
@@ -319,13 +319,13 @@ The demo builds that result and then drops the streams. After `translate` and `s
 {"jsonrpc":"2.0","result":{"stopReason":"end_turn"}}
 ```
 
-`format!("acp: {}", reason.as_str())` is `acp: end_turn`, and the JSON isn't in that returned string. A second `write_result` of the cancelled reason pushes another line, and the test checks it after the end-turn line is already in the vec:
+`format!("acp: {}", reason.as_str())` is `acp: end_turn`, and the JSON isn't in that returned string. A second `write_result` of the cancelled reason pushes another line. The test checks it after the end-turn line is already in the vec:.
 
 ```text
 {"jsonrpc":"2.0","result":{"stopReason":"cancelled"}}
 ```
 
-The `format!` has no trailing newline, so a parser that splits stdout on `\n` would see this object only after something else wrote the newline, and this function doesn't write one. The two lines in the test are two `String`s rather than one buffer split on newlines. `stdout[0]` contains `end_turn` and doesn't contain `session started`, `stdout[1]` contains `cancelled`, and `stderr` stays a one-element vec.
+The `format!` has no trailing newline. So a parser that splits stdout on `\n` would see this object only after something else wrote the newline, and this function doesn't write one. The two lines in the test are two `String`s rather than one buffer split on newlines. `stdout[0]` contains `end_turn` and doesn't contain `session started`, `stdout[1]` contains `cancelled`, and `stderr` stays a one-element vec.
 
 `ch44-harness-cli` depends on `ch44-acp` by path, and `ch44-acp` doesn't depend on `ch43-cron`. `lib.rs` lists `pub mod acp` and, above it, `pub mod cron`, so a test in this package can still call `harness_core::cron::run_job`, and the ACP tests don't. There is no `use crate::cron` inside `acp.rs`, so the adapter doesn't scan a prompt and doesn't claim a job. `cargo run -p ch44-acp --bin ch44-acp` selects `chapter_demo.rs`, while the example target `demo` still runs `run_saved_evals` and wouldn't print `acp: end_turn`.
 
