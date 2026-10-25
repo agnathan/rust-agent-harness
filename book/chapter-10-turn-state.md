@@ -2,11 +2,11 @@
 
 An `execute_code` refund can put the iteration counter back to zero after the model has already been called. If that moment used the same budget row as a turn that hasn't started, the loop would take a wrap-up it isn't owed. The table splits them; `BudgetAbort` ends the turn, and `BudgetHit` is the row that still gets one more call; nineteen pairs are legal. Every other combination of phase and event is `Illegal`, and the loop panics when it and the table disagree.
 
-Chapter 9 returns one `TurnOutcome`. The checks that produce it, cancel and steer and budget and stall and validation and wrap-up, are a nest, and you can read them without being able to name which combinations are allowed. This chapter pulls those combinations into `step`, then makes the same loop walk the table before it calls the model. The step isn't a second demo beside the loop. It's chapter 9's finished harness, `steps/ch09-10-evals`, copied to `steps/ch10-turn-state`, plus a `turn` module. The package is `ch10-turn-state`, the library is `harness_core`, and the CLI package is `ch10-harness-cli`.
+Chapter 9 returns one `TurnOutcome`. The checks that produce it, cancel and steer and budget and stall and validation and wrap-up, are a nest, and you can read them without being able to name which combinations are allowed. This chapter pulls those combinations into `step`, then makes the same loop walk the table before it calls the model. It's chapter 9's finished harness, `steps/ch09-10-evals`, copied to `steps/ch10-turn-state`, plus a `turn` module. The package is `ch10-turn-state`, the library is `harness_core`, and the CLI package is `ch10-harness-cli`.
 
 `Phase` is where the turn is, and a terminal phase accepts no further event; `TurnEvent` is what just happened. `step` maps the pair to the next phase or to `Illegal`. `Driver` remembers which wrap is in progress, and `drive_loop` calls `advance` at every observation. Two more events exist because the live loop has moves the first rows didn't name. `NoDone` is a provider batch with no `Done`, and `SoftWrapIgnoredTools` is a soft-stop wrap-up that asked for tools or returned no text. Those tools stay unrun. Soft stop and a spent budget both pass through a wrap-up, and they end as different phases, which is chapter 9's split, now refused by the type when a caller mixes them.
 
-Every later harness chapter copies this crate and asks the table before it calls the model. `run_script` stays a fake model, with no HTTP and no key. Empty-response retries and the repetition guard stay in chapter 14.
+Every later harness chapter copies this crate and asks the table before it calls the model. A chapter that keeps a skill still leaves the turn through these rows. A continuously improving harness adds stores and still leaves through this table. `run_script` stays a fake model, with no HTTP and no key. Empty-response retries and the repetition guard stay in chapter 14.
 
 `cargo run -p ch10-turn-state` runs the scripted demo.
 
@@ -860,7 +860,7 @@ The means are `mean.point_estimate` from [run 39104733918](https://github.com/ag
 
 `finish_wrap` is a second function. `step(WrappingUp, WrapUpText)` returns `Finished` either way. Forgetting to call `finish_wrap` reports a soft stop as `Finished`. The script helper does it. A caller that uses `step` alone has to do it too.
 
-An unmatched script step returns `Illegal` with `event: Start`, which is the wrong event. The grid test doesn't go through `run_script`. A script the match doesn't recognize is a bug in the script, and the error's event field isn't a real `Start`: the walk was already sitting in some phase, and the helper reports a `Start` that never happened. I'd rather it returned the phase it was already in, so a bad script showed where the walk stopped. The tests in this chapter only use scripts the match knows, so that wrong field never shows up in the suite.
+An unmatched script step returns `Illegal` with `event: Start`, which is the wrong event. The grid test doesn't go through `run_script`. A script the match doesn't recognize is a bug in the script, and the error's event field isn't a real `Start`: the walk was already sitting in some phase, and the helper reports a `Start` that never happened. The tests in this chapter only use scripts the match knows, so that wrong field never shows up in the suite.
 
 ## Guardrails in this chapter
 

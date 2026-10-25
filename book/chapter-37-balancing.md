@@ -30,8 +30,7 @@ At the pick, the outstanding count is an integer you raise and lower. Power of t
 > I read `tools/mcp_tool_discovery.py` and the `mcp` block in `hermes_cli/config_defaults.py`.
 >
 > 
-
-```text
+> ```text
 > 25  # Default max concurrent MCP server connections per discovery pass
 > 27  # ``mcp.discovery_concurrency`` overrides it, 0 = unlimited (#117373).
 > 28  _DISCOVERY_CONNECT_CONCURRENCY = 4
@@ -41,8 +40,7 @@ At the pick, the outstanding count is an integer you raise and lower. Power of t
 > `_discovery_connect_concurrency` reads `mcp.discovery_concurrency`. A non-integer, a bool, or a negative value warns and returns 4. The comment on the constant says 0 means unlimited. `config_defaults.py` sets that key to 4, in the `mcp` object, and the comment there says the same thing: max servers connected at once per discovery pass, and 0 means unlimited. `_discover_all` builds the bound:
 >
 > 
-
-```text
+> ```text
 > 442  # Flat cap for all transports; 0 (unlimited) keeps the original unbounded gather.
 > 443  cap = _discovery_connect_concurrency()
 > 444  semaphore = asyncio.Semaphore(cap) if cap > 0 else None

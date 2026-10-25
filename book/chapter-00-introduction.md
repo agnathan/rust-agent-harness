@@ -18,6 +18,10 @@ Rust shows up in sidebars when the design needs it: a struct for a message, an e
 - The plan
 - How to read this book
 
+## What this chapter decides
+
+The book commits to one harness that keeps what it learned, and to a second program that only offers tools. Sessions, memory, skills, and reflection are the stores behind that promise, and they arrive before any team exists. Curation, the librarian, and the eval suite come after those stores. Chapter 53 is the run where those stores share one task and a score is allowed to change. The gateway chapters stay on their own lineage, so a catalog lesson never rewrites the prompt. A later sentence that says it expected something is naming a wrong guess, and the next sentence is the file.
+
 ## What is an "agent harness"?
 
 An agent, stripped of the product language, is that short loop from the opening. The *harness* is everything around it that turns the loop from a demo into something you can leave running: talking to more than one model provider, defining and running tools, enforcing a budget so the agent can't loop forever, recovering from rate limits and network errors, compressing the conversation when it gets too long, saving the session, letting a human interrupt, and, once there is more than one agent, handing work across, running it in parallel, and cancelling it cleanly.

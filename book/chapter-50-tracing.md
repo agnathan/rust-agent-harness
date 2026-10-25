@@ -26,8 +26,7 @@ At the subscriber, the `tracing` crate's subscriber is a trait you implement. Th
 > The module doc on `otlp_exporter.py` says it maps gateway monitoring events to OTel spans for the operator-configured `monitoring.export.otlp` endpoint, and that no default destination ships. The OTel SDK is an optional extra (`hermes-agent[otlp]`) imported lazily. `headers_env` values are read at export time and never logged or stored. The streaming subscriber runs fail-isolated on the emitter thread. `event_filter` keeps other planes off it. The first lines are:
 >
 > 
-
-```python
+> ```python
 > """Export monitoring events to an OpenTelemetry Collector over OTLP/HTTP.
 >
 > Maps gateway monitoring events to OTel spans for the operator-configured ``monitoring.export.otlp``
@@ -42,8 +41,7 @@ At the subscriber, the `tracing` crate's subscriber is a trait you implement. Th
 > `redact_bounded` in `agent/monitoring/redaction.py` is:
 >
 > 
-
-```python
+> ```python
 > def redact_bounded(raw: Any, *, limit: int = 500, empty: str = "[redacted]", unavailable: str = UNAVAILABLE) -> str:
 >     """Redact ``str(raw or "")`` and length-bound it; ``empty`` replaces an empty
 >     result, ``unavailable`` is returned if redaction itself raises."""
@@ -59,8 +57,7 @@ At the subscriber, the `tracing` crate's subscriber is a trait you implement. Th
 > `agent/moa_trace.py` is opt-in via `moa.save_traces`. The module doc says it is off by default, and that when it is off the only overhead is the config read. A turn that runs appends one JSON line to `<hermes_home>/moa-traces/<session_id>.jsonl`. The same doc says the side channel never enters the `messages` table, history, or replay. `_traces_enabled_and_dir` returns `None` when the flag is off:
 >
 > 
-
-```python
+> ```python
 > def _traces_enabled_and_dir() -> Optional[Path]:
 >     """Trace directory if ``moa.save_traces`` is on, else None. Reads config per
 >     call (once per cache-MISS turn); ``moa.trace_dir`` overrides the default."""

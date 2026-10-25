@@ -172,7 +172,7 @@ The workflow installs `cargo-nextest` and runs `cargo nextest run -p my-harness 
 
 | Input | Values |
 |---|---|
-| `chapters` | `all` (default), `1`, `1-52`, or `9,12,14`. The book is an introduction plus chapters 1–52; a chapter runs only after its `tests/chNN.rs` exists (today: the chapter 1 sections, chapter 2, and chapters 11–32). Those tests panic on `todo!` until the stubs are filled |
+| `chapters` | `all` (default), `1`, `1-53`, or `9,12,14`. The book is an introduction plus chapters 1–53; a chapter runs only after its `tests/chNN.rs` exists (today: the chapter 1 sections, chapter 2, and chapters 11–53). Those tests panic on `todo!` until the stubs are filled |
 | `os` | `all` (default), `ubuntu`, `macos`, or `windows` |
 
 A manual run fails if any selected chapter fails.

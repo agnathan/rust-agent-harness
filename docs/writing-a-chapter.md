@@ -18,7 +18,7 @@ Every chapter has the box. Cite the specific Hermes files. For each idea say one
 
 Do not invent a file path, a function name, or a threshold. If the source was not opened, the box does not mention it.
 
-The MCP gateway is a separate track from the harness. Its architecture, the harness/server split, and the notes from Hermes and the public gateways are in [mcp-gateway.md](mcp-gateway.md). Server chapters 5, 7, 8, 15, 23, 37, 42, and 51 are written. They bind no socket. From chapter 10 on, each harness step is a copy of the previous harness plus the new modules. The layout, the two lineages, and the per-chapter plan for chapters 11–52 are in [harness-architecture.md](harness-architecture.md).
+The MCP gateway is a separate track from the harness. Its architecture, the harness/server split, and the notes from Hermes and the public gateways are in [mcp-gateway.md](mcp-gateway.md). Server chapters 5, 7, 8, 15, 23, 37, 42, and 51 are written. They bind no socket. From chapter 10 on, each harness step is a copy of the previous harness plus the new modules. The layout, the two lineages, and the per-chapter plan for chapters 11–53 are in [harness-architecture.md](harness-architecture.md).
 
 ## What else a chapter contains
 

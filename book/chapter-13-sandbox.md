@@ -8,7 +8,7 @@ Chapter 11 can deny a dangerous shell command, and chapter 12 can watch a call. 
 
 `Backend` describes how a job would be launched; the Docker argv drops capabilities, sets `no-new-privileges`, and sets a pid limit, and nothing in this chapter spawns Docker. `scrub_env` builds the child environment from an allowlist plus declared passthrough. `run_until` is the deadline, the timeout chapter 1 deferred, and it kills the process it spawned. A grandchild that worker started would survive, which is the gap beside Hermes's `kill_process_tree`. A warm worker accepts a job without starting a process per call.
 
-Chapter 17 sends the terminal through this worker after the approval floor, instead of growing a second sandbox. A skill that contains a script is still a script, the scanner for that text is chapter 25, and chapter 36 restarts a failed child agent from a heartbeat without adopting this worker.
+Chapter 17 sends the terminal through this worker after the approval floor, instead of growing a second sandbox. A skill that contains a script is still a script, the scanner for that text is chapter 25, and chapter 36 restarts a failed child agent from a heartbeat without adopting this worker. The boundary belongs to the continuously improving harness, because a procedure it keeps is still code another process must run. The keys stay off that child, and a timeout can still kill the process this chapter started.
 
 A child process is `std::process`, and the worker is a binary so the tests can kill it. A checkpoint is a list of paths and bytes, rather than a filesystem snapshot library. `check_execute_code` returns an enum, so a cron session can't fall through to allow by forgetting an arm.
 
@@ -764,7 +764,7 @@ fn main() {
 }
 ```
 
-`current_exe` is the `ch13-sandbox` binary. `pop` drops that file name. `cfg!(windows)` is false on ubuntu, so the pushed name is `sandbox-worker`. `cargo run` puts both binaries in one directory. The print is `reply: ok ping`, then `assert_eq` checks that line, then `quit` writes `quit` and waits. No API key. No Docker. The tests and the bench skip `worker_path` and pass `env!("CARGO_BIN_EXE_sandbox-worker")` to `spawn` or `run_until`.
+`current_exe` is the `ch13-sandbox` binary. `pop` drops that file name. `cfg!(windows)` is false on ubuntu, so the pushed name is `sandbox-worker`. `cargo run` puts both binaries in one directory. No API key is read, and Docker is not started. The tests and the bench skip `worker_path` and pass `env!("CARGO_BIN_EXE_sandbox-worker")` to `spawn` or `run_until`.
 
 ## 13.9 What each test locks
 
@@ -870,7 +870,7 @@ The means are `mean.point_estimate` from [run 39104733918](https://github.com/ag
 
 ## Pitfalls
 
-Local is the default. Printing Docker argv does not put the process in a container. `is_sandboxed` is the bit a later chapter should check before it tells the model the command is isolated.
+`is_sandboxed` is the bit a later chapter should check before it tells the model the command is isolated.
 
 `accept` deadlocks if the child does not flush. The worker flushes every line. A child you write later has to do the same.
 
