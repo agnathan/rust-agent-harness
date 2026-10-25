@@ -1,16 +1,18 @@
 # Chapter 49: A2A for External Agents
 
-Chapter 48's team shares skills inside this process, on a bus the process owns. An agent that lives somewhere else — another product, another language, another trust boundary — is not a subscriber you can `try_send` to. MCP already covers tools, and agents, and skills this harness exposes. A second protocol for those would split the catalog. This chapter uses A2A only for agents outside the process. The crate is `steps/ch49-a2a`, a copy of chapter 48 plus `a2a`. The package is `ch49-a2a`.
+An agent in another product, another language, and another trust boundary can't be a subscriber you `try_send` to. Chapter 48 can share a skill on a bus this process owns, and that bus stops at the process edge, so a peer outside the process has to be reached by a call.
 
-`ExternalAgent` is the peer. `AgentCard` describes it. `Pool` and `HttpPool` record calls in memory. `record` appends the url and the body the test will read. Nothing opens a socket. `acquire` and `hold` bound how many outbound calls are in flight, `CALL_BOUND`. `RemotePeer::send` is the trait method the fake implements. `call` passes chapter 20's `redact_for_egress` into that send, so a key in the outbound body is scrubbed by the one egress function. `wrap_inbound` marks the reply as data, with `INBOUND_PREFIX`, because the other agent is an untrusted writer the way a web page is. `cancel` reaches an in-flight call. `wait_cancel` is the join the bench times. `demo` prints the round trip against the fake.
+> **Illustration, not a service this crate dials.** A billing agent written in another language is the peer in this picture, and nothing here opens a socket to it. `call` passes `crate::redact::redact_for_egress` into `RemotePeer::send`, and `HttpPool::record` stores the url and the already-scrubbed body. The reply is wrapped with the exact prefix `[A2A inbound — untrusted external input]` plus a newline, which is what `wrap_inbound` writes in front of the peer and the text when the test frames an inbound message.
 
-Chapter 50 copies this harness and adds tracing, including a research team that learns across runs. The external call stays a call. It does not become a span by itself until that chapter wraps it. The MCP server is still the other program. Tools we own are listed and called over MCP. A2A is the path for a peer we do not own and should not pretend to supervise with chapter 36's heartbeat. Cancel is the control we do keep: an external call that ignores cancel would pin a permit until the peer felt like answering.
+> **MCP and A2A.** MCP is how this harness lists and calls the tools it exposes, so `read_file` stays on that path, and A2A is only for an agent outside the process. The billing-agent picture above is the A2A example, this crate doesn't dial a deployment of it, and a second protocol for those tools would split the catalog.
 
-The scrub and the wrapper are the learning constraint. A reply from outside can be fluent and wrong, and it can contain an instruction to write a skill. It enters the transcript as wrapped data. Reflection may still read it. The skill write still goes through chapter 25's scanner. The outbound scrub is why our memory and our keys do not become the other agent's training text.
+The numbered sections are four movements around that split. Outbound is the scrub and a `CALL_BOUND` of 8, inbound is the wrapper, cancel is `cancel` together with `wait_cancel`, and the protocol split above is why a tool this process owns never becomes a peer. Sections 49.1, 49.3, 49.4, 49.5, and 49.7 carry the outbound movement, 49.6 is the wrapper, 49.8 and 49.11 are cancel, and 49.2, 49.9, and 49.10 keep the boundary, the card, and the fake round trip.
 
-Rust, at the boundary: the peer is a trait, so the test supplies a fake that records bytes. The pool is a counter and a guard, the same permit shape as the tool scheduler. Cancel is an atomic flag the in-flight wait checks. `Result` is `A2aError`, and a scrubbed body is a `String` the send consumes.
+A fluent wrong reply can tell the harness to write a skill, which is the pressure a continuously improving harness meets at this boundary. The reply enters as wrapped data, so reflection may still read it, and the skill write still goes through chapter 25's scanner. The outbound scrub is why a key in our memory doesn't leave as the other agent's training text.
 
-`cargo run -p ch49-a2a --bin ch49-a2a` runs the demo. The exercise is `my-harness/tests/ch49.rs`: cancel reaches an in-flight remote call.
+The crate is `steps/ch49-a2a`, a copy of chapter 48 plus `a2a`, the package is `ch49-a2a`, and `cargo run -p ch49-a2a --bin ch49-a2a` prints `a2a: ok`. The exercise is `my-harness/tests/ch49.rs`, where cancel has to reach an in-flight remote call. Chapter 50 copies this harness and adds tracing, and a second call there can see that notes already exist, while `FakeModel` ignores their text and the stored note is the mock reply. The external call stays a call until that chapter puts a span around it, and cancel is the control we keep, because an external call that ignores cancel would pin a permit until the peer felt like answering. We shouldn't pretend to supervise that peer with chapter 36's heartbeat.
+
+At the boundary the peer is a trait, so the test supplies a fake that records bytes, the pool is a counter and a guard in the same permit shape as the tool scheduler, and cancel is a flag the in-flight wait checks. The error type is `A2aError`, and the scrubbed body is a `String` that `send` consumes.
 
 | Section | What it walks |
 |---|---|
@@ -78,23 +80,21 @@ Rust, at the boundary: the peer is a trait, so the test supplies a fake that rec
 
 ## What this chapter decides
 
-`a2a.rs` defines no redact function. `call` builds the outbound string with `crate::redact::redact_for_egress` and hands that string to `send`. `HttpPool::record` stores the url and that already-scrubbed body.
+The module defines no redact function of its own, so `call` builds the outbound string with `crate::redact::redact_for_egress` and hands that string to `send`. `HttpPool::record` stores the url and that already-scrubbed body, which is the text a later assertion reads back from the pool.
 
-`CALL_BOUND` is 8. `Pool::acquire` is a `compare_exchange` loop. The ninth hold fails with `A2aError::Bound` from `call` when `acquire` returns false.
+`CALL_BOUND` is 8, and `Pool::acquire` is a `compare_exchange` loop that returns false once eight holds are already in flight. The ninth hold fails with `A2aError::Bound` from `call` when `acquire` returns false, and that failure leaves the eight permits where they were.
 
-A URL that starts with `local://` is `A2aError::InProcess`. `call` checks that prefix before `acquire`. `send` checks it again. A URL that is neither `local://` nor `http://` nor `https://` is `A2aError::Unreachable`, from `send`.
+A URL that starts with `local://` is `A2aError::InProcess`, and `call` checks that prefix before `acquire`, while `send` checks it again so a direct send of the same URL still refuses. A URL that is neither `local://` nor `http://` nor `https://` is `A2aError::Unreachable`, and that error comes from `send` after `call` has already taken a permit.
 
-`INBOUND_PREFIX` is exactly `"[A2A inbound — untrusted external input]\n"`. The dash in that string is an em dash. `wrap_inbound` formats the prefix, then the peer, then a newline, then the text.
+`INBOUND_PREFIX` is exactly `"[A2A inbound — untrusted external input]\n"`. `wrap_inbound` formats the prefix, then the peer, then a newline, then the text, so the peer sits on its own line under the bracket line.
 
-`cancel` stores `true` on the `AtomicBool`. It does not abort a thread by itself. `wait_cancel` stores `started`, then spins on `yield_now` until the flag is set.
+`cancel` stores `true` on the `AtomicBool` and leaves the thread running, because the store by itself never aborts a thread. `wait_cancel` stores `started`, then spins on `yield_now` until the flag is set, which is the join the bench times.
 
-`card` returns the name `"harness"` and the skills `["research"]`.
-
-`demo` calls `http://research.example:9900` with the message `summarize` and returns `a2a: ok`.
+`card` returns the name `"harness"` and the skills `["research"]`. `demo` calls `http://research.example:9900` with the message `summarize` and returns `a2a: ok`.
 
 ## 49.1 The module note, `CALL_BOUND`, and `A2aError`
 
-`a2a.rs` is the new module. `team_skills.rs` is the chapter 48 copy. `pub mod a2a` is what `chapter_demo.rs` imports. The file opens with the boundary and the scrub:
+The new module is `a2a.rs`, the chapter 48 copy is `team_skills.rs`, and `pub mod a2a` is what `chapter_demo.rs` imports. The file opens on the boundary, the bound, and the one egress function `call` will name:
 
 ```rust
 //! Book chapter 49. A2A is the trait at the process boundary.
@@ -116,19 +116,15 @@ pub enum A2aError {
 }
 ```
 
-The module comment names the three decisions this file keeps in one place. The trait is the process boundary. An agent in this process is not this trait. The pool bound is 8. Outbound text is `crate::redact::redact_for_egress`. There is no second scrub. The second scrub in Hermes is the email substitution inside `redact_outbound`. This file does not define a function that would do it.
+The module comment keeps the boundary and the bound in one place: the trait is the process boundary, an agent that already lives in this process can't be this trait, and the pool bound is 8. Outbound text is `crate::redact::redact_for_egress`, which is the scrub `call` passes through, so the patterns stay in `redact.rs` where chapter 20 put them.
 
-`CALL_BOUND` is a public `usize`. The test `the_ninth_call_is_refused` loops `for _ in 0..CALL_BOUND`. Changing the constant changes how many `hold` calls fill the pool. The number 8 is also what the module comment states. `acquire` compares against the constant, not against a field stored on `Pool`.
+`CALL_BOUND` is a public `usize`, and the test `the_ninth_call_is_refused` loops `for _ in 0..CALL_BOUND`, so changing the constant changes how many `hold` calls fill the pool. The number 8 is also what the module comment states. `acquire` compares against the constant, and `Pool` stores no separate limit field.
 
-`A2aError` has four variants. `InProcess` is the `local://` refusal. `Bound` is the full pool. `Cancelled` is the flag. `Unreachable` is a URL that `send` will not record. `Debug`, `Clone`, `PartialEq`, and `Eq` are derived. The tests use `assert_eq!` on `Err(A2aError::InProcess)`, `Err(A2aError::Bound)`, and `Err(A2aError::Cancelled)`. No test in `tests/a2a.rs` constructs `Unreachable`. The variant is still in the enum, and `send` returns it.
-
-> **Rust sidebar: a `Copy`-less error enum**
->
-> `A2aError` does not derive `Copy`. Each variant holds no data, so a `Copy` derive would compile. The file does not ask for it. `Clone` is enough for `assert_eq!`, because `assert_eq!` compares by `PartialEq` and the `Err` side is built at the assertion. `call` returns `Result<String, A2aError>` by moving the error out. The caller of `unwrap_err` in `a_cancelled_flag_never_records_the_url` owns that error and compares it to `A2aError::Cancelled`.
->
-> `PartialEq` is what makes `assert_eq!(call(...), Err(A2aError::InProcess))` a test of the variant. A mismatch prints both sides with `Debug`. The four names are the whole error surface of this module. `send` and `call` return them. `demo` uses `expect("call")` on the `Ok` path and never matches the enum.
+`A2aError` has four variants, and the tests match three of them by `assert_eq!`. `InProcess` is the `local://` refusal, `Bound` is the full pool, `Cancelled` is the flag, and `Unreachable` is a URL that `send` will refuse to record. `Debug`, `Clone`, `PartialEq`, and `Eq` are derived, which is what lets `assert_eq!` print both sides and compare `Err(A2aError::InProcess)`, `Err(A2aError::Bound)`, and `Err(A2aError::Cancelled)`. No test in `tests/a2a.rs` constructs `Unreachable`, but the variant stays in the enum because `send` returns it for a scheme the prefix checks reject.
 
 ## 49.2 `ExternalAgent`
+
+The trait is one method, and the signature is the whole promise a peer has to keep:
 
 ```rust
 pub trait ExternalAgent {
@@ -136,19 +132,17 @@ pub trait ExternalAgent {
 }
 ```
 
-The trait is one method. `send` borrows the agent, borrows the message, and borrows the cancel flag. The flag is an `AtomicBool`, so the borrower can load it while another thread stores it. The return is the reply string or an `A2aError`.
+`send` borrows the agent, borrows the message, and borrows the cancel flag. The flag is an `AtomicBool`, so one thread can load it while another thread stores it, and the return is the reply string or an `A2aError`.
 
-`RemotePeer` is the only implementor in this file. The module comment says an agent in this process is not this trait. A supervisor, a librarian, a kanban worker, and a bus subscriber stay on the types they already have. They do not implement `ExternalAgent`. The compiler will not stop a caller from building a `RemotePeer` whose URL is `local://`. `call` and `send` return `InProcess` for that URL. The trait itself has no URL parameter. The URL lives on `RemotePeer`.
+`RemotePeer` is the only implementor in this file. A supervisor, a librarian, a kanban worker, and a bus subscriber stay on the types they already have, and they don't implement `ExternalAgent`. The compiler won't stop a caller from building a `RemotePeer` whose URL is `local://`, because the trait itself has no URL parameter and the URL lives on `RemotePeer`. `call` and `send` return `InProcess` for that URL, which is the check that keeps an in-process name off this trait.
 
-MCP stays the path for tools this process owns. `ExternalAgent` is the process boundary. A tool registered in this crate is still dispatched here. This trait does not list tools, and `send` does not look up a tool name.
+MCP stays the path for tools this process owns, and the MCP server is still the other program. A tool registered in this crate is still dispatched here. This trait doesn't list tools, and `send` doesn't look up a tool name, which is why `read_file` stays on the MCP catalog and this chapter doesn't open a second protocol for it.
 
-> **Rust sidebar: a trait with one method**
->
-> A trait is a set of methods a type promises. `impl ExternalAgent for RemotePeer` is that promise for one struct. `call` does not use the trait as a parameter. It takes `&RemotePeer`. The method call `peer.send(...)` still goes through the impl. A later caller could take `impl ExternalAgent` or `&dyn ExternalAgent`. This file does not. The tests build a `RemotePeer` and pass it to `call`.
->
-> `&self` means `send` does not need a mutable peer. The mutation is inside `HttpPool`, behind mutexes, and inside `FakeModel` there is no mutation at all. The cancel flag is shared by reference. `AtomicBool` allows a store through a shared reference. That is why the flag is atomic and the peer is not wrapped in `RefCell`.
+`call` takes `&RemotePeer` and doesn't take the trait as a parameter, even though `peer.send(...)` still goes through the impl. The tests build a `RemotePeer` and pass it to `call`. `&self` means `send` needs no mutable peer, because the mutation sits inside `HttpPool` behind mutexes, and `FakeModel` doesn't mutate at all. The cancel flag is shared by reference, which is why the flag is atomic and the peer isn't wrapped in `RefCell`.
 
 ## 49.3 `HttpPool` and `record`
+
+The stand-in for an HTTP client is a pair of mutexes, and it has no socket:
 
 ```rust
 #[derive(Debug, Default)]
@@ -169,23 +163,17 @@ impl HttpPool {
 }
 ```
 
-`HttpPool` is the stand-in for an HTTP client. It has no socket. `record` stores the url and the body it was given. `call` scrubs the message before `send`, and `send` passes that argument to `record`. The body in the pool is the already-scrubbed body. The url is the peer's url.
+`record` stores the url and the body it was given. `call` scrubs the message before `send`, and `send` passes that argument to `record`, so the body in the pool is the already-scrubbed body and the url is the peer's url.
 
-The two fields are separate mutexes. `record` locks `urls`, pushes, and drops that guard at the end of the statement. Then it locks `bodies` and pushes. `calls` locks `urls` and returns the length. A body can be one push behind a url if a thread reads between the two statements. The tests read `calls` after `call` has returned, and they read `bodies` after `call` has returned. `call` does not return until `send` returns, and `send` does not return until both pushes have finished.
+The two fields are separate mutexes. `record` locks `urls`, pushes, and drops that guard at the end of the statement, then locks `bodies` and pushes. `calls` locks `urls` and returns the length. A body can be one push behind a url if a thread reads between the two statements, which is a gap the tests never hit, because they read `calls` and `bodies` only after `call` has returned. `call` waits until `send` returns, and `send` waits until both pushes have finished.
 
-`expect("pool")` panics if the mutex is poisoned. A poison would mean a thread panicked while holding the lock. The tests do not poison it. `Default` comes from the derive. `HttpPool::default()` is an empty url vec and an empty body vec. `demo` wraps that value in `Arc::new`. `RemotePeer.http` is `Arc<HttpPool>`, so `send` can record through a shared pointer. `call` takes `&RemotePeer` and does not clone the pool.
+`expect("pool")` panics if the mutex is poisoned, which would mean a thread panicked while holding the lock, and the tests don't poison it. `HttpPool::default()` is an empty url vec and an empty body vec, because `Default` comes from the derive. `demo` wraps that value in `Arc::new`. `RemotePeer.http` is `Arc<HttpPool>`, so `send` can record through a shared pointer, and `call` takes `&RemotePeer` without cloning the pool. The helper `peer` builds a new `Arc` for each `RemotePeer`, so two peers share a pool only when the caller passes the same `Arc`, which the tests don't do.
 
-`calls` is the assertion the cancel test and the in-process test use. Both expect `0`. `record` was not entered, so the url vec length is 0. A cancelled flag checked before `record` never records the URL.
-
-> **Rust sidebar: `Mutex` and `Arc`**
->
-> `Mutex<Vec<String>>` means the vec is only touched while the lock is held. `lock` returns a `Result`. `expect` turns the poison error into a panic with the message `pool`. The guard's `push` and `len` are the methods of `Vec`, reached by deref. When the guard drops, the lock is released. There is no `unlock` call in this file.
->
-> `Arc` is a reference count. `RemotePeer` owns one `Arc`. Cloning the `Arc` would share the same mutexes. `demo` does not clone it. The test helper `peer` builds a new `Arc` for each `RemotePeer`. Two peers do not share a pool unless the caller passes the same `Arc`. The tests do not share one.
->
-> `#[derive(Default)]` on `HttpPool` fills each mutex with `Vec::new` because `Vec<String>` implements `Default` and `Mutex` implements `Default` when the inner type does. `Pool` below does not use that derive for its atomic. It writes `Default` by hand and calls `new`.
+`calls` is the assertion the cancel test and the in-process test use, and both expect `0`. `record` was never entered, so the url vec length is 0. A cancelled flag checked before `record` never records the URL.
 
 ## 49.4 `Pool`, `acquire`, and `hold`
+
+The pool counts in-flight calls and stores no URLs:
 
 ```rust
 pub struct Pool {
@@ -240,23 +228,23 @@ impl Default for Pool {
 }
 ```
 
-`Pool` counts in-flight calls. It does not store URLs. `new` starts the counter at 0. `in_flight` loads it with `Ordering::SeqCst`. `acquire` is private. `hold` is the public name the test uses to take a permit and keep it. The comment on `hold` says that. `release` is private. `release_one` is the public name the test uses to give one back.
+`new` starts the counter at 0, and `in_flight` loads it with `Ordering::SeqCst`. `acquire` is private, and `hold` is the public name the test uses to take a permit and keep it, which is what the comment on `hold` says. `release` is private, and `release_one` is the public name the test uses to give one back.
 
-`acquire` is a loop. It loads `now`. If `now >= CALL_BOUND`, it returns `false`. Otherwise it tries `compare_exchange` from `now` to `now + 1`. Success returns `true`. Failure means another thread stored a different value, and the loop loads again. The success ordering and the failure ordering are both `SeqCst`.
+`acquire` loads `now`, returns `false` when `now >= CALL_BOUND`, and otherwise tries `compare_exchange` from `now` to `now + 1`, returning `true` when the exchange succeeds. Failure means another thread stored a different value, and the loop loads again. The success ordering and the failure ordering are both `SeqCst`.
 
-Eight successful acquires leave the counter at 8. The next `acquire` loads 8, sees `8 >= CALL_BOUND`, and returns `false` without storing. `call` turns that `false` into `A2aError::Bound`. That is the ninth hold. The test does the first eight with `hold` and the ninth with `call`.
+Eight successful acquires leave the counter at 8. The next `acquire` loads 8, sees `8 >= CALL_BOUND`, and returns `false` without storing, and `call` turns that `false` into `A2aError::Bound`. That is the ninth hold. The test does the first eight with `hold` and the ninth with `call`.
 
-`release` is `fetch_sub(1)`. It does not check for zero. `call` only releases after a successful `acquire`. The `Bound` path returns before `release`, so a failed ninth acquire does not decrement the eight that are still held. The in-process path returns before `acquire`, so it does not decrement either. The test `an_in_process_url_is_not_a2a` expects `pool.in_flight()` to be 0 after that early return.
+`release` is `fetch_sub(1)`, and it never checks for zero. `call` releases only after a successful `acquire`. The `Bound` path returns before `release`, so a failed ninth acquire doesn't decrement the eight that are still held. The in-process path returns before `acquire`, so it doesn't decrement either. The test `an_in_process_url_is_not_a2a` expects `pool.in_flight()` to be 0 after that early return.
 
-> **Rust sidebar: `compare_exchange` on `AtomicUsize`**
->
-> `compare_exchange(now, now + 1, success, failure)` stores `now + 1` only when the atomic still equals `now`. The return is `Ok(now)` on success and `Err(actual)` on failure. This loop ignores the error value and starts over. That is how two threads can both pass the `now >= CALL_BOUND` check and still have only one of them increment. The loser sees the new value on the next load. If that new value is 8, the loser returns `false`.
->
-> `SeqCst` is the ordering written on every atomic operation in this pool, and on `cancel` and `wait_cancel`. A sequentially consistent store is visible to a sequentially consistent load in one total order. `hold` and `call` in the test run on one thread, so the race the loop is written for does not happen in `the_ninth_call_is_refused`. The loop is still the implementation. A single-threaded ninth call hits the `now >= CALL_BOUND` arm and returns `false` on the first iteration.
->
-> `fetch_sub` returns the previous value. `release` discards it. After eight holds and one `release_one`, the counter is 7. The following `call` can acquire. After that `call` returns, `call` has released its own permit, and the test still has seven holds. The loop `for _ in 1..CALL_BOUND` calls `release_one` seven more times. `1..8` is seven integers. Eight holds, one release before the successful call, one release inside that call, and seven releases after it, leave `in_flight` at 0. The test asserts that 0.
+> **Rust sidebar: `compare_exchange` on the permit count.** `compare_exchange(now, now + 1, success, failure)` stores `now + 1` only when the atomic still equals `now`, so two threads can both pass the `now >= CALL_BOUND` check and still have only one of them increment. The loser loads again, and if that new value is 8 it returns false, which is the same answer a single-threaded ninth call gets on the first iteration once `hold` has filled the pool. `hold` and `call` in `the_ninth_call_is_refused` run on one thread, so the race the loop is written for doesn't happen there, and the loop is still the implementation.
+
+`fetch_sub` returns the previous value, and `release` discards it. After eight holds and one `release_one`, the counter is 7, so the following `call` can acquire, and after that `call` returns it has released its own permit while the test still holds seven. The loop `for _ in 1..CALL_BOUND` calls `release_one` seven more times, because `1..8` is seven integers. Eight holds, one release before the successful call, one release inside that call, and seven releases after it, leave `in_flight` at 0, which is what the test asserts.
+
+`SeqCst` is the ordering written on every atomic operation in this pool, and on `cancel` and `wait_cancel`. A sequentially consistent store is visible to a sequentially consistent load in one total order, which is the pairing the waiter relies on.
 
 ## 49.5 `FakeModel` and `RemotePeer::send`
+
+The model ignores the prompt, and the peer is the type that records a call:
 
 ```rust
 pub struct FakeModel {
@@ -297,27 +285,21 @@ impl ExternalAgent for RemotePeer {
 }
 ```
 
-`FakeModel::complete` binds the prompt and ignores it. The reply is `self.reply.to_string()`. `demo` sets `reply: "ok"`. The test helper `peer` does the same. The model does not read the URL and does not read the cancel flag.
+`FakeModel::complete` binds the prompt and ignores it, and the reply is `self.reply.to_string()`. `demo` sets `reply: "ok"`, and the test helper `peer` does the same. The model doesn't read the URL and doesn't read the cancel flag, which is why a cancelled call can still have paid for a scrub and then returned before the model ran.
 
-`RemotePeer` stores a name, a URL, the pool, and the model. All four fields are public. `send` reads `url`, `http`, and `model`. `send` does not read `name`. `demo` sets `name: "researcher"`. The printed line does not include that name. `card` uses the string `"harness"`, which is a different string from the peer name.
+`RemotePeer` stores a name, a URL, the pool, and the model, and all four fields are public. `send` reads `url`, `http`, and `model`, and it doesn't read `name`. `demo` sets `name: "researcher"`, and the printed line doesn't include that name. `card` uses the string `"harness"`, which is a different string from the peer name.
 
-`send` checks prefixes in order. `local://` returns `InProcess` before any HTTP check and before `record`. The next condition is the negation of `http://` or `https://`. A URL that matches neither `local://` nor those two prefixes returns `Unreachable`. `ftp://files.example/a2a`, `HTTP://research.example`, `Local://supervisor`, and `"notaurl"` all take that arm. The checks are `starts_with` on the exact lowercase prefixes. `tests/a2a.rs` does not pass one of those strings. The branch is in `send`.
+`send` checks prefixes in order. `local://` returns `InProcess` before any HTTP check and before `record`. The next condition is the negation of `http://` or `https://`, so a URL that matches neither `local://` nor those two prefixes returns `Unreachable`. `ftp://files.example/a2a`, `HTTP://research.example`, `Local://supervisor`, and `"notaurl"` all take that arm, because the checks are `starts_with` on the exact lowercase prefixes. `tests/a2a.rs` never passes one of those strings, and the branch is still in `send`.
 
-A `local://` URL never reaches `Unreachable`, because the `local://` check is first. `call` also returns `InProcess` before `acquire` for that prefix, so a `call` of `local://supervisor` does not enter `send`. A direct `send` of the same URL still returns `InProcess` and does not call `record`. The test goes through `call` and asserts `local.http.calls()` is 0.
+A `local://` URL never reaches `Unreachable`, because the `local://` check is first. `call` also returns `InProcess` before `acquire` for that prefix, so a `call` of `local://supervisor` doesn't enter `send`. A direct `send` of the same URL still returns `InProcess` and doesn't call `record`. The test goes through `call` and asserts `local.http.calls()` is 0.
 
-After the prefix checks, `send` loads the cancel flag. If it is `true`, `send` returns `Cancelled` and does not call `record`. That is the check before the record. A cancelled flag there never records the URL. `record` runs only when that load is `false`. The arguments are `self.url` and `message`. The message is whatever the caller passed. `call` passes the scrubbed string. A direct `send` would record the string it was given. The tests that record go through `call`.
+After the prefix checks, `send` loads the cancel flag, and when that load is `true` it returns `Cancelled` without calling `record`, which is why a cancelled flag there never records the URL. `record` runs only when that load is `false`, with `self.url` and whatever message the caller passed, and `call` passes the scrubbed string. A direct `send` would record the string it was given, and the tests that record go through `call`.
 
-There is a second load after `record`. If the flag is `true` then, `send` returns `Cancelled` and the URL is already in the vec. The test `a_cancelled_flag_never_records_the_url` sets the flag before `call`, so the first load returns `Cancelled` and `calls()` is 0. The test does not flip the flag during `record`.
-
-If the second load is `false`, `send` returns `Ok` of `model.complete(message)`. The prompt argument is the scrubbed message. `complete` ignores it and returns `ok` in the tests and in `demo`.
-
-> **Rust sidebar: `starts_with` and `let _ = prompt`**
->
-> `starts_with` on `&str` compares bytes at the front. `"http://research.example:9900".starts_with("http://")` is true. `"https://research.example/a2a".starts_with("https://")` is true. `"http://".starts_with("https://")` is false. The `||` is inside a negation. Both prefixes have to miss for `Unreachable`. One hit is enough to continue to the cancel load.
->
-> `let _ = prompt` uses the parameter so the compiler accepts an unused argument. The value is dropped. `complete` cannot return the prompt by accident after that line, because the only value it constructs is `self.reply.to_string()`. The reply type is `String`. The static `reply` field stays on the model.
+A second load sits after `record`, and if the flag is `true` then, `send` returns `Cancelled` with the URL already in the vec. The test `a_cancelled_flag_never_records_the_url` sets the flag before `call`, so the first load returns `Cancelled` and `calls()` is 0, and the test doesn't flip the flag during `record`. If the second load is `false`, `send` returns `Ok` of `model.complete(message)`. The prompt argument is the scrubbed message, and `complete` ignores it and returns `ok` in the tests and in `demo`.
 
 ## 49.6 `INBOUND_PREFIX` and `wrap_inbound`
+
+The inbound frame is a constant plus the peer and the text:
 
 ```rust
 pub const INBOUND_PREFIX: &str = "[A2A inbound — untrusted external input]\n";
@@ -327,7 +309,7 @@ pub fn wrap_inbound(peer: &str, text: &str) -> String {
 }
 ```
 
-`INBOUND_PREFIX` is exactly `[A2A inbound — untrusted external input]` plus a newline. The dash is an em dash, the same character Hermes uses in `PRIVACY_PREFIX`. The Hermes constant is longer. It begins `[A2A inbound — message from a remote agent peer named {peer!r}.` and it continues through the colleague sentence and a blank line. This prefix does not contain the peer name. The peer is written after the prefix, on the next line.
+`INBOUND_PREFIX` is exactly `[A2A inbound — untrusted external input]` plus a newline. The Hermes constant is longer: it begins `[A2A inbound — message from a remote agent peer named {peer!r}.` and continues through the colleague sentence and a blank line. This prefix doesn't contain the peer name, so the peer is written after the prefix, on the next line.
 
 `wrap_inbound("researcher", "/shutdown")` formats to:
 
@@ -337,17 +319,13 @@ researcher
 /shutdown
 ```
 
-The test `egress_and_inbound_are_wrapped` asserts that the string starts with `INBOUND_PREFIX` and that it contains `/shutdown`. It does not assert the peer line as its own `assert_eq!`. The format string puts the peer between the prefix and the text, with a newline after the peer. `/shutdown` stays in the result. Hermes frames every inbound message, including text that starts with a slash. This function does the same for the text it is given. It does not strip the slash and it does not call `filter_inbound`.
+The test `egress_and_inbound_are_wrapped` asserts that the string starts with `INBOUND_PREFIX` and that it contains `/shutdown`, and it doesn't give the peer line its own `assert_eq!`. The format string puts the peer between the prefix and the text, with a newline after the peer, so `/shutdown` stays in the result. Hermes frames every inbound message, including text that starts with a slash, and this function does the same for the text it is given. It doesn't strip the slash and it doesn't call `filter_inbound`.
 
-`call`, `send`, and `demo` do not call `wrap_inbound`. The frame is a function the test calls directly. An outbound `call` does not wrap the message it scrubs.
-
-> **Rust sidebar: `format!` and a const in the template**
->
-> `{INBOUND_PREFIX}` inside `format!` interpolates the constant. `{peer}` and `{text}` interpolate the arguments. The `\n` between `{peer}` and `{text}` is a newline in the format string, separate from the newline already stored at the end of `INBOUND_PREFIX`. Two newlines are why the peer sits on its own line under the bracket line.
->
-> The return type is `String`. The inputs are borrowed. The function does not store them. Hermes `str.format` substitutes `{peer!r}` inside the prefix and then concatenates `filter_inbound`. `{peer!r}` is Python's `repr` of the name, quotes included. This format string does not use `Debug` for the peer. The peer bytes are copied as they were passed.
+`call`, `send`, and `demo` don't call `wrap_inbound`. The frame is a function the test calls directly, and an outbound `call` doesn't wrap the message it scrubs. `{INBOUND_PREFIX}` inside `format!` interpolates the constant, `{peer}` and `{text}` interpolate the arguments, and the `\n` between `{peer}` and `{text}` is a newline in the format string, separate from the newline already stored at the end of `INBOUND_PREFIX`. Two newlines are why the peer sits on its own line under the bracket line. The return type is `String`, the inputs are borrowed, and the function doesn't store them. Hermes substitutes `{peer!r}` inside the prefix, quotes included, and this format string copies the peer bytes as they were passed.
 
 ## 49.7 `call` and `redact_for_egress`
+
+The function that ties the pool, the scrub, and the peer together is short:
 
 ```rust
 pub fn call(
@@ -368,15 +346,15 @@ pub fn call(
 }
 ```
 
-This is the whole function. There is no local redact function beside it. The scrub is `crate::redact::redact_for_egress(message)`, evaluated as the first argument to `send`.
+There is no local redact function beside it. The scrub is `crate::redact::redact_for_egress(message)`, evaluated as the first argument to `send`.
 
-The first branch is `local://`. It returns `InProcess` before `acquire`. The permit count does not change. `send` is not called. `redact_for_egress` is not called. The test with `local://supervisor` expects `InProcess`, `in_flight() == 0`, and `calls() == 0`.
+The first branch is `local://`. It returns `InProcess` before `acquire`, the permit count stays where it was, and neither `send` nor `redact_for_egress` runs. The test with `local://supervisor` expects `InProcess`, `in_flight() == 0`, and `calls() == 0`.
 
-The second branch is a failed `acquire`. It returns `Bound`. `send` is not called. The scrub is not called. The eight permits from `hold` stay held. That is the ninth hold.
+The second branch is a failed `acquire`. It returns `Bound`, `send` doesn't run, and the scrub doesn't run. The eight permits from `hold` stay held, which is the ninth hold.
 
-On the success path, `acquire` has returned `true` and the counter is one higher. Then `send` runs with the scrubbed message and the same cancel flag. Then `release` runs. Then `result` is returned. `release` runs when `send` returns `Ok` and when `send` returns `Err`. The cancel test expects `in_flight() == 0` after a `Cancelled` error, which is this `release`. The `Bound` return and the `InProcess` return sit above `release` and do not call it.
+On the success path, `acquire` has returned `true` and the counter is one higher, then `send` runs with the scrubbed message and the same cancel flag, then `release` runs, then `result` is returned. `release` runs when `send` returns `Ok` and when `send` returns `Err`. The cancel test expects `in_flight() == 0` after a `Cancelled` error, which is this `release`. The `Bound` return and the `InProcess` return sit above `release` and don't call it.
 
-`send` still contains its own `local://` check. `call` does not reach it for that prefix. A URL such as `ftp://files.example/a` passes the `call` check, takes a permit, and `send` returns `Unreachable` before `record`. `call` then releases the permit and returns that error. No test in `tests/a2a.rs` uses that URL.
+`send` still contains its own `local://` check, and `call` doesn't reach it for that prefix. A URL such as `ftp://files.example/a` passes the `call` check, takes a permit, and `send` returns `Unreachable` before `record`. `call` then releases the permit and returns that error. No test in `tests/a2a.rs` uses that URL.
 
 `redact.rs` in this crate is the scrub `call` names. The egress function is:
 
@@ -390,19 +368,15 @@ pub fn redact_for_egress(text: &str) -> String {
 }
 ```
 
-`redact_sensitive_text` runs the prefix-family regex, then the env-assignment regex, then the auth-header regex. The prefix regex includes `sk-[A-Za-z0-9_-](?:\.?[A-Za-z0-9_-]){9,}`. A match keeps the characters through the first `-` or `_` and then writes `***`. `sk-live-0123456789abcdef` becomes `sk-***`. The bearer residue regex is `(?i)\bBearer\s+(?:\[[^\]]+\]|[A-Za-z0-9._~+/-]{20,}=*)`, replaced with the literal `Bearer [redacted]`. The env regex captures a name that contains `API_KEY`, `TOKEN`, `SECRET`, `PASSWORD`, `PASSWD`, or `CREDENTIAL`, and the replacement is that name plus `=***`.
+`redact_sensitive_text` runs the prefix-family regex, then the env-assignment regex, then the auth-header regex. The prefix regex includes `sk-[A-Za-z0-9_-](?:\.?[A-Za-z0-9_-]){9,}`. A match keeps the characters through the first `-` or `_` and then writes `***`, so `sk-live-0123456789abcdef` becomes `sk-***`. The bearer residue regex is `(?i)\bBearer\s+(?:\[[^\]]+\]|[A-Za-z0-9._~+/-]{20,}=*)`, replaced with the literal `Bearer [redacted]`. The env regex captures a name that contains `API_KEY`, `TOKEN`, `SECRET`, `PASSWORD`, `PASSWD`, or `CREDENTIAL`, and the replacement is that name plus `=***`.
 
-I am quoting `redact.rs` because `call` calls it. `a2a.rs` does not copy those regexes. Hermes `redact_outbound` runs `redact_for_egress` and then `_EMAIL_RE`. Nothing in `a2a.rs` or in this `redact_for_egress` substitutes `[redacted-email]`.
+The test strings are the scrub the assertions check. `redact_for_egress("Bearer sk-live-0123456789abcdef")` must exclude `sk-live` and must contain `sk-***`. `redact_for_egress("Bearer abcdefghijklmnopqrstuvwxyz012345")` must contain `Bearer [redacted]` and must exclude `abcdefghijklmnopqrstuvwxyz012345`. `redact_for_egress("OPENAI_API_KEY=supersecret")` must exclude `supersecret` and must contain `OPENAI_API_KEY=***`. A `call` of `"see sk-live-0123456789abcdef"` on `https://research.example/a2a` returns `"ok"`, and `bodies[0]` must exclude `sk-live` and must contain `sk-***`. The reply is `ok` because `FakeModel` ignores the prompt. The body is the scrubbed message because `record` stored `send`'s message argument.
 
-The test strings show the scrub the assertions check. `redact_for_egress("Bearer sk-live-0123456789abcdef")` must not contain `sk-live` and must contain `sk-***`. `redact_for_egress("Bearer abcdefghijklmnopqrstuvwxyz012345")` must contain `Bearer [redacted]` and must not contain `abcdefghijklmnopqrstuvwxyz012345`. `redact_for_egress("OPENAI_API_KEY=supersecret")` must not contain `supersecret` and must contain `OPENAI_API_KEY=***`. `call` of `"see sk-live-0123456789abcdef"` on `https://research.example/a2a` returns `"ok"`, and `bodies[0]` must not contain `sk-live` and must contain `sk-***`. The reply is `ok` because `FakeModel` ignores the prompt. The body is the scrubbed message because `record` stored `send`'s message argument.
-
-> **Rust sidebar: argument order and an early return**
->
-> Rust evaluates the arguments of `peer.send(...)` before entering `send`. `redact_for_egress(message)` runs, then `send` loads the flag. A flag that is already `true` still pays for the scrub, and then `send` returns `Cancelled` before `record`. The scrubbed string is dropped with the stack frame. The pool's body vec does not receive it. The test asserts `calls() == 0`, which is the url vec. It does not assert on `bodies` for that case. Both vecs stay empty because `record` pushes to both or to neither.
->
-> `pool.release()` is a separate statement after `send`. It is not a `Drop` guard. A panic inside `send` would skip it. `send` panics only if a pool mutex is poisoned, through `expect("pool")`. The tests do not take that path. On every `Result` this function returns after a successful `acquire`, the counter goes back down before the `Result` reaches the caller.
+> **Rust sidebar: the scrub runs before the flag is read.** Rust evaluates the arguments of `peer.send(...)` before entering `send`, so `redact_for_egress(message)` runs and then `send` loads the flag. A flag that is already `true` still pays for the scrub, and then `send` returns `Cancelled` before `record`, and the scrubbed string is dropped with the stack frame. The pool's body vec doesn't receive it. The test asserts `calls() == 0`, which is the url vec, and both vecs stay empty because `record` pushes to both or to neither. `pool.release()` is a separate statement after `send`, so it isn't a `Drop` guard, and a panic inside `send` would skip it. `send` panics only if a pool mutex is poisoned, through `expect("pool")`, and the tests don't take that path. On every `Result` this function returns after a successful `acquire`, the counter goes back down before the `Result` reaches the caller.
 
 ## 49.8 `cancel`
+
+The cancel control is a store, and the waiting loop lives in another function:
 
 ```rust
 /// Set the flag and wait until `arrived` is true. The in-flight loop is the peer.
@@ -411,15 +385,13 @@ pub fn cancel(flag: &AtomicBool) {
 }
 ```
 
-`cancel` stores `true`. That is the whole body. It does not take a `JoinHandle`. It does not call `thread::park` or `unpark`. It does not abort a thread by itself. The doc comment says to set the flag and wait until `arrived` is true, and that the in-flight loop is the peer. The parameter list is only `flag`. There is no `arrived` argument on this function. `wait_cancel` is the function that stores `started` and spins. The bench and the test call `cancel` after they have seen `started`.
+`cancel` stores `true`, and that is the whole body. It takes no `JoinHandle`, it calls neither `thread::park` nor `unpark`, and it never aborts a thread by itself. The doc comment says to set the flag and wait until `arrived` is true, and that the in-flight loop is the peer, but the parameter list is only `flag` and there is no `arrived` argument on this function. `wait_cancel` is the function that stores `started` and spins. The bench and the test call `cancel` after they have seen `started`.
 
-Hermes `DESIGN.md` says `tasks/cancel` marks the task canceled and drops the reply, but cannot abort the live session's in-flight turn. This `cancel` matches that limit. The flag becomes `true`. A thread inside `wait_cancel` notices on its next load. A model call that never loads the flag would keep running. `FakeModel::complete` does not load it. `send` loads it twice, around `record`. `wait_cancel` loads it in a loop. Those are the readers in this file.
-
-> **Rust sidebar: `AtomicBool::store`**
->
-> `store(true, Ordering::SeqCst)` writes the bool. A later `load` with `SeqCst` on the same atomic sees that write once the store is in the order. `cancel` does not return the old value. The test `cancel_stops_an_in_flight_wait` loads the flag after `join` and asserts it is `true`. The store is the reason that assertion passes. The join is the reason the waiter has finished. `cancel` alone, with no waiter, still leaves the flag `true`. Nothing in `cancel` waits.
+Hermes `DESIGN.md` says `tasks/cancel` marks the task canceled and drops the reply, but cannot abort the live session's in-flight turn, and this `cancel` matches that limit. The flag becomes `true`, a thread inside `wait_cancel` notices on its next load, and a model call that never loads the flag would keep running. `FakeModel::complete` doesn't load the flag, `send` loads it twice around `record`, and `wait_cancel` loads it in a loop, which are the readers in this file. The test `cancel_stops_an_in_flight_wait` loads the flag after `join` and asserts it is `true`, because the store is why that assertion passes and the join is why the waiter has finished. `cancel` alone, with no waiter, still leaves the flag `true`, and nothing in `cancel` waits.
 
 ## 49.9 `AgentCard` and `card`
+
+The card is a struct the test reads, and nothing in the call path serves it:
 
 ```rust
 pub struct AgentCard {
@@ -435,13 +407,11 @@ pub fn card() -> AgentCard {
 }
 ```
 
-`card` returns a struct. The name is `"harness"`. The skills are a static slice of one string, `"research"`. The test asserts `card().name` equals `"harness"` and `card().skills` equals `&["research"]`. Each call builds a new struct. The string data is `'static`. Nothing in `call` or `demo` reads the card. There is no HTTP route that serves it. Hermes `DESIGN.md` lists agent-card discovery as a requirement traced to `protocol.build_agent_card` and an adapter GET. This chapter's card is the struct the test reads.
-
-> **Rust sidebar: a static slice**
->
-> `&'static [&'static str]` is a reference to a slice whose elements are references to static strings. `&["research"]` is that value. The length is 1. `assert_eq!` on the slice compares the strings. `AgentCard` does not derive `PartialEq`. The test compares the fields, not the struct. The fields are public, so the test can read them without a method.
+`card` returns a struct whose name is `"harness"` and whose skills are a static slice of one string, `"research"`. The test asserts `card().name` equals `"harness"` and `card().skills` equals `&["research"]`. Each call builds a new struct, and the string data is `'static`. Nothing in `call` or `demo` reads the card, and there is no HTTP route that serves it. Hermes `DESIGN.md` lists agent-card discovery as a requirement traced to `protocol.build_agent_card` and an adapter GET, and this chapter's card is the struct the test reads. `&["research"]` is a reference to a slice of one static string, and the test compares the fields because that is how it reaches the name and the skill list.
 
 ## 49.10 `demo`
+
+The demo is one fake peer and one clear flag:
 
 ```rust
 pub fn demo() -> String {
@@ -457,17 +427,13 @@ pub fn demo() -> String {
 }
 ```
 
-`demo` builds a new pool at 0 and one peer. The URL is `http://research.example:9900`. The flag is a new `AtomicBool` set to `false`. `call` sees an HTTP URL, acquires the one permit, scrubs `summarize`, and `send` records the URL and the scrubbed body. `summarize` has no key pattern in `redact.rs`. `send` completes `FakeModel` and returns `ok`. `call` releases the permit. `expect("call")` unwraps the `Ok`. The format string is `a2a: ok`.
+`demo` builds a new pool at 0 and one peer at `http://research.example:9900`, with a new `AtomicBool` set to `false`. `call` sees an HTTP URL, acquires the one permit, and scrubs `summarize`, which has no key pattern in `redact.rs`, and `send` records the URL and the scrubbed body before `FakeModel` returns `ok`. `call` releases the permit, `expect("call")` unwraps the `Ok`, and the format string is `a2a: ok`.
 
-The test `demo_needs_no_key` asserts `demo()` equals `"a2a: ok"`. The binary `chapter_demo.rs` prints that string. The peer name `researcher` is stored and never read. The card is not consulted. `wrap_inbound` is not called. The HTTP pool holds one URL after the call, and `demo` drops the peer at the end of the function. The printed line is the reply, not the URL.
-
-`AtomicBool::new(false)` is a local flag. No other thread stores it. The first cancel load in `send` is `false`. `record` runs. The second load is `false`. The model runs.
-
-> **Rust sidebar: `expect` on `Result`**
->
-> `expect("call")` returns the `String` inside `Ok` and panics with the message `call` on `Err`. `demo` is written so the URL and the empty pool and the clear flag produce `Ok("ok")`. A panic would mean one of the error variants. The test compares the returned `String` and would fail if `demo` panicked. `format!("a2a: {reply}")` does not allocate the pool into the output. The only characters that come from the model are `ok`.
+The test `demo_needs_no_key` asserts `demo()` equals `"a2a: ok"`, and the binary `chapter_demo.rs` prints that string. The peer name `researcher` is stored and never read, the card isn't consulted, and `wrap_inbound` isn't called. The HTTP pool holds one URL after the call, and `demo` drops the peer at the end of the function, so the printed line is the reply and not the URL. `AtomicBool::new(false)` is a local flag, no other thread stores it, the first cancel load in `send` is `false`, `record` runs, the second load is `false`, and the model runs. `expect("call")` returns the `String` inside `Ok` and panics with the message `call` on `Err`, and `demo` is written so the URL, the empty pool, and the clear flag produce `Ok("ok")`.
 
 ## 49.11 `wait_cancel`
+
+The waiter publishes that it has started, then polls the flag:
 
 ```rust
 /// Spin until `flag` is set. Used by the cancel bench and the cancel test.
@@ -479,47 +445,39 @@ pub fn wait_cancel(flag: &AtomicBool, started: &AtomicBool) {
 }
 ```
 
-`wait_cancel` stores `true` on `started`, then loops. Each iteration loads `flag`. A `false` load calls `thread::yield_now` and tries again. A `true` load ends the function. There is no sleep. There is no timeout. There is no socket.
+`wait_cancel` stores `true` on `started`, then loops, and each iteration loads `flag`. A `false` load calls `thread::yield_now` and tries again, and a `true` load ends the function. There is no sleep, there is no timeout, and there is no socket.
 
-The store to `started` happens before the loop. The bench and the test spawn this function on another thread and spin until `started` is `true`. That spin is outside the timed sample in the bench, and it is outside `cancel` itself. Once `started` is set, the waiter is inside the loop or about to enter it. `cancel` then stores `true` on `flag`. The waiter loads that `true` and returns. `join` finishes.
+The store to `started` happens before the loop. The bench and the test spawn this function on another thread and spin until `started` is `true`, and that spin sits outside the timed sample in the bench and outside `cancel` itself. Once `started` is set, the waiter is inside the loop or about to enter it. `cancel` then stores `true` on `flag`, the waiter loads that `true` and returns, and `join` finishes.
 
-`cancel` does not abort the thread. The thread exits because its own loop saw the flag. If `cancel` were never called, `wait_cancel` would spin until the process stopped it. The test calls `cancel` and then `join`. The assertion after `join` is `flag.load(Ordering::SeqCst)` is `true`.
-
-> **Rust sidebar: `yield_now`**
->
-> `thread::yield_now` hints the scheduler to run another thread. It is not a timed sleep. The loop is a poll of an atomic. `Ordering::SeqCst` on the load pairs with `Ordering::SeqCst` on `cancel`'s store. `started` uses the same ordering so the parent thread's load of `started` sees the store that happened before the loop. The parent can treat `started == true` as "the waiter has passed the store." The waiter might already be in `yield_now`. That is the in-flight state the bench measures across `cancel` and `join`.
+`cancel` doesn't abort the thread, so the thread exits because its own loop saw the flag. If `cancel` were never called, `wait_cancel` would spin until the process stopped it. The test calls `cancel` and then `join`, and the assertion after `join` is that `flag.load(Ordering::SeqCst)` is `true`. `thread::yield_now` hints the scheduler to run another thread, and it isn't a timed sleep, so the loop is a poll of an atomic. `Ordering::SeqCst` on the load pairs with `Ordering::SeqCst` on `cancel`'s store, and `started` uses the same ordering so the parent thread's load of `started` sees the store that happened before the loop. The parent can treat `started == true` as the waiter having passed the store, even though the waiter might already be in `yield_now`, and that in-flight state is what the bench measures across `cancel` and `join`.
 
 ## A call, walked in order
 
-Take `demo`'s inputs and follow `call`. The pool counter is 0. The URL is `http://research.example:9900`. The message is `summarize`. The flag is `false`.
+Take `demo`'s inputs and follow `call`. The pool counter is 0, the URL is `http://research.example:9900`, the message is `summarize`, and the flag is `false`. `call` checks `local://`, the URL doesn't start with that prefix, `acquire` loads 0, and `0 >= 8` is false, so `compare_exchange(0, 1)` succeeds and the counter is 1 before `redact_for_egress("summarize")` runs. `send` checks `local://`, then checks `http://`, which matches, then loads the flag, which is `false`, then `record` pushes the URL and the scrubbed body, then loads the flag again, which is `false`, then `complete` returns `ok`. `call` releases, the counter is 0, and `demo` formats `a2a: ok`.
 
-`call` checks `local://`. The URL does not start with that prefix. `acquire` loads 0, and `0 >= 8` is false. `compare_exchange(0, 1)` succeeds. The counter is 1. `redact_for_egress("summarize")` runs. `send` checks `local://`, then checks `http://`, which matches, then loads the flag, which is `false`, then `record` pushes the URL and the scrubbed body, then loads the flag again, which is `false`, then `complete` returns `ok`. `call` releases. The counter is 0. `demo` formats `a2a: ok`.
+The in-process case is `local://supervisor` and the message `hello`, which is the test `an_in_process_url_is_not_a2a`. `call` returns `InProcess` on the first line that checks the prefix, `acquire` doesn't run, `in_flight` stays 0, `send` doesn't run, and `calls` stays 0. The same URL passed only to `send` would also return `InProcess`, on `send`'s first line, still without `record`, and `call` never gets that far.
 
-Now `local://supervisor` and the message `hello`, which is the test `an_in_process_url_is_not_a2a`. `call` returns `InProcess` on the first line that checks the prefix. `acquire` does not run. `in_flight` stays 0. `send` does not run. `calls` stays 0. The same URL passed only to `send` would also return `InProcess`, on `send`'s first line, still without `record`. `call` never gets that far.
+Eight `hold` calls and a ninth `call` are `the_ninth_call_is_refused`. Each `hold` is one successful `acquire`, the counter is 8, and `call` on `http://research.example:9900` fails `acquire` and returns `Bound`, so `send` doesn't run. The test then calls `release_one`, the counter is 7, and the next `call` acquires, records, and returns `ok`. `urls[0]` doesn't start with `local`. The test releases the remaining holds with `for _ in 1..CALL_BOUND`, which is seven `release_one` calls, and `in_flight` is 0 because the successful `call` already released its own permit inside `call`.
 
-Now eight `hold` calls and a ninth `call`, which is `the_ninth_call_is_refused`. Each `hold` is one successful `acquire`. The counter is 8. `call` on `http://research.example:9900` fails `acquire` and returns `Bound`. `send` does not run. The test then `release_one`. The counter is 7. The next `call` acquires, records, and returns `ok`. `urls[0]` does not start with `local`. The test releases the remaining holds. `for _ in 1..CALL_BOUND` is seven `release_one` calls. `in_flight` is 0. The successful `call` already released its own permit inside `call`.
+A flag that starts `true` is `a_cancelled_flag_never_records_the_url`. `call` acquires, the scrub runs, `send` loads the flag and returns `Cancelled` before `record`, `calls` is 0, `call` releases, `in_flight` is 0, and the error equals `A2aError::Cancelled`.
 
-Now a flag that starts `true`, which is `a_cancelled_flag_never_records_the_url`. `call` acquires. The scrub runs. `send` loads the flag and returns `Cancelled` before `record`. `calls` is 0. `call` releases. `in_flight` is 0. The error equals `A2aError::Cancelled`.
-
-`wait_cancel` is a different shape. Nothing in that function records a URL. The test spawns it, waits until `started` is set, calls `cancel`, joins, and asserts the flag is `true`. The bench times that `cancel` plus the `join`, after the same wait for `started`.
+`wait_cancel` records no URL: the test spawns it, waits until `started` is set, calls `cancel`, joins, and asserts the flag is `true`. The bench times that `cancel` plus the `join`, after the same wait for `started`.
 
 ## Tests
 
-The new tests are `steps/ch49-a2a/crates/harness-core/tests/a2a.rs`. The package also builds the copied harness tests. The nextest line below is the package run.
+The new tests are `steps/ch49-a2a/crates/harness-core/tests/a2a.rs`, and the package also builds the copied harness tests. The nextest line below is the package run.
 
-`an_in_process_url_is_not_a2a` builds `peer("local://supervisor")` and calls `call` with `"hello"` and a flag of `false`. It asserts the result equals `Err(A2aError::InProcess)`. It asserts `pool.in_flight()` equals 0. It asserts `local.http.calls()` equals 0.
+`an_in_process_url_is_not_a2a` builds `peer("local://supervisor")` and calls `call` with `"hello"` and a flag of `false`, then asserts the result equals `Err(A2aError::InProcess)`, `pool.in_flight()` equals 0, and `local.http.calls()` equals 0.
 
-`the_ninth_call_is_refused` holds `CALL_BOUND` times, each `assert!(pool.hold())`. The next `call` with `"hello"` and a clear flag equals `Err(A2aError::Bound)`. After `release_one`, `call` unwraps to `"ok"`. `remote.http.urls.lock().unwrap()[0]` does not start with `local`. The loop `for _ in 1..CALL_BOUND` calls `release_one`. `pool.in_flight()` equals 0.
+`the_ninth_call_is_refused` holds `CALL_BOUND` times, each `assert!(pool.hold())`, and the next `call` with `"hello"` and a clear flag equals `Err(A2aError::Bound)`. After `release_one`, `call` unwraps to `"ok"`, `remote.http.urls.lock().unwrap()[0]` doesn't start with `local`, the loop `for _ in 1..CALL_BOUND` calls `release_one`, and `pool.in_flight()` equals 0.
 
-`cancel_stops_an_in_flight_wait` spawns `wait_cancel` on a shared flag and a shared `started` flag. The parent yields until `started` loads `true`. It calls `cancel`. It joins. It asserts the flag loads `true`.
+`cancel_stops_an_in_flight_wait` spawns `wait_cancel` on a shared flag and a shared `started` flag, the parent yields until `started` loads `true`, it calls `cancel`, it joins, and it asserts the flag loads `true`.
 
-`egress_and_inbound_are_wrapped` asserts `redact_for_egress("Bearer sk-live-0123456789abcdef")` does not contain `sk-live` and does contain `sk-***`. It asserts `redact_for_egress("Bearer abcdefghijklmnopqrstuvwxyz012345")` contains `Bearer [redacted]` and does not contain `abcdefghijklmnopqrstuvwxyz012345`. It asserts `redact_for_egress("OPENAI_API_KEY=supersecret")` does not contain `supersecret` and does contain `OPENAI_API_KEY=***`. It asserts `wrap_inbound("researcher", "/shutdown")` starts with `INBOUND_PREFIX` and contains `/shutdown`. It asserts `card().name` equals `"harness"` and `card().skills` equals `&["research"]`. It calls `https://research.example/a2a` with `"see sk-live-0123456789abcdef"` and a clear flag, asserts the reply equals `"ok"`, and asserts `bodies[0]` does not contain `sk-live` and does contain `sk-***`.
+`egress_and_inbound_are_wrapped` checks three scrubs, the inbound frame, the card, and one outbound call. `redact_for_egress("Bearer sk-live-0123456789abcdef")` excludes `sk-live` and contains `sk-***`. `redact_for_egress("Bearer abcdefghijklmnopqrstuvwxyz012345")` contains `Bearer [redacted]` and excludes `abcdefghijklmnopqrstuvwxyz012345`. `redact_for_egress("OPENAI_API_KEY=supersecret")` excludes `supersecret` and contains `OPENAI_API_KEY=***`. `wrap_inbound("researcher", "/shutdown")` starts with `INBOUND_PREFIX` and contains `/shutdown`. `card().name` equals `"harness"` and `card().skills` equals `&["research"]`. The call to `https://research.example/a2a` with `"see sk-live-0123456789abcdef"` and a clear flag returns `"ok"`, and `bodies[0]` excludes `sk-live` and contains `sk-***`.
 
-`a_cancelled_flag_never_records_the_url` calls `http://research.example:9900` with `"hello"` and a flag of `true`. It asserts the error equals `A2aError::Cancelled`. It asserts `remote.http.calls()` equals 0. It asserts `pool.in_flight()` equals 0.
+`a_cancelled_flag_never_records_the_url` calls `http://research.example:9900` with `"hello"` and a flag of `true`, then asserts the error equals `A2aError::Cancelled`, `remote.http.calls()` equals 0, and `pool.in_flight()` equals 0.
 
-`demo_needs_no_key` asserts `demo()` equals `"a2a: ok"`.
-
-The helper `peer` sets the name `"researcher"`, the URL it was given, a fresh `HttpPool`, and `FakeModel { reply: "ok" }`. Every test that builds a peer uses that reply.
+`demo_needs_no_key` asserts `demo()` equals `"a2a: ok"`. The helper `peer` sets the name `"researcher"`, the URL it was given, a fresh `HttpPool`, and `FakeModel { reply: "ok" }`, and every test that builds a peer uses that reply.
 
 ## Build, run, and benchmark
 
@@ -540,7 +498,7 @@ cargo run -p ch49-a2a --bin ch49-a2a
 a2a: ok
 ```
 
-The binary calls one fake peer. No key. No socket. `examples/demo.rs` is the eval runner. The line above is `chapter_demo.rs`.
+The binary calls one fake peer, with no key and no socket. `examples/demo.rs` is the eval runner, and the line above is `chapter_demo.rs`.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
@@ -572,19 +530,19 @@ fn cancel_inflight(c: &mut Criterion) {
 }
 ```
 
-`descriptions.json` says the setup closure spawns a thread running `wait_cancel`, spins until `started` is true, and is not timed. The timed routine calls `cancel` with the flag passed through `black_box`, joins the thread, then `black_box` of the unit. The atomic store and the waiter's exit are inside the sample. `HttpPool`, `FakeModel`, `redact_for_egress`, `call`, and the permit pool are not used. There is no sleep and no socket.
+`descriptions.json` says the setup closure spawns a thread running `wait_cancel`, spins until `started` is true, and sits outside the timed sample. The timed routine calls `cancel` with the flag passed through `black_box`, joins the thread, then `black_box` of the unit, so the atomic store and the waiter's exit are inside the sample. `HttpPool`, `FakeModel`, `redact_for_egress`, `call`, and the permit pool aren't used, and there is no sleep and no socket.
 
 The means are `mean.point_estimate` from [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196). Bench ids: `49/cancel_inflight`, `47/cancel_inflight`, `45/cancel_inflight`. Command: `cargo bench -p ch49-a2a --bench a2a --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
-The bench is a flag store and a join. `HttpPool::record` is not in the sample. A sample that called `call` would scrub a message and push a URL. This sample does neither.
+The bench is a flag store and a join, and `HttpPool::record` isn't in the sample, so a sample that called `call` would scrub a message and push a URL while this sample does neither.
 
-`local://` returns from `call` before `acquire`. Counting that URL against the pool would spend a remote permit on a name this trait refuses. The test expects `in_flight` to stay 0.
+`local://` returns from `call` before `acquire`, and counting that URL against the pool would spend a remote permit on a name this trait refuses, which is why the test expects `in_flight` to stay 0.
 
-The ninth `call` is `Bound` only while eight permits are held. `call` releases before it returns on the success path. A test that only calls `call` nine times in a row never sees 8, because each call releases. `hold` is what keeps the permits.
+The ninth `call` is `Bound` only while eight permits are held, because `call` releases before it returns on the success path, and a test that only calls `call` nine times in a row never sees 8. `hold` is what keeps the permits.
 
-The second load in `send` sits after `record`. A flag that becomes `true` only after `record` returns `Cancelled` with the URL already stored. The test that expects `calls() == 0` sets the flag before `call`, so the first load is the one that returns.
+The second load in `send` sits after `record`, so a flag that becomes `true` only after `record` returns `Cancelled` with the URL already stored. The test that expects `calls() == 0` sets the flag before `call`, so the first load is the one that returns.
 
 ## Guardrails in this chapter
 
@@ -615,7 +573,7 @@ fn cancel_reaches_an_in_flight_remote_call() {
 }
 ```
 
-The stub panics.
+The stub panics, because the body is still the `todo!` below.
 
 ```rust
 pub fn chapter_49_cancel_reached() -> bool {
@@ -623,19 +581,19 @@ pub fn chapter_49_cancel_reached() -> bool {
 }
 ```
 
-`todo!("chapter 49")` is the panic. The test asserts `chapter_49_cancel_reached()` is true. In the step crate that is `cancel` storing `true` on the flag a `wait_cancel` loop is loading, then the loop returning so `join` finishes. The stub stays `todo!`. 
+`todo!("chapter 49")` is the panic, and the test asserts `chapter_49_cancel_reached()` is true. In the step crate that is `cancel` storing `true` on the flag a `wait_cancel` loop is loading, then the loop returning so `join` finishes, and the stub stays `todo!`.
 
 ## Chapter summary
 
-- **Trait.** `ExternalAgent` is the process boundary. A `local://` URL is `InProcess` before `acquire`, and again in `send`.
-- **Pool.** `CALL_BOUND` is 8. The ninth `acquire` is `Bound` from `call`.
-- **Record.** `HttpPool::record` stores the url and the body `call` already scrubbed. A flag set before that store leaves the URL unrecorded.
-- **Inbound.** The prefix is `[A2A inbound — untrusted external input]` plus a newline. `wrap_inbound` adds the peer and the text.
-- **Cancel.** `cancel` stores `true`. `wait_cancel` yields until the load is `true`.
-- **Card.** The name is `harness`. The skill is `research`.
-- **Model.** `FakeModel` answers `ok`. The demo line is `a2a: ok`.
-- **Time.** `cancel_inflight` mean `46.13 µs`. That cell is `mean.point_estimate` for id `49/cancel_inflight`.
+- **Trait:** `ExternalAgent` is the process boundary, a `local://` URL returns `InProcess` before `acquire` and again in `send`, and an in-process agent stays on the type it already has.
+- **Pool:** `CALL_BOUND` is 8, the ninth `acquire` is `Bound` from `call`, and `hold` is what keeps those permits from releasing early.
+- **Record:** `HttpPool::record` stores the url and the body `call` already scrubbed, and a flag set before that store leaves the URL unrecorded.
+- **Inbound:** the prefix is `[A2A inbound — untrusted external input]` plus a newline, and `wrap_inbound` adds the peer and the text, including a slash command the test passes through.
+- **Cancel:** `cancel` stores `true`, `wait_cancel` yields until the load is `true`, and the store never aborts the thread by itself.
+- **Card:** the name is `harness`, the skill is `research`, and neither `call` nor `demo` reads the struct.
+- **Model:** `FakeModel` answers `ok`, and the demo line is `a2a: ok`.
+- **Time:** `cancel_inflight` mean `46.13 µs` is `mean.point_estimate` for id `49/cancel_inflight`.
 
 ## What's next
 
-Chapter 50 is seeing inside. A span per event. The field is the event name.
+A secret that must not become a span field is the boundary chapter 50 has to hold, because a collector would keep whatever that field stored.
