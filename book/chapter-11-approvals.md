@@ -1,14 +1,14 @@
 # Chapter 11: Approvals and Guardrails
 
-Chapter 10's loop will call whatever tool the model names, as long as the name resolves and the scheduler has a permit. That is the right default for `echo`. It is the wrong default for a shell. This chapter puts a decision in front of dispatch. The crate is `steps/ch11-approvals`, a copy of chapter 10's harness plus an `approval` module. The package is `ch11-approvals` and the library is `harness_core`. The loop calls `approval::deny_tool` before `dispatcher.run_raced`. A denial is pushed as the tool result, and the tool body does not run.
+`echo "rm -rf /"` is allowed. The quotes hide the payload, the hardline scan never sees `rm`, and the command comes back safe. `bash -c 'rm -rf /'` is refused. The same scan looks at the raw payload, finds the root delete, and denies it even when YOLO is on. That second look is the floor this chapter puts in front of dispatch. A continuously improving harness can be talked into a destructive command while it is learning a skill or writing a memory, and learning doesn't get to bypass the floor.
 
-`check` is the single entry. The order is the table under What this chapter decides. Hardline is denied even in YOLO. Only `terminal` and `execute_code` are gated, and `echo` still runs.
+A person thinking must not pin one of the eight tool slots. When the verdict is ask and a prompt is installed, the wait drops the concurrency permit first, and silence at the end of that wait is a denial. The tool result says so: "Silence is not consent."
 
-`Ask` with no prompt installed becomes a denial. When a prompt is installed, the wait drops the tool-concurrency permit first, so a person thinking does not pin one of the eight slots.
+Chapter 10's loop will call whatever tool the model names, once the name resolves and the scheduler has a permit. That's the right default for `echo` and the wrong default for a shell. The crate is `steps/ch11-approvals`. It starts from chapter 10's harness and adds an `approval` module. The package is `ch11-approvals` and the library is `harness_core`. The loop calls `approval::deny_tool` before `dispatcher.run_raced`. A denial is the tool result, and the tool body doesn't run. Only `terminal` and `execute_code` are gated, `echo` still runs, and `execute_code` still returns without a script check until chapter 13.
 
-Later chapters reuse this floor rather than growing a second one. Chapter 13 calls it for `execute_code` and adds the script gate. Chapter 14 adds two more floor checks, before YOLO: deleting the running binary, and a git mutation of this crate's own tree. Chapter 17's terminal goes through `deny_tool` before the sandbox worker. Chapter 25's skill-write gate is a different question, and it stays off unless configured. The self-improving loop depends on this chapter in a blunt way. An agent that can write a skill, remember a fact, or patch its own procedure is an agent that can also be talked into a destructive command. Learning does not get to bypass the floor.
+Later chapters reuse this floor. Chapter 13 calls it for `execute_code` and adds the script gate. Chapter 14 adds two more floor checks, before YOLO: deleting the running binary, and a git mutation of this crate's own tree. Chapter 17's terminal goes through `deny_tool` before the sandbox worker. Chapter 25's skill-write gate is a different question, and it stays off unless it's configured.
 
-`cargo run -p ch11-approvals` prints the denial. The exercise is `my-harness/tests/ch11.rs`: a hardline `terminal` command is denied, and the tool body does not run.
+`cargo run -p ch11-approvals` prints the denial. The exercise is `my-harness/tests/ch11.rs`: a hardline `terminal` command is denied, and the tool body doesn't run.
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -45,11 +45,11 @@ Later chapters reuse this floor rather than growing a second one. Chapter 13 cal
 | Smart | `fake_smart_review` returns deny or approve | `Deny` or `Allow` |
 | Ask | Manual mode, or smart escalates | `Ask` |
 
-`run_script` stops on the first `Deny`. `hardline_message` names `--yolo` and does not append `STOP_COMMAND`. The other denials do. The third denial carries the breaker sentence. An `Ask` drops the permit before the prompt, and the test's peak inside the lock is 1. The default timeout is 300 seconds. The test uses 30 milliseconds.
+`hardline_message` names `--yolo` and doesn't append `STOP_COMMAND`. The other denials do, and the third carries the breaker sentence. The test's peak inside the lock is 1. The default timeout is 300 seconds, and the test uses 30 milliseconds.
 
 ## 11.1 Labels, policy, and the verdict
 
-`Risk` is a label. The pipeline decides. I still made it an enum so a later match has to name every level.
+I made `Risk` an enum so a later match has to name every level.
 
 ```rust
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -190,9 +190,9 @@ impl Verdict {
 
 `ScriptCall` is one command from the fake model. It owns a `String`. `run_script` borrows a slice of them.
 
-## 11.2 `check`, in the order the branches return
+## 11.2 One command, in the order the branches return
 
-`check` takes `&Policy`, `&mut Session`, and `&str`. The command is borrowed. The session is borrowed mutably because every return path either zeroes `denials` or adds one. The policy is shared.
+The walk below is the opening's two commands, `bash -c 'rm -rf /'` and then the quoted echo, in the order the branches return. `check` takes `&Policy`, `&mut Session`, and `&str`. The command is borrowed, the session is borrowed mutably because every return path either zeroes `denials` or adds one, and the policy is shared.
 
 > **Rust sidebar: `&mut`, `Result` is not this function**
 > - `&mut Session` is the only way `check` can write the tally the caller keeps. The function does not return the session.
@@ -629,9 +629,9 @@ fn dangerous_text(text: &str) -> Option<String> {
 
 Any recursive `rm` is `"recursive delete"`, including `rm -rf ./build`, which is not a root delete and so was not hardline. A token that starts with `/etc`, or contains `/.ssh` or `/.env`, is a sensitive path. `curl` plus `--upload-file`, ` -t `, or `-t` is an upload. The check is `contains` on the lowered line, so `-T` becomes `-t` before the test. An interpreter word plus a token that is exactly `-c` or `-e` is inline code. `dangerous` runs `variants`, so `bash -c 'rm -rf ./build'` is dangerous because the raw payload is, even when the masked command is only `bash -c`.
 
-## 11.4 One prompt, and the permit it does not hold
+## 11.4 The wait that gives the permit back
 
-`Prompt` is the human wait. Concurrent callers share it through `Arc` in the test. The lock is a `tokio::sync::Mutex<()>`. The unit value means the mutex carries no data. Holding it is the mutual exclusion.
+A person thinking must not pin one of the eight slots. `run_call` acquires a permit, runs `check`, and on `Ask` drops that permit before `prompt.wait`, then records how many permits were free so the joined test can see that both callers had a slot. Callers still share one `Prompt` through an `Arc`. The lock is a `tokio::sync::Mutex<()>`, a unit value, so the mutex carries no data and the two asks don't enter the critical section together.
 
 ```rust
 pub struct Prompt {
@@ -749,13 +749,11 @@ pub async fn run_call(
 > - The session guard is a block. It ends before the `match`, so `prompt.wait` does not run while the tally is locked.
 > - `other => other` moves an `Allow` or a `Deny` out. The original `permit` drops when the function returns. Only the `Ask` arm drops it early.
 
-The `Ask` arm drops the permit, then reads `available`, then waits. The free count is what `wait` records. An allow script returns true without sleeping. `run_call` then acquires a new permit into `_permit` and returns `Allow { risk }`. That new permit drops at the end of the block. The function does not run the tool. A deny script, or a silent prompt that times out, locks the session again, increments `denials`, and returns `Deny` with `STOP_COMMAND` and `Silence is not consent.` `breaker_addendum` sees the tally after that increment.
+The `Ask` arm drops the permit, reads `available`, and waits. An allow script returns true without sleeping, and `run_call` then acquires a new permit into `_permit` and returns `Allow { risk }`. That new permit drops at the end of the block. The function doesn't run the tool. A deny script, or a silent prompt that times out, locks the session again, increments `denials`, and returns `Deny` with `STOP_COMMAND` and `Silence is not consent.` `breaker_addendum` sees the tally after that increment.
 
-`the_human_wait_is_one_prompt_and_drops_the_permit` joins two `run_call`s on `rm -rf ./build` and `rm -rf ./other`, with `Prompt::allow` and a bound of 8. Both verdicts are `Allow`. `peak` is 1. `permits_seen_free` is true. After both return, `available` is 8 again. The policy timeout in that test is 200 milliseconds. Script 1 never reads it.
+`the_human_wait_is_one_prompt_and_drops_the_permit` joins two `run_call`s on `rm -rf ./build` and `rm -rf ./other`, with `Prompt::allow` and a bound of 8. Both verdicts are `Allow`, `peak` is 1, `permits_seen_free` is true, and after both return `available` is 8 again. The policy timeout in that test is 200 milliseconds, which script 1 never reads. `a_silent_prompt_denies_at_the_timeout` uses 30 milliseconds and a bound of 1 so the suite doesn't sit on the 300 second default. The elapsed time is under two seconds, the message contains `Silence is not consent` and `has NOT consented`, `hardline` is false, and the one permit is back.
 
-`a_silent_prompt_denies_at_the_timeout` uses 30 milliseconds and a bound of 1. The elapsed time is under two seconds. The message contains `Silence is not consent` and `has NOT consented`, `hardline` is false, and the one permit is back. The default timeout stays 300 seconds. The test is the one that shortens it.
-
-An `Allow` or a `Deny` from `check` takes `other => other` and holds the original permit until `run_call` returns. That return is the tool body this function does not run. A caller that then waits on its own must drop the permit too. The joined-ask test is the one that checks the drop, because both calls took the `Ask` arm.
+An `Allow` or a `Deny` from `check` takes `other => other` and holds the original permit until `run_call` returns. That return is the tool body this function doesn't run, so a caller that then does its own long wait has to drop the permit too. The joined-ask test is the one that checks the drop, because both calls took the `Ask` arm.
 
 ## 11.5 `deny_tool` before `run_raced`
 
@@ -799,13 +797,9 @@ pub fn deny_tool(
 > - The first `if` returns `None` for every name except `terminal` and `execute_code`. `echo` and `delegate` take that arm. They are not gated.
 > - `and_then` plus `unwrap_or("")` turns a missing key, or a non-string, into an empty command. `?` is not used. The function's return type is `Option<String>`, and a missing argument is not `None` in that sense.
 
-`execute_code` reads `arguments["code"]` into `command` and then returns `None` before `check`. The string is dropped. This chapter does not block the script. The sandbox check arrives in chapter 13. The branch is here so the argument key is already `code`.
+`execute_code` reads `arguments["code"]` and then returns `None` before `check`, so this chapter doesn't block the script. The branch is here so the argument key is already `code` when chapter 13 adds the sandbox check. `terminal` reads `arguments["command"]`, and `check` always sees `Policy::manual()`: interactive, YOLO off, empty lists, a 300 second timeout. The loop can't pass a different policy in. Tests of YOLO and cron call `check` themselves.
 
-`terminal` reads `arguments["command"]`. `check` always sees `Policy::manual()`: manual mode, interactive, YOLO off, empty deny list, empty allowlist, 300 second timeout. The loop cannot pass a different policy in. Tests of YOLO and cron call `check` themselves.
-
-`Allow` returns `None`. The tool runs. An empty command string is `fast_safe` when the deny list is empty, so a `terminal` call with no `command` key is allowed through.
-
-`Deny` returns the message `check` built. For `rm -rf /` that is `hardline_message`. `Ask` becomes a denial too. The text says no prompt is installed and appends `STOP_COMMAND`. There is no `Prompt`, no `Semaphore`, and no `await`. A human wait cannot hold a tool permit on this path, because this path never acquires one and never waits. `rm -rf ./build` on the manual policy is `Ask` from `check` and a `Some` from `deny_tool`. The tool does not run.
+`Allow` returns `None` and the tool runs, including an empty command, which is `fast_safe` when the deny list is empty. `Deny` returns the message `check` built, `hardline_message` for `rm -rf /`. `Ask` becomes a denial too. The text says no prompt is installed and appends `STOP_COMMAND`, and this path never acquires a permit or waits, so a human pause can't pin a slot here. `rm -rf ./build` on the manual policy is `Ask` from `check` and a `Some` from `deny_tool`, and the tool doesn't run.
 
 In `drive_loop`, after `ModelToolCalls` has moved the phase to `Dispatching` and the assistant has been pushed, the runnable calls are split before `run_raced`.
 
@@ -852,13 +846,13 @@ The result walk has to keep the zip aligned. Denied ids were not in `allowed`, s
             }
 ```
 
-I skipped the error arm and the blocked-id arm above this one. Both also `continue` before `ran.next()`, for the same reason: those calls were not dispatched. The `find` borrows the denial message and clones it into the tool message. `StaticTool` named `terminal` would have returned the string `"terminal"` if it had run. `a_hardline_terminal_command_never_reaches_the_tool` sends `rm -rf /` as the `command` argument, then a text reply. The tool message contains `BLOCKED` and is not `"terminal"`. The outcome is `StopReason::Finished`, because that next scripted reply is text and the phase takes `ModelText`.
+The error arm and the blocked-id arm sit above this one, and both `continue` before `ran.next()` for the same reason: those calls were never dispatched. The `find` borrows the denial message and clones it into the tool message. `StaticTool` named `terminal` would have returned the string `"terminal"` if it had run. `a_hardline_terminal_command_never_reaches_the_tool` sends `rm -rf /` as the `command` argument, then a text reply. The tool message contains `BLOCKED` and isn't `"terminal"`, and the outcome is `StopReason::Finished` because that next scripted reply is text and the phase takes `ModelText`.
 
-The session on this path is manual and interactive, so the deny-list arm and the unattended arm do not run. Hardline and `sudo -S` are the `Deny` values `check` can still return. Hardline's message has no breaker sentence. Three hardline denials in one batch would increment the same session, and the messages would still be `hardline_message`. The breaker the cron test sees is `check` with `Presence::Cron`, not this loop.
+The session on this path is manual and interactive, so the deny-list arm and the unattended arm don't run. Hardline and `sudo -S` are the `Deny` values `check` can still return, and hardline's message has no breaker sentence. Three hardline denials in one batch would increment the same session and still be `hardline_message`. The breaker the cron test sees is `check` with `Presence::Cron`, not this loop.
 
 ## Tests
 
-Fourteen approval tests plus the loop test that a hardline `terminal` command never reaches the tool. `echo "rm -rf /"` is allowed. `bash -c 'rm -rf /'` is not. Two asks share one prompt, and both saw a free permit.
+Fourteen approval tests, plus the loop test that a hardline `terminal` command never reaches the tool.
 
 ## Build, run, and benchmark
 
@@ -890,13 +884,13 @@ The means are `mean.point_estimate` from [run 39104733918](https://github.com/ag
 
 ## Pitfalls
 
-The fast path only runs when the deny list is empty. A deny rule of `echo` would be skipped if the fast path ignored the list. It does not. It falls through to the scan.
+The fast path runs only when the deny list is empty. A deny rule of `echo` falls through to the scan, which is why an empty list is part of the skip.
 
-Quote masking deletes the inside of quotes before the hardline check. That is what lets `echo "rm -rf /"` through. `bash -c 'rm -rf /'` is a second variant: the payload is scanned raw. Forgetting that second variant is how a quoted shell one-liner escapes the floor.
+Quote masking deletes the inside of quotes before the hardline check, which is what lets the opening's `echo "rm -rf /"` through. Forgetting the second variant, the raw payload of `bash -c 'rm -rf /'`, is how a quoted shell one-liner escapes the floor.
 
-`run_call` drops the permit only on `Ask`. An `Allow` or a `Deny` holds the permit until the function returns. That is the tool body, which this function does not run. A caller that then does its own long wait must not keep the permit either. The test that joins two asks is the one that checks the drop.
+`run_call` drops the permit only on `Ask`. An `Allow` or a `Deny` holds it until the function returns, and that return is the tool body this function doesn't run, so a caller that then waits on its own has to drop the permit too. The joined-ask test is the one that checks the drop.
 
-The breaker reads the tally after this denial has been counted. Threshold 3 means the third message carries the sentence, not the fourth.
+The breaker reads the tally after this denial has been counted, so threshold 3 means the third message carries the sentence, not the fourth.
 
 ## Guardrails in this chapter
 
@@ -931,4 +925,4 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Laye
 
 ## What's next
 
-Chapter 12 is hooks. A `pre_tool_call` hook can block, rewrite arguments, or escalate into the prompt this chapter just added. The availability check stays in the registry from chapter 3.
+Chapter 12 is hooks. A `pre_tool_call` hook can block, rewrite arguments, or escalate into the prompt this chapter just added, and the availability check stays in the registry from chapter 3.
