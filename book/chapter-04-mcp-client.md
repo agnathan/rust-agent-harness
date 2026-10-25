@@ -1,16 +1,16 @@
 # Chapter 4: MCP Client
 
-Chapter 3 can call a tool that lives in this process. A real workspace does not keep every tool there. A file server, a browser, a notes database: each is its own program, and the way those programs advertise tools is MCP. This chapter is the client. It speaks MCP over a child process's stdin and stdout, and over streamable HTTP on `127.0.0.1`. The tools that come back are the same `Tool` values chapter 3 already dispatches. The four copies are `steps/ch04-1-stdio`, `steps/ch04-2-http`, `steps/ch04-3-registry`, and `steps/ch04-4-cache`. The library in every copy is still `harness_core`.
+A file server, a browser, a notes database: each of those is someone else's program, and the way they advertise tools is MCP. Chapter 3 can call a function in this process. This chapter is the client that goes and gets the others. It speaks MCP over a child process's stdin and stdout, and over streamable HTTP on `127.0.0.1`, and the tools that come back are the same `Tool` values chapter 3 already dispatches. Four copies carry that client: `steps/ch04-1-stdio`, `steps/ch04-2-http`, `steps/ch04-3-registry`, and `steps/ch04-4-cache`. The library in every copy is still `harness_core`.
 
-`McpSession` is the connection. `McpTool` is the registry entry. `readOnlyHint` becomes `ToolKind`, and a missing hint means `Write`, because treating silence as a read would let a mutating tool overlap its neighbors. A duplicate name is `ToolError::Duplicate`. The test server is the fixture in `steps/ch04-fixture`, included into each step so the tests can see `CARGO_BIN_EXE_mcp_fixture`. It does not dial an external host. Linux, macOS, and Windows all run it. `echo` returns its text and is read-only. `note` stores a line and is a write. `grow` reveals a fourth tool, `extra`, and sends `notifications/tools/list_changed`. Section 4.4's `ToolListCache` remembers the last `tools/list` for one connection and drops it on that notification.
+`McpSession` is the connection and `McpTool` is the registry entry. `readOnlyHint` becomes `ToolKind`, and a missing hint means `Write`, because treating silence as a read would let a mutating tool overlap its neighbors. A duplicate name is `ToolError::Duplicate`. The test server is the fixture in `steps/ch04-fixture`, included into each step so the tests can see `CARGO_BIN_EXE_mcp_fixture`. It stays on the local machine, and Linux, macOS, and Windows all run it. `echo` returns its text and is read-only, `note` stores a line and is a write, and `grow` reveals a fourth tool, `extra`, then sends `notifications/tools/list_changed`. Section 4.4's `ToolListCache` remembers the last `tools/list` for one connection and drops it on that notification.
 
-This client is why the server track can stay a separate program. Chapter 5 will be a small MCP server. Chapters 7, 8, 15, 23, 37, 42, and 51 grow that server. The harness never becomes the catalog. It connects, lists, and calls. Two `harness_core` crates cannot be dependencies of one package, which is why chapter 6 does not link `rmcp`. It takes a list of cards. The end of this chapter is where that list comes from: `cards_from_listed` is the seam. `rmcp` 3.5.1 needs rustc 1.88, so these four crates and the fixture set `rust-version = "1.88"`. Earlier chapters stay on 1.85.
+This client is why the server track can stay a separate program. Chapter 5 will be a small MCP server, and chapters 7, 8, 15, 23, 37, 42, and 51 grow that server. The harness connects, lists, and calls, and it stays the client rather than the catalog. Two `harness_core` crates can't be dependencies of one package, which is why chapter 6 takes a list of cards instead of linking `rmcp`. The end of this chapter is where that list comes from: `cards_from_listed` is the seam. `rmcp` 3.5.1 needs rustc 1.88, so these four crates and the fixture set `rust-version = "1.88"`, and earlier chapters stay on 1.85.
 
-The split matters for everything that comes later. Chapter 9's loop will call an MCP tool and a native tool through the same `Arc<dyn Tool>`. Chapter 6 will measure what happens when the list is thousands of names long, and it will keep the full schemas off the prompt. A self-improving harness that learned a new procedure would still want to call tools it does not contain. MCP is that boundary. Skills and memory, when they arrive, are harness stores. The tool catalog is the server's.
+The split matters once a skill is really a call this process doesn't contain. A procedure that says "rename the notes file" still has to reach a notes server. Chapter 9's loop will call an MCP tool and a native tool through the same `Arc<dyn Tool>`. Chapter 6 will measure what happens when the list is thousands of names long, and it will keep the full schemas off the prompt. Skills and memory, when they arrive, are harness stores. The tool catalog is the server's.
 
-Rust, in sidebars: a child process and stdio, an HTTP session, `async` across the call, and a cache that is just a value you drop. The fixture is pulled in with `include!` because a binary dependency of the kind Cargo prefers needs a nightly flag this repo does not use.
+The language shows up beside the call: a child process and stdio, an HTTP session, `async` across the await, and a cache that is just a value you drop. The fixture is pulled in with `include!` because a binary dependency of the kind Cargo prefers needs a nightly flag this repo doesn't use.
 
-`cargo run -p ch04-4-harness-core --example demo --quiet` runs the fixture. `cargo run -p ch04-4-harness-cli -- --mock ask "hello"` is the CLI. No step calls OpenRouter. A key that is present is refused with the message that this demo does not place a live call.
+`cargo run -p ch04-4-harness-core --example demo --quiet` runs the fixture, and `cargo run -p ch04-4-harness-cli -- --mock ask "hello"` is the CLI. No step calls OpenRouter. A key that is present is refused with the message that this demo does not place a live call.
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -41,7 +41,7 @@ Tests then see `CARGO_BIN_EXE_mcp_fixture`. Examples and benches do not, so `fix
 
 The list cache is per session, and one notification drops it. Hermes coalesces. I want the notification to be visible in a test before I hide a burst. Chapter 6's `ListCache` is the place a large catalog is snapshotted for many agents. This chapter's `ToolListCache` is the place one connection remembers the last `tools/list`.
 
-No step calls OpenRouter. `--mock` on the 4.4 CLI runs the fixture. Without `--mock`, a missing `OPENROUTER_API_KEY` is the chapter 1 error, and a key that is present is refused with "this demo does not place a live OpenRouter call". The refusal is the whole live path.
+`--mock` on the 4.4 CLI runs the fixture. Without `--mock`, a missing `OPENROUTER_API_KEY` is the chapter 1 error, and a key that is present is refused with "this demo does not place a live OpenRouter call". The refusal is the whole live path.
 
 ## 4.1 Stdio
 
@@ -143,6 +143,8 @@ error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 
 ## 4.2 Streamable HTTP
 
+The HTTP trip is about three times the stdio trip, 215.7 µs against 71.29 µs. I expected that gap to be a network story, but both ends are loopback, so the difference is framing, and the rest of this section is what that framing is made of.
+
 `HttpFixture::spawn` starts `mcp_fixture --http`, reads one stderr line, and keeps the child. The line is `MCP_URL=http://127.0.0.1:<port>/mcp`. The port is `0`, so the OS picks it. Drop calls `start_kill`.
 
 The server side is `StreamableHttpService` with a local session manager, JSON responses, and legacy session mode off. Axum nests that service at `/mcp` and binds `127.0.0.1:0`. The factory closes over the shared `extra` flag, so `grow` survives from one HTTP request to the next even though each request builds a `Fixture`.
@@ -191,7 +193,7 @@ http_echo_round_trip    time:   [213.70 µs 214.94 µs 216.48 µs]
 |---|---|---|---|
 | `http_echo_round_trip` | 215.7 µs | one local HTTP call, no model | same machine as 4.1 |
 
-The HTTP trip is about three times the stdio trip (215.7 µs against 71.29 µs). Both are loopback. The difference is the HTTP framing, not a network. The series is on the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/).
+The table is that same comparison, 215.7 µs against the 71.29 µs stdio trip from section 4.1. Both are loopback. The series is on the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/).
 
 ### Milestone demo
 
@@ -266,7 +268,7 @@ echo: hello
 
 ## 4.4 A cache, and the chapter 6 seam
 
-`ToolListCache` holds the session and `Option<Arc<[RemoteTool]>>`. `list` calls `take_list_changed`. A `true` drops the cached `Arc`. A hit clones the `Arc` and does not call `list_tools`. A miss lists, stores the slice, and returns it.
+`ToolListCache` holds the session and `Option<Arc<[RemoteTool]>>`. `list` calls `take_list_changed`, and a `true` drops the cached `Arc`. A hit clones the `Arc` instead of calling `list_tools`. A miss lists, stores the slice, and returns it.
 
 ```rust
 pub async fn list(&mut self) -> Result<Arc<[RemoteTool]>, SessionError> {
@@ -342,7 +344,7 @@ event: error missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 ```
 
-`--api-key` overrides the environment variable for that check. A key that is present, from the flag or from the variable, still does not place a live OpenRouter call. The process prints `this demo does not place a live OpenRouter call` and exits 1. I did not paste a live transcript.
+`--api-key` overrides the environment variable for that check. A key that is present, from the flag or from the variable, still does not place a live OpenRouter call: the process prints `this demo does not place a live OpenRouter call` and exits 1.
 
 ## Pitfalls
 
@@ -374,8 +376,8 @@ Sampling and elicitation limits (M7, `tools/mcp_tool_sampling.py`) are not in th
 
 ## What's next
 
-Chapter 5 is a minimal MCP server, a separate process from this client. The skeleton is `mcp-gateway/`. The step crate offers a fixed list, `echo`, and a 32/8 gate, and it binds no socket. That process is where the catalog lives.
+Chapter 5 is the other program: a minimal MCP server, separate from this client. The skeleton is `mcp-gateway/`. The step crate offers a fixed list, `echo`, and a 32/8 gate, and it binds no socket. That process is where the catalog lives.
 
-Chapter 6 already measured what happens when the list is thousands of tools long. The generator stays. A session from this chapter can feed that cache through `cards_from_listed`. That chapter is the client half: it decides what enters the prompt.
+Chapter 6 measures what happens when the list is thousands of tools long. The generator stays. A session from this chapter can feed that cache through `cards_from_listed`. That chapter is the client half: it decides what enters the prompt.
 
 Chapter 9 is the agent loop. The model returns text or tool calls, the dispatcher runs native tools and these MCP tools, and the results come back as messages. A cancellation token and a budget sit on that loop, and a small saved eval set starts there.
