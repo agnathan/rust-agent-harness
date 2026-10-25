@@ -1,6 +1,6 @@
-# Growing harness, chapters 10–52
+# Growing harness, chapters 10–53
 
-Chapters 1–10 grow one harness by copying the previous step and adding the new behavior. From chapter 11 onward the book had drifted into standalone demo crates. This document is the plan that puts it back. Batch 1 (chapters 11–22, plus the chapter 10 driver) is done. Batch 2 (chapters 23–32) is done. Batch 3 (chapters 33–44, including the Browser Tools and Vision insert) is done. Batch 4 (chapters 45–52) is done. The harness line ends at chapter 52. The server line ends at chapter 51.
+Chapters 1–10 grow one harness by copying the previous step and adding the new behavior. From chapter 11 onward the book had drifted into standalone demo crates. This document is the plan that puts it back. Batch 1 (chapters 11–22, plus the chapter 10 driver) is done. Batch 2 (chapters 23–32) is done. Batch 3 (chapters 33–44, including the Browser Tools and Vision insert) is done. Batch 4 (chapters 45–52) is done. Chapter 53 copies the chapter 52 harness and closes the learning loop on one task. The harness line ends at chapter 53. The server line ends at chapter 51.
 
 A later step is a new copy, not a path dependency and not a patch of the previous directory. `steps/README.md` already says that. Unique Cargo package names stay. The library name inside a harness step stays `harness_core`.
 
@@ -37,6 +37,7 @@ ch09-10-evals
   → ch43-cron            (chapter 42 is the server)
   → ch44-acp
   → ch45-blackboard … ch50-tracing, ch52-evals
+  → ch53-the-loop-closes
 ```
 
 Chapter 33 copies chapter 32. Chapter 38 copies chapter 36. Chapter 40 copies chapter 39. Chapter 43 copies chapter 41. Chapter 45 copies chapter 44. Chapter 46 copies 45, and so on through chapter 50. Chapter 52 copies chapter 50. Chapter 51 is the server copy of chapter 42.
@@ -146,7 +147,7 @@ Inherited chapter 9 tests must still pass. If a new guard would deny `echo`, the
 
 ## Chapter length and shape
 
-Chapters 1–4 run about 3,500–7,000 words. Every chapter from 10 through 52 matches that size and this shape. Do not ship a chapter that only names the new functions.
+Chapters 1–4 run about 3,500–7,000 words. Every chapter from 10 through 53 matches that size and this shape. Do not ship a chapter that only names the new functions.
 
 - Numbered sections (`## N.1`, `## N.2`, …). Each section walks one type or one function.
 - Full listings of that code, copied from the step crate. A reader who has not opened the file can still read the function.
@@ -208,6 +209,7 @@ Bench IDs are `section/function` from `benchmarks/descriptions.json`. Keep both 
 | 50 | tracing on the chapter 49 harness, and the research team | the capstone research team lives here. Chapter 51 is the load and token comparison, not this team | `ch50.rs`: a span per event still finishes the mock turn | `50/event_without_span`, `50/span_per_event` |
 | 51 | server copy of chapter 42, plus the three token arms and an in-memory load | no socket. oha is not measured. Token counts use `approx_tokens` (`div_ceil`) | `ch51.rs`: dynamic, static, and every-tool arms each report tokens and task success | `51/dynamic_tokens`, `51/load_100` |
 | 52 | chapter 50 harness plus `suite`. Re-runs chapter 9's saved evals on `run_loop`, plus one red-team case per layer L1–L9 and X | each case calls the real module. No `repair_tool` stub. No fail threshold. `FAIL_THRESHOLD` is `None` | `ch52.rs`: the saved set still passes on the mock; one appended trajectory event is ordered | `52/append_event`, `52/saved_set` |
+| 53 | chapter 52 harness plus `improve`. One task scored twice on `run_loop` | reflection notes the miss, `Writer::create` scans the skill, the curator archives a stale neighbor, `librarian_accept` shares the name, the second attempt calls `skill_view` | `ch53.rs`: the second attempt passes | `53/close_once` |
 
 ## Where the orphaned deferrals live
 
@@ -234,13 +236,13 @@ Do not move existing `step-NN` tags. After this batch merges, tags `step-10` thr
 
 ## Planned chapters: built-in tools, browser, and vision
 
-Chapters 16 and 17 are built. Browser Tools is chapter 40 and Vision is chapter 41. Both are written. The book is chapters 0–52. Means for the shifted chapters 10–15 and 18–22 stay the `mean.point_estimate` values from [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918). Means for `16/fake_search`, `16/ssrf_block`, `17/patch_apply`, and `17/todo_merge` are `mean.point_estimate` from [run 39114427940](https://github.com/agnathan/rust-agent-harness/actions/runs/39114427940). Means for chapters 23–32 stay the values from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589). Means for chapters 33–44 are the `mean.point_estimate` values from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). Means for chapters 45–52 are the `mean.point_estimate` values from [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196).
+Chapters 16 and 17 are built. Browser Tools is chapter 40 and Vision is chapter 41. Both are written. The book is chapters 0–53. Means for the shifted chapters 10–15 and 18–22 stay the `mean.point_estimate` values from [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918). Means for `16/fake_search`, `16/ssrf_block`, `17/patch_apply`, and `17/todo_merge` are `mean.point_estimate` from [run 39114427940](https://github.com/agnathan/rust-agent-harness/actions/runs/39114427940). Means for chapters 23–32 stay the values from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589). Means for chapters 33–44 are the `mean.point_estimate` values from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). Means for chapters 45–52 are the `mean.point_estimate` values from [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196).
 
 ### Where the two tool chapters go
 
 They are adjacent, in Part I, after chapter 15 (Limits and Breakers) and before Providers. That is the first place the loop, the approval floor, the sandbox, and the cap of 50 all exist. Putting them immediately after chapter 9 would teach the tools before the guardrails they call. Part I currently ends at Streaming, so both chapters stay in Part I.
 
-The insert is applied. The book is chapters 0–52.
+The insert is applied. The book is chapters 0–53.
 
 | After the insert | Was | Title | This batch |
 |---|---|---|---|

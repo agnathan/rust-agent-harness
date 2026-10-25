@@ -133,4 +133,6 @@ members = [
     "steps/ch51-capstone",
     "steps/ch52-evals/crates/harness-core",
     "steps/ch52-evals/crates/harness-cli",
+    "steps/ch53-the-loop-closes/crates/harness-core",
+    "steps/ch53-the-loop-closes/crates/harness-cli",
 ]
