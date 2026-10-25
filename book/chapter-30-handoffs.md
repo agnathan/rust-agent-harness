@@ -1,16 +1,18 @@
 # Chapter 30: Handoffs
 
-Chapter 29's supervisor calls specialists and gets summaries back. The parent still owns the task. Sometimes ownership should move: a router decides that a different agent continues, and the first agent is done. If that transfer copied the whole transcript, the next agent would see scratch it should not see. This chapter filters the transcript and then moves the owner. It does not rewrite the system prompt. Chapter 2's cache rule is why that prefix has to stay put. The code's job is the filter, not a prompt edit. The crate is `steps/ch30-handoffs`, a copy of chapter 29 plus `handoffs`. The package is `ch30-handoffs`.
+> Confusing delegation with handoff is how a team loses the parent.
 
-The board is a count and an owner. `filter_transcript` drops scratch and keeps order. `handoff` filters, then counts, then writes the owner. A max-handoff limit stops a task from bouncing forever. The demo shows the next owner and the filtered length. The bench times the filter on 100 messages, which is the copy the next owner receives, not the full transcript. Platform re-bind, the part where a chat session starts talking to the new owner, stays in chapter 39. This chapter changes the owner field. It does not talk to Telegram.
+A specialist that returns a summary leaves the parent in charge. A handoff is the other move: the next agent owns the task, and the first agent is done. The demo starts at `outline`, drops a scratch row, and prints `draft sees 2`, the new owner and the two rows that survived. A continuously improving harness learns from what that next agent can see, so a debugging aside that rides along becomes part of the lesson.
 
-The filter is the guardrail. A handoff that forwards every tool result forwards every secret and every poisoned page the first agent saw. Chapter 20's scrub already ran on the way into the session. The filter is a second, structural cut: scratch roles and notes the next agent must not see are dropped before the pointer moves. Chapter 33 will call this only when the route says ownership should move. A supervisor that fans out does not hand off on every specialist result. Confusing the two is how a team loses the parent.
+The code filters the transcript and then writes the owner. It never reads or writes a system prompt, so chapter 2's cache rule stays a different mechanism and this chapter doesn't claim to protect it. What the filter does protect is the scratch. A handoff that forwarded every tool result would forward every secret and every poisoned page the first agent saw. Chapter 20's scrub already ran on the way into the session. This cut is structural: role `scratch` is dropped, the other rows stay in order, and then the owner changes.
 
-Nothing here writes a skill. The lesson, if there is one, is still chapter 26's job, and it reviews the parent's view. A handoff that let the next agent inherit the reviewer's tool slice would spread writes across owners. The next agent gets the filtered transcript and the tools its own role already had.
+`Board` holds a count and an owner. `handoff` filters, then counts, then writes the owner, and `MAX_HANDOFFS` is 4 so a task can't bounce forever. That cap belongs to this harness, and the bench times the filter on 100 messages, the copy the next owner receives. Platform re-bind, where a chat session starts talking to the new owner, stays in chapter 39. This chapter changes the owner field and leaves the chat platform alone.
 
-Rust, at the board: the owner is an enum or a name in a struct, and the count is an integer the limit checks. The filter allocates a new `Vec` because the next agent must not share a buffer it can push scratch back into. Order is preserved by iterating once. The 100-message bench is that allocation.
+Nothing here writes a skill. The lesson, if there is one, is still chapter 26's job, and it reviews the parent's view. A handoff that let the next agent inherit the reviewer's tool slice would spread writes across owners. The next agent gets the filtered transcript and the tools its own role already had. Chapter 33 calls this board only when the route says ownership should move.
 
-`cargo run --locked -p ch30-handoffs --bin ch30-handoffs` prints the next owner. The exercise is `my-harness/tests/ch30.rs`: a 100-message filter drops what the next agent must not see.
+Chapter 28's `hand_off` is a pointer, and this `handoff` is a new vec. The names sit close together on purpose, and the types don't. The step is chapter 29's harness plus `handoffs`, at `steps/ch30-handoffs`, package `ch30-handoffs`. The filter allocates a new `Vec` so the next agent can't push scratch back into the caller's buffer, and one iteration keeps the order. Under contention the add-then-undo on the count can briefly show a number past 4. Section 30.6 says that plainly, because the tests call `handoff` from one thread.
+
+`cargo run --locked -p ch30-handoffs --bin ch30-handoffs` prints `draft sees 2`. `my-harness/tests/ch30.rs` checks that scratch is dropped.
 
 **In this chapter**
 
@@ -43,13 +45,13 @@ Rust, at the board: the owner is an enum or a name in a struct, and the count is
 
 ## What this chapter decides
 
-`Board::new` stores an owner and an `AtomicU32` at 0. `handoff` filters first. An empty filtered vec is `HandoffError::Empty`. The count stays. The owner stays. Otherwise `fetch_add` increments. If the previous value is already `MAX_HANDOFFS`, `fetch_sub` undoes it and the error is `Limit`. The owner is replaced only after that check passes. The returned vec is the filtered one.
+`Board::new` stores an owner and an `AtomicU32` at 0. `handoff` filters first. An empty filtered vec is `HandoffError::Empty`, so the count and the owner both stay. Otherwise `fetch_add` increments. If the previous value is already `MAX_HANDOFFS`, `fetch_sub` undoes it and the error is `Limit`. The owner is replaced only after that check passes, and the returned vec is the filtered one.
 
-`filter_transcript` keeps order. The role it drops is `scratch`.
+`filter_transcript` keeps order, and the role it drops is `scratch`.
 
-`demo` starts at `outline`, hands three messages to `draft`, and returns `draft sees 2`. No key.
+`demo` starts at `outline`, hands three messages to `draft`, and returns `draft sees 2`, and no key.
 
-`filter_100` times the filter on 100 messages. It does not call `handoff`. The mean is `2.13 µs`.
+`filter_100` times the filter on 100 messages, and it doesn't call `handoff`, and the mean is `2.13 µs`.
 
 ## 30.1 The board is a count and an owner
 
@@ -59,7 +61,7 @@ The atomic import is the first line that is new relative to the supervisor.
 use std::sync::atomic::{AtomicU32, Ordering};
 ```
 
-`AtomicU32` is an unsigned 32-bit integer that `fetch_add` and `load` can update without a `Mutex` around the number. `Ordering` is the memory-ordering argument those methods require. This file uses `Ordering::Relaxed` on every atomic call.
+`AtomicU32` is an unsigned 32-bit integer that `fetch_add` and `load` can update without a `Mutex` around the number. `Ordering` is the memory-ordering argument those methods require, and this file uses `Ordering::Relaxed` on every atomic call.
 
 The cap is a public const.
 
@@ -68,7 +70,7 @@ The cap is a public const.
 pub const MAX_HANDOFFS: u32 = 4;
 ```
 
-The doc comment is the warning. Hermes `handoff.request` does not count handoffs. Four is the number this harness refuses on. The type is `u32` because the atomic is an `AtomicU32`.
+The doc comment is the warning. Hermes `handoff.request` doesn't count handoffs, and four is the number this harness refuses on. The type is `u32` because the atomic is an `AtomicU32`.
 
 `Message` is the row the filter clones.
 
@@ -80,7 +82,7 @@ pub struct Message {
 }
 ```
 
-`Clone` is what `.cloned()` calls in the filter. `PartialEq` is what the tests use when they compare text. This `Message` is `handoffs::Message`. Chapter 28's `pipeline::Message` is a different struct with the same two fields. The filter does not call the pipeline.
+`Clone` is what `.cloned()` calls in the filter. `PartialEq` is what the tests use when they compare text, and this `Message` is `handoffs::Message`. Chapter 28's `pipeline::Message` is a different struct with the same two fields, and the filter doesn't call the pipeline.
 
 The errors are an enum.
 
@@ -92,7 +94,7 @@ pub enum HandoffError {
 }
 ```
 
-`Limit` means the cap. `Empty` means the filter removed every message. Neither variant carries a string. The caller matches the variant.
+`Limit` means the cap. `Empty` means the filter removed every message. Neither variant carries a string, and the caller matches the variant.
 
 `Board` holds the two pieces of ownership.
 
@@ -103,7 +105,7 @@ pub struct Board {
 }
 ```
 
-The count is atomic. The owner is a `Mutex<String>`. They are not one lock. `new` sets both.
+The count is atomic, and the owner is a `Mutex<String>`, and they are not one lock. `new` sets both.
 
 ```rust
 impl Board {
@@ -115,7 +117,7 @@ impl Board {
     }
 ```
 
-`impl Into<String>` means the caller can pass `String` or `&str`. The demo passes `"outline"`. `Into::into` builds the `String` the mutex stores. `AtomicU32::new(0)` is a count of zero. No handoff has been accepted.
+`impl Into<String>` means the caller can pass `String` or `&str`, and the demo passes `"outline"`. `Into::into` builds the `String` the mutex stores. `AtomicU32::new(0)` is a count of zero, and no handoff has been accepted.
 
 `owner` and `count` are the readers.
 
@@ -129,7 +131,7 @@ impl Board {
     }
 ```
 
-`owner()` locks, clones the `String`, and drops the guard at the end of the statement. The clone is why the returned name does not borrow the mutex. `expect("owner")` panics if the mutex is poisoned. `count()` loads the atomic. `Ordering::Relaxed` is the ordering: this load is atomic, so you do not observe a torn `u32`, and it does not synchronize other memory by itself. The tests call `count()` on one thread after `handoff` has returned, so the value they read is the value the same thread stored.
+`owner()` locks, clones the `String`, and drops the guard at the end of the statement. The clone is why the returned name doesn't borrow the mutex. `expect("owner")` panics if the mutex is poisoned. `count()` loads the atomic. `Ordering::Relaxed` is the ordering: this load is atomic, so you don't observe a torn `u32`, and it doesn't synchronize other memory by itself. The tests call `count()` on one thread after `handoff` has returned, so the value they read is the value the same thread stored.
 
 > **Rust sidebar: `AtomicU32`**
 >
@@ -140,7 +142,7 @@ impl Board {
 
 ## 30.2 `filter_transcript` drops scratch and keeps order
 
-The filter is a free function. `handoff` calls it. The bench calls it. The test `filter_keeps_order` calls it without a board.
+A handoff that forwards every tool result forwards every secret and every poisoned page the first agent saw. The filter is the cut that stops that, and it's a free function: `handoff` calls it, the bench calls it, and `filter_keeps_order` calls it without a board.
 
 ```rust
 pub fn filter_transcript(messages: &[Message]) -> Vec<Message> {
@@ -152,9 +154,9 @@ pub fn filter_transcript(messages: &[Message]) -> Vec<Message> {
 }
 ```
 
-`messages` is a shared slice. The function cannot remove a row from the caller's vec. `iter` yields `&Message`. `filter` keeps the borrow when the closure returns true. The closure reads `role` and compares it to the literal `"scratch"`. A role of `user` stays. A role of `assistant` stays. A role of `scratch` goes. A user message whose text contains the word scratch stays, because the comparison is the role field, not a search of `text`.
+`messages` is a shared slice, and the function can't remove a row from the caller's vec. `iter` yields `&Message`. `filter` keeps the borrow when the closure returns true, and the closure reads `role` and compares it to the literal `"scratch"`. A role of `user` stays, and a role of `assistant` stays, and a role of `scratch` goes. A user message whose text contains the word scratch stays, because the comparison is the role field, not a search of `text`.
 
-`.cloned()` turns `&Message` into `Message` by `Clone`. Both strings are copied. `.collect()` builds a new `Vec<Message>`. Iterator order is slice order, and `filter` does not reorder, so the kept rows stay in the order they had. The new vec is shorter by the number of scratch rows. The caller's slice is unchanged.
+`.cloned()` turns `&Message` into `Message` by `Clone`, and both strings are copied. `.collect()` builds a new `Vec<Message>`. Iterator order is slice order, and `filter` doesn't reorder, so the kept rows stay in the order they had. The new vec is shorter by the number of scratch rows, and the caller's slice is unchanged.
 
 The order test builds three messages and checks the two that remain.
 
@@ -183,7 +185,7 @@ fn message(role: &str, text: &str) -> Message {
 }
 ```
 
-That is the whole policy. One role. A new vec. The next owner is handed that vec, not the slice the caller still holds.
+That is the whole policy, and one role. A new vec, and the next owner is handed that vec, not the slice the caller still holds.
 
 ## 30.3 `handoff` filters, then counts, then writes the owner
 
@@ -212,11 +214,11 @@ That is the whole policy. One role. A new vec. The next owner is handed that vec
 > - Callers in the tests use `unwrap` on the success path and `matches!` on the error path.
 > - `Option`, `Result`, enums, and `Arc` are taught in [chapter 1](chapter-01-first-contact.md).
 
-The first statement filters. The empty check is next, before any atomic update. A transcript of only scratch produces an empty vec. The function returns `Empty`. `fetch_add` does not run. `count` stays 0. The owner stays the name from `new`. The test `an_empty_filtered_transcript_does_not_move_ownership` builds that case: one scratch message, `handoff` to `draft`, expects `Empty`, expects owner `outline`, expects count 0.
+The first statement filters, and the empty check is next, before any atomic update, and a transcript of only scratch produces an empty vec, and the function returns `Empty`. `fetch_add` doesn't run. `count` stays 0, and the owner stays the name from `new`. The test `an_empty_filtered_transcript_does_not_move_ownership` builds that case: one scratch message, `handoff` to `draft`, expects `Empty`, expects owner `outline`, expects count 0.
 
-When the filtered vec has at least one message, `fetch_add(1, Ordering::Relaxed)` increments and returns the old count into `current`. The first successful call sees `current` of 0 and leaves the atomic at 1. The fourth successful call sees `current` of 3 and leaves the atomic at 4. `3 >= 4` is false, so the fourth call is allowed. `MAX_HANDOFFS` is 4, and the check is on the previous value, so four accepted handoffs fit. The call that sees `current` of 4 has already moved the atomic to 5. `4 >= 4` is true. `fetch_sub(1)` puts the atomic back to 4. The function returns `Limit`. The owner line does not run.
+When the filtered vec has at least one message, `fetch_add(1, Ordering::Relaxed)` increments and returns the old count into `current`. The first successful call sees `current` of 0 and leaves the atomic at 1, and the fourth successful call sees `current` of 3 and leaves the atomic at 4. `3 >= 4` is false, so the fourth call is allowed. `MAX_HANDOFFS` is 4, and the check is on the previous value, so four accepted handoffs fit. The call that sees `current` of 4 has already moved the atomic to 5. `4 >= 4` is true. `fetch_sub(1)` puts the atomic back to 4, and the function returns `Limit`, and the owner line doesn't run.
 
-`*self.owner.lock().expect("owner") = next.to_string()` locks, writes a new `String` through the guard, and drops the guard at the end of the statement. `next` is `&str`. `to_string` owns it. The dereference `*` assigns through `MutexGuard<String>`, which implements `DerefMut`.
+`*self.owner.lock().expect("owner") = next.to_string()` locks, writes a new `String` through the guard, and drops the guard at the end of the statement. `next` is `&str`. `to_string` owns it, and the dereference `*` assigns through `MutexGuard<String>`, which implements `DerefMut`.
 
 The success test walks the cap.
 
@@ -245,11 +247,11 @@ fn scratch_is_dropped_and_the_fifth_handoff_is_refused() {
 }
 ```
 
-The first call's filtered length is 2. The scratch text `draft junk` is gone. `all` checks every remaining role. The owner is `draft`. The loop `1..MAX_HANDOFFS` is `1..4`, so the indexes are 1, 2, and 3. Those three calls succeed. The owners in order after the first are `agent-1`, `agent-2`, and `agent-3`. The count is 4. The next call passes `one-more`. It gets `Limit`. The owner is still `agent-3`, because the `Limit` path returns before the assignment. Four accepted transfers, then a refusal. The fifth attempt is the one that sees `current >= 4`.
+The first call's filtered length is 2, and the scratch text `draft junk` is gone. `all` checks every remaining role, and the owner is `draft`. The loop `1..MAX_HANDOFFS` is `1..4`, so the indexes are 1, 2, and 3, and those three calls succeed. The owners in order after the first are `agent-1`, `agent-2`, and `agent-3`, and the count is 4. The next call passes `one-more`, and it gets `Limit`. The owner is still `agent-3`, because the `Limit` path returns before the assignment, and four accepted transfers, then a refusal. The fifth attempt is the one that sees `current >= 4`.
 
-`fetch_add` returns a unique previous value to each caller. On one thread the story is the loop above. The tests do not spawn a second thread against `Board`. The owner mutex and the atomic are still two steps. The source order on this thread is the order the test observes.
+`fetch_add` returns a unique previous value to each caller, and on one thread the story is the loop above. The tests don't spawn a second thread against `Board`, and the owner mutex and the atomic are still two steps. The source order on this thread is the order the test observes.
 
-Hermes writes a pending row and lets a watcher claim it. This function writes the owner string in the same call that accepts the count. The recorded transfer is the `Ok` and the new owner. There is no model call between them. Error 4009 is the Hermes busy-session error. It is not a variant of `HandoffError`. This board does not know whether a session is running. Platform is required on the Hermes method. `handoff` takes `next` and `messages`. Chapter 39 is where the platform re-bind goes.
+Hermes writes a pending row and lets a watcher claim it, and this function writes the owner string in the same call that accepts the count. The recorded transfer is the `Ok` and the new owner, and there is no model call between them. Error 4009 is the Hermes busy-session error, and it isn't a variant of `HandoffError`. This board doesn't know whether a session is running. Platform is required on the Hermes method. `handoff` takes `next` and `messages`. Chapter 39 is where the platform re-bind goes.
 
 ## 30.4 The demo shows the next owner and the filtered length
 
@@ -275,7 +277,7 @@ pub fn demo() -> String {
 }
 ```
 
-`Board::new("outline")` is the starting owner. Three messages: user, scratch, assistant. `handoff("draft", &messages)` filters to the user row and the assistant row, increments the count from 0 to 1, and sets the owner to `draft`. `expect("handoff")` panics if the `Result` is `Err`. This input is not empty and the count was 0, so the `Result` is `Ok`. `format!` prints the owner and the filtered length. The string is `draft sees 2`. The scratch text is not in that string. The length is the evidence the scratch row was dropped.
+`Board::new("outline")` is the starting owner, and three messages: user, scratch, assistant. `handoff("draft", &messages)` filters to the user row and the assistant row, increments the count from 0 to 1, and sets the owner to `draft`. `expect("handoff")` panics if the `Result` is `Err`. This input isn't empty and the count was 0, so the `Result` is `Ok`. `format!` prints the owner and the filtered length, and the string is `draft sees 2`. The scratch text isn't in that string, and the length is the evidence the scratch row was dropped.
 
 The test is the equality.
 
@@ -296,13 +298,13 @@ fn main() {
 }
 ```
 
-The package binary is `ch30-handoffs`. `Cargo.toml` sets `name = "ch30-handoffs"` and `path = "src/bin/chapter_demo.rs"`. The other binaries in the package are `ch30_mcp_fixture` and `sandbox-worker`. The run line passes `--bin ch30-handoffs`.
+The package binary is `ch30-handoffs`. `Cargo.toml` sets `name = "ch30-handoffs"` and `path = "src/bin/chapter_demo.rs"`, and the other binaries in the package are `ch30_mcp_fixture` and `sandbox-worker`. The run line passes `--bin ch30-handoffs`.
 
-No key. The three texts are literals. `expect` is the only panic path, and the demo input does not hit it.
+No key, and the three texts are literals. `expect` is the only panic path, and the demo input doesn't hit it.
 
 ## 30.5 `filter_100` times the copy the next owner receives
 
-The bench file is `benches/handoffs.rs`. The `[[bench]]` name is `handoffs` with `harness = false`. The workflow section is `30`, label `chapter 30 handoffs`, package `ch30-handoffs`.
+The bench file is `benches/handoffs.rs`, and the `[[bench]]` name is `handoffs` with `harness = false`. The workflow section is `30`, label `chapter 30 handoffs`, package `ch30-handoffs`.
 
 ```rust
 fn filter_100(c: &mut Criterion) {
@@ -328,19 +330,19 @@ criterion_group!(benches, filter_100);
 criterion_main!(benches);
 ```
 
-The vec is built before `b.iter`. Indexes `0, 5, 10, ...` are role `scratch`, because `i % 5 == 0`. The other indexes are role `user`. Every text is `message {i} about the rename procedure`. One hundred messages. The timed closure calls `filter_transcript` and passes the slice through `black_box`. The new vec goes through `black_box` so the clone stays in the sample. `Board` is not constructed. `fetch_add` does not run. The mean is the filter, which is the allocation the next owner receives.
+The vec is built before `b.iter`. Indexes `0, 5, 10, ...` are role `scratch`, because `i % 5 == 0`, and the other indexes are role `user`. Every text is `message {i} about the rename procedure`, and one hundred messages. The timed closure calls `filter_transcript` and passes the slice through `black_box`, and the new vec goes through `black_box` so the clone stays in the sample. `Board` isn't constructed. `fetch_add` doesn't run, and the mean is the filter, which is the allocation the next owner receives.
 
-The mean is `2.13 µs`. It is `mean.point_estimate`.
+The mean is `2.13 µs`, and it's `mean.point_estimate`.
 
-`black_box` is `std::hint::black_box`, imported at the top of the bench file. It stops the compiler from deleting a result that the function does not otherwise use.
+`black_box` is `std::hint::black_box`, imported at the top of the bench file. It stops the compiler from deleting a result that the function doesn't otherwise use.
 
 A handoff of this vec would also pay for the atomic and the owner lock. Those are not in the sample. The chapter's question for the bench is the cost of dropping scratch out of a hundred-row transcript. The cap is what the unit test walks, four successes and then `Limit`.
 
-The iterator chain is lazy until `collect`. `filter` decides. `.cloned()` runs only for a row the predicate kept. A scratch row is borrowed long enough to read `role`, then dropped from the pipeline of the iterator. It is not cloned. In `filter_100`, `i % 5 == 0` is true for 20 indexes in `0..100`: 0, 5, 10, and so on through 95. The other 80 rows are role `user` and are cloned. Each clone copies two `String`s, the role and the text. The mean `2.13 µs` is that work, repeated by `b.iter`, on the same input vec. The input vec is not cleared. The next iteration filters it again.
+The iterator chain is lazy until `collect`. `filter` decides. `.cloned()` runs only for a row the predicate kept. A scratch row is borrowed long enough to read `role`, then dropped from the pipeline of the iterator. It isn't cloned. In `filter_100`, `i % 5 == 0` is true for 20 indexes in `0..100`: 0, 5, 10, and so on through 95. The other 80 rows are role `user` and are cloned, and each clone copies two `String`s, the role and the text. The mean `2.13 µs` is that work, repeated by `b.iter`, on the same input vec. The input vec isn't cleared, and the next iteration filters it again.
 
-## 30.6 The count moves one accepted call at a time
+## 30.6 The count can briefly lie under contention
 
-The success test's five calls are a table of the atomic. `fetch_add` returns the previous value. The owner write runs only when that previous value is below 4.
+On one thread the five calls in `scratch_is_dropped_and_the_fifth_handoff_is_refused` are this table. `fetch_add` returns the previous value, and the owner write runs only when that previous value is below 4. Section 30.3 already walks the same function, so this section is the weak point, not a second tour.
 
 | Call | `next` | Previous count | Atomic after the call | Owner after the call |
 |---|---|---|---|---|
@@ -350,11 +352,29 @@ The success test's five calls are a table of the atomic. `fetch_add` returns the
 | 4 | `agent-3` | 3 | 4 | `agent-3` |
 | 5 | `one-more` | 4 | 4, after `fetch_sub` | `agent-3` |
 
-Call 4 is the last `Ok`. Previous count 3 fails the test `current >= MAX_HANDOFFS`. The atomic sits at 4. Call 5 reads previous count 4, which passes that test, subtracts one, and returns `Limit`. The owner cell does not change. `board.count()` after call 4 is 4, which is the assert in the test, placed before the refusing call. After call 5 the source has executed `fetch_sub`, so a later `count()` on that same board is 4 again. The test does not assert `count()` after the error. It asserts the owner.
+Call 4 is the last `Ok`. Call 5 has already moved the atomic to 5, then `fetch_sub` puts it back to 4 and returns `Limit` before the owner changes. The test asserts the owner, and it asserts `count()` before that refusal. The same three rows go in every time, scratch included, and the filter still drops `draft junk` on the call that refuses.
 
-The messages on every one of those calls are the same three rows: `Write a note.`, `draft junk`, and `three steps`. The filter result is the same two-row vec each time. Call 5 builds that vec and then drops it, because the `Err` path does not return it. The scratch row is removed even on the call that does not move the owner. The filter does not know whether the cap will refuse.
+That undo is safe only because the tests call `handoff` from one thread. Two threads can both `fetch_add` before either decides to undo, so `count()` can briefly read 5, or higher, while the cap is 4. The final count comes back once each failed attempt subtracts, and a successful handoff isn't granted an extra slot by that window, but a reader of the atomic in the middle of the window sees a number the cap was supposed to forbid. I would not ship the add-then-undo under load. A `compare_exchange` loop reserves the slot only when the previous value is still below 4:
 
-The empty path never enters the table.
+```rust
+loop {
+    let current = self.count.load(Ordering::Relaxed);
+    if current >= MAX_HANDOFFS {
+        return Err(HandoffError::Limit);
+    }
+    if self
+        .count
+        .compare_exchange(current, current + 1, Ordering::Relaxed, Ordering::Relaxed)
+        .is_ok()
+    {
+        break;
+    }
+}
+```
+
+That loop isn't the function in `handoffs.rs`. The crate keeps `fetch_add` and `fetch_sub`, and the tests never start the second thread that would show the window.
+
+The empty path never enters the table. A transcript of only scratch returns `Empty` with the owner and the count still at the values from `new`.
 
 ```rust
 #[test]
@@ -370,11 +390,9 @@ fn an_empty_filtered_transcript_does_not_move_ownership() {
 }
 ```
 
-One row, role `scratch`, text `nope`. `filter_transcript` collects an empty vec. `is_empty` is true. `HandoffError::Empty` comes back. `fetch_add` is not in the executed path. The owner lock is not taken. `outline` and `0` are the values `new` stored.
+`HandoffError` is a plain enum. `expect("handoff")` still works, because `expect` is a method on `Result` and the error type doesn't have to implement `std::error::Error`. The tests use `matches!` so they can name `Empty` or `Limit` without panicking.
 
-`HandoffError` is a plain enum. The file does not derive `thiserror` and does not implement `std::error::Error` for it. `expect("handoff")` in `demo` still works. `expect` is a method on `Result`. It panics with the provided message when the value is `Err`, and it does not need the error type to be an `Error`. The tests use `matches!` so they can name `Empty` or `Limit` without panicking.
-
-This crate still contains chapter 28's `hand_off`. It is a different function, on a different type, in `pipeline.rs`.
+This crate still contains chapter 28's `hand_off`, a different function on a different type.
 
 ```rust
 /// What the next stage is given. The pointer is the same allocation.
@@ -383,27 +401,19 @@ pub fn hand_off(context: Arc<Context>) -> Arc<Context> {
 }
 ```
 
-`pipeline::hand_off` moves an `Arc<Context>` and returns it. The message vec inside that context is the same allocation. It does not look at roles. A `scratch` message in that vec is still there after the call. `Board::handoff` takes a slice, allocates a filtered vec, and returns that vec inside a `Result`. The name in the demo string is the board's owner, not an `Arc`. Chapter 28 answers "is it the same pointer?" Chapter 30 answers "which rows does the next owner receive, and how many times may the owner change?"
+`pipeline::hand_off` moves an `Arc<Context>` and leaves every role in that vec, scratch included. `Board::handoff` allocates a filtered vec and returns it inside a `Result`. The two functions answer different questions, and `handoffs::demo` builds its own `Vec<Message>` rather than calling `pipeline::run`.
 
-The pipeline context and the handoff board are not wired together in this crate. `demo` in `handoffs` builds its own `Vec<Message>`. It does not call `pipeline::run`. A later chapter can put a filtered vec into a context. This chapter stops at the `Result`.
+`Ordering::Relaxed` doesn't publish the owner string, and the mutex does. On the test thread the statements run in source order, so `owner()` after a successful `handoff` sees the assignment. Hermes writes a pending row and lets a watcher re-bind. Error 4009 and the required `platform` field live there. This `Board` takes `next` and `messages`, and chapter 39 is where the platform comes back.
 
-`Ordering::Relaxed` on the count means the atomic operations do not, by themselves, publish the owner string. The owner string is published by the mutex. On the test thread the statements run in source order, so the `assert_eq!` on `owner()` after `handoff` returns sees the assignment that happened before `Ok`. A second thread is not part of `tests/handoffs.rs`. I am not adding one. The implementation's atomic is there so the increment is a single update, and the tests exercise it from one caller.
-
-The Hermes method this replaces as the idea, not as a port, writes pending and returns. The watcher does the re-bind. Error 4009 is that method's response when the session is running. Nothing in `handoffs.rs` returns the integer 4009. `platform` is required there. `Board::handoff`'s parameters are `next` and `messages`. Chapter 39 is the chapter that takes the platform back up. Until then, the recorded transfer is the filtered vec and the owner `String`.
-
-The `Ok` value from the demo is worth writing out as two structs, because the length `2` is the only number the binary prints. The first kept `Message` has role `user` and text `Write a note.` The second has role `assistant` and text `three steps`. The dropped `Message` has role `scratch` and text `draft junk`. `filtered.len()` is 2 because those are the two clones `collect` produced. `board.owner()` is the `String` `draft` stored by the assignment. The format string `"{} sees {}"` puts a space, the word `sees`, and a space between them. No other punctuation. The scratch text is not interpolated. A reader of the terminal line knows the owner and the count of rows, and does not know the row text. The test `the_demo_shows_the_next_owner` compares that line and does not look at the notes a pipeline would have pushed. `handoffs::demo` does not call `pipeline::demo`.
-
-`Clone` on `Message` is derived, so the clone is field-wise. `role.clone()` and `text.clone()` each allocate. A handoff that keeps two short rows allocates two small strings for roles and two for texts, plus the vec buffer. The bench scales that to 80 kept rows of a longer sentence, `message {i} about the rename procedure`. The chapter's mean for that scale is `2.13 µs`, and it is only the filter. I keep the atomic out of the sample so a change to `fetch_add` does not move the filter's mean, and a change to `filter` does not hide inside the cap test. The cap test is the correctness check. It runs once. The bench runs the filter in `b.iter`.
-
-`MAX_HANDOFFS` as a `u32` matches `AtomicU32`. Comparing `current >= MAX_HANDOFFS` does not need a cast. `count()` returns `u32` from `load`. The test's `assert_eq!(board.count(), MAX_HANDOFFS)` compares those two `u32` values. Four fits in a `u32` with room to spare. The undo uses `fetch_sub(1)`, not a store of a constant, so the atomic goes back by one from whatever the `fetch_add` left, which on this path is 5 going back to 4. I am describing that path for a count that was already 4. The test reaches that state through the four successes and then one refusal.
+The demo's `Ok` value is two structs: role `user` with `Write a note.`, and role `assistant` with `three steps`. The dropped row is `scratch` / `draft junk`. `format!("{} sees {}")` is why the binary prints `draft sees 2` and nothing of the scratch text. The bench's `2.13 µs` is only the filter, on 80 kept rows, so a change to `fetch_add` doesn't move that mean.
 
 ## Tests
 
 Four tests in `tests/handoffs.rs`.
 
-Scratch is dropped. Two messages remain. The owner becomes `draft`. Three more handoffs reach count 4. The next call is `Limit`. The owner stays `agent-3`.
+Scratch is dropped, and two messages remain, and the owner becomes `draft`, and three more handoffs reach count 4. The next call is `Limit`, and the owner stays `agent-3`.
 
-A transcript of only scratch is `Empty`. The owner stays `outline`. The count stays 0.
+A transcript of only scratch is `Empty`, and the owner stays `outline`, and the count stays 0.
 
 `filter_keeps_order` expects text `a` then text `c`.
 
@@ -430,47 +440,47 @@ cargo run --locked -p ch30-handoffs --bin ch30-handoffs
 draft sees 2
 ```
 
-The binary filters one scratch line and moves the owner from `outline` to `draft`. No key.
+The binary filters one scratch line and moves the owner from `outline` to `draft`. It reads no key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
 | `filter_100` | 2.13 µs | the transcript the next owner receives | drop role `scratch` from 100 messages |
 
-`filter_100` builds the vec before `b.iter`. The timed closure is `filter_transcript` and `black_box` of the new vec. No board. No model.
+`filter_100` builds the vec before `b.iter`, and the timed closure is `filter_transcript` and `black_box` of the new vec. The bench builds no board and calls no model.
 
-The next owner is `draft`. It sees 2 messages.
+The next owner is `draft`, and it sees 2 messages.
 
-The means are `mean.point_estimate` from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `30`. Bench ids: `30/filter_100`, `28/filter_100`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
+The means are `mean.point_estimate` from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `30`. Bench ids: `30/filter_100`, `28/filter_100`, and how to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
-`MAX_HANDOFFS` is 4. The comment on the const says it is not a Hermes constant. `handoff.request` does not define this number. Raising the const to match a Hermes key that is not in that method would invent a source.
+`MAX_HANDOFFS` is 4, and the comment on the const says it isn't a Hermes constant. `handoff.request` doesn't define this number. Raising the const to match a Hermes key that isn't in that method would invent a source.
 
-The filter compares `role` to `scratch`. It does not search `text`. A user message that says scratch is kept. A scratch message that holds the sentence you meant to pass on is dropped. The sentence the next agent must see needs a role other than `scratch`.
+The filter compares `role` to `scratch`, and it doesn't search `text`. A user message that says scratch is kept, and a scratch message that holds the sentence you meant to pass on is dropped. The sentence the next agent must see needs a role other than `scratch`.
 
-`Empty` returns before `fetch_add`. A handoff of nothing does not burn one of the four. If the empty check moved below the increment, a scratch-only transcript would consume a slot and still return `Empty`. The source checks empty first.
+`Empty` returns before `fetch_add`, and a handoff of nothing doesn't burn one of the four. If the empty check moved below the increment, a scratch-only transcript would consume a slot and still return `Empty`. The source checks empty first.
 
-The `Limit` path calls `fetch_sub`. The atomic is back at 4 after the refusal. The owner write is below that return, so `one-more` does not become the owner. Forgetting the `fetch_sub` would leave the count one higher than the cap after a refused call. The source undoes the increment it just did.
+The `Limit` path calls `fetch_sub`, and the atomic is back at 4 after the refusal. The owner write is below that return, so `one-more` doesn't become the owner. Forgetting the `fetch_sub` would leave the count one higher than the cap after a refused call. The source undoes the increment it just did.
 
 ## Guardrails in this chapter
 
-The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). This chapter filters context on a transfer.
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md), and this chapter filters context on a transfer.
 
-**Filter.** `filter_transcript` drops role `scratch` before the owner changes. The next agent receives the `Vec` inside `Ok`. The caller's slice still holds the unfiltered rows. Hermes `handoff.request` writes pending and does not do this filter. The filter is the adaptation.
+**Filter.** `filter_transcript` drops role `scratch` before the owner changes, and the next agent receives the `Vec` inside `Ok`. The caller's slice still holds the unfiltered rows. Hermes `handoff.request` writes pending and doesn't do this filter, and the filter is the adaptation.
 
 **Cap.** `MAX_HANDOFFS` is 4. The call that observes a previous count greater than or equal to 4 returns `Limit` and restores the count with `fetch_sub`. The owner string changes only on `Ok`.
 
-**Recorded transfer.** `handoff` does not call a model. It filters, updates the count, and stores the next owner. That is the idea taken from a method that writes pending for a watcher.
+**Recorded transfer.** `handoff` doesn't call a model, and it filters, updates the count, and stores the next owner. That is the idea taken from a method that writes pending for a watcher.
 
-**Left for later.** The gateway watcher, error 4009, and the required `platform` field are chapter 39. This board does not re-bind a platform.
+**Left for later.** The gateway watcher, error 4009, and the required `platform` field are chapter 39. This board doesn't re-bind a platform.
 
 ## Chapter summary
 
-- **Filter.** Role `scratch` is dropped. The other rows stay, in order. The result is a new vec.
-- **Cap.** Four accepted handoffs. The next is `Limit`. `MAX_HANDOFFS` is this harness, not a Hermes constant.
+- **Filter.** Role `scratch` is dropped, and the other rows stay, in order, and the result is a new vec.
+- **Cap.** Four accepted handoffs, and the next is `Limit`. `MAX_HANDOFFS` is this harness, not a Hermes constant.
 - **Owner.** Changes only after a non-empty filtered transcript is accepted. `Empty` and `Limit` leave the owner as it was.
-- **Atomic.** `AtomicU32` with `Ordering::Relaxed`. `fetch_add` returns the previous count. The refusal undoes itself.
-- **Time.** `filter_100` mean `2.13 µs`. That is `mean.point_estimate`.
+- **Atomic.** `AtomicU32` with `Ordering::Relaxed`. `fetch_add` returns the previous count, and the refusal undoes itself.
+- **Time.** `filter_100` mean `2.13 µs`, and that is `mean.point_estimate`.
 
 ## What you implement
 
@@ -493,8 +503,8 @@ pub fn chapter_30_keeps_scratch() -> bool {
 }
 ```
 
-`todo!("chapter 30")` is the panic. The test wants `chapter_30_keeps_scratch()` to be false. 
+`todo!("chapter 30")` is the panic, and the test wants `chapter_30_keeps_scratch()` to be false.
 
 ## What's next
 
-Chapter 31 puts tasks on a queue of 100. The 101st `schedule` returns `FanError::Full`. `gather` runs them on the supervisor pool, sorts by `task_index`, and returns the replies. The tool trace stays off that string. Heartbeats are still chapter 36.
+Chapter 31 puts tasks on a queue of 100, and the 101st `schedule` returns `FanError::Full`. `gather` runs them on the supervisor pool, sorts by `task_index`, and returns the replies, and the tool trace stays off that string. Heartbeats are still chapter 36.

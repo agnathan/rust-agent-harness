@@ -1,14 +1,16 @@
-# Chapter 33: Composing Patterns
+# Chapter 33: Composition and the Goal Loop
 
-The team patterns now exist as separate modules: a pipeline, a supervisor with a pool of eight, a filtered handoff, a fan-out of 100, and a critic with one permit. A real task uses more than one of them. A supervisor fans out, and it hands off only when ownership should move. A nested fan-out that ignores the pool will schedule a width the machine never agreed to. This chapter composes the patterns and puts the limits in front of the scheduling. The crate is `steps/ch33-composition`, a copy of chapter 32. The new module is `composition`. The package is `ch33-composition`. It does not path-depend on four older crates. The sources are copied, which is the rule from chapter 10 on.
+`fan n0 | n1; owner supervisor; done` is the whole demo in one line. Two children answer `n0` and `n1`, the route stays so the owner remains `supervisor`, and the scripted critic returns `done`. That string is two stories sharing a crate. The first is composition: a nested fan-out has to fit the pool the parent is already using. The second is the goal loop chapter 32 deferred, `wait_target`, the gate, `FakeModel`, and a cap of 20 turns.
 
-`nested_fanout` refuses a width of 9 before `schedule` is called. Eight is the pool. The refusal happens before any task starts, so a too-wide request does not leave orphan work. `dispatch` moves ownership only for `Route::Move`. Any other route keeps the parent, which is how a fan-out result stays a result instead of becoming a handoff. `wait_target` reads a session, then a pid, then seconds, the wait chapter 30 deferred. `Gate` records shell exits for the quality gate, also deferred from chapter 30. The loop runs the gates, then the critic from chapter 32. `limits` returns the four numbers the composition actually enforces, and the demo stays inside them. `FakeModel` pops a scripted line.
+The compositional check is `held.saturating_add(width) > pool.limit()`, and it returns `ComposeError::ExceedsBound` before `schedule`. Width 9 on a pool of 8 never starts a task. `held` is a number the caller passes. The function doesn't read `inflight`, so the guard is only as honest as that caller. A parent that passes 0 while permits are already out walks past the check and then waits inside `acquire`. The tests use a fresh pool, which is why `max_seen` stays 0 on the refusal. This is a convention the caller keeps, not a lock the pool enforces.
 
-Composition is what makes the patterns a harness instead of a menu. Chapter 34 will compress the context this composition shares. Chapter 35 will turn each agent into a task with a mailbox, which is a different structure: here the parent still drives. Chapter 50's research team is a later consumer of these patterns, with tracing on. None of that works if nested width is a suggestion. The learning loop still does not run inside the composition. A reflection note can be enqueued when the composed run finishes. The critic's verdict is not, by itself, a skill.
+`dispatch` moves ownership only for `Route::Move`. `Stay` returns `Ok(None)` and the parent keeps the conversation, which is how a fan-out result stays a result. `wait_target` reads a session, then a pid, then seconds. `Gate` records scripted exit codes, and `run_continuation` runs those gates before the critic. `FakeModel::complete` pops a line and never opens a socket. `limits` returns `(20, 30, 300, 3)`. From this chapter the Hermes box cites `9e01b44`, a later commit of the same tree than the `ab3fe9dffb0a` cited in chapters 23 through 32.
 
-Rust, at the refusal: the route is an enum, so "move" and "stay" are not booleans you can mix with a width. The width check is a comparison before any spawn. `Result` is the refusal. The gate's exit codes are a small struct you record, not a shell the test has to launch.
+A continuously improving harness can use more than one pattern on a task, and the critic's verdict still isn't a skill. A reflection note can be enqueued when the composed run finishes, and the learning loop doesn't run inside `run_continuation`. Chapter 34 compresses the context this composition shares. Chapter 35 gives each agent a mailbox, and here the parent still drives.
 
-`cargo run -p ch33-composition --bin ch33-composition --offline` stays inside the limits. The exercise is `my-harness/tests/ch33.rs`: nested width 9 is refused before any task starts.
+The step is chapter 32's harness plus `composition`, at `steps/ch33-composition`, package `ch33-composition`. The sources are copied forward, the rule from chapter 10, rather than path-depending on four older crates. The route is an enum, so stay and move can't be mixed with a width. The gate's exit codes are recorded, and the test doesn't launch a shell.
+
+`cargo run -p ch33-composition --bin ch33-composition --offline` prints `fan n0 | n1; owner supervisor; done`. `my-harness/tests/ch33.rs` checks that nested width 9 is refused before any task starts.
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -34,13 +36,13 @@ Rust, at the refusal: the route is an enum, so "move" and "stay" are not boolean
 
 ## What this chapter decides
 
-`nested_fanout` returns `Err(ComposeError::ExceedsBound { held, asked: width, limit })` when `held.saturating_add(width) > pool.limit()`. That return happens before `FanBoard::new` and before `schedule`. A width that fits is queued and then `gather_holding` runs it on the caller's `Pool`.
+`nested_fanout` returns `Err(ComposeError::ExceedsBound { held, asked: width, limit })` when `held.saturating_add(width) > pool.limit()`, and that return happens before `FanBoard::new` and before `schedule`. A width that fits is queued and then `gather_holding` runs it on the caller's `Pool`.
 
-`dispatch` matches `Route`. `Stay` returns `Ok(None)` and does not call `handoff`. `Move` calls `board.handoff` and wraps the filtered messages in `Some`.
+`dispatch` matches `Route`. `Stay` returns `Ok(None)` and doesn't call `handoff`. `Move` calls `board.handoff` and wraps the filtered messages in `Some`.
 
 `wait_target` returns a session when `wait_on_session` has a value, otherwise a pid greater than 0, otherwise seconds greater than 0, otherwise `None`.
 
-`run_continuation` stops with `LoopStop::Turns` when `turns >= DEFAULT_MAX_TURNS`, which is 20, and it stops before the next `complete`. After each line, `check_gates` runs. A non-zero exit retries or, once `attempts` passes 3, returns `LoopStop::GatePaused`. `as_tool` runs only on `Gates::Clear`. `Verdict::Done`, `Blocked`, and `Reject` return. `Verdict::Wait` with a target returns `LoopStop::Parked` and does not increment `turns`. `Verdict::Wait` with no target, and `Verdict::Continue`, increment `turns`.
+`run_continuation` stops with `LoopStop::Turns` when `turns >= DEFAULT_MAX_TURNS`, which is 20, and it stops before the next `complete`. After each line, `check_gates` runs, and a non-zero exit retries or, once `attempts` passes 3, returns `LoopStop::GatePaused`. `as_tool` runs only on `Gates::Clear`. `Verdict::Done`, `Blocked`, and `Reject` return. `Verdict::Wait` with a target returns `LoopStop::Parked` and doesn't increment `turns`. `Verdict::Wait` with no target, and `Verdict::Continue`, increment `turns`.
 
 `limits` returns `(20, 30, 300, 3)`. `demo` returns `fan n0 | n1; owner supervisor; done`.
 
@@ -53,9 +55,9 @@ pub const DEFAULT_GATE_TIMEOUT_SECONDS: u32 = 300;
 pub const DEFAULT_GATE_MAX_RETRIES: u32 = 3;
 ```
 
-These four names are the Hermes constants from `goals.py`, stored as integers. `DEFAULT_MAX_TURNS` is 20, a `u32`. `DEFAULT_JUDGE_TIMEOUT_SECS` is 30, a `u64`, where Hermes stores `DEFAULT_JUDGE_TIMEOUT` as 30.0. `DEFAULT_GATE_TIMEOUT_SECONDS` is 300, a `u32`. `DEFAULT_GATE_MAX_RETRIES` is 3, a `u32`. Chapter 32's `critic::limits` still returns the pair `(20, 30)`. This module's `limits` returns all four. The critic module in this crate is the copy. It still does not loop. The loop that reads 20 lives here.
+These four names are the Hermes constants from `goals.py`, stored as integers. `DEFAULT_MAX_TURNS` is 20, a `u32`. `DEFAULT_JUDGE_TIMEOUT_SECS` is 30, a `u64`, where Hermes stores `DEFAULT_JUDGE_TIMEOUT` as 30.0. `DEFAULT_GATE_TIMEOUT_SECONDS` is 300, a `u32`. `DEFAULT_GATE_MAX_RETRIES` is 3, a `u32`. Chapter 32's `critic::limits` still returns the pair `(20, 30)`, and this module's `limits` returns all four. The critic module in this crate is the copy, and it still doesn't loop. The loop that reads 20 lives here.
 
-`Duration` is imported at the top of `composition.rs`. The continuation loop does not construct a `Duration` from 30 or from 300. The only `Duration` this file builds is `Duration::ZERO`, passed by `nested_fanout` into `nested_fanout_holding`. A caller who wants the tasks to overlap passes a non-zero hold into `nested_fanout_holding`. That hold is a sleep inside the copied `gather_holding`, per task, after that task's `acquire`. It is not the judge timeout and it is not the gate timeout.
+`Duration` is imported at the top of `composition.rs`, and the continuation loop doesn't construct a `Duration` from 30 or from 300. The only `Duration` this file builds is `Duration::ZERO`, passed by `nested_fanout` into `nested_fanout_holding`, and a caller who wants the tasks to overlap passes a non-zero hold into `nested_fanout_holding`. That hold is a sleep inside the copied `gather_holding`, per task, after that task's `acquire`. It isn't the judge timeout and it isn't the gate timeout.
 
 > **Rust sidebar: `enum`**
 >
@@ -75,7 +77,7 @@ pub enum ComposeError {
 }
 ```
 
-`asked` is the width the caller wanted. `held` is the count the caller says it already owns. `limit` is `pool.limit()` at the moment of the check. There is no second error variant. A schedule failure inside a width that passed the check is an `expect` panic, described in 33.3, because the fan-out queue cap is 100 and the pool the tests build has limit 8.
+`asked` is the width the caller wanted. `held` is the count the caller says it already owns. `limit` is `pool.limit()` at the moment of the check, and there is no second error variant. A schedule failure inside a width that passed the check is an `expect` panic, described in 33.3, because the fan-out queue cap is 100 and the pool the tests build has limit 8.
 
 ```rust
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -85,7 +87,7 @@ pub enum Route {
 }
 ```
 
-`Stay` means the specialist is a tool and the supervisor keeps the conversation. `Move` means ownership should move, and the handoff board filters, then accepts. The comments on the variants are the contract `dispatch` implements.
+`Stay` means the specialist is a tool and the supervisor keeps the conversation. `Move` means ownership should move, and the handoff board filters, then accepts, and the comments on the variants are the contract `dispatch` implements.
 
 ```rust
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -96,7 +98,7 @@ pub enum WaitTarget {
 }
 ```
 
-`Session` owns the id string. `Pid` and `Seconds` are `u32`. A zero pid and a zero seconds value are not built by `wait_target`. The enum can still hold a zero if a caller constructs `WaitTarget::Pid(0)` directly. The parser does not.
+`Session` owns the id string. `Pid` and `Seconds` are `u32`, and a zero pid and a zero seconds value are not built by `wait_target`. The enum can still hold a zero if a caller constructs `WaitTarget::Pid(0)` directly, and the parser doesn't.
 
 ```rust
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -110,7 +112,7 @@ pub enum LoopStop {
 }
 ```
 
-`Done`, `Blocked`, and `Reject` are the critic verdicts that stop the loop. `Parked` carries the target that was found. `Turns` means the cap of 20 was already reached at the top of the loop. `GatePaused` carries the command string of the gate that ran out of retries. The command is data on the stop value. This function does not execute it.
+`Done`, `Blocked`, and `Reject` are the critic verdicts that stop the loop. `Parked` carries the target that was found. `Turns` means the cap of 20 was already reached at the top of the loop. `GatePaused` carries the command string of the gate that ran out of retries, and the command is data on the stop value. This function doesn't execute it.
 
 ## 33.2 `Gate` records exits, and `FakeModel` pops a line
 
@@ -140,7 +142,7 @@ impl Gate {
 > - `impl IntoIterator<Item = i32>` lets the caller pass an array such as `[1, 0]` or an iterator such as `std::iter::repeat_n(1, 4)`. Both become the `exits` queue.
 > - `attempts` starts at 0. `check_gates` is the only function that writes it.
 
-`command` is the label that `GatePaused` will clone. The tests use `"cargo test"`. The string is not passed to a process API. I read `composition.rs`. `std::process` is not imported. `Gate` holds the name and the scripted codes.
+`command` is the label that `GatePaused` will clone. The tests use `"cargo test"`, and that string isn't passed to a process API, because `composition.rs` doesn't import `std::process`. `Gate` holds the name and the scripted codes.
 
 ```rust
 pub struct FakeModel {
@@ -160,9 +162,9 @@ impl FakeModel {
 }
 ```
 
-`script` collects each item into an owned `String`. `complete` needs `&mut self` because `pop_front` removes a line. The first call returns the first scripted line. The next call returns the next. When the queue is empty, `unwrap_or_default` returns `String::new()`, which is `""`. An empty reply still goes through the gates and, if the gates are clear, through `as_tool`. The copied `parse_verdict` returns `Verdict::Reject` when the lowercased text has no `verdict` substring. A model that has run out of lines does not spin forever on empty strings once the judge is reached. The judge rejects that empty line and the loop returns `LoopStop::Reject`.
+`script` collects each item into an owned `String`. `complete` needs `&mut self` because `pop_front` removes a line, and the first call returns the first scripted line. The next call returns the next, and when the queue is empty, `unwrap_or_default` returns `String::new()`, which is `""`. An empty reply still goes through the gates and, if the gates are clear, through `as_tool`. The copied `parse_verdict` returns `Verdict::Reject` when the lowercased text has no `verdict` substring. A model that has run out of lines doesn't spin forever on empty strings once the judge is reached. The judge rejects that empty line and the loop returns `LoopStop::Reject`.
 
-`FakeModel` in this module is not the provider in `provider.rs`. It has no socket, no HTTP client, and no API key. `complete` returns the next owned line or `""`.
+`FakeModel` in this module isn't the provider in `provider.rs`, and it has no socket, no HTTP client, and no API key. `complete` returns the next owned line or `""`.
 
 ## 33.3 `nested_fanout` refuses before `schedule`
 
@@ -212,17 +214,17 @@ pub fn nested_fanout_holding(
 > - `saturating_add` returns the sum, or `usize::MAX` when the sum would not fit. `usize::MAX` is greater than any pool limit this harness builds, so an overflowing pair still takes the `Err` branch.
 > - The tests use small numbers: `0 + 9`, `1 + 8`, `0 + 8`, `0 + 2`. Those sums do not overflow. The method is still the comparison the function runs.
 
-`pool.limit()` is the limit stored in `Pool::new`. `Pool::new` keeps `limit.max(1)`, so a constructed pool has a limit of at least 1. `WORKER_BOUND` in the copied supervisor is 8. `Pool::new(WORKER_BOUND)` therefore has `limit()` of 8. `held` is an argument. The function does not read `inflight` and does not call `acquire` on the refusal path. A parent that already owns one permit passes `held: 1`. The pool object can still show `max_seen` of 0, because this check is arithmetic on the arguments and the limit. It is the caller's report of what it holds.
+`pool.limit()` is the limit stored in `Pool::new`. `Pool::new` keeps `limit.max(1)`, so a constructed pool has a limit of at least 1. `WORKER_BOUND` in the copied supervisor is 8. `Pool::new(WORKER_BOUND)` therefore has `limit()` of 8. `held` is an argument. The function doesn't read `inflight` and doesn't call `acquire` on the refusal path. A parent that already owns one permit passes `held: 1`. The pool object can still show `max_seen` of 0, because this check is arithmetic on the arguments and the limit. It's the caller's report of what it holds.
 
-The refusal test builds `Pool::new(WORKER_BOUND)` and calls `nested_fanout(&pool, 0, WORKER_BOUND + 1)`. Width 9 with held 0 is `9 > 8`. The error is `ExceedsBound { held: 0, asked: 9, limit: 8 }`. `pool.max_seen()` is 0. The same pool then receives `nested_fanout(&pool, 1, WORKER_BOUND)`, which is `1 + 8 > 8`. That error is `ExceedsBound { held: 1, asked: 8, .. }`. `max_seen` is still 0. `FanBoard::new` is under the `if`, so a refused call does not allocate the board, does not call `schedule`, and does not call `gather_holding`. Tasks have not started.
+The refusal test builds `Pool::new(WORKER_BOUND)` and calls `nested_fanout(&pool, 0, WORKER_BOUND + 1)`. Width 9 with held 0 is `9 > 8`, and the error is `ExceedsBound { held: 0, asked: 9, limit: 8 }`. `pool.max_seen()` is 0. The same pool then receives `nested_fanout(&pool, 1, WORKER_BOUND)`, which is `1 + 8 > 8`. That error is `ExceedsBound { held: 1, asked: 8, .. }`. `max_seen` is still 0. `FanBoard::new` is under the `if`, so a refused call doesn't allocate the board, doesn't call `schedule`, and doesn't call `gather_holding`. Tasks have not started.
 
-When the sum is within the limit, the board is new and empty. The loop `for index in 0..width` schedules `width` tasks. Task `index` gets reply `n{index}` from `format!`, and `tool_trace` is an empty `String`. The copied `schedule` returns `Err(FanError::Full)` when the queue length is already `QUEUE_CAP`, and `QUEUE_CAP` in `fanout.rs` is 100. A width that passed a pool limit of 8 is at most 8, which is under 100, so `expect` does not fire for the pools the tests build. `Pool::new(200)` would pass `held: 0` and `width: 200` through this check, and the 101st `schedule` would panic on `expect`. The tests and the demo use `WORKER_BOUND`.
+When the sum is within the limit, the board is new and empty, and the loop `for index in 0..width` schedules `width` tasks. Task `index` gets reply `n{index}` from `format!`, and `tool_trace` is an empty `String`. The copied `schedule` returns `Err(FanError::Full)` when the queue length is already `QUEUE_CAP`, and `QUEUE_CAP` in `fanout.rs` is 100. A width that passed a pool limit of 8 is at most 8, which is under 100, so `expect` doesn't fire for the pools the tests build. `Pool::new(200)` would pass `held: 0` and `width: 200` through this check, and the 101st `schedule` would panic on `expect`. The tests and the demo use `WORKER_BOUND`.
 
-`gather_holding` drains the queue and spawns one scoped thread per task. Each thread calls `pool.acquire()`, sleeps `hold` when `hold` is not zero, and returns `(task_index, reply)`. The replies are sorted by `task_index` and joined with `\n`. `tool_trace` is not in that string. `nested_fanout` then wraps the string in `Ok`.
+`gather_holding` drains the queue and spawns one scoped thread per task. Each thread calls `pool.acquire()`, sleeps `hold` when `hold` isn't zero, and returns `(task_index, reply)`. The replies are sorted by `task_index` and joined with `\n`. `tool_trace` isn't in that string. `nested_fanout` then wraps the string in `Ok`.
 
-The overlap test calls `nested_fanout_holding(&pool, 0, WORKER_BOUND, Duration::from_millis(40))`. The summary is `n0\nn1\nn2\nn3\nn4\nn5\nn6\nn7`. `pool.max_seen()` equals `WORKER_BOUND`, 8. The 40 milliseconds are long enough that the eight acquires overlap and the high-water mark reaches 8. A second pool, called through `nested_fanout` so the hold is `Duration::ZERO`, returns the same summary string. That assertion is `quiet.max_seen() <= WORKER_BOUND`. The zero hold still acquires inside `gather_holding`. The test allows the high-water mark to be 8 or lower, because a task can finish and drop its permit before the next one is observed. Both calls use the pool they were given. Neither builds a second pool type.
+The overlap test calls `nested_fanout_holding(&pool, 0, WORKER_BOUND, Duration::from_millis(40))`, and the summary is `n0\nn1\nn2\nn3\nn4\nn5\nn6\nn7`. `pool.max_seen()` equals `WORKER_BOUND`, 8. The 40 milliseconds are long enough that the eight acquires overlap and the high-water mark reaches 8. A second pool, called through `nested_fanout` so the hold is `Duration::ZERO`, returns the same summary string. That assertion is `quiet.max_seen() <= WORKER_BOUND`, and the zero hold still acquires inside `gather_holding`. The test allows the high-water mark to be 8 or lower, because a task can finish and drop its permit before the next one is observed. Both calls use the pool they were given. Neither builds a second pool type.
 
-`acquire` on the copied pool waits on a `Condvar` while `inflight >= limit`. The pre-check exists so a nested width that would pass the bound returns `Err` instead of entering that wait. Hermes's `_get_max_async_children` docstring says a new async dispatch at capacity is rejected. The shape here is the `Result` above. The number compared is this pool's limit.
+`acquire` on the copied pool waits on a `Condvar` while `inflight >= limit`. The pre-check exists so a nested width that would pass the bound returns `Err` instead of entering that wait. Hermes's `_get_max_async_children` docstring says a new async dispatch at capacity is rejected, and the shape here is the `Result` above. The number compared is this pool's limit.
 
 ## 33.4 `dispatch` moves ownership only for `Route::Move`
 
@@ -246,11 +248,11 @@ pub fn dispatch(
 > - `Ok(None)` is a successful `Result` whose inner `Option` is `None`. Success and "no handoff" are different layers. `None` means the board was not asked. `Err` would mean `handoff` failed.
 > - `.map(Some)` converts `Result<Vec<Message>, HandoffError>` into `Result<Option<Vec<Message>>, HandoffError>`. `Ok(messages)` becomes `Ok(Some(messages))`. `Err` stays `Err`.
 
-`Route::Stay` returns before `board.handoff`. The copied `handoff` filters the transcript, rejects an empty filtered list with `HandoffError::Empty`, increments a counter, rejects a fifth move with `HandoffError::Limit` (`MAX_HANDOFFS` is 4), and on success sets the owner to `next`. `Stay` does none of that. The test builds `HandoffBoard::new("supervisor")` with a user message and a scratch message. `dispatch(Route::Stay, &board, "billing", &messages)` is `Ok(None)`. `board.owner()` is still `"supervisor"`. `board.count()` is 0.
+`Route::Stay` returns before `board.handoff`. The copied `handoff` filters the transcript, rejects an empty filtered list with `HandoffError::Empty`, increments a counter, rejects a fifth move with `HandoffError::Limit` (`MAX_HANDOFFS` is 4), and on success sets the owner to `next`. `Stay` does none of that, and the test builds `HandoffBoard::new("supervisor")` with a user message and a scratch message. `dispatch(Route::Stay, &board, "billing", &messages)` is `Ok(None)`. `board.owner()` is still `"supervisor"`. `board.count()` is 0.
 
-`Route::Move` on the same board and the same messages returns `Ok(Some(moved))`. `moved.len()` is 1. `filter_transcript` drops `role == "scratch"`, so the private scratch line is not in the vec the next owner receives. `board.owner()` is `"billing"`. The supervisor kept the conversation on `Stay`. Ownership changed on `Move`.
+`Route::Move` on the same board and the same messages returns `Ok(Some(moved))`. `moved.len()` is 1. `filter_transcript` drops `role == "scratch"`, so the private scratch line isn't in the vec the next owner receives. `board.owner()` is `"billing"`, and the supervisor kept the conversation on `Stay`. Ownership changed on `Move`.
 
-`dispatch` does not catch `HandoffError`. A `Move` whose messages are all scratch returns `Err(Empty)` from `handoff`, still as `Err` after `map`. The fifth `Move` on one board returns `Err(Limit)`, because `current >= MAX_HANDOFFS` after four accepted handoffs. The feature test stops at one `Move`. The error variants are the ones `handoff` already returns. This function adds the `Stay` path that never calls it.
+`dispatch` doesn't catch `HandoffError`. A `Move` whose messages are all scratch returns `Err(Empty)` from `handoff`, still as `Err` after `map`. The fifth `Move` on one board returns `Err(Limit)`, because `current >= MAX_HANDOFFS` after four accepted handoffs. The feature test stops at one `Move`, and the error variants are the ones `handoff` already returns. This function adds the `Stay` path that never calls it.
 
 ## 33.5 `wait_target` reads a session, then a pid, then seconds
 
@@ -298,15 +300,15 @@ pub fn wait_target(raw: &str) -> Option<WaitTarget> {
 > - The lifetime `'a` on `field` means the returned `&str` points into `raw`. `wait_target` calls `session.to_string()` before returning, so `WaitTarget::Session` owns its id after `raw` is gone.
 > - `Option`, `Result`, enums, and `Arc` are taught in [chapter 1](chapter-01-first-contact.md).
 
-The needle is a quoted key: `"wait_on_session"`, with the quote characters included. `split_once` splits on the first match. The suffix is trimmed of leading whitespace, then of a prefix made of `:`, space, `"`, and `=`. The value ends at the next `"`, comma, `}`, or whitespace. An empty slice becomes `None`.
+The needle is a quoted key: `"wait_on_session"`, with the quote characters included. `split_once` splits on the first match. The suffix is trimmed of leading whitespace, then of a prefix made of `:`, space, `"`, and `=`. The value ends at the next `"`, comma, `}`, or whitespace, and an empty slice becomes `None`.
 
-`{"verdict": "wait", "wait_on_session": "sess-9"}` yields `WaitTarget::Session("sess-9")`. The function returns inside the first `if let`. A pid or a seconds field later in the same text is not read once a session value exists.
+`{"verdict": "wait", "wait_on_session": "sess-9"}` yields `WaitTarget::Session("sess-9")`, and the function returns inside the first `if let`. A pid or a seconds field later in the same text isn't read once a session value exists.
 
 `{"verdict": "wait", "wait_on_pid": 44}` has no session field. `field` returns `"44"`. `parse` succeeds. `44 > 0`, so the result is `WaitTarget::Pid(44)`. `{"verdict": "wait", "wait_for_seconds": 12}` is `WaitTarget::Seconds(12)`. `{"verdict": "wait"}` matches none of the three names. `wait_target` returns `None`.
 
-A pid of 0 parses and fails `pid > 0`. That arm does not return. Execution continues to the seconds check. A pid that does not parse fails the `if let` and also continues. The same shape applies to seconds: zero or a bad parse falls through to `None`. Hermes's `_first_int` likewise keeps a value only when `iv > 0`, and it tries alias keys this function does not look up. `session_id`, `wait_session`, `pid`, `wait_pid`, `seconds`, and `wait_seconds` are absent from `field`'s call sites. A reply that uses only those aliases is `None` here.
+A pid of 0 parses and fails `pid > 0`, and that arm doesn't return. Execution continues to the seconds check, and a pid that doesn't parse fails the `if let` and also continues. The same shape applies to seconds: zero or a bad parse falls through to `None`. Hermes's `_first_int` likewise keeps a value only when `iv > 0`, and it tries alias keys this function doesn't look up. `session_id`, `wait_session`, `pid`, `wait_pid`, `seconds`, and `wait_seconds` are absent from `field`'s call sites, and a reply that uses only those aliases is `None` here.
 
-This scan is not `json`. A key without quotes in the text does not match the needle. The order of the three `if` blocks is the order in `_parse_judge_response`: session, then pid, then seconds.
+This scan isn't `json`, and a key without quotes in the text doesn't match the needle. The order of the three `if` blocks is the order in `_parse_judge_response`: session, then pid, then seconds.
 
 ## 33.6 The loop runs the gates, then the critic
 
@@ -365,25 +367,25 @@ pub fn run_continuation(model: &mut FakeModel, pool: &Pool, gates: &mut [Gate]) 
 }
 ```
 
-`check_gates` walks the slice from front to back. Each gate pops one exit code. An empty `exits` queue uses `unwrap_or(0)`, so a gate with no remaining codes is treated as success. A code of 0 sets `attempts` back to 0 and `continue`s to the next gate. A non-zero code increments `attempts`. When `attempts` is 1, 2, or 3, `attempts > 3` is false, and the function returns `Gates::Retry` immediately. Later gates in the slice are not popped on that call. When `attempts` becomes 4, `4 > DEFAULT_GATE_MAX_RETRIES` is true, and the function returns `Gates::Paused` with `command` cloned. Three failures are retries. The fourth failure pauses. The test name says three retries, then a pause. The script length is `DEFAULT_GATE_MAX_RETRIES as usize + 1`, which is 4.
+`check_gates` walks the slice from front to back, and each gate pops one exit code. An empty `exits` queue uses `unwrap_or(0)`, so a gate with no remaining codes is treated as success. A code of 0 sets `attempts` back to 0 and `continue`s to the next gate. A non-zero code increments `attempts`. When `attempts` is 1, 2, or 3, `attempts > 3` is false, and the function returns `Gates::Retry` immediately. Later gates in the slice are not popped on that call. When `attempts` becomes 4, `4 > DEFAULT_GATE_MAX_RETRIES` is true, and the function returns `Gates::Paused` with `command` cloned. Three failures are retries, and the fourth failure pauses. The test name says three retries, then a pause, and the script length is `DEFAULT_GATE_MAX_RETRIES as usize + 1`, which is 4.
 
-An empty gate slice never enters the `for` loop. The result is `Gates::Clear`.
+An empty gate slice never enters the `for` loop, and the result is `Gates::Clear`.
 
-`run_continuation` starts `turns` at 0. The first statement in the loop compares `turns` with 20. The model is not called when that comparison is already true. Then `complete` pops one line. Then the gates run. `Gates::Paused` returns `LoopStop::GatePaused` before `as_tool`. `Gates::Retry` increments `turns`, `continue`s, and also skips `as_tool`. The popped reply is dropped. The comment on `run_continuation` says a failing gate does not call the judge. The copied `as_tool` calls `judge`, and `judge` calls `pool.acquire`. Skipping `as_tool` means the refusal path of a red gate does not take a permit.
+`run_continuation` starts `turns` at 0, and the first statement in the loop compares `turns` with 20. The model isn't called when that comparison is already true, and then `complete` pops one line. Then the gates run. `Gates::Paused` returns `LoopStop::GatePaused` before `as_tool`. `Gates::Retry` increments `turns`, `continue`s, and also skips `as_tool`, and the popped reply is dropped. The comment on `run_continuation` says a failing gate doesn't call the judge, and the copied `as_tool` calls `judge`, and `judge` calls `pool.acquire`. Skipping `as_tool` means the refusal path of a red gate doesn't take a permit.
 
-On `Gates::Clear`, `as_tool(pool, &reply)` runs. `Verdict::Done` returns `LoopStop::Done`. `Blocked` returns `LoopStop::Blocked`. `Reject` returns `LoopStop::Reject`. Those three do not increment `turns`. The cap is checked at the start of the next iteration, which does not happen after a return.
+On `Gates::Clear`, `as_tool(pool, &reply)` runs. `Verdict::Done` returns `LoopStop::Done`. `Blocked` returns `LoopStop::Blocked`. `Reject` returns `LoopStop::Reject`, and those three don't increment `turns`. The cap is checked at the start of the next iteration, which doesn't happen after a return.
 
-`Verdict::Wait` calls `wait_target(&reply)`. `Some(target)` returns `LoopStop::Parked(target)` and does not execute `turns += 1`. A parked wait consumed a model line and a judge permit, and it did not spend a turn against the cap of 20. `None` falls into `turns += 1` and the loop goes around. Hermes downgrades a target-less `wait` to `"continue"` inside `_parse_judge_response`. This loop leaves the verdict as `Wait` and spends a turn. The next scripted line is judged on the next iteration. `Verdict::Continue` spends a turn the same way.
+`Verdict::Wait` calls `wait_target(&reply)`. `Some(target)` returns `LoopStop::Parked(target)` and doesn't execute `turns += 1`. A parked wait consumed a model line and a judge permit, and it didn't spend a turn against the cap of 20. `None` falls into `turns += 1` and the loop goes around. Hermes downgrades a target-less `wait` to `"continue"` inside `_parse_judge_response`, and this loop leaves the verdict as `Wait` and spends a turn. The next scripted line is judged on the next iteration. `Verdict::Continue` spends a turn the same way.
 
-The accept-and-park test checks `limits()` first: 20, 30, 300, 3. A model scripted with `verdict: continue` then `verdict: done` returns `LoopStop::Done`. The continue spends one turn. The done returns. A model scripted with `{"verdict": "wait", "wait_on_session": "sess-9"}` returns `LoopStop::Parked(WaitTarget::Session("sess-9"))`. The same test calls `wait_target` on the pid line and the seconds line and on `{"verdict": "wait"}`, which is `None`. A model scripted with `verdict: wait` then `verdict: done` returns `LoopStop::Done`. The bare wait has no target, so it spends a turn, and the next line is the accept. `parse_verdict` sees the substring `verdict` and a suffix that starts with `wait`, so the first line is `Verdict::Wait`, not `Reject`.
+The accept-and-park test checks `limits()` first: 20, 30, 300, 3, and a model scripted with `verdict: continue` then `verdict: done` returns `LoopStop::Done`. The continue spends one turn, and the done returns, and a model scripted with `{"verdict": "wait", "wait_on_session": "sess-9"}` returns `LoopStop::Parked(WaitTarget::Session("sess-9"))`. The same test calls `wait_target` on the pid line and the seconds line and on `{"verdict": "wait"}`, which is `None`. A model scripted with `verdict: wait` then `verdict: done` returns `LoopStop::Done`. The bare wait has no target, so it spends a turn, and the next line is the accept. `parse_verdict` sees the substring `verdict` and a suffix that starts with `wait`, so the first line is `Verdict::Wait`, not `Reject`.
 
-The gate test uses `Gate::scripted("cargo test", [1, 0])` and a model with `ignored while the gate is red` then `verdict: done`. The first code is 1, so `attempts` becomes 1 and the loop retries. The red line is consumed and never judged. The second iteration pops 0, resets `attempts` to 0, sees `Clear`, and `as_tool` accepts `verdict: done`. The result is `LoopStop::Done`. `gates[0].attempts` is 0 because the successful pop cleared it. `pool.max_seen()` is 1 because the accepting `as_tool` acquired one permit. A fresh pool with four failures of `cargo test`, and a model of four `verdict: done` lines, returns `LoopStop::GatePaused { command: "cargo test" }`. `fresh.max_seen()` is 0. The four done-lines were popped by `complete` and discarded. The judge never ran. After three retries, `turns` is 3, which is under 20, and the fourth failure pauses inside `check_gates`.
+The gate test uses `Gate::scripted("cargo test", [1, 0])` and a model with `ignored while the gate is red` then `verdict: done`. The first code is 1, so `attempts` becomes 1 and the loop retries, and the red line is consumed and never judged. The second iteration pops 0, resets `attempts` to 0, sees `Clear`, and `as_tool` accepts `verdict: done`. The result is `LoopStop::Done`. `gates[0].attempts` is 0 because the successful pop cleared it. `pool.max_seen()` is 1 because the accepting `as_tool` acquired one permit. A fresh pool with four failures of `cargo test`, and a model of four `verdict: done` lines, returns `LoopStop::GatePaused { command: "cargo test" }`. `fresh.max_seen()` is 0, and the four done-lines were popped by `complete` and discarded, and the judge never ran. After three retries, `turns` is 3, which is under 20, and the fourth failure pauses inside `check_gates`.
 
-`twenty_continues_stop_the_loop` scripts 21 copies of `verdict: continue`. Each clear continue calls `as_tool` and then increments `turns`. After the twentieth continue, `turns` is 20. The next loop iteration hits `turns >= DEFAULT_MAX_TURNS` and returns `LoopStop::Turns` before `complete` pops the twenty-first line. The cap is the check at the top, not a special case inside the `Continue` arm.
+`twenty_continues_stop_the_loop` scripts 21 copies of `verdict: continue`, and each clear continue calls `as_tool` and then increments `turns`. After the twentieth continue, `turns` is 20. The next loop iteration hits `turns >= DEFAULT_MAX_TURNS` and returns `LoopStop::Turns` before `complete` pops the twenty-first line. The cap is the check at the top, not a special case inside the `Continue` arm.
 
-`a_missing_verdict_rejects` scripts `looks finished`. The gates slice is empty, so `as_tool` runs. `parse_verdict` finds no `verdict` and returns `Reject`. The loop returns `LoopStop::Reject`.
+`a_missing_verdict_rejects` scripts `looks finished`, and the gates slice is empty, so `as_tool` runs. `parse_verdict` finds no `verdict` and returns `Reject`, and the loop returns `LoopStop::Reject`.
 
-`Blocked` is a return arm in the same `match`. The feature tests reach `Done`, `Parked`, `Turns`, `GatePaused`, and `Reject`. The `Blocked` arm is the same shape as `Done` and `Reject`: return that stop, do not increment `turns`.
+`Blocked` is a return arm in the same `match`, and the feature tests reach `Done`, `Parked`, `Turns`, `GatePaused`, and `Reject`. The `Blocked` arm is the same shape as `Done` and `Reject`: return that stop, don't increment `turns`.
 
 ## 33.7 `limits` returns the four numbers, and the demo stays
 
@@ -419,11 +421,11 @@ pub fn demo() -> String {
 }
 ```
 
-`limits` is the tuple `(20, 30, 300, 3)`. The test asserts each field. Nothing in `limits` starts a timer.
+`limits` is the tuple `(20, 30, 300, 3)`, and the test asserts each field, and nothing in `limits` starts a timer.
 
-`demo` builds a pool of 8. `nested_fanout(&pool, 0, 2)` fits: `0 + 2` is not greater than 8. The gathered string is `n0\nn1`. `replace('\n', " | ")` makes `n0 | n1`. The handoff board starts owned by `supervisor`. The only message is a user line, `ship the note`. `Route::Stay` returns `None`, and `assert!` checks that. `expect("stay")` would panic if `dispatch` returned `Err`. `Stay` returns `Ok(None)`, so `expect` yields `None`. The owner is unchanged because `handoff` was not called.
+`demo` builds a pool of 8. `nested_fanout(&pool, 0, 2)` fits: `0 + 2` isn't greater than 8, and the gathered string is `n0\nn1`. `replace('\n', " | ")` makes `n0 | n1`, and the handoff board starts owned by `supervisor`. The only message is a user line, `ship the note`. `Route::Stay` returns `None`, and `assert!` checks that. `expect("stay")` would panic if `dispatch` returned `Err`. `Stay` returns `Ok(None)`, so `expect` yields `None`, and the owner is unchanged because `handoff` was not called.
 
-The model has one line, `verdict: done`. The gate slice is empty. `run_continuation` judges that line, `as_tool` accepts it, and the stop is `LoopStop::Done`. The label is `done`. Any other `LoopStop` would label `not-done`. This input takes the `Done` arm. `format!` reads `board.owner()`, which is still `supervisor`. The returned string is `fan n0 | n1; owner supervisor; done`.
+The model has one line, `verdict: done`, and the gate slice is empty. `run_continuation` judges that line, `as_tool` accepts it, and the stop is `LoopStop::Done`, and the label is `done`. Any other `LoopStop` would label `not-done`, and this input takes the `Done` arm. `format!` reads `board.owner()`, which is still `supervisor`, and the returned string is `fan n0 | n1; owner supervisor; done`.
 
 ```rust
 #[test]
@@ -442,7 +444,7 @@ fn main() {
 }
 ```
 
-I ran `cargo run -p ch33-composition --bin ch33-composition --offline`. The process printed `fan n0 | n1; owner supervisor; done`. The package also builds `ch33_mcp_fixture` and `sandbox-worker`, so a `cargo run -p ch33-composition --offline` without `--bin` stops and asks which binary. The chapter line is the `ch33-composition` bin. The example `demo` is the copied eval runner. It calls `run_saved_evals` and `run_stress_evals`. It does not call `composition::demo`.
+I ran `cargo run -p ch33-composition --bin ch33-composition --offline`, and the process printed `fan n0 | n1; owner supervisor; done`. The package also builds `ch33_mcp_fixture` and `sandbox-worker`, so a `cargo run -p ch33-composition --offline` without `--bin` stops and asks which binary. The chapter line is the `ch33-composition` bin, and the example `demo` is the copied eval runner. It calls `run_saved_evals` and `run_stress_evals`, and it doesn't call `composition::demo`.
 
 The bench is `benches/composition.rs`. `Cargo.toml` names it `composition` with `harness = false`.
 
@@ -459,7 +461,7 @@ fn nested_eight(c: &mut Criterion) {
 }
 ```
 
-The pool is built before `b.iter`. Each sample calls `nested_fanout` with held 0 and width 8. `0 + 8` equals the limit, and the `>` check is false, so the call schedules eight tasks and gathers them with `Duration::ZERO`. `black_box` keeps the pool borrow, the numbers, and the summary in the sample. The bench does not pass width 9. The refusal is the unit test. The bench does not call `run_continuation`, so it does not sleep 30 seconds and it does not run a gate.
+The pool is built before `b.iter`, and each sample calls `nested_fanout` with held 0 and width 8. `0 + 8` equals the limit, and the `>` check is false, so the call schedules eight tasks and gathers them with `Duration::ZERO`. `black_box` keeps the pool borrow, the numbers, and the summary in the sample, and the bench doesn't pass width 9. The refusal is the unit test. The bench doesn't call `run_continuation`, so it doesn't sleep 30 seconds and it doesn't run a gate.
 
 ## Tests
 
@@ -471,7 +473,7 @@ Eight tests in `tests/composition.rs`.
 
 `a_handoff_runs_only_when_ownership_moves` sees `Stay` leave the owner as `supervisor` and the count at 0. `Move` returns one message and the owner becomes `billing`.
 
-`the_loop_accepts_done_and_parks_a_wait_that_names_a_target` asserts `limits` as 20, 30, 300, and 3. Continue-then-done is `Done`. A session target parks as `sess-9`. Pid 44 and 12 seconds parse. A wait object with no target is `None`. A bare `verdict: wait` followed by `verdict: done` is `Done`.
+`the_loop_accepts_done_and_parks_a_wait_that_names_a_target` asserts `limits` as 20, 30, 300, and 3. Continue-then-done is `Done`, and a session target parks as `sess-9`. Pid 44 and 12 seconds parse, and a wait object with no target is `None`. A bare `verdict: wait` followed by `verdict: done` is `Done`.
 
 `a_gate_failure_does_not_ask_the_judge_and_three_retries_then_pause` accepts after a red code then a green code, with `max_seen` of 1 and `attempts` of 0. Four red codes pause on `cargo test` and leave `max_seen` at 0.
 
@@ -508,17 +510,17 @@ The binary fans out two children, stays with the supervisor, and judges one scri
 |---|---|---|---|
 | `nested_eight` | 271.87 µs | eight children on the pool of 8 | `nested_fanout` with held 0 and width 8 |
 
-The means are `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `33`. Bench ids: `33/nested_eight`, `31/nested_eight`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
+The means are `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573), section `33`. Bench ids: `33/nested_eight`, `31/nested_eight`, and how to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
-`held` is the caller's number. `nested_fanout` does not read `inflight`. A call with `held: 0` and `width: 8` on a pool that another thread has already filled will pass the arithmetic check and then wait inside `acquire`. The tests use a fresh pool. The refusal the tests observe is the `>` check, and `max_seen` stays 0 because `gather_holding` never runs.
+`held` is the caller's number. `nested_fanout` doesn't read `inflight`. A call with `held: 0` and `width: 8` on a pool that another thread has already filled will pass the arithmetic check and then wait inside `acquire`. The tests use a fresh pool. The refusal the tests observe is the `>` check, and `max_seen` stays 0 because `gather_holding` never runs.
 
-`saturating_add` compares the sum with `pool.limit()`. A pool built with `WORKER_BOUND` has limit 8. `WORKER_BOUND + 1` is the width 9 the refusal test asks for. `Pool::new` can be given another limit. The check uses whatever `limit()` returns.
+`saturating_add` compares the sum with `pool.limit()`, and a pool built with `WORKER_BOUND` has limit 8. `WORKER_BOUND + 1` is the width 9 the refusal test asks for. `Pool::new` can be given another limit, and the check uses whatever `limit()` returns.
 
-`schedule`'s `expect` panics if the fan-out queue is already at 100. The bound check does not know `QUEUE_CAP`. It knows `pool.limit()`. The tests stay at 8.
+`schedule`'s `expect` panics if the fan-out queue is already at 100, and the bound check doesn't know `QUEUE_CAP`. It knows `pool.limit()`, and the tests stay at 8.
 
-`demo` uses `assert!` on the stay result. A `Stay` that returned `Some` would panic inside `demo` before the string was built. The test expects the string, which is only built when that assertion passes.
+`demo` uses `assert!` on the stay result, and a `Stay` that returned `Some` would panic inside `demo` before the string was built. The test expects the string, which is only built when that assertion passes.
 
 ## Guardrails in this chapter
 
@@ -526,13 +528,13 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 
 **Nested bound.** `held.saturating_add(width) > pool.limit()` returns `ComposeError::ExceedsBound` before `FanBoard::new` and before `schedule`. Width 9 on a pool of 8, and width 8 with `held` of 1, leave `max_seen` at 0. The pool the tests build has limit 8, from `WORKER_BOUND`.
 
-**Quality gates before the judge.** `check_gates` runs after `complete` and before `as_tool`. `Retry` and `Paused` return without `as_tool`. Four failures of `cargo test` pause with `max_seen` of 0. A failure then a success reaches the judge once, and `max_seen` is 1. The command string is stored. A shell is not spawned. `DEFAULT_GATE_MAX_RETRIES` is 3. `DEFAULT_GATE_TIMEOUT_SECONDS` is 300 and is not slept.
+**Quality gates before the judge.** `check_gates` runs after `complete` and before `as_tool`. `Retry` and `Paused` return without `as_tool`, and four failures of `cargo test` pause with `max_seen` of 0. A failure then a success reaches the judge once, and `max_seen` is 1, and the command string is stored. A shell isn't spawned. `DEFAULT_GATE_MAX_RETRIES` is 3. `DEFAULT_GATE_TIMEOUT_SECONDS` is 300 and isn't slept.
 
-**Wait target order.** `wait_target` reads `wait_on_session`, then `wait_on_pid` when the parsed pid is greater than 0, then `wait_for_seconds` when the parsed seconds are greater than 0. A wait with none of them is `None`, and the loop spends a turn. A wait with a target returns `LoopStop::Parked` and does not increment `turns`.
+**Wait target order.** `wait_target` reads `wait_on_session`, then `wait_on_pid` when the parsed pid is greater than 0, then `wait_for_seconds` when the parsed seconds are greater than 0. A wait with none of them is `None`, and the loop spends a turn, and a wait with a target returns `LoopStop::Parked` and doesn't increment `turns`.
 
-**Twenty-turn cap.** `turns >= DEFAULT_MAX_TURNS` returns `LoopStop::Turns` before the next `complete`. `DEFAULT_MAX_TURNS` is 20. Twenty `verdict: continue` lines stop the loop. The twenty-first scripted line is still in the model.
+**Twenty-turn cap.** `turns >= DEFAULT_MAX_TURNS` returns `LoopStop::Turns` before the next `complete`. `DEFAULT_MAX_TURNS` is 20. Twenty `verdict: continue` lines stop the loop, and the twenty-first scripted line is still in the model.
 
-**Left for later.** Chapter 34 scans context files, truncates them, wraps untrusted tool output, and shares a snapshot `Arc`. Chapter 36 is supervision. Heartbeats are still there. This file does not beat and does not restart a child.
+**Left for later.** Chapter 34 scans context files, truncates them, wraps untrusted tool output, and shares a snapshot `Arc`. Chapter 36 is supervision. Heartbeats are still there, and this file doesn't beat and doesn't restart a child.
 
 ## What you implement
 
@@ -555,19 +557,19 @@ pub fn chapter_33_refuses_width_nine_before_tasks_start() -> bool {
 }
 ```
 
-`todo!("chapter 33")` is the panic. The test wants the function to return true only when a nested fan-out of width 9 against a pool whose limit is 8 is refused before any task is scheduled. 
+`todo!("chapter 33")` is the panic. The test wants the function to return true only when a nested fan-out of width 9 against a pool whose limit is 8 is refused before any task is scheduled.
 
 ## Chapter summary
 
 - **Bound.** `held` plus `width` past `pool.limit()` is `ComposeError::ExceedsBound` before `schedule`. Width 9 on a pool of 8 leaves `max_seen` at 0.
-- **Same pool.** Eight children gather on the `Pool` the caller passed. The overlap test sees `max_seen` of 8.
+- **Same pool.** Eight children gather on the `Pool` the caller passed, and the overlap test sees `max_seen` of 8.
 - **Route.** `Stay` returns `None` and leaves the owner. `Move` calls `handoff`.
-- **Wait.** Session, then pid, then seconds. A target parks. A missing target spends a turn.
-- **Gates.** A failing gate does not call `as_tool`. Three retries, then `GatePaused`. The timeouts 30 and 300 are stored and are not slept in the loop.
+- **Wait.** Session, then pid, then seconds, and a target parks, and a missing target spends a turn.
+- **Gates.** A failing gate doesn't call `as_tool`, and three retries, then `GatePaused`, and the timeouts 30 and 300 are stored and are not slept in the loop.
 - **Cap.** Twenty turns return `LoopStop::Turns`.
 - **Demo.** `fan n0 | n1; owner supervisor; done`.
-- **Time.** `nested_eight` mean `271.87 µs`. That is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573).
+- **Time.** `nested_eight` mean `271.87 µs`, and that is `mean.point_estimate` from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573).
 
 ## What's next
 
-Chapter 34 manages context. A project file that matches an injection pattern is replaced. A long file keeps a head and a tail. High-risk tool output is wrapped, and an embedded closer is neutralized. Preflight compression runs when the transcript is over the cap, and the hot path shares the snapshot with `Arc::clone`.
+Chapter 34 manages context, and a project file that matches an injection pattern is replaced. A long file keeps a head and a tail. High-risk tool output is wrapped, and an embedded closer is neutralized. Preflight compression runs when the transcript is over the cap, and the hot path shares the snapshot with `Arc::clone`.
