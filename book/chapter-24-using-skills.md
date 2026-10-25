@@ -55,13 +55,13 @@ A skill on disk is `<category>/<name>/SKILL.md`, and the frontmatter keys this p
 
 `render_index` writes one string, and the same slice and the same connected-server list write the same bytes. `SkillSession::open` stores that string in an `Arc<String>`, and `index` clones the pointer.
 
-`skills_list` returns every meta, or the metas in one category, and `skill_view` returns the whole `SKILL.md`, or one supporting file under the four directory names. `change_note` compares names. An added name or a removed name returns the note, and the `Arc` from `open` is still the first render.
+`skills_list` returns every meta, or the metas in one category, and `skill_view` returns the whole `SKILL.md`, or one supporting file under the four directory names. `change_note` compares names, and an added name or a removed name returns the note, and the `Arc` from `open` is still the first render.
 
 `ScriptedModel` replies with the string it was built with, and the demo writes one skill, completes once, and views the name in that reply. No key.
 
 ## 24.1 The caps and the two types
 
-The module starts with three caps and the list of supporting directories, and the caps are the Hermes numbers. The directory list is what `support_path` allows.
+The module starts with three caps and the list of supporting directories, and the caps are the Hermes numbers; the directory list is what `support_path` allows.
 
 ```rust
 pub const MAX_NAME_LENGTH: usize = 64;
@@ -71,7 +71,7 @@ pub const MAX_BODY_CHARS: usize = 100_000;
 const SUPPORT: &[&str] = &["references", "templates", "scripts", "assets"];
 ```
 
-`MAX_NAME_LENGTH` and `MAX_DESCRIPTION_LENGTH` are public because the long-name test imports the name cap and builds a string one character past it. `MAX_BODY_CHARS` is public too. `SUPPORT` is private. Callers learn the four names when `skill_view` returns `SkillError::Path`.
+`MAX_NAME_LENGTH` and `MAX_DESCRIPTION_LENGTH` are public because the long-name test imports the name cap and builds a string one character past it. `MAX_BODY_CHARS` is public too, and `SUPPORT` is private. Callers learn the four names when `skill_view` returns `SkillError::Path`.
 
 `usize` is the length type, and the comparisons later use `chars().count()`, which counts Unicode scalar values. A name of 64 `n` characters is legal, and a name of 65 is `SkillError::Name`. The test builds that 65-character name with `"n".repeat(MAX_NAME_LENGTH + 1)`.
 
@@ -98,9 +98,9 @@ pub struct SkillMeta {
 }
 ```
 
-Every field is owned, and `load_tree` returns `Vec<SkillMeta>`, and the caller can drop the files' text. `description` is a `String`, which may be empty. `requires_mcp` is `Option<String>`. `None` means the frontmatter had no non-empty `requires_mcp` key, and `Some` is the server name after trim. `Clone` is what `skills_list` uses when it copies a row out of the slice, and `PartialEq` and `Eq` are what the duplicate-name check uses, through `got.name == meta.name`. The struct derive makes the whole row comparable, and the check compares the name field only.
+Every field is owned, and `load_tree` returns `Vec<SkillMeta>`, and the caller can drop the files' text; `description` is a `String`, which may be empty. `requires_mcp` is `Option<String>`, and `None` means the frontmatter had no non-empty `requires_mcp` key, and `Some` is the server name after trim. `Clone` is what `skills_list` uses when it copies a row out of the slice, and `PartialEq` and `Eq` are what the duplicate-name check uses, through `got.name == meta.name`. The struct derive makes the whole row comparable, and the check compares the name field only.
 
-`SkillError` is the error of every public function in this file, and it is an enum, not a trait. Each variant is a different failure.
+`SkillError` is the error of every public function in this file, and it is an enum, not a trait, and each variant is a different failure.
 
 ```rust
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -179,7 +179,7 @@ impl SkillSession {
 
 `open` borrows the root and the connected list, but it doesn't store either borrow. `load_tree` returns an owned `Vec<SkillMeta>`, and `render_index` borrows that vec and returns an owned `String`. `Arc::new` moves that `String` onto the heap and returns a pointer, and the vec drops at the end of `open`. The files are not held open, and the session holds the rendered text.
 
-`index` takes `&self`. It doesn't re-read the directory, and `Arc::clone` copies the pointer and bumps the strong count. It doesn't copy the characters, and the test in `a_new_skill_is_a_note_and_the_arc_stays` keeps that pointer:
+`index` takes `&self`; it doesn't re-read the directory, and `Arc::clone` copies the pointer and bumps the strong count. It doesn't copy the characters, and the test in `a_new_skill_is_a_note_and_the_arc_stays` keeps that pointer:
 
 ```rust
 let kept: Arc<String> = session.index();
@@ -198,7 +198,7 @@ The type ascription is there so the reader sees the pointer, not a `String`, and
 
 ## 24.4 `load_tree` walks categories, then skill folders
 
-`load_tree` is the directory walk. It is public. The bench calls it. `open` calls it. The note test calls it again after a file appears.
+`load_tree` is the directory walk; it is public. The bench calls it. `open` calls it. The note test calls it again after a file appears.
 
 ```rust
 pub fn load_tree(root: &Path) -> Result<Vec<SkillMeta>, SkillError> {
@@ -227,21 +227,21 @@ pub fn load_tree(root: &Path) -> Result<Vec<SkillMeta>, SkillError> {
 }
 ```
 
-`root` is borrowed. `found` is owned. The function returns the vec or the first hard error.
+`root` is borrowed, and `found` is owned. The function returns the vec or the first hard error.
 
 `list_dirs(root)` yields category directories, sorted by path, and a missing root is an empty vec from `list_dirs`, so `load_tree` returns `Ok` with no skills. A file sitting directly in `root` is ignored, because `list_dirs` keeps directories only.
 
 For each category, `file_name` is the directory's last component as a `String`, and that string is the category stored on every skill inside it. `files/rename/SKILL.md` gets category `files`.
 
-The inner loop lists skill directories, and `skill_dir.join("SKILL.md")` builds the file path. `is_file` is false for a missing file and for a directory named `SKILL.md`. Those entries `continue`. A folder of notes with no `SKILL.md` isn't a skill.
+The inner loop lists skill directories, and `skill_dir.join("SKILL.md")` builds the file path. `is_file` is false for a missing file and for a directory named `SKILL.md`; those entries `continue`. A folder of notes with no `SKILL.md` isn't a skill.
 
 `fs::read_to_string` reads the whole file as UTF-8, and a non-UTF-8 file is `SkillError::Io` with the `io::Error` display text. `map_err` is required because `read_to_string` returns `std::io::Error`, and this function returns `SkillError`.
 
-The body cap runs before parse, and `text.chars().count()` is the number of scalar values. `MAX_BODY_CHARS` is 100_000. A longer file returns `Err(SkillError::Body(count))` and drops `found`, and skills already pushed are discarded with the error. One huge file fails the whole tree, and the check is on the file that was just read, including frontmatter. It isn't a check of the body after the `---` split.
+The body cap runs before parse, and `text.chars().count()` is the number of scalar values, and `MAX_BODY_CHARS` is 100_000. A longer file returns `Err(SkillError::Body(count))` and drops `found`, and skills already pushed are discarded with the error. One huge file fails the whole tree, and the check is on the file that was just read, including frontmatter. It isn't a check of the body after the `---` split.
 
 `parse_skill` can return `Name` or `Description`, and the `?` returns that error too. One bad name fails the tree. The long-name test writes a legal file first, then overwrites `SKILL.md` with a 65-character name, and expects `load_tree` to be `Err`. The directory name `bad` isn't the name that fails, and the frontmatter name is.
 
-The duplicate check walks `found` so far, and `any` stops on the first equal name. The closure's `|got: &SkillMeta|` writes the type so the comparison is field to field. A duplicate `continue`s. The first name in walk order stays, and walk order is sorted paths, because `list_dirs` sorts. The later folder is the one that disappears.
+The duplicate check walks `found` so far, and `any` stops on the first equal name. The closure's `|got: &SkillMeta|` writes the type so the comparison is field to field; a duplicate `continue`s. The first name in walk order stays, and walk order is sorted paths, because `list_dirs` sorts. The later folder is the one that disappears.
 
 `sort_by` runs after the walk, and the key is the pair `(&category, &name)`. `cmp` on a tuple compares the first element, then the second, and categories sort, and names sort inside a category. The references are there so the sort borrows the strings instead of cloning them into the key. The sort is total for these fields because `String` is `Ord`.
 

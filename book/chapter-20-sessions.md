@@ -4,11 +4,11 @@ This is the start of the learning half of the book. A continuously improving har
 
 Chapter 2 can save a conversation as one JSON file, and chapter 19 can fold a stream into text worth keeping. Neither of those is a session you can resume, or trust with a key that passed through the transcript. `append_turn` runs both strings through `redact_sensitive_text` before the insert, so a turn that contains an `sk-` token is stored as `sk-***`. The mask keeps the prefix through the first `-` or `_`, then stars. A session row is a place a key would live forever, which is why the scrub happens on the way in.
 
-`Store` is a SQLite connection in WAL mode, and two tables hold the session and its messages. The patterns cover the prefix families, environment assignments, `Authorization` headers, and PEM blocks. `redact_for_egress` is that scrub plus a sweep that turns a bare bearer token into `Bearer [redacted]`. A background queue does the write. Full-text search isn't built here: the ids are queued, and chapter 22 builds the search on this store.
+`Store` is a SQLite connection in WAL mode, and two tables hold the session and its messages. The patterns cover the prefix families, environment assignments, `Authorization` headers, and PEM blocks. `redact_for_egress` is that scrub plus a sweep that turns a bare bearer token into `Bearer [redacted]`, and a background queue does the write. Full-text search isn't built here: the ids are queued, and chapter 22 builds the search on this store.
 
 The scrub is the one later chapters call. Chapter 21's memory writes call `first_threat_message` rather than this redactor, so a secret that misses those patterns can still land in the file. Chapter 39's outbound chat, chapter 47's bus delivery, and chapter 49's external-agent call all call `redact_for_egress`, rather than inventing a narrower scrub. Chapter 52's red-team case for persistence calls this module. Copying the harness forward is what keeps the function under the same name. Hermes keeps sessions in SQLite and scrubs before text leaves or lands. The same split is here, with JSON from chapter 2 left as the export format rather than the store.
 
-SQLite is a library linked into the process. WAL lets a reader proceed while a writer appends, and a prepared statement is the insert. `redact` is string replacement driven by a regex set compiled once. A disk error stays a `rusqlite::Error`, which is a different failure from a model error and should stay that way.
+SQLite is a library linked into the process; WAL lets a reader proceed while a writer appends, and a prepared statement is the insert. `redact` is string replacement driven by a regex set compiled once. A disk error stays a `rusqlite::Error`, which is a different failure from a model error and should stay that way.
 
 The step is `steps/ch20-sessions`, package `ch20-sessions`, library `harness_core`, a copy of chapter 19 plus `wal` and `redact`. `lib.rs` re-exports the redaction functions from here on, so later chapters call `crate::redact`. `cargo run -p ch20-sessions` writes a temp database, prints the row count and `wal`, and deletes the file. `my-harness/tests/ch20.rs` stores a turn that contains an `sk-` token and `OPENAI_API_KEY=` without the secret, and egress strips a bare bearer.
 
@@ -37,21 +37,21 @@ The step is `steps/ch20-sessions`, package `ch20-sessions`, library `harness_cor
 
 ## What this chapter decides
 
-`Store::open` opens a file. `migrate` sets WAL and creates the two tables if they are missing.
+`Store::open` opens a file, and `migrate` sets WAL and creates the two tables if they are missing.
 
 `journal_mode` is `wal`.
 
-`append_turn("s1", "hi", "pong")` returns 2. `messages("s1")` is the user row and then the assistant row. `pending_fts` is 2. `sqlite_master` has no `messages_fts_trigram`.
+`append_turn("s1", "hi", "pong")` returns 2; `messages("s1")` is the user row and then the assistant row, and `pending_fts` is 2. `sqlite_master` has no `messages_fts_trigram`.
 
 A second `append_turn` on `s1` makes four messages and still one session row.
 
 The demo writes `ch20-sessions-demo.db` under the temp directory, appends the fake reply `pong`, prints the row count and the journal mode, and deletes the file. No key.
 
-The third test calls `run_saved_evals` and `run_stress_evals` from chapter 9. Both lists are all `passed`. That work is the mock loop. It does not open this database.
+The third test calls `run_saved_evals` and `run_stress_evals` from chapter 9, and both lists are all `passed`; that work is the mock loop. It does not open this database.
 
 ## 20.1 A file, a connection, and two tables
 
-A session has to outlive the process. I put it in a SQLite file. The Rust type that holds the open file is `rusqlite::Connection`. `Store` owns that connection, and it owns the queue of row ids that a later chapter will index.
+A session has to outlive the process; I put it in a SQLite file. The Rust type that holds the open file is `rusqlite::Connection`. `Store` owns that connection, and it owns the queue of row ids that a later chapter will index.
 
 ```rust
 pub struct Store {
@@ -60,13 +60,13 @@ pub struct Store {
 }
 ```
 
-`Connection` is the handle. Queries go through it. `pending_fts` is a `VecDeque<i64>`. A `VecDeque` is a buffer with a front and a back. I push new ids on the back and drop old ids from the front. The id is an `i64` because that is what SQLite returns from `last_insert_rowid`. The queue lives in the process. It is not a table. Open the same file in a new process and the queue starts empty. The messages are still in the file.
+`Connection` is the handle, and queries go through it, and `pending_fts` is a `VecDeque<i64>`. A `VecDeque` is a buffer with a front and a back. I push new ids on the back and drop old ids from the front. The id is an `i64` because that is what SQLite returns from `last_insert_rowid`, and the queue lives in the process, and it is not a table. Open the same file in a new process and the queue starts empty, and the messages are still in the file.
 
 > **Rust sidebar: SQLite from Rust**
 >
 > A database here is a file. `Connection::open` takes a `&Path` and returns `Result<Connection, rusqlite::Error>`. The path is borrowed, and the connection owns the open file. `Result` is the error channel. The `?` after a call means: if this is `Err`, return that error from the function; if it is `Ok`, keep the value. `open`, `migrate`, and `append_turn` all use it, so a caller gets either the store or a SQLite error. This file doesn't add a second error enum. SQL in this crate is a string. `?1`, `?2`, and `?3` are placeholders, and `params!` builds the list that fills them. The text of a message is data in that list, so it isn't pasted into the SQL string. `execute` runs one statement. `execute_batch` runs several, separated by semicolons. `query_row` runs a statement that must return one row and maps that row with a closure.
 
-`open` creates the connection and an empty queue. It does not create tables.
+`open` creates the connection and an empty queue; it does not create tables.
 
 ```rust
 pub fn open(path: &Path) -> Result<Self, rusqlite::Error> {
@@ -83,9 +83,9 @@ pub fn open(path: &Path) -> Result<Self, rusqlite::Error> {
 
 `Path` is a borrowed path, the way `&str` is a borrowed string. The demo and the tests own a `PathBuf` and lend it. `Connection::open` creates the file if it is missing. A second `open` of the same path sees the rows that were committed.
 
-`busy_timeout` tells this connection to wait up to two seconds when SQLite says the file is busy, instead of failing the next statement at once. The comment in `open` is the reason: parallel tests can touch neighboring files while macOS still reports the new file busy. The wait is on the connection. It is not a lock I take in Rust.
+`busy_timeout` tells this connection to wait up to two seconds when SQLite says the file is busy, instead of failing the next statement at once. The comment in `open` is the reason: parallel tests can touch neighboring files while macOS still reports the new file busy, and the wait is on the connection. It is not a lock I take in Rust.
 
-`migrate` is the next call. Every test and the demo call it before a write. `append_turn` assumes the tables exist. I do not call `migrate` from `append_turn`, so a store that was only opened fails the insert with a SQLite error. That split keeps "create the schema" visible.
+`migrate` is the next call; every test and the demo call it before a write. `append_turn` assumes the tables exist. I do not call `migrate` from `append_turn`, so a store that was only opened fails the insert with a SQLite error. That split keeps "create the schema" visible.
 
 ```rust
 pub fn migrate(&self) -> Result<(), rusqlite::Error> {
@@ -95,7 +95,7 @@ pub fn migrate(&self) -> Result<(), rusqlite::Error> {
 }
 ```
 
-The first batch is one pragma. `journal_mode=WAL` turns on write-ahead logging for this file. SQLite stores that choice in the file, so a later open still reports it. WAL means commits land in a log beside the database. Readers of the main file do not have to wait for a writer the way they do with the older rollback journal. The demo's journal line is this pragma read back.
+The first batch is one pragma; `journal_mode=WAL` turns on write-ahead logging for this file. SQLite stores that choice in the file, so a later open still reports it. WAL means commits land in a log beside the database. Readers of the main file do not have to wait for a writer the way they do with the older rollback journal. The demo's journal line is this pragma read back.
 
 ```rust
 const SCHEMA: &str = "
@@ -116,9 +116,9 @@ CREATE TABLE IF NOT EXISTS messages (
 ";
 ```
 
-`CREATE TABLE IF NOT EXISTS` is safe to run twice. The second `migrate` sees the tables and leaves the rows. `sessions.id` is text, and it is the primary key. `source` has to be present. `parent_id` and `title` may be null. `started_at` is an integer. `messages.id` is `INTEGER PRIMARY KEY`. In SQLite that column is the row id. I never send an id in the insert. SQLite assigns one, and `last_insert_rowid` reads it back. `session_id`, `role`, and `content` are required text. `ts` is an integer. There is no foreign key in this SQL. A message can name a session id I have not inserted. `append_turn` does not do that. It inserts the session row first.
+`CREATE TABLE IF NOT EXISTS` is safe to run twice. The second `migrate` sees the tables and leaves the rows. `sessions.id` is text, and it is the primary key, and `source` has to be present; `parent_id` and `title` may be null. `started_at` is an integer; `messages.id` is `INTEGER PRIMARY KEY`; in SQLite that column is the row id; I never send an id in the insert. SQLite assigns one, and `last_insert_rowid` reads it back, and `session_id`, `role`, and `content` are required text, and `ts` is an integer. There is no foreign key in this SQL. A message can name a session id I have not inserted. `append_turn` does not do that. It inserts the session row first.
 
-`journal_mode` reads the pragma back as one string. After `migrate` the tests expect `"wal"`.
+`journal_mode` reads the pragma back as one string; after `migrate` the tests expect `"wal"`.
 
 ```rust
 pub fn journal_mode(&self) -> Result<String, rusqlite::Error> {
@@ -141,7 +141,7 @@ pub fn connection_mut(&mut self) -> &mut Connection {
 }
 ```
 
-`connection` is a shared borrow. `journal_mode` and `messages` only need that. `connection_mut` is a mutable borrow. `transaction()` on this version of `rusqlite` takes `&mut Connection`, so a writer needs it. Rust allows many shared borrows, or one mutable borrow, not both at once. A function that holds `connection_mut` is the only user of that store until it returns.
+`connection` is a shared borrow, and `journal_mode` and `messages` only need that, and `connection_mut` is a mutable borrow. `transaction()` on this version of `rusqlite` takes `&mut Connection`, so a writer needs it. Rust allows many shared borrows, or one mutable borrow, not both at once. A function that holds `connection_mut` is the only user of that store until it returns.
 
 ```rust
 pub fn pending_fts(&self) -> usize {
@@ -149,7 +149,7 @@ pub fn pending_fts(&self) -> usize {
 }
 ```
 
-This is the length of the in-memory queue, not a count of indexed rows. After one turn it is 2. It never grows past 64.
+This is the length of the in-memory queue, not a count of indexed rows; after one turn it is 2; it never grows past 64.
 
 `unix_secs` is the clock both rows share.
 
@@ -162,7 +162,7 @@ fn unix_secs() -> i64 {
 }
 ```
 
-`SystemTime::now` is the machine clock. `duration_since(UNIX_EPOCH)` is the time since 1970, or an error if the clock is set earlier than that. The `map` keeps the whole seconds and casts them to `i64`. `unwrap_or(0)` is the branch for a clock before the epoch. I would rather store a zero than refuse the turn. Both message rows and, on the first insert, `sessions.started_at` use this one number. A second turn on the same session does not change `started_at`, because that insert is ignored.
+`SystemTime::now` is the machine clock, and `duration_since(UNIX_EPOCH)` is the time since 1970, or an error if the clock is set earlier than that. The `map` keeps the whole seconds and casts them to `i64`. `unwrap_or(0)` is the branch for a clock before the epoch. I would rather store a zero than refuse the turn. Both message rows and, on the first insert, `sessions.started_at` use this one number. A second turn on the same session does not change `started_at`, because that insert is ignored.
 
 ```rust
 pub fn demo_reply() -> &'static str {
@@ -170,9 +170,9 @@ pub fn demo_reply() -> &'static str {
 }
 ```
 
-`&'static str` is a string baked into the binary. The demo prints it and passes it as the assistant text. There is no model in this binary.
+`&'static str` is a string baked into the binary. The demo prints it and passes it as the assistant text; there is no model in this binary.
 
-`lib.rs` declares the modules and re-exports the scrub functions. `Store` stays behind the module. Tests construct `harness_core::wal::Store`. The redact tests import the three functions from the crate root.
+`lib.rs` declares the modules and re-exports the scrub functions, and `Store` stays behind the module, and tests construct `harness_core::wal::Store`. The redact tests import the three functions from the crate root.
 
 ```rust
 pub mod redact;
@@ -183,7 +183,7 @@ pub use redact::{redact_for_egress, redact_sensitive_text, redacting_formatter};
 
 ## 20.2 One transaction, then the queue
 
-`append_turn` writes one user row and one assistant row, then remembers both ids. The virtual table is not in this function. I want that to stay obvious, because chapter 22's copy of the session test still looks for the table and still expects it to be missing.
+`append_turn` writes one user row and one assistant row, then remembers both ids; the virtual table is not in this function. I want that to stay obvious, because chapter 22's copy of the session test still looks for the table and still expects it to be missing.
 
 ```rust
 pub fn append_turn(
@@ -220,21 +220,21 @@ pub fn append_turn(
 }
 ```
 
-The signature takes `&mut self` because the transaction borrows the connection mutably, and because the queue push needs to change `pending_fts`. `session_id`, `user`, and `assistant` are borrowed strings. The function does not keep them. It stores copies inside SQLite.
+The signature takes `&mut self` because the transaction borrows the connection mutably, and because the queue push needs to change `pending_fts`. `session_id`, `user`, and `assistant` are borrowed strings, and the function does not keep them; it stores copies inside SQLite.
 
-`now` is computed once, before the transaction. The session row and both message rows carry the same timestamp.
+`now` is computed once, before the transaction; the session row and both message rows carry the same timestamp.
 
 > **Rust sidebar: a transaction**
 >
 > `self.conn.transaction()` starts a transaction and returns a `Transaction` value. The statements run on `tx` are part of that transaction. `commit` writes it, and in WAL mode that commit is the append to the log. A reader that starts after the commit sees both message rows. `tx` owns the transaction. If an `?` returns before `commit`, `tx` is dropped at the end of that early return, and dropping an uncommitted `Transaction` rolls it back. A failure on the assistant insert doesn't leave the user row behind, and it doesn't leave a new session row behind either. The queue push is after `commit`, so a rollback never enqueues an id. A commit that succeeds and then a panic before `enqueue` would leave rows with no queued id. The queue is a hint for a background job. The file is the record.
 
-The session insert is `INSERT OR IGNORE`. The primary key is `id`. The first turn for `"s1"` inserts one sessions row: source `'user'`, `parent_id` null, `started_at` set to `now`, `title` null. The source string is fixed in the SQL. This function cannot record a cron session or a subagent session. Chapter 22 has a different insert for those. A second `append_turn` for `"s1"` hits the same primary key. `OR IGNORE` skips that insert. It does not update `source`, `parent_id`, `started_at`, or `title`. The test that appends twice expects `SELECT COUNT(*) FROM sessions` to be 1.
+The session insert is `INSERT OR IGNORE`, and the primary key is `id`. The first turn for `"s1"` inserts one sessions row: source `'user'`, `parent_id` null, `started_at` set to `now`, `title` null; the source string is fixed in the SQL. This function cannot record a cron session or a subagent session; Chapter 22 has a different insert for those. A second `append_turn` for `"s1"` hits the same primary key; `OR IGNORE` skips that insert. It does not update `source`, `parent_id`, `started_at`, or `title`. The test that appends twice expects `SELECT COUNT(*) FROM sessions` to be 1.
 
 The id comes from `last_insert_rowid` after each message insert, not after the session insert. SQLite remembers the last row id on the connection, and the message insert is the statement that sets the id worth keeping. On a resumed session the ignored session insert doesn't change that, so the read stays after the message statement.
 
-Both message values pass through `crate::redact::redact_sensitive_text` in the `params!` list. That call runs before `execute` sends the row. The user string is scrubbed. The assistant string is scrubbed. The session id is not scrubbed. The role is the literal `'user'` or `'assistant'` in the SQL, not a parameter I could forget to scrub. `ts` is the integer `now`.
+Both message values pass through `crate::redact::redact_sensitive_text` in the `params!` list. That call runs before `execute` sends the row; the user string is scrubbed. The assistant string is scrubbed, and the session id is not scrubbed. The role is the literal `'user'` or `'assistant'` in the SQL, not a parameter I could forget to scrub, and `ts` is the integer `now`.
 
-`Ok(2)` is the literal at the bottom. It is not `changes()`, and it is not the number of session rows. Both inserts have already succeeded, or the function would have returned on `?`. One turn reports two message rows. The resume test does not use that return for the total. It reads `messages` and expects four pairs.
+`Ok(2)` is the literal at the bottom; it is not `changes()`, and it is not the number of session rows. Both inserts have already succeeded, or the function would have returned on `?`. One turn reports two message rows; the resume test does not use that return for the total, and it reads `messages` and expects four pairs.
 
 `enqueue` is the cap.
 
@@ -247,7 +247,7 @@ fn enqueue(&mut self, id: i64) {
 }
 ```
 
-`PENDING_CAP` is 64. The check is `==`, not `>`. At 64 ids, the oldest is removed, then the new id is pushed, and the length stays 64. Under 64, the length grows by one. One turn calls `enqueue` twice, user id then assistant id, so the assistant id is the newer one. A long bench of `append_turn` fills the queue and then forgets the oldest id on every further push. Those forgotten ids are still rows in `messages`. Nothing in this crate drains the queue into an index. Chapter 22 rebuilds from the table. It does not read `pending_fts`.
+`PENDING_CAP` is 64, and the check is `==`, not `>`. At 64 ids, the oldest is removed, then the new id is pushed, and the length stays 64, and under 64, the length grows by one. One turn calls `enqueue` twice, user id then assistant id, so the assistant id is the newer one. A long bench of `append_turn` fills the queue and then forgets the oldest id on every further push; those forgotten ids are still rows in `messages`. Nothing in this crate drains the queue into an index. Chapter 22 rebuilds from the table. It does not read `pending_fts`.
 
 `messages` is the read path the tests use.
 
@@ -261,7 +261,7 @@ pub fn messages(&self, session_id: &str) -> Result<Vec<(String, String)>, rusqli
 }
 ```
 
-`prepare` compiles the statement. `query_map` binds the session id and runs the closure on each row. The closure returns `Ok((role, content))`. `row.get` fails if the column is the wrong type, and `?` turns that into the closure's `Err`. `query_map` itself returns an iterator of results. `collect` on that iterator is a `Result<Vec<_>, _>`: the first row error stops the collect, and a clean run is the whole vec. `ORDER BY id` is append order, because the ids are the row ids SQLite assigned. A session with no rows is an empty vec, not an error. A missing table is an error, which is what you get if you skip `migrate`.
+`prepare` compiles the statement; `query_map` binds the session id and runs the closure on each row; the closure returns `Ok((role, content))`. `row.get` fails if the column is the wrong type, and `?` turns that into the closure's `Err`. `query_map` itself returns an iterator of results. `collect` on that iterator is a `Result<Vec<_>, _>`: the first row error stops the collect, and a clean run is the whole vec. `ORDER BY id` is append order, because the ids are the row ids SQLite assigned. A session with no rows is an empty vec, not an error. A missing table is an error, which is what you get if you skip `migrate`.
 
 The first session test calls `append_turn("s1", "hi", "pong")` and expects exactly those two strings back, in that order, with `pending_fts() == 2`. It also runs this count:
 
@@ -269,9 +269,9 @@ The first session test calls `append_turn("s1", "hi", "pong")` and expects exact
 "SELECT COUNT(*) FROM sqlite_master WHERE name = 'messages_fts_trigram'"
 ```
 
-The count is 0. `sqlite_master` is SQLite's catalog of tables. `append_turn` never creates `messages_fts_trigram`, so the name is absent. `hi` and `pong` contain no prefix family, no `=`, and no `Authorization` header, so the characters come back unchanged even though `redact_sensitive_text` still runs and allocates a new `String`. That is why the expectation can stay `hi` and `pong`. The resume test uses `one`, `a`, `two`, and `b`, which miss the patterns the same way, and it expects four messages and one session row.
+The count is 0, and `sqlite_master` is SQLite's catalog of tables. `append_turn` never creates `messages_fts_trigram`, so the name is absent. `hi` and `pong` contain no prefix family, no `=`, and no `Authorization` header, so the characters come back unchanged even though `redact_sensitive_text` still runs and allocates a new `String`. That is why the expectation can stay `hi` and `pong`. The resume test uses `one`, `a`, `two`, and `b`, which miss the patterns the same way, and it expects four messages and one session row.
 
-The third test calls `run_saved_evals` and `run_stress_evals`. Those functions drive the chapter 9 mock loop. They do not call `Store::open`. A pass there means the copied loop still passes.
+The third test calls `run_saved_evals` and `run_stress_evals`; those functions drive the chapter 9 mock loop. They do not call `Store::open`. A pass there means the copied loop still passes.
 
 The demo binary opens `ch20-sessions-demo.db` under the temp directory, calls `migrate`, appends session `"demo"` with user `"hi"` and `demo_reply()`, prints the returned count and `journal_mode`, drops the store, and deletes the file. Dropping the store closes the connection. The delete happens after that, so the remove is not racing an open handle in this binary.
 

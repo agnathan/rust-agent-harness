@@ -1,12 +1,12 @@
 # Chapter 33: Composition and the Goal Loop
 
-`fan n0 | n1; owner supervisor; done` is the whole demo in one line. Two children answer `n0` and `n1`, the route stays so the owner remains `supervisor`, and the scripted critic returns `done`. That string is two stories sharing a crate. The first is composition: a nested fan-out has to fit the pool the parent is already using. The second is the goal loop chapter 32 deferred, `wait_target`, the gate, `FakeModel`, and a cap of 20 turns.
+`fan n0 | n1; owner supervisor; done` is the whole demo in one line. Two children answer `n0` and `n1`, the route stays so the owner remains `supervisor`, and the scripted critic returns `done`, and that string is two stories sharing a crate. The first is composition: a nested fan-out has to fit the pool the parent is already using. The second is the goal loop chapter 32 deferred, `wait_target`, the gate, `FakeModel`, and a cap of 20 turns.
 
-The compositional check is `held.saturating_add(width) > pool.limit()`, and it returns `ComposeError::ExceedsBound` before `schedule`. Width 9 on a pool of 8 never starts a task. `held` is a number the caller passes. The function doesn't read `inflight`, so the guard is only as honest as that caller. A parent that passes 0 while permits are already out walks past the check and then waits inside `acquire`. The tests use a fresh pool, which is why `max_seen` stays 0 on the refusal. This is a convention the caller keeps, not a lock the pool enforces.
+The compositional check is `held.saturating_add(width) > pool.limit()`, and it returns `ComposeError::ExceedsBound` before `schedule`. Width 9 on a pool of 8 never starts a task; `held` is a number the caller passes. The function doesn't read `inflight`, so the guard is only as honest as that caller. A parent that passes 0 while permits are already out walks past the check and then waits inside `acquire`. The tests use a fresh pool, which is why `max_seen` stays 0 on the refusal. This is a convention the caller keeps, not a lock the pool enforces.
 
-`dispatch` moves ownership only for `Route::Move`. `Stay` returns `Ok(None)` and the parent keeps the conversation, which is how a fan-out result stays a result. `wait_target` reads a session, then a pid, then seconds. `Gate` records scripted exit codes, and `run_continuation` runs those gates before the critic. `FakeModel::complete` pops a line and never opens a socket. `limits` returns `(20, 30, 300, 3)`. From this chapter the Hermes box cites `9e01b44`, a later commit of the same tree than the `ab3fe9dffb0a` cited in chapters 23 through 32.
+`dispatch` moves ownership only for `Route::Move`, and `Stay` returns `Ok(None)` and the parent keeps the conversation, which is how a fan-out result stays a result. `wait_target` reads a session, then a pid, then seconds. `Gate` records scripted exit codes, and `run_continuation` runs those gates before the critic. `FakeModel::complete` pops a line and never opens a socket, and `limits` returns `(20, 30, 300, 3)`. From this chapter the Hermes box cites `9e01b44`, a later commit of the same tree than the `ab3fe9dffb0a` cited in chapters 23 through 32.
 
-A continuously improving harness can use more than one pattern on a task, and the critic's verdict still isn't a skill. A reflection note can be enqueued when the composed run finishes, and the learning loop doesn't run inside `run_continuation`. Chapter 34 compresses the context this composition shares. Chapter 35 gives each agent a mailbox, and here the parent still drives.
+A continuously improving harness can use more than one pattern on a task, and the critic's verdict still isn't a skill. A reflection note can be enqueued when the composed run finishes, and the learning loop doesn't run inside `run_continuation`; Chapter 34 compresses the context this composition shares. Chapter 35 gives each agent a mailbox, and here the parent still drives.
 
 The step is chapter 32's harness plus `composition`, at `steps/ch33-composition`, package `ch33-composition`. The sources are copied forward, the rule from chapter 10, rather than path-depending on four older crates. The route is an enum, so stay and move can't be mixed with a width. The gate's exit codes are recorded, and the test doesn't launch a shell.
 
@@ -38,13 +38,13 @@ The step is chapter 32's harness plus `composition`, at `steps/ch33-composition`
 
 `nested_fanout` returns `Err(ComposeError::ExceedsBound { held, asked: width, limit })` when `held.saturating_add(width) > pool.limit()`, and that return happens before `FanBoard::new` and before `schedule`. A width that fits is queued and then `gather_holding` runs it on the caller's `Pool`.
 
-`dispatch` matches `Route`. `Stay` returns `Ok(None)` and doesn't call `handoff`. `Move` calls `board.handoff` and wraps the filtered messages in `Some`.
+`dispatch` matches `Route`, and `Stay` returns `Ok(None)` and doesn't call `handoff`. `Move` calls `board.handoff` and wraps the filtered messages in `Some`.
 
 `wait_target` returns a session when `wait_on_session` has a value, otherwise a pid greater than 0, otherwise seconds greater than 0, otherwise `None`.
 
-`run_continuation` stops with `LoopStop::Turns` when `turns >= DEFAULT_MAX_TURNS`, which is 20, and it stops before the next `complete`. After each line, `check_gates` runs, and a non-zero exit retries or, once `attempts` passes 3, returns `LoopStop::GatePaused`. `as_tool` runs only on `Gates::Clear`. `Verdict::Done`, `Blocked`, and `Reject` return. `Verdict::Wait` with a target returns `LoopStop::Parked` and doesn't increment `turns`. `Verdict::Wait` with no target, and `Verdict::Continue`, increment `turns`.
+`run_continuation` stops with `LoopStop::Turns` when `turns >= DEFAULT_MAX_TURNS`, which is 20, and it stops before the next `complete`. After each line, `check_gates` runs, and a non-zero exit retries or, once `attempts` passes 3, returns `LoopStop::GatePaused`; `as_tool` runs only on `Gates::Clear`. `Verdict::Done`, `Blocked`, and `Reject` return; `Verdict::Wait` with a target returns `LoopStop::Parked` and doesn't increment `turns`. `Verdict::Wait` with no target, and `Verdict::Continue`, increment `turns`.
 
-`limits` returns `(20, 30, 300, 3)`. `demo` returns `fan n0 | n1; owner supervisor; done`.
+`limits` returns `(20, 30, 300, 3)`, and `demo` returns `fan n0 | n1; owner supervisor; done`.
 
 ## 33.1 Four constants, and the enums that carry a stop
 
@@ -55,7 +55,7 @@ pub const DEFAULT_GATE_TIMEOUT_SECONDS: u32 = 300;
 pub const DEFAULT_GATE_MAX_RETRIES: u32 = 3;
 ```
 
-These four names are the Hermes constants from `goals.py`, stored as integers. `DEFAULT_MAX_TURNS` is 20, a `u32`. `DEFAULT_JUDGE_TIMEOUT_SECS` is 30, a `u64`, where Hermes stores `DEFAULT_JUDGE_TIMEOUT` as 30.0. `DEFAULT_GATE_TIMEOUT_SECONDS` is 300, a `u32`. `DEFAULT_GATE_MAX_RETRIES` is 3, a `u32`. Chapter 32's `critic::limits` still returns the pair `(20, 30)`, and this module's `limits` returns all four. The critic module in this crate is the copy, and it still doesn't loop. The loop that reads 20 lives here.
+These four names are the Hermes constants from `goals.py`, stored as integers; `DEFAULT_MAX_TURNS` is 20, a `u32`. `DEFAULT_JUDGE_TIMEOUT_SECS` is 30, a `u64`, where Hermes stores `DEFAULT_JUDGE_TIMEOUT` as 30.0, and `DEFAULT_GATE_TIMEOUT_SECONDS` is 300, a `u32`. `DEFAULT_GATE_MAX_RETRIES` is 3, a `u32`. Chapter 32's `critic::limits` still returns the pair `(20, 30)`, and this module's `limits` returns all four. The critic module in this crate is the copy, and it still doesn't loop. The loop that reads 20 lives here.
 
 `Duration` is imported at the top of `composition.rs`, and the continuation loop doesn't construct a `Duration` from 30 or from 300. The only `Duration` this file builds is `Duration::ZERO`, passed by `nested_fanout` into `nested_fanout_holding`, and a caller who wants the tasks to overlap passes a non-zero hold into `nested_fanout_holding`. That hold is a sleep inside the copied `gather_holding`, per task, after that task's `acquire`. It isn't the judge timeout and it isn't the gate timeout.
 
@@ -77,7 +77,7 @@ pub enum ComposeError {
 }
 ```
 
-`asked` is the width the caller wanted. `held` is the count the caller says it already owns. `limit` is `pool.limit()` at the moment of the check, and there is no second error variant. A schedule failure inside a width that passed the check is an `expect` panic, described in 33.3, because the fan-out queue cap is 100 and the pool the tests build has limit 8.
+`asked` is the width the caller wanted, and `held` is the count the caller says it already owns. `limit` is `pool.limit()` at the moment of the check, and there is no second error variant. A schedule failure inside a width that passed the check is an `expect` panic, described in 33.3, because the fan-out queue cap is 100 and the pool the tests build has limit 8.
 
 ```rust
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -98,7 +98,7 @@ pub enum WaitTarget {
 }
 ```
 
-`Session` owns the id string. `Pid` and `Seconds` are `u32`, and a zero pid and a zero seconds value are not built by `wait_target`. The enum can still hold a zero if a caller constructs `WaitTarget::Pid(0)` directly, and the parser doesn't.
+`Session` owns the id string; `Pid` and `Seconds` are `u32`, and a zero pid and a zero seconds value are not built by `wait_target`. The enum can still hold a zero if a caller constructs `WaitTarget::Pid(0)` directly, and the parser doesn't.
 
 ```rust
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -112,7 +112,7 @@ pub enum LoopStop {
 }
 ```
 
-`Done`, `Blocked`, and `Reject` are the critic verdicts that stop the loop. `Parked` carries the target that was found. `Turns` means the cap of 20 was already reached at the top of the loop. `GatePaused` carries the command string of the gate that ran out of retries, and the command is data on the stop value. This function doesn't execute it.
+`Done`, `Blocked`, and `Reject` are the critic verdicts that stop the loop; `Parked` carries the target that was found. `Turns` means the cap of 20 was already reached at the top of the loop. `GatePaused` carries the command string of the gate that ran out of retries, and the command is data on the stop value. This function doesn't execute it.
 
 ## 33.2 `Gate` records exits, and `FakeModel` pops a line
 
@@ -142,7 +142,7 @@ impl Gate {
 > - `impl IntoIterator<Item = i32>` lets the caller pass an array such as `[1, 0]` or an iterator such as `std::iter::repeat_n(1, 4)`. Both become the `exits` queue.
 > - `attempts` starts at 0. `check_gates` is the only function that writes it.
 
-`command` is the label that `GatePaused` will clone. The tests use `"cargo test"`, and that string isn't passed to a process API, because `composition.rs` doesn't import `std::process`. `Gate` holds the name and the scripted codes.
+`command` is the label that `GatePaused` will clone, and the tests use `"cargo test"`, and that string isn't passed to a process API, because `composition.rs` doesn't import `std::process`. `Gate` holds the name and the scripted codes.
 
 ```rust
 pub struct FakeModel {
@@ -162,9 +162,9 @@ impl FakeModel {
 }
 ```
 
-`script` collects each item into an owned `String`. `complete` needs `&mut self` because `pop_front` removes a line, and the first call returns the first scripted line. The next call returns the next, and when the queue is empty, `unwrap_or_default` returns `String::new()`, which is `""`. An empty reply still goes through the gates and, if the gates are clear, through `as_tool`. The copied `parse_verdict` returns `Verdict::Reject` when the lowercased text has no `verdict` substring. A model that has run out of lines doesn't spin forever on empty strings once the judge is reached. The judge rejects that empty line and the loop returns `LoopStop::Reject`.
+`script` collects each item into an owned `String`; `complete` needs `&mut self` because `pop_front` removes a line, and the first call returns the first scripted line. The next call returns the next, and when the queue is empty, `unwrap_or_default` returns `String::new()`, which is `""`. An empty reply still goes through the gates and, if the gates are clear, through `as_tool`. The copied `parse_verdict` returns `Verdict::Reject` when the lowercased text has no `verdict` substring. A model that has run out of lines doesn't spin forever on empty strings once the judge is reached. The judge rejects that empty line and the loop returns `LoopStop::Reject`.
 
-`FakeModel` in this module isn't the provider in `provider.rs`, and it has no socket, no HTTP client, and no API key. `complete` returns the next owned line or `""`.
+`FakeModel` in this module isn't the provider in `provider.rs`, and it has no socket, no HTTP client, and no API key, and `complete` returns the next owned line or `""`.
 
 ## 33.3 `nested_fanout` refuses before `schedule`
 
@@ -214,7 +214,7 @@ pub fn nested_fanout_holding(
 > - `saturating_add` returns the sum, or `usize::MAX` when the sum would not fit. `usize::MAX` is greater than any pool limit this harness builds, so an overflowing pair still takes the `Err` branch.
 > - The tests use small numbers: `0 + 9`, `1 + 8`, `0 + 8`, `0 + 2`. Those sums do not overflow. The method is still the comparison the function runs.
 
-`pool.limit()` is the limit stored in `Pool::new`. `Pool::new` keeps `limit.max(1)`, so a constructed pool has a limit of at least 1. `WORKER_BOUND` in the copied supervisor is 8. `Pool::new(WORKER_BOUND)` therefore has `limit()` of 8. `held` is an argument. The function doesn't read `inflight` and doesn't call `acquire` on the refusal path. A parent that already owns one permit passes `held: 1`. The pool object can still show `max_seen` of 0, because this check is arithmetic on the arguments and the limit. It's the caller's report of what it holds.
+`pool.limit()` is the limit stored in `Pool::new`. `Pool::new` keeps `limit.max(1)`, so a constructed pool has a limit of at least 1; `WORKER_BOUND` in the copied supervisor is 8. `Pool::new(WORKER_BOUND)` therefore has `limit()` of 8. `held` is an argument. The function doesn't read `inflight` and doesn't call `acquire` on the refusal path. A parent that already owns one permit passes `held: 1`. The pool object can still show `max_seen` of 0, because this check is arithmetic on the arguments and the limit. It's the caller's report of what it holds.
 
 The refusal test builds `Pool::new(WORKER_BOUND)` and calls `nested_fanout(&pool, 0, WORKER_BOUND + 1)`. Width 9 with held 0 is `9 > 8`, and the error is `ExceedsBound { held: 0, asked: 9, limit: 8 }`. `pool.max_seen()` is 0. The same pool then receives `nested_fanout(&pool, 1, WORKER_BOUND)`, which is `1 + 8 > 8`. That error is `ExceedsBound { held: 1, asked: 8, .. }`. `max_seen` is still 0. `FanBoard::new` is under the `if`, so a refused call doesn't allocate the board, doesn't call `schedule`, and doesn't call `gather_holding`. Tasks have not started.
 

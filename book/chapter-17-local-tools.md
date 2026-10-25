@@ -2,13 +2,15 @@
 
 An agent with a filesystem can clobber a file it never read, walk `..` out of the workspace, or run `rm -rf /` the moment a terminal exists. Chapter 16 can search and extract, with the URL checked first. It still can't read a file in the workspace, patch one, run a command through the approval floor, keep a todo list, or pause to ask the user a question. Those are the everyday tools, and each one has a way to go wrong that a bare function would miss.
 
-The trick is that a path is canonicalized before it is trusted, and a write needs a stamp from a read. `Workspace::resolve` refuses a path that doesn't start with the workspace root, absolute paths included, and a relative `..` that leaves the root is an error. `read_file` records the mtime and the length. `write_file` of a path that was never read, or whose mtime moved, is refused as a stale write, so the model can't clobber a file it hasn't seen. `patch` replaces the one occurrence that matched. The read is capped. The terminal goes through chapter 11's `deny_tool` and then chapter 13's worker, rather than growing a second approval pipeline, with output cut head and tail and the foreground timeout bounded. `TodoStore` is agent-owned state, one list merged by id, with a revision so a stale write can be rejected, and it isn't a file in the user's repository. `clarify` pauses for a user, with a cap on questions and choices. A child agent may not call it. That block is the one chapter 29 will enforce again for a specialist: `clarify`, `delegate_task`, `memory`, `send_message`, and cron stay out of a child's hands.
+The trick is that a path is canonicalized before it is trusted, and a write needs a stamp from a read. `Workspace::resolve` refuses a path that doesn't start with the workspace root, absolute paths included, and a relative `..` that leaves the root is an error. `read_file` records the mtime and the length. `write_file` of a path that was never read, or whose mtime moved, is refused as a stale write, so the model can't clobber a file it hasn't seen. `patch` replaces the one occurrence that matched, and the read is capped.
 
-The limit belongs up front. `read_file`, `write_file`, and `patch_file` aren't `Tool` implementations, so the registry doesn't gain those names for the model to call. The tests and the demo call the functions, the same way chapter 13's tests call the worker. `ClarifyTool` is the exception, because the pause has to sit inside `Tool::call` so the turn waits on it. A later wrapper that registers the file functions would call these same functions.
+The terminal goes through chapter 11's `deny_tool` and then chapter 13's worker, rather than growing a second approval pipeline, with output cut head and tail and the foreground timeout bounded. `TodoStore` is agent-owned state, one list merged by id, with a revision so a stale write can be rejected, and it isn't a file in the user's repository. `clarify` pauses for a user, with a cap on questions and choices, and a child agent may not call it. That block is the one chapter 29 will enforce again for a specialist: `clarify`, `delegate_task`, `memory`, `send_message`, and cron stay out of a child's hands.
+
+The limit belongs up front; `read_file`, `write_file`, and `patch_file` aren't `Tool` implementations, so the registry doesn't gain those names for the model to call. The tests and the demo call the functions, the same way chapter 13's tests call the worker. `ClarifyTool` is the exception, because the pause has to sit inside `Tool::call` so the turn waits on it. A later wrapper that registers the file functions would call these same functions.
 
 These tools are what a later skill actually does. A procedure that says "patch the file, then run the tests" is only real if patch and the terminal exist and are guarded, which is why chapter 25 will have something safe to call when it lets the agent write that procedure down. The stale-write refusal matters for a continuously improving harness in particular: an agent that "fixes" a file it didn't read will store a confident mistake, and reflection will then treat the mistake as experience.
 
-Canonicalization is how `..` and symlinks stop being a string trick. A stamp is a struct you compare. The todo list is a `Vec` plus a revision counter. `clarify`'s pause is a future the test completes with a fake user reply.
+Canonicalization is how `..` and symlinks stop being a string trick, and a stamp is a struct you compare. The todo list is a `Vec` plus a revision counter. `clarify`'s pause is a future the test completes with a fake user reply.
 
 The step is `steps/ch17-local-tools`, package `ch17-local-tools`, library `harness_core`, the module `local_tools` on a copy of chapter 16. `cargo run -p ch17-local-tools --bin ch17-local-tools` prints the escape, the stale write, the file still holding `one`, and the child refusal. `my-harness/tests/ch17.rs` is a write without a prior read.
 
@@ -40,11 +42,11 @@ The step is `steps/ch17-local-tools`, package `ch17-local-tools`, library `harne
 
 ## What this chapter decides
 
-A path is allowed only when `canonicalize` lands under the workspace root. An existing file can be written or patched only after a read in this task, and only while the mtime and length still match. A patch that doesn't match exactly once leaves the file untouched. The terminal asks chapter 11 before it asks chapter 13's worker. The todo list never becomes a file. `clarify` waits inside `call`, and `depth >= 1` refuses before the queued reply moves.
+A path is allowed only when `canonicalize` lands under the workspace root. An existing file can be written or patched only after a read in this task, and only while the mtime and length still match. A patch that doesn't match exactly once leaves the file untouched. The terminal asks chapter 11 before it asks chapter 13's worker; the todo list never becomes a file. `clarify` waits inside `call`, and `depth >= 1` refuses before the queued reply moves.
 
 ## 17.1 The root is a canonical path
 
-`Workspace` holds one `PathBuf`. `resolve` is the only way a caller names a file.
+`Workspace` holds one `PathBuf`, and `resolve` is the only way a caller names a file.
 
 ```rust
 pub fn resolve(&self, raw: &str) -> Result<PathBuf, String> {
@@ -78,19 +80,19 @@ pub fn resolve(&self, raw: &str) -> Result<PathBuf, String> {
 }
 ```
 
-The root is canonicalized first, so a relative root and a symlink root become the same prefix. A relative request is joined onto that prefix. `..` is not interpreted by string chopping. `canonicalize` resolves it, and `starts_with` then answers whether the result is still inside the root.
+The root is canonicalized first, so a relative root and a symlink root become the same prefix; a relative request is joined onto that prefix. `..` is not interpreted by string chopping; `canonicalize` resolves it, and `starts_with` then answers whether the result is still inside the root.
 
-A path that does not exist yet cannot be canonicalized. The file's parent is canonicalized instead, and the final component is joined back on. `inside/new.txt` works when `inside` exists. `../outside.txt` canonicalizes the parent to a directory above the root, `starts_with` fails, and the error contains `escapes`. That is the demo's first line.
+A path that does not exist yet cannot be canonicalized. The file's parent is canonicalized instead, and the final component is joined back on, and `inside/new.txt` works when `inside` exists. `../outside.txt` canonicalizes the parent to a directory above the root, `starts_with` fails, and the error contains `escapes`, and that is the demo's first line.
 
 > **Rust sidebar.** `Path::is_absolute` is true for a path that starts at the filesystem root. `root.join(path)` on a relative path appends components. `starts_with` on `Path` compares components, not a string prefix, so `/workspace` does not count as a prefix of `/workspace-other`. `canonicalize` returns an error if the path is missing, which is why the new-file branch exists. `map_err(|err| err.to_string())` turns `std::io::Error` into the `String` this module uses for every refusal. The model reads that string. It does not read the `io::Error` type.
 
-An absolute path skips the join. `/etc/passwd` does not start with the workspace root, so it is refused. An absolute path that does land inside the root is allowed. That is the adaptation of Hermes: absolute is not a free pass, and a relative escape is an error rather than a warning.
+An absolute path skips the join; `/etc/passwd` does not start with the workspace root, so it is refused. An absolute path that does land inside the root is allowed. That is the adaptation of Hermes: absolute is not a free pass, and a relative escape is an error rather than a warning.
 
-A symlink inside the root that points outside fails the same check. `canonicalize` follows it. The followed path does not start with the root. The unit test does not build a symlink. The `..` case is the one it asserts.
+A symlink inside the root that points outside fails the same check, and `canonicalize` follows it. The followed path does not start with the root; the unit test does not build a symlink, and the `..` case is the one it asserts.
 
 ## 17.2 A write needs a stamp from a read
 
-`FileState` is a `HashMap` from the canonical path to a `Stamp`. The stamp is the mtime and the length.
+`FileState` is a `HashMap` from the canonical path to a `Stamp`; the stamp is the mtime and the length.
 
 ```rust
 pub fn check_stale(&self, path: &Path) -> Result<(), String> {
@@ -112,11 +114,11 @@ A path that does not exist yet has nothing to clobber. Creating it is allowed, a
 
 > **Rust sidebar.** `if let Some(seen) = ... else { return Err(...) }` is the form for "I need the value, and the other case is a return." `Stamp` derives `PartialEq`, so `current != *seen` compares both fields. `*seen` dereferences the reference `get` returned. `SystemTime` equality is the mtime compare. A length change with the same mtime still fails, because both fields are in the struct.
 
-`stamp_of` reads `metadata`. A platform that cannot report mtime contributes `UNIX_EPOCH` rather than failing the read. Two such stamps still compare equal to each other, and a length change is still visible.
+`stamp_of` reads `metadata`, and a platform that cannot report mtime contributes `UNIX_EPOCH` rather than failing the read. Two such stamps still compare equal to each other, and a length change is still visible.
 
 `read_file` resolves, reads the bytes as UTF-8, and calls `note`, which stores the stamp. `write_file` and `patch_file` call `check_stale` before they touch the file. After a successful write or patch, `note` runs again, so the next write in the same task sees the new stamp and is not stale.
 
-The unit test writes `inside/note.txt` with the contents `one`, then calls `write_file` with `two` on a fresh `FileState`. The error contains `stale_write_blocked`. It then reads, writes `two`, and patches. The file on disk ends as `three`.
+The unit test writes `inside/note.txt` with the contents `one`, then calls `write_file` with `two` on a fresh `FileState`; the error contains `stale_write_blocked`. It then reads, writes `two`, and patches; the file on disk ends as `three`.
 
 ## 17.3 Read, write, and a patch that matches once
 
@@ -139,11 +141,11 @@ pub fn read_file(
 
 `write_file` checks stale, creates the parent with `create_dir_all` when there is one, writes the bytes, and notes the new stamp.
 
-`patch_file` is the edit. An empty `old` is refused before any path work, because replacing the empty string would match every file in a way that is not an edit. The path is resolved, the stale check runs, and the file is read. `matches(old).count()` must be exactly one. Zero matches and two matches both return `patch expected one match, found N` and do not call `fs::write`. One match uses `replacen(old, new, 1)`, writes, and notes.
+`patch_file` is the edit. An empty `old` is refused before any path work, because replacing the empty string would match every file in a way that is not an edit. The path is resolved, the stale check runs, and the file is read, and `matches(old).count()` must be exactly one. Zero matches and two matches both return `patch expected one match, found N` and do not call `fs::write`. One match uses `replacen(old, new, 1)`, writes, and notes.
 
 > **Rust sidebar.** `str::matches` yields non-overlapping hits. `count` consumes that iterator. `replacen` stops after the first replacement, which matches the count we just required. The file is left untouched on the error path because `fs::write` is below the `if count != 1` return.
 
-These three functions are not `Tool` implementations. The registry in this chapter does not gain `read_file` as a name the model calls. The tests and the demo call the functions, the same way chapter 13's tests call the worker. `ClarifyTool` is the exception, because the pause has to sit inside `Tool::call` so `turn_from_inbox` waits on it. A later wrapper that registers the file functions would call these same functions. It would not grow a second path check.
+These three functions are not `Tool` implementations; the registry in this chapter does not gain `read_file` as a name the model calls. The tests and the demo call the functions, the same way chapter 13's tests call the worker. `ClarifyTool` is the exception, because the pause has to sit inside `Tool::call` so `turn_from_inbox` waits on it. A later wrapper that registers the file functions would call these same functions, and it would not grow a second path check.
 
 ## 17.4 The terminal asks, then it runs
 
@@ -172,16 +174,16 @@ pub fn run_terminal(
 }
 ```
 
-`deny_tool` returns `None` when the command may run, and `Some(message)` when it may not. The name passed here is `terminal`. Chapter 11 only inspects `terminal` and `execute_code`. Any other name skips the floor. That is why this call uses `terminal` and not a new name. `execute_code` still goes through `check_execute_code` inside `deny_tool`. This function does not replace that path.
+`deny_tool` returns `None` when the command may run, and `Some(message)` when it may not; the name passed here is `terminal`; Chapter 11 only inspects `terminal` and `execute_code`. Any other name skips the floor. That is why this call uses `terminal` and not a new name. `execute_code` still goes through `check_execute_code` inside `deny_tool`. This function does not replace that path.
 
-A denial returns immediately. `denied` is true. The worker path is never opened. The integration test points the worker at `/no/such/sandbox-worker` and sends `rm -rf /`. Chapter 11's hardline answers with a message that starts `BLOCKED (hardline)`. The test asserts `denied`, asserts the text contains `BLOCKED`, and asserts it does not contain `echo hello ran`, which is the line the worker prints for a command it actually ran. A bug that skipped `deny_tool` would try to spawn a binary that is not there. It would not print the worker's success line, and `denied` would be false.
+A denial returns immediately, and `denied` is true; the worker path is never opened. The integration test points the worker at `/no/such/sandbox-worker` and sends `rm -rf /`. Chapter 11's hardline answers with a message that starts `BLOCKED (hardline)`. The test asserts `denied`, asserts the text contains `BLOCKED`, and asserts it does not contain `echo hello ran`, which is the line the worker prints for a command it actually ran. A bug that skipped `deny_tool` would try to spawn a binary that is not there. It would not print the worker's success line, and `denied` would be false.
 
-`FOREGROUND_MAX_TIMEOUT` is 600 seconds. A caller who passes a longer `Duration` is clamped. The timeout argument is still what `sleep-ms` waits on after that clamp.
+`FOREGROUND_MAX_TIMEOUT` is 600 seconds; a caller who passes a longer `Duration` is clamped. The timeout argument is still what `sleep-ms` waits on after that clamp.
 
-The worker split is the adaptation. `sandbox::run_until` waits until the worker process exits. The chapter 13 worker exits on `quit`, not after one job. Sending `echo hello` through `run_until` would sit until the timeout and then report a timeout for a command that had already answered. So `run_terminal` branches:
+The worker split is the adaptation, and `sandbox::run_until` waits until the worker process exits. The chapter 13 worker exits on `quit`, not after one job. Sending `echo hello` through `run_until` would sit until the timeout and then report a timeout for a command that had already answered. So `run_terminal` branches:
 
-- A command that starts with `sleep-ms ` uses `run_until`. That is the worker's slow job, and `run_until` kills the child when the timeout fires. `SandboxError::Timeout` becomes the text `timeout`.
-- Every other command spawns a `Worker`, calls `accept` with the line, then `quit`. `accept` reads one reply. `quit` tells the process to exit so the test does not leave it behind.
+- A command that starts with `sleep-ms ` uses `run_until`. That is the worker's slow job, and `run_until` kills the child when the timeout fires; `SandboxError::Timeout` becomes the text `timeout`.
+- Every other command spawns a `Worker`, calls `accept` with the line, then `quit`, and `accept` reads one reply. `quit` tells the process to exit so the test does not leave it behind.
 
 > **Rust sidebar.** `Worker::spawn(worker).and_then(|mut child| { ... })` is "spawn, and if that succeeded, run this closure." `and_then` on `Result` does not run the closure on `Err`. `child.accept(command)?` returns the `Err` from the closure, which `and_then` then returns as the outer `Err`. `let _ = child.quit()` ignores a quit failure. The process has already given us the line. A failed quit is not a failed command.
 
@@ -189,9 +191,9 @@ The allowed-command test uses `env!("CARGO_BIN_EXE_sandbox-worker")`, the path C
 
 ## 17.5 Truncation, in an order that matters
 
-`truncate_terminal` runs three cuts. Line length, then line count, then bytes.
+`truncate_terminal` runs three cuts; line length, then line count, then bytes.
 
-`DEFAULT_MAX_LINE_LENGTH` is 2,000 characters. A longer line keeps that many `char`s and appends `…`. `DEFAULT_MAX_LINES` is 2,000. Over that, the first half and the last half stay, and the middle becomes `… [N lines omitted] …`. `DEFAULT_MAX_BYTES` is 50,000. Over that, the string is split near the middle on character boundaries and the gap is `… [N bytes omitted] …`.
+`DEFAULT_MAX_LINE_LENGTH` is 2,000 characters, and a longer line keeps that many `char`s and appends `…`. `DEFAULT_MAX_LINES` is 2,000. Over that, the first half and the last half stay, and the middle becomes `… [N lines omitted] …`. `DEFAULT_MAX_BYTES` is 50,000. Over that, the string is split near the middle on character boundaries and the gap is `… [N bytes omitted] …`.
 
 ```rust
 fn floor_char_boundary(text: &str, mut index: usize) -> usize {

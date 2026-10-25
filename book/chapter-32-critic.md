@@ -1,10 +1,10 @@
 # Chapter 32: The Critic
 
-If the same agent that did the work also grades it, the grade tends to agree with the work. Workers work, and someone else checks. That split is what keeps a continuously improving harness from storing its own mistakes as the procedure. The demo hands `judge` the line `verdict: done` and prints `accepted: done`, and a missing word, or a polite sentence that never says `verdict`, comes back `Reject`.
+If the same agent that did the work also grades it, the grade tends to agree with the work, and workers work, and someone else checks. That split is what keeps a continuously improving harness from storing its own mistakes as the procedure. The demo hands `judge` the line `verdict: done` and prints `accepted: done`, and a missing word, or a polite sentence that never says `verdict`, comes back `Reject`.
 
 `judge` is a function. It isn't the `Tool` trait, and it isn't chapter 29's `Job`, so the fix for the mismatch is to stop calling it a tool. `as_tool` is only the name of the wrapper that calls `judge`, and one permit comes off the chapter 29 pool. A judge that ran wide would starve the workers it's judging, which is why the summary quotes that limit again. The parser scans for one word, and the snippet cuts on a character boundary so a slice never lands in the middle of a UTF-8 sequence. The notes lock is a read, and the fan-out queue doesn't gain a task from the grade.
 
-Chapter 33 will loop on this verdict: a continuation, a `wait` target, and the quality-gate commands deferred from earlier. They stay out of this file so one judgment is testable without a state machine. A bad grade is information for the parent. Turning every rejection into a new procedure is how curation inherits a pile of "don't do the thing we just did" skills. Chapter 26 can review the run afterward, with the skill tools, off the hot path.
+Chapter 33 will loop on this verdict: a continuation, a `wait` target, and the quality-gate commands deferred from earlier. They stay out of this file so one judgment is testable without a state machine; a bad grade is information for the parent. Turning every rejection into a new procedure is how curation inherits a pile of "don't do the thing we just did" skills. Chapter 26 can review the run afterward, with the skill tools, off the hot path.
 
 The same rule shows up in smaller form elsewhere: the reviewer's tool slice, and the curator's enqueue, both spend a bounded resource so the check can't become the work.
 
@@ -38,11 +38,11 @@ The step is chapter 31's harness plus `critic`, at `steps/ch32-critic`, package 
 
 `parse_verdict` lowercases the reply, finds `verdict`, and reads the token after the separators. `done`, `blocked`, `wait`, and `continue` map to those variants, and any other token, and a reply with no `verdict` substring, is `Reject`.
 
-`judge` acquires one permit, clones the pool's context `Arc`, locks `notes`, parses, and builds an `Outcome`. `accepted` is `verdict == Verdict::Done`, and the snippet is the reply cut at 4,000 bytes on a character boundary. The notes vec isn't pushed.
+`judge` acquires one permit, clones the pool's context `Arc`, locks `notes`, parses, and builds an `Outcome`. `accepted` is `verdict == Verdict::Done`, and the snippet is the reply cut at 4,000 bytes on a character boundary, and the notes vec isn't pushed.
 
-`as_tool` returns that `Outcome`. `final_gate` returns `Ok(snippet)` when `accepted` is true and `Err(verdict)` otherwise.
+`as_tool` returns that `Outcome`; `final_gate` returns `Ok(snippet)` when `accepted` is true and `Err(verdict)` otherwise.
 
-`demo` judges `verdict: done` and returns `accepted: done`. It reads no key.
+`demo` judges `verdict: done` and returns `accepted: done`, and it reads no key.
 
 ## 32.1 The constants are named, and two of them are not looped
 
@@ -54,9 +54,9 @@ pub const DEFAULT_JUDGE_TIMEOUT_SECS: u64 = 30;
 pub const SNIPPET_CHARS: usize = 4_000;
 ```
 
-`Pool` is the only import from the supervisor. `WORKER_BOUND` isn't imported at the top. `demo` refers to it as `crate::supervisor::WORKER_BOUND` at the call, and the pool's limit is still 8, because `Pool::new` receives that const. The critic doesn't build a second pool type.
+`Pool` is the only import from the supervisor; `WORKER_BOUND` isn't imported at the top. `demo` refers to it as `crate::supervisor::WORKER_BOUND` at the call, and the pool's limit is still 8, because `Pool::new` receives that const. The critic doesn't build a second pool type.
 
-`DEFAULT_MAX_TURNS` is 20, a `u32`, matching the Hermes turn cap. `DEFAULT_JUDGE_TIMEOUT_SECS` is 30, a `u64`. Hermes stores `DEFAULT_JUDGE_TIMEOUT` as 30.0, and this file stores whole seconds. `SNIPPET_CHARS` is `4_000`, which is 4000, and the underscore is a digit separator. Hermes names the same size `_JUDGE_RESPONSE_SNIPPET_CHARS`.
+`DEFAULT_MAX_TURNS` is 20, a `u32`, matching the Hermes turn cap, and `DEFAULT_JUDGE_TIMEOUT_SECS` is 30, a `u64`. Hermes stores `DEFAULT_JUDGE_TIMEOUT` as 30.0, and this file stores whole seconds. `SNIPPET_CHARS` is `4_000`, which is 4000, and the underscore is a digit separator. Hermes names the same size `_JUDGE_RESPONSE_SNIPPET_CHARS`.
 
 `limits` returns the pair the tests assert.
 
@@ -94,11 +94,11 @@ pub struct Outcome {
 }
 ```
 
-`accepted` isn't a second opinion. `judge` sets it from the verdict. `snippet` is an owned prefix of the raw reply, and it isn't a new sentence the critic wrote.
+`accepted` isn't a second opinion; `judge` sets it from the verdict. `snippet` is an owned prefix of the raw reply, and it isn't a new sentence the critic wrote.
 
 ## 32.2 `parse_verdict` scans for one word
 
-The parser is the adaptation. Hermes has `_parse_judge_response`, and this function scans the reply text.
+The parser is the adaptation; Hermes has `_parse_judge_response`, and this function scans the reply text.
 
 ```rust
 pub fn parse_verdict(raw: &str) -> Verdict {
@@ -123,11 +123,11 @@ pub fn parse_verdict(raw: &str) -> Verdict {
 }
 ```
 
-`to_ascii_lowercase` allocates a new `String`. ASCII letters fold. Other bytes stay as they are. `Verdict: Done` becomes a string that contains `verdict: done`, and the original `raw` isn't modified. The snippet helper cuts `raw`, not `lower`, so the snippet keeps the caller's casing.
+`to_ascii_lowercase` allocates a new `String`; ASCII letters fold, and other bytes stay as they are. `Verdict: Done` becomes a string that contains `verdict: done`, and the original `raw` isn't modified. The snippet helper cuts `raw`, not `lower`, so the snippet keeps the caller's casing.
 
 `find("verdict")` returns `Option<usize>`, the byte index of the first match. `let Some(pos) = ... else` is the pattern that returns `Reject` when the word is absent, and the search is a substring search on the lowercased text. It isn't a JSON parse, and it doesn't require the word to sit at column 0. A reply that never contains those seven letters is `Reject`.
 
-`pos + "verdict".len()` is the index just after the word. `"verdict".len()` is 7 bytes, and the range `lower[pos + 7..]` is the suffix. `trim_start_matches` drops a prefix of characters while the closure returns true, and the characters are colon, double quote, space, equals, and single quote. A run of them is removed. `verdict: done`, `verdict:done`, `verdict = done`, and `verdict "done"` all leave a suffix that starts with `done`. The trim stops at the first other character, and it doesn't remove a quote that appears after the word `done`.
+`pos + "verdict".len()` is the index just after the word. `"verdict".len()` is 7 bytes, and the range `lower[pos + 7..]` is the suffix. `trim_start_matches` drops a prefix of characters while the closure returns true, and the characters are colon, double quote, space, equals, and single quote. A run of them is removed, and `verdict: done`, `verdict:done`, `verdict = done`, and `verdict "done"` all leave a suffix that starts with `done`. The trim stops at the first other character, and it doesn't remove a quote that appears after the word `done`.
 
 The `if` chain uses `starts_with`. `done` is tested first, then `blocked`, then `wait`, then `continue`, and a suffix that starts with `done` is `Done` even when more characters follow. The tests pass exact tokens: `verdict: done`, `verdict: blocked`, `verdict: wait`, `verdict: continue`, and they also pass three rejects: the empty string, `looks fine`, and `verdict: maybe`.
 
@@ -135,17 +135,17 @@ Empty string: `find` returns `None`. `Reject`.
 
 `looks fine`: the lowercased text has no `verdict`. `Reject`.
 
-`verdict: maybe`: the suffix after the trim is `maybe`, and it doesn't start with any of the four words. The final `else` is `Reject`.
+`verdict: maybe`: the suffix after the trim is `maybe`, and it doesn't start with any of the four words; the final `else` is `Reject`.
 
-`verdict: done` is `Done`. `verdict: blocked` is `Blocked`. `verdict: wait` is `Wait`. `verdict: continue` is `Continue`, and the interesting failures are the ones the unit tests don't pass. `verdict: donut` takes the done branch, because `starts_with("done")` is true of `donut`, so a nonsense word that happens to share those four letters is accepted. `The verdict is done` finds `verdict` and then sees `is done`, and the trim only strips colon, quote, space, equals, and single quote, so the suffix doesn't start with `done` and the function returns `Reject`. A polite critic that writes a sentence, instead of `verdict: done`, fails closed, and that is what the function returns on those two strings. Neither string is in `done_accepts_and_a_missing_verdict_rejects`.
+`verdict: done` is `Done`; `verdict: blocked` is `Blocked`. `verdict: wait` is `Wait`. `verdict: continue` is `Continue`, and the interesting failures are the ones the unit tests don't pass. `verdict: donut` takes the done branch, because `starts_with("done")` is true of `donut`, so a nonsense word that happens to share those four letters is accepted. `The verdict is done` finds `verdict` and then sees `is done`, and the trim only strips colon, quote, space, equals, and single quote, so the suffix doesn't start with `done` and the function returns `Reject`. A polite critic that writes a sentence, instead of `verdict: done`, fails closed, and that is what the function returns on those two strings. Neither string is in `done_accepts_and_a_missing_verdict_rejects`.
 
-`Wait` parses and doesn't mean the function slept. There is no session id, no pid, and no number of seconds read out of the suffix. The word is the variant, and the continuation loop and the wait target are chapter 33.
+`Wait` parses and doesn't mean the function slept, and there is no session id, no pid, and no number of seconds read out of the suffix. The word is the variant, and the continuation loop and the wait target are chapter 33.
 
-The scan is the whole reply, including newlines. The demo string is `verdict: done\nThe note is short enough.` The word sits on the first line. `find` returns its index, and the suffix starts at the colon. After the trim, `starts_with("done")` matches, and the newline and the sentence stay in the suffix, past the matched prefix. The function doesn't split on `\n` and it doesn't require the verdict to be the only thing on the line. The adaptation is that scan, in place of a structured judge object.
+The scan is the whole reply, including newlines; the demo string is `verdict: done\nThe note is short enough.` The word sits on the first line. `find` returns its index, and the suffix starts at the colon. After the trim, `starts_with("done")` matches, and the newline and the sentence stay in the suffix, past the matched prefix. The function doesn't split on `\n` and it doesn't require the verdict to be the only thing on the line. The adaptation is that scan, in place of a structured judge object.
 
-Chapter 31's demo string is `a\nb\nc`. Put that string through `parse_verdict` and `find("verdict")` returns `None`, and the verdict is `Reject`. `accepted` would be false. `final_gate` would return `Err(Reject)`, and the gather output is three replies and no verdict word. The critic doesn't treat a non-empty summary as finished. Someone has to put the word `verdict` in the text the critic reads, and the demo in this chapter does that with a literal. `judge` doesn't call `fanout::gather`. The two modules sit in one crate and meet only if a caller passes a string from one into the other.
+Chapter 31's demo string is `a\nb\nc`, and put that string through `parse_verdict` and `find("verdict")` returns `None`, and the verdict is `Reject`. `accepted` would be false. `final_gate` would return `Err(Reject)`, and the gather output is three replies and no verdict word. The critic doesn't treat a non-empty summary as finished. Someone has to put the word `verdict` in the text the critic reads, and the demo in this chapter does that with a literal. `judge` doesn't call `fanout::gather`. The two modules sit in one crate and meet only if a caller passes a string from one into the other.
 
-The separators in the trim closure are five characters. Colon is the demo's separator, in `verdict: done`. Space is what a line like `verdict done` would need, and the closure includes it. Equals is included, and a double quote is included, and a single quote is included, and a comma isn't. A suffix that starts with a comma after the word `verdict` doesn't lose that comma, and `,done` doesn't start with `done`. The tests don't pass a comma. The closure is the list of characters the source strips, and it's only a prefix strip. Characters later in the suffix stay, which is why `done\nThe note is short enough.` still starts with `done`.
+The separators in the trim closure are five characters; colon is the demo's separator, in `verdict: done`. Space is what a line like `verdict done` would need, and the closure includes it. Equals is included, and a double quote is included, and a single quote is included, and a comma isn't. A suffix that starts with a comma after the word `verdict` doesn't lose that comma, and `,done` doesn't start with `done`. The tests don't pass a comma. The closure is the list of characters the source strips, and it's only a prefix strip. Characters later in the suffix stay, which is why `done\nThe note is short enough.` still starts with `done`.
 
 `to_ascii_lowercase` copies the whole reply before `find`. A 5,000-`x` reply allocates that lowercase string inside `parse_verdict`, and `snippet_of` allocates another string of 4,000 bytes from the original. Both allocations happen inside `judge`, while the notes guard is held, and the lowercase `String` is a local inside `parse_verdict`. It drops when `parse_verdict` returns, before `Outcome` is built. The snippet is moved into the `Outcome` and lives as long as that value does. The lowercase copy isn't stored on `Outcome`. The bench's reply is one short line plus a second short line, so both allocations are small. The mean `278.9 ns` includes them, plus the permit and the lock, and it doesn't include a 5,000-character reply. That longer reply is the unit test `the_snippet_stops_at_four_thousand_chars`.
 

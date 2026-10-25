@@ -2,13 +2,15 @@
 
 The first time the harness is asked for the release checksum, it answers `unknown`. The second time it answers `sha256sum target/release/harness`.
 
-Same question, same fake model, same four checks chapter 52 uses to score a saved task. What sits between the two scores is a file. Reflection records that the skill was missing. Chapter 25's writer scans a procedure and stores it. The curator archives a stale neighbor and leaves the new skill active. The librarian puts the name on the team index, and the bus carries the notice that the index moved. The second attempt sees that name, calls `skill_view`, and copies the `command:` line out of the file the tool just returned. `suite::Score` says fail, then pass. I ran the binary. The first attempt made 0 tool calls and 1 model call. The second made 1 tool call and 2 model calls.
+Same question, same fake model, same four checks chapter 52 uses to score a saved task. What sits between the two scores is a file; reflection records that the skill was missing. Chapter 25's writer scans a procedure and stores it. The curator archives a stale neighbor and leaves the new skill active. The librarian puts the name on the team index, and the bus carries the notice that the index moved. The second attempt sees that name, calls `skill_view`, and copies the `command:` line out of the file the tool just returned; `suite::Score` says fail, then pass. I ran the binary; the first attempt made 0 tool calls and 1 model call. The second made 1 tool call and 2 model calls.
 
-That is the continuously improving loop the introduction named, on the one task this chapter has, with the model that needs no key. It is a small proof. It is also the first time the book shows a score move because the harness kept something.
+That is the continuously improving loop the introduction named, on the one task this chapter has, with the model that needs no key. It is a small proof; it is also the first time the book shows a score move because the harness kept something.
 
-The crate is `steps/ch53-the-loop-closes`, a copy of chapter 52 plus `improve`. The package is `ch53-the-loop-closes`, the library is still `harness_core`, and the binary that prints the report is `ch53-the-loop-closes`. The MCP gateway stays the other program. This chapter doesn't copy chapter 51.
+The crate is `steps/ch53-the-loop-closes`, a copy of chapter 52 plus `improve`. The package is `ch53-the-loop-closes`, the library is still `harness_core`, and the binary that prints the report is `ch53-the-loop-closes`. The MCP gateway stays the other program; this chapter doesn't copy chapter 51.
 
-A few seams are still seams, and the report is easier to read if you know them before the code. `reflection::execute` can append a memory note. Its `skill_manage` arm formats a string and returns it. The write is a later call to `Writer::create`, and the bytes in that call are the procedure in `skill_markdown`, not a paragraph the reviewer composed. One failed turn doesn't trip `MEMORY_NUDGE_INTERVAL`, which is 10, so the demo notes the real miss and then advances the same counter until `finalize` returns the fork it would return after ten user turns. The curator archives a directory named `root/<skill>`. Writer stores the new skill at `root/procedures/release-checksum`, so the pass is handed a `Skill` slice instead of discovering that tree. `librarian_accept` reads the `Proposal` you pass it. The bus delivers a string afterwards. `run_loop` still doesn't open a `Library` on its own. The second prompt is a string this module builds from `team_md` and from `SkillSession::index`.
+A few seams are still seams, and the report is easier to read if you know them before the code; `reflection::execute` can append a memory note. Its `skill_manage` arm formats a string and returns it. The write is a later call to `Writer::create`, and the bytes in that call are the procedure in `skill_markdown`, not a paragraph the reviewer composed. One failed turn doesn't trip `MEMORY_NUDGE_INTERVAL`, which is 10, so the demo notes the real miss and then advances the same counter until `finalize` returns the fork it would return after ten user turns.
+
+The curator archives a directory named `root/<skill>`. Writer stores the new skill at `root/procedures/release-checksum`, so the pass is handed a `Skill` slice instead of discovering that tree. `librarian_accept` reads the `Proposal` you pass it; the bus delivers a string afterwards. `run_loop` still doesn't open a `Library` on its own. The second prompt is a string this module builds from `team_md` and from `SkillSession::index`.
 
 | Section | What it walks |
 |---|---|
@@ -39,27 +41,27 @@ A few seams are still seams, and the report is easier to read if you know them b
 
 ## What this chapter decides
 
-`TASK` is `release-checksum`. `EXPECT` is `sha256sum target/release/harness`. `TASK_PROMPT` is `what command prints the release checksum?` The prompt doesn't contain the skill name, and it doesn't contain the command. `MAX_ATTEMPTS` is 2. There is no third call to `run_attempt`.
+`TASK` is `release-checksum`; `EXPECT` is `sha256sum target/release/harness`. `TASK_PROMPT` is `what command prints the release checksum?` The prompt doesn't contain the skill name, and it doesn't contain the command. `MAX_ATTEMPTS` is 2; there is no third call to `run_attempt`.
 
-`judge` builds a `suite::Score`. The name is the task. `passed` is the same four checks `run_saved_eval` uses: the stop reason is `Finished`, the final assistant text equals `EXPECT`, the transcript contains a call named `skill_view`, and the number of tool calls is within `DISPATCH_BOUND`, which is 8. The before row fails the text check and the tool check. The after row meets all four. `append_event` pushes one JSON object per score, in that order, onto a `Vec<String>`. `FAIL_THRESHOLD` stays `None` on the suite this crate copied. This chapter doesn't read it.
+`judge` builds a `suite::Score`; the name is the task. `passed` is the same four checks `run_saved_eval` uses: the stop reason is `Finished`, the final assistant text equals `EXPECT`, the transcript contains a call named `skill_view`, and the number of tool calls is within `DISPATCH_BOUND`, which is 8. The before row fails the text check and the tool check; the after row meets all four. `append_event` pushes one JSON object per score, in that order, onto a `Vec<String>`. `FAIL_THRESHOLD` stays `None` on the suite this crate copied; this chapter doesn't read it.
 
-`LookingModel` is the fake. If a tool message contains a `command:` line, the reply is that line's text, copied, not looked up from `EXPECT`. If any message contains the skill name and no command has come back yet, the reply is a `skill_view` call. Otherwise the reply is the text `unknown`. Each reply carries an empty `Usage`, so `run_loop` counts the model call toward `Budget::default`, whose `max_iterations` is 8. The success path uses 1 call, then 2.
+`LookingModel` is the fake; if a tool message contains a `command:` line, the reply is that line's text, copied, not looked up from `EXPECT`. If any message contains the skill name and no command has come back yet, the reply is a `skill_view` call; otherwise the reply is the text `unknown`. Each reply carries an empty `Usage`, so `run_loop` counts the model call toward `Budget::default`, whose `max_iterations` is 8; the success path uses 1 call, then 2.
 
-`SkillView` is a `Tool`. `call` reads `name` and returns `skills::skill_view`. That is chapter 24's reader. The library's copy of the body is what the librarian stored. The tool doesn't read the library. If the file is missing, the tool returns `ToolError::Failed` and the model never sees a `command:` line.
+`SkillView` is a `Tool`; `call` reads `name` and returns `skills::skill_view`; that is chapter 24's reader. The library's copy of the body is what the librarian stored; the tool doesn't read the library. If the file is missing, the tool returns `ToolError::Failed` and the model never sees a `command:` line.
 
-`reflect` notes one user turn and calls `finalize`. That fork is `None`, and the report says `first_turn_fork=false`. It then notes turns until `user_turns` is `MEMORY_NUDGE_INTERVAL` and calls `finalize` again. The fork's tool list includes `memory`, because `spawn_reviewer(true)` is what `finalize` returns when the memory flag is set. The scripted line is `memory reply was {final}; skill release-checksum was absent`. `execute` pushes the argument onto the notes. The argument in the run is `reply was unknown; skill release-checksum was absent`.
+`reflect` notes one user turn and calls `finalize`; that fork is `None`, and the report says `first_turn_fork=false`. It then notes turns until `user_turns` is `MEMORY_NUDGE_INTERVAL` and calls `finalize` again. The fork's tool list includes `memory`, because `spawn_reviewer(true)` is what `finalize` returns when the memory flag is set. The scripted line is `memory reply was {final}; skill release-checksum was absent`; `execute` pushes the argument onto the notes. The argument in the run is `reply was unknown; skill release-checksum was absent`.
 
 `Writer::create` with `Actor::Agent` scans that procedure as `Trust::AgentCreated`. The body is safe, so the file lands at `procedures/release-checksum/SKILL.md`. A second body, the one with `ignore previous instructions` and `curl $API_KEY`, comes back `WriteError::Staged` and leaves no `leak` directory. That path is the guard test, not the happy path.
 
-`Curator::enqueue` pushes `curate` and leaves the disk alone, which is the chapter 27 request path. `pass` then snapshots and walks the slice we handed it. The new skill has `age_days: 0`, so it stays `Active`. `scratch` is `ARCHIVE_AFTER_DAYS` old, origin agent, not pinned, so its directory moves to `.archive/scratch`. The queue length after `pass` is still 1. `pass` doesn't pop.
+`Curator::enqueue` pushes `curate` and leaves the disk alone, which is the chapter 27 request path. `pass` then snapshots and walks the slice we handed it. The new skill has `age_days: 0`, so it stays `Active`. `scratch` is `ARCHIVE_AFTER_DAYS` old, origin agent, not pinned, so its directory moves to `.archive/scratch`; the queue length after `pass` is still 1. `pass` doesn't pop.
 
-`skill_propose` queues one `Proposal` whose body is the file we just read. `librarian_accept` with `Trust::Community` and `force: false` calls chapter 25's scanner through `allow_install`. The safe body is allowed. The index goes from version 1 to version 2. `team_md` is `# TEAM` and `- release-checksum (team)`. It names the skill and it doesn't contain the command. `submit` on topic `skills` delivers `skills.updated v2` to the librarian subscription. `redact_for_egress` leaves that string as it was. I checked the received body in the run below.
+`skill_propose` queues one `Proposal` whose body is the file we just read. `librarian_accept` with `Trust::Community` and `force: false` calls chapter 25's scanner through `allow_install`; the safe body is allowed. The index goes from version 1 to version 2; `team_md` is `# TEAM` and `- release-checksum (team)`. It names the skill and it doesn't contain the command. `submit` on topic `skills` delivers `skills.updated v2` to the librarian subscription. `redact_for_egress` leaves that string as it was. I checked the received body in the run below.
 
-The second prompt is the question, then `team_md`, then the chapter 24 index from `SkillSession::open`. Both name the task. Neither contains `EXPECT`. `LookingModel` calls `skill_view` because the name is there. The tool returns the file. The next model call copies the command. `judge` marks the score passed.
+The second prompt is the question, then `team_md`, then the chapter 24 index from `SkillSession::open`; both name the task; neither contains `EXPECT`. `LookingModel` calls `skill_view` because the name is there; the tool returns the file; the next model call copies the command. `judge` marks the score passed.
 
-`runaway` is the bound that isn't the happy path. A provider that always asks for `echo`, under `max_iterations` of 2, stops `Partial` with `usage.calls == 3`. Two calls run tools. The third is the budget wrap-up, and because that reply is also a tool call, the loop returns `Partial` rather than `Budget`. It stops. `escape_is_refused` asks `write_file` for `../…`. Chapter 25's path check rejects it, and the file is not created beside the root.
+`runaway` is the bound that isn't the happy path. A provider that always asks for `echo`, under `max_iterations` of 2, stops `Partial` with `usage.calls == 3`; two calls run tools. The third is the budget wrap-up, and because that reply is also a tool call, the loop returns `Partial` rather than `Budget`. It stops. `escape_is_refused` asks `write_file` for `../…`; Chapter 25's path check rejects it, and the file is not created beside the root.
 
-`demo` builds a temp directory, calls `run`, prints `render`, and deletes the directory. No key is read. `prepare_live` is `prepare_live_evals` from chapter 52. `close_loop` doesn't call it.
+`demo` builds a temp directory, calls `run`, prints `render`, and deletes the directory; no key is read. `prepare_live` is `prepare_live_evals` from chapter 52; `close_loop` doesn't call it.
 
 The lines I got from `cargo run -p ch53-the-loop-closes --bin ch53-the-loop-closes` are in [The run](#5310-demo-and-the-run). The two that carry the thesis are:
 
@@ -70,7 +72,7 @@ after: pass stop=Finished final=sha256sum target/release/harness tool_calls=1 mo
 
 ## 53.1 The task, the error, and the report
 
-The task is one string constant so the prompt, the skill name, the score name, and the tool argument can't drift apart. `EXPECT` is the other constant, and it appears in the skill body and in `judge`. It doesn't appear in `LookingModel`. If those two ever disagree, the second score fails, which is what you want from a check that claims the model copied the file.
+The task is one string constant so the prompt, the skill name, the score name, and the tool argument can't drift apart. `EXPECT` is the other constant, and it appears in the skill body and in `judge`; it doesn't appear in `LookingModel`. If those two ever disagree, the second score fails, which is what you want from a check that claims the model copied the file.
 
 ```rust
 pub const TASK: &str = "release-checksum";
@@ -103,17 +105,17 @@ pub enum LoopError {
 }
 ```
 
-`Attempt` is one score plus the measurements the harness actually produced on that turn. `suite::Score` is a name and a bool. `stop` is `TurnOutcome::label`, so the printed word is `Finished` or `Partial` or whatever the loop returned. `final_text` is the last assistant message that asked for no tools, which is the same scan `run_saved_eval` uses. `tool_calls` is the sum of `tool_calls.len()` across the transcript. `model_calls` is how many times `Provider::complete` ran. I keep both, because a turn can finish with a model call and zero tools, and that is exactly the first attempt.
+`Attempt` is one score plus the measurements the harness actually produced on that turn; `suite::Score` is a name and a bool. `stop` is `TurnOutcome::label`, so the printed word is `Finished` or `Partial` or whatever the loop returned. `final_text` is the last assistant message that asked for no tools, which is the same scan `run_saved_eval` uses. `tool_calls` is the sum of `tool_calls.len()` across the transcript. `model_calls` is how many times `Provider::complete` ran. I keep both, because a turn can finish with a model call and zero tools, and that is exactly the first attempt.
 
-`Report` holds the two attempts and the counters from the path between them. `nudge_due_on_first_turn` is the honest bit: after the one failure, `finalize` returned `None`. `user_turns_at_fork` is 10, the interval, not a claim that the user spoke ten times. `notes` is what `execute` pushed. `skill_file` is whether `SKILL.md` is still on disk after the curator pass. `fresh_state` is the in-memory `State` of the new skill. `queue_len` is the curator's queue after `pass`. `scratch_archived` is the directory move, not just the enum. `library_version` and `team_md` are the librarian's index. `skill_index` is chapter 24's rendered index, kept so a test can show it names the task and still doesn't contain the command. `bus` is the `Publish` value. `bus_body` is what the subscriber received after redact. `trajectory` is the two `append_event` lines. `attempts` is `MAX_ATTEMPTS`.
+`Report` holds the two attempts and the counters from the path between them. `nudge_due_on_first_turn` is the honest bit: after the one failure, `finalize` returned `None`. `user_turns_at_fork` is 10, the interval, not a claim that the user spoke ten times; `notes` is what `execute` pushed. `skill_file` is whether `SKILL.md` is still on disk after the curator pass. `fresh_state` is the in-memory `State` of the new skill; `queue_len` is the curator's queue after `pass`. `scratch_archived` is the directory move, not just the enum. `library_version` and `team_md` are the librarian's index. `skill_index` is chapter 24's rendered index, kept so a test can show it names the task and still doesn't contain the command. `bus` is the `Publish` value. `bus_body` is what the subscriber received after redact. `trajectory` is the two `append_event` lines. `attempts` is `MAX_ATTEMPTS`.
 
-`render` turns that into the lines the binary prints. The team markdown is joined with ` | ` so the report stays one line per fact. Empty lines are dropped. The skill index is reduced to a bool, `skill_index_names_task`, because the index is a paragraph and the question is whether the name is in it.
+`render` turns that into the lines the binary prints. The team markdown is joined with ` | ` so the report stays one line per fact; empty lines are dropped. The skill index is reduced to a bool, `skill_index_names_task`, because the index is a paragraph and the question is whether the name is in it.
 
 > **Rust sidebar.** `Provider::complete` takes `&self`. A `u64` field would have to be mutated through a shared reference, and the compiler won't allow that. `AtomicU64` is the counter that can move with `fetch_add` while the loop holds the provider as `&dyn Provider`. `Ordering::Relaxed` is enough here because the count is read after `run_loop` returns, on the same thread that made the calls. Nothing else synchronizes on it.
 
 ## 53.2 How a score is a chapter 52 score
 
-`run_saved_eval` passes when four things are true at once: `StopReason::Finished`, the final text equals the expected string, the expected tool shows up in the transcript (or no tool shows up, for `direct`), and the in-flight peak of the delay tool stays within `DISPATCH_BOUND`. This task has no delay tool. The bound I can actually check is the number of tool calls on the turn, and 0 or 1 is inside 8. Using a weaker check and calling it the same function would be a fake. Using these four, with the tool name required, means a model that already knew the command and never called `skill_view` would fail. That matters, because the command is a constant in this file. The score only passes if the transcript took the tool path.
+`run_saved_eval` passes when four things are true at once: `StopReason::Finished`, the final text equals the expected string, the expected tool shows up in the transcript (or no tool shows up, for `direct`), and the in-flight peak of the delay tool stays within `DISPATCH_BOUND`. This task has no delay tool; the bound I can actually check is the number of tool calls on the turn, and 0 or 1 is inside 8. Using a weaker check and calling it the same function would be a fake. Using these four, with the tool name required, means a model that already knew the command and never called `skill_view` would fail. That matters, because the command is a constant in this file. The score only passes if the transcript took the tool path.
 
 ```rust
 fn judge(outcome: &TurnOutcome, messages: &[Message], model_calls: u64) -> Attempt {
@@ -146,7 +148,7 @@ fn judge(outcome: &TurnOutcome, messages: &[Message], model_calls: u64) -> Attem
 }
 ```
 
-`run_attempt` registers `SkillView` on a `ToolRegistry`, starts from one user message, and calls `run_loop` with `Budget::default` and a fresh `CancelFlag`. The dispatcher bound is `DISPATCH_BOUND`. The provider is `LookingModel`. When the loop returns, `judge` reads the transcript the loop mutated. `suite::append_event` happens later, in `close_loop`, once both attempts exist, so the trajectory order is before then after.
+`run_attempt` registers `SkillView` on a `ToolRegistry`, starts from one user message, and calls `run_loop` with `Budget::default` and a fresh `CancelFlag`. The dispatcher bound is `DISPATCH_BOUND`; the provider is `LookingModel`. When the loop returns, `judge` reads the transcript the loop mutated. `suite::append_event` happens later, in `close_loop`, once both attempts exist, so the trajectory order is before then after.
 
 ```rust
 pub fn append_event(log: &mut Vec<String>, name: &str, passed: bool) {
@@ -154,13 +156,13 @@ pub fn append_event(log: &mut Vec<String>, name: &str, passed: bool) {
 }
 ```
 
-That function lives in `suite`, unchanged. The two lines in the report are what it pushed for this task. Both rows use the name `release-checksum`. The bool is the thing that moved.
+That function lives in `suite`, unchanged; the two lines in the report are what it pushed for this task. Both rows use the name `release-checksum`. The bool is the thing that moved.
 
-I didn't route this task through `saved_evals`. Those three names still mean what chapter 9 named, and this copy of the harness still runs them. Adding a fourth name to that list would make every later reader think chapter 9 had shipped a checksum task. The score type is shared. The task list isn't.
+I didn't route this task through `saved_evals`; those three names still mean what chapter 9 named, and this copy of the harness still runs them. Adding a fourth name to that list would make every later reader think chapter 9 had shipped a checksum task. The score type is shared. The task list isn't.
 
 ## 53.3 The fake model copies, or it says unknown
 
-A scripted provider that always emits the right tool call would pass the second attempt even if the skill had never been written. A scripted provider that always emits the command would pass even if `skill_view` returned garbage. `LookingModel` does neither. It looks at the messages `run_loop` already has.
+A scripted provider that always emits the right tool call would pass the second attempt even if the skill had never been written. A scripted provider that always emits the command would pass even if `skill_view` returned garbage; `LookingModel` does neither. It looks at the messages `run_loop` already has.
 
 ```rust
 fn command_from(text: &str) -> Option<String> {
@@ -177,7 +179,7 @@ fn command_from(text: &str) -> Option<String> {
 }
 ```
 
-`let Some(rest) = … else { continue }` is the same early-continue chapter 2's matches use, written as a let-else so the rest of the loop body is the success path. The prefix is the literal `command:`. The skill body has one such line. The frontmatter has `name:` and `description:` and `origin:`, which don't match.
+`let Some(rest) = … else { continue }` is the same early-continue chapter 2's matches use, written as a let-else so the rest of the loop body is the success path. The prefix is the literal `command:`; the skill body has one such line. The frontmatter has `name:` and `description:` and `origin:`, which don't match.
 
 ```rust
 #[async_trait]
@@ -441,7 +443,9 @@ trajectory: {"name":"release-checksum","passed":true}
 attempts: 2
 ```
 
-Read it as a trace, not as a summary I smoothed over. `before` finished, which means the loop didn't hit the budget or a stall. It finished on the text `unknown`, with no tool call, after one model call. The trajectory JSON is `append_event` of that score. `first_turn_fork=false` is the interval doing what chapter 26 specified. `user_turns=10` is the counter at the second `finalize`. The note is the scripted argument, and it contains the real final text. `skill_file: true` is the path after curation. The curator checked 2, archived 1, left the fresh skill `Active`, and left one `curate` on the queue. `scratch_archived: true` is the moved directory. The librarian's version is 2. The team line names the skill and not the command. The chapter 24 index also names the task. The bus delivered one envelope, and the body after redact is `skills.updated v2`. `after` finished on the command, with one `skill_view` and two model calls. `attempts` is 2.
+Read it as a trace, not as a summary I smoothed over. `before` finished, which means the loop didn't hit the budget or a stall. It finished on the text `unknown`, with no tool call, after one model call. The trajectory JSON is `append_event` of that score. `first_turn_fork=false` is the interval doing what chapter 26 specified. `user_turns=10` is the counter at the second `finalize`. The note is the scripted argument, and it contains the real final text.
+
+`skill_file: true` is the path after curation. The curator checked 2, archived 1, left the fresh skill `Active`, and left one `curate` on the queue. `scratch_archived: true` is the moved directory. The librarian's version is 2. The team line names the skill and not the command. The chapter 24 index also names the task. The bus delivered one envelope, and the body after redact is `skills.updated v2`. `after` finished on the command, with one `skill_view` and two model calls. `attempts` is 2.
 
 The bench id is `53/close_once`, in `benches/improve.rs`. It calls `improve::run` on a fresh directory and black-boxes the second score. The Benchmarks workflow is where this book's Criterion means come from. I don't have that run's `mean.point_estimate` for this id, so I'm not printing one.
 
@@ -530,13 +534,13 @@ Two smaller checks, if you want them beside the milestone. A skill whose text ma
 
 ## What the run proved, and what it left open
 
-The introduction said a continuously improving harness gets better at a kind of task because it keeps what it learned. This demo is that sentence, narrowed until it can be tested.
+The introduction named a harness that gets better at a kind of task because it keeps what it learned. This demo is that claim on one task, with the model that needs no key.
 
-It proved a before and an after on one task. The before is a real `run_loop` finish: `StopReason::Finished`, final text `unknown`, no tool call, one model call, `suite::Score.passed == false`, and one trajectory line from `append_event`. The after is another `run_loop` finish on the same score function: final text `sha256sum target/release/harness`, one `skill_view`, two model calls, `passed == true`. The command the model printed was copied from the tool result. `team_md` and the skill index were checked, in the test, to make sure they didn't already contain that command. The file had been through `Writer::create`, so the scan ran. The curator pass ran and archived the stale neighbor. The librarian accept ran and bumped the version. The bus delivered the notice. The dangerous-skill guard and the path guard and the budget wrap-up still hold on this copy of the harness.
+Both finishes are real `run_loop` calls, scored by the same function, each with a trajectory line from `append_event`. The test checked `team_md` and the skill index so the command was not already sitting there. The file went through `Writer::create`, so the scan ran. The curator archived the stale neighbor. The librarian bumped the version. The bus delivered the notice. The dangerous-skill guard, the path guard, and the budget wrap-up still hold on this copy.
 
-It didn't prove that a model can notice its own mistake. `LookingModel` is a few branches on the transcript. The note is a format string that interpolates the final text into a script we wrote. The procedure in the skill is `skill_markdown`, a constant. Advancing the nudge counter to 10 is not ten conversations. The curator was handed a `Skill` slice. The second prompt was concatenated in `close_loop`, because `run_loop` still has no parameter for a skill index. One task moved. `echo-hello`, `direct`, and `eight-reads` were not re-scored by this binary. Nothing here shows the harness getting better at a family of tasks, or keeping the skill across a process restart, or refusing a skill that is dangerous in a way the five regexes miss.
+A model noticing its own mistake sits outside this run. `LookingModel` is a few branches on the transcript. The note is a format string; the procedure is `skill_markdown`, a constant. Advancing the nudge counter to 10 is not ten conversations. The curator was handed a `Skill` slice. The second prompt was concatenated in `close_loop`, because `run_loop` still has no parameter for a skill index. One task moved. `echo-hello`, `direct`, and `eight-reads` were not re-scored. Nothing here shows a family of tasks getting better, a skill surviving a restart, or a refusal the five regexes miss.
 
-A real model run would replace `LookingModel` with `LiveProvider`, let that model propose the skill body, send the body through `Writer::create`, and score the second attempt with the same `judge`. The interesting failure, if the key is present and the model is mediocre, is a second score that stays false because the body it wrote didn't contain a `command:` line `command_from` can copy. That swap is not in this file. `prepare_live` only forwards to `prepare_live_evals`, and `close_loop` doesn't call it.
+A live swap would use `LiveProvider`, let that model propose the body, send it through `Writer::create`, and score again with the same `judge`. A mediocre body with no `command:` line leaves the second score false. `command_from` has nothing to copy. That swap is not in this file. `prepare_live` only forwards to `prepare_live_evals`, and `close_loop` doesn't call it.
 
 What does take a key is the CLI copied forward from chapter 52. With no key, I ran:
 
@@ -557,8 +561,8 @@ error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 cargo run -p ch53-harness-cli --bin ch53-harness -- --live --api-key "$OPENROUTER_API_KEY" ask "say hello using the echo tool"
 ```
 
-If you want the closing loop on a live model, the change is in `run_attempt`: construct a `LiveProvider` when the key is present, and keep `LookingModel` when it isn't. I didn't do that here, because a chapter that sometimes calls the network is a chapter CI can't re-run, and because the score would then depend on a transcript I can't paste without having run it.
+The live closing loop would be a change in `run_attempt`: `LiveProvider` when the key is present, `LookingModel` when it isn't. I left that out. A chapter that sometimes calls the network is a chapter CI can't re-run, and the score would then depend on a transcript I can't paste without having run it.
 
-The harness can go further along the seams this chapter left open. A reviewer fork whose `skill_manage` calls `Writer::create`, so the note and the file are one turn. A curator that lists `procedures/` and builds the `Skill` slice from the directories, so age is a property of the file rather than a number we pass in. A bus body that is the proposal, if we ever define that encoding, with `librarian_accept` as the subscriber's handler rather than a call beside `submit`. A second task that needs a different command, so a hard-coded `skill_markdown` can't satisfy both. The saved set from chapter 9, still on this crate, is the regression check while those change. The server line stays where chapter 51 left it: three offer shapes, a load of 100, no socket.
+The open seams are the ones the opening already named. `skill_manage` returns a string, the curator is handed a slice, and `run_loop` builds the second prompt itself. The saved set from chapter 9 stays the regression check. The server line stays at chapter 51: three offer shapes, a load of 100, no socket.
 
-The loop in the introduction was ten lines. The harness around it is the rest of the book. This chapter is the first time those lines, a skill, and a score sit in one run, and the score is different the second time. That's the ending I can stand behind. The limits above are part of it.
+I expected the reviewer to be the write. The file shows a string from `skill_manage` and a later `Writer::create`. You already have the turn, the stores, the team, and the other program that holds the catalog. They share a run here. The score on this one task is what moved. The limits in this section are the size of that claim.

@@ -4,7 +4,7 @@ The 51st `web_search` never reaches the backend. The counter is already at 50, `
 
 A continuously improving harness will want to search, and later to spawn a subagent, on the way to a lesson. The cap is the boring reason that loop stays a loop: fifty searches, then the turn has to answer with what it already has. The harness bound of 8 doesn't know that `web_search` has been called fifty times, or that one upstream is down. Putting the cap, the breaker, and the idempotent retry on the server means every client inherits them. Chapter 16 names its search tool `web_search` so this cap applies, and it copies chapter 14, not this crate. Chapter 23 vendors this crate, and learned tools sit on top of the limit.
 
-The package is `ch15-limits`, the library is `gw_limits`, and the bench is `limits`. Chapter 7's catalog and chapter 8's session gateway are vendored under `src/catalog/` and `src/session.rs`, so this step builds alone, with no path dependency on `ch07-catalog` or `ch08-session-toolsets`. The public names chapter 23 already calls stay: `Catalog`, `LimitedGateway` (`new`, `catalog`, `open_session`, `session_tools`), and `SessionView`. The crate binds no socket. `LimitedGateway` wraps the session view with a per-tool gate. `ACCEPT_BOUND` and `EXECUTE_BOUND` are the chapter 5 numbers, 32 and 8, now per tool. `CallError::Cap` is what that 51st search receives, and `dispatch` checks the breaker, the cap, the permit, and the timeout in that order.
+The package is `ch15-limits`, the library is `gw_limits`, and the bench is `limits`. Chapter 7's catalog and chapter 8's session gateway are vendored under `src/catalog/` and `src/session.rs`, so this step builds alone, with no path dependency on `ch07-catalog` or `ch08-session-toolsets`. The public names chapter 23 already calls stay: `Catalog`, `LimitedGateway` (`new`, `catalog`, `open_session`, `session_tools`), and `SessionView`; the crate binds no socket. `LimitedGateway` wraps the session view with a per-tool gate. `ACCEPT_BOUND` and `EXECUTE_BOUND` are the chapter 5 numbers, 32 and 8, now per tool. `CallError::Cap` is what that 51st search receives, and `dispatch` checks the breaker, the cap, the permit, and the timeout in that order.
 
 A permit is an owned guard, so releasing it is a drop, including when a timeout wins. The breaker here is closed or open, and a half-open probe is the state left for later. `Result` is `CallError`, with `Cap` as its own variant, so a policy refusal stays distinct from a backend failure.
 
@@ -30,27 +30,27 @@ A permit is an owned guard, so releasing it is a drop, including when a timeout 
 
 ## What this chapter decides
 
-`LimitedGateway::new` wraps the chapter 8 session gateway. `catalog`, `open_session`, and `session_tools` are the same methods the smoke test already calls. The catalog is empty until something loads it.
+`LimitedGateway::new` wraps the chapter 8 session gateway; `catalog`, `open_session`, and `session_tools` are the same methods the smoke test already calls. The catalog is empty until something loads it.
 
-`set_idempotent("echo", true)` marks one tool. The default is false, so a write does not retry.
+`set_idempotent("echo", true)` marks one tool; the default is false, so a write does not retry.
 
-`dispatch` checks the breaker first. An open breaker returns `CallError::OpenBreaker` and does not call the backend. Then it checks the cap. The 51st `web_search` returns the search sentence and does not call the backend. The same is true for `delegate_task`, except `{"action":"list"}` (and `steer`, and `stop`) still run.
+`dispatch` checks the breaker first. An open breaker returns `CallError::OpenBreaker` and does not call the backend; then it checks the cap. The 51st `web_search` returns the search sentence and does not call the backend. The same is true for `delegate_task`, except `{"action":"list"}` (and `steer`, and `stop`) still run.
 
 A transport failure on an idempotent tool calls the backend a second time. A 429 or a 503 does not, even when the tool is idempotent. A status such as 500 does retry once, and only then. A non-idempotent tool never gets that second call.
 
 `CallOpts { hedge: true }` on an idempotent tool always makes the second call, and the first `Ok` wins. The same option on a write makes one call.
 
-Three `503` results open the breaker for that tool name. A different tool is not open. A success in the middle clears the count, so two failures, one success, and two more failures stay closed.
+Three `503` results open the breaker for that tool name; a different tool is not open. A success in the middle clears the count, so two failures, one success, and two more failures stay closed.
 
-`hold_accept` takes one of 32 accept permits. The 33rd is `Saturated`. `run_with_timeout` takes one accept permit and one execute permit, waits 30 milliseconds against a 5 second sleep, and drops both. The test finishes in under two seconds, and both counts are full again.
+`hold_accept` takes one of 32 accept permits; the 33rd is `Saturated`. `run_with_timeout` takes one accept permit and one execute permit, waits 30 milliseconds against a 5 second sleep, and drops both. The test finishes in under two seconds, and both counts are full again.
 
-The demo marks `echo` idempotent. The script fails once with a transport error, then returns `ok`. Three `503`s on `search` open the breaker. The next `search` prints `breaker: open`.
+The demo marks `echo` idempotent; the script fails once with a transport error, then returns `ok`; three `503`s on `search` open the breaker. The next `search` prints `breaker: open`.
 
 ## Permits and the caps
 
 ### 15.1 One flat package, and the names chapter 23 already calls
 
-The file is `steps/ch15-limits/src/lib.rs`. The package name is `ch15-limits`. The library name is `gw_limits`. A test writes `gw_limits::LimitedGateway`. The harness layout puts code under `crates/harness-core`. This server step keeps a flat `src/` tree:
+The file is `steps/ch15-limits/src/lib.rs`; the package name is `ch15-limits`; the library name is `gw_limits`; a test writes `gw_limits::LimitedGateway`. The harness layout puts code under `crates/harness-core`; this server step keeps a flat `src/` tree:.
 
 ```text
 steps/ch15-limits/
@@ -66,7 +66,7 @@ steps/ch15-limits/
   tests/session.rs
 ```
 
-`pub mod catalog` loads `src/catalog/mod.rs`. `pub mod session` loads `src/session.rs`. I copied chapter 7 and chapter 8 into those files so the step builds alone. `Cargo.toml` has no path dependency on the earlier server crates.
+`pub mod catalog` loads `src/catalog/mod.rs`; `pub mod session` loads `src/session.rs`. I copied chapter 7 and chapter 8 into those files so the step builds alone. `Cargo.toml` has no path dependency on the earlier server crates.
 
 The top of `lib.rs` is the module comment, the two modules, the imports, and the re-exports.
 
@@ -96,9 +96,9 @@ pub use crate::catalog::Gateway as Catalog;
 pub use crate::session::{SessionError, SessionView};
 ```
 
-`pub use crate::catalog::Gateway as Catalog` publishes the chapter 7 gateway as `Catalog`. `catalog::Gateway` and `Catalog` are the same type. Chapter 23 writes `gw_limits::Catalog`, `gw_limits::LimitedGateway`, and `gw_limits::SessionView`. Those three stay. `SessionError` is also at the crate root, because the session module's own methods return it. The methods chapter 23 calls are `new`, `catalog`, `open_session`, and `session_tools`.
+`pub use crate::catalog::Gateway as Catalog` publishes the chapter 7 gateway as `Catalog`; `catalog::Gateway` and `Catalog` are the same type. Chapter 23 writes `gw_limits::Catalog`, `gw_limits::LimitedGateway`, and `gw_limits::SessionView`; those three stay. `SessionError` is also at the crate root, because the session module's own methods return it. The methods chapter 23 calls are `new`, `catalog`, `open_session`, and `session_tools`.
 
-`LimitedGateway` owns a `SessionGateway`. That struct owns a `catalog::Gateway`. The limits code calls through `inner`.
+`LimitedGateway` owns a `SessionGateway`; that struct owns a `catalog::Gateway`; the limits code calls through `inner`.
 
 ```rust
 pub struct SessionGateway {
@@ -116,7 +116,7 @@ impl SessionGateway {
 }
 ```
 
-`Gateway::new` stores a snapshot built from an empty card list, so `is_empty` is true. A fresh `LimitedGateway` stays empty until `reload`. The limits tests never load tools. The copied catalog and session tests do, through `gw_limits::catalog` and `gw_limits::session`.
+`Gateway::new` stores a snapshot built from an empty card list, so `is_empty` is true; a fresh `LimitedGateway` stays empty until `reload`. The limits tests never load tools; the copied catalog and session tests do, through `gw_limits::catalog` and `gw_limits::session`.
 
 ### 15.2 `ACCEPT_BOUND`, `EXECUTE_BOUND`, and the cap of 50
 
@@ -130,13 +130,13 @@ pub const MAX_WEB_SEARCHES: u32 = 50;
 pub const MAX_SUBAGENTS: u32 = 50;
 ```
 
-`ACCEPT_BOUND` is 32. `Semaphore::new` starts the accept counter there. `hold_accept` takes one permit at a time. The 33rd take is `CallError::Saturated`, which is what the comment says.
+`ACCEPT_BOUND` is 32; `Semaphore::new` starts the accept counter there; `hold_accept` takes one permit at a time. The 33rd take is `CallError::Saturated`, which is what the comment says.
 
-`EXECUTE_BOUND` is 8. `run_with_timeout` waits for one execute permit before the body runs. Eight bodies can hold one at once. A ninth waits, after it already holds an accept permit.
+`EXECUTE_BOUND` is 8; `run_with_timeout` waits for one execute permit before the body runs; eight bodies can hold one at once. A ninth waits, after it already holds an accept permit.
 
 `Semaphore::new` and `available_permits` use `usize`, so those two constants are `usize`. The streak and the caps live in `AtomicU32`, so the other three constants are `u32`. `web_searches.load(...) >= MAX_WEB_SEARCHES` type-checks because both sides are `u32`.
 
-`BREAKER_THRESHOLD` is 3. `MAX_WEB_SEARCHES` and `MAX_SUBAGENTS` are 50. `block_cap` refuses `web_search` once that counter is already 50, so the 50th search is the last one that runs. A spawning `delegate_task` uses the same line. `list`, `steer`, and `stop` add zero. `format!("{MAX_WEB_SEARCHES}")` prints `50`, and the test names `gw_limits::ACCEPT_BOUND` directly.
+`BREAKER_THRESHOLD` is 3; `MAX_WEB_SEARCHES` and `MAX_SUBAGENTS` are 50. `block_cap` refuses `web_search` once that counter is already 50, so the 50th search is the last one that runs; a spawning `delegate_task` uses the same line. `list`, `steer`, and `stop` add zero; `format!("{MAX_WEB_SEARCHES}")` prints `50`, and the test names `gw_limits::ACCEPT_BOUND` directly.
 
 ## What a call returns
 
@@ -150,7 +150,7 @@ pub enum FailureKind {
 }
 ```
 
-`Transport` carries no data. The empty script queue uses it, and the retry test uses it for a failure that may run again. `Status` holds a `u16`. The tests pass `429` and `503`. `retriable` has a separate arm for every other status, so `Status(500)` is a different answer from `Status(503)`.
+`Transport` carries no data; the empty script queue uses it, and the retry test uses it for a failure that may run again. `Status` holds a `u16`; the tests pass `429` and `503`. `retriable` has a separate arm for every other status, so `Status(500)` is a different answer from `Status(503)`.
 
 > **Rust sidebar: an enum is one variant**
 >
@@ -166,11 +166,11 @@ pub enum Outcome {
 }
 ```
 
-There is no `Copy`. `String` is not `Copy`. Moving `Outcome::Ok` moves the body string. `Clone` is still derived, so a caller who needs two copies can ask. `dispatch` moves the outcome.
+There is no `Copy`; `String` is not `Copy`; moving `Outcome::Ok` moves the body string. `Clone` is still derived, so a caller who needs two copies can ask; `dispatch` moves the outcome.
 
-`Ok` on this enum is my variant. `Result`'s `Ok` is a different type. `backend.call` returns `Outcome`. `dispatch` returns `Result<String, CallError>`. The last match in `dispatch` turns `Outcome::Ok(body)` into `Ok(body)`, and `Outcome::Fail(kind)` into `Err(CallError::Failed(kind))`.
+`Ok` on this enum is my variant; `Result`'s `Ok` is a different type; `backend.call` returns `Outcome`; `dispatch` returns `Result<String, CallError>`. The last match in `dispatch` turns `Outcome::Ok(body)` into `Ok(body)`, and `Outcome::Fail(kind)` into `Err(CallError::Failed(kind))`.
 
-`Outcome::Ok("ok".into())` allocates when the script is built. `"ok".into()` uses `From<&str> for String`.
+`Outcome::Ok("ok".into())` allocates when the script is built; `"ok".into()` uses `From<&str> for String`.
 
 ### 15.5 `CallOpts`
 
@@ -181,7 +181,7 @@ pub struct CallOpts {
 }
 ```
 
-`hedge` is public. The hedge test builds `CallOpts { hedge: true }`. Every other call in the tests and the binary passes `CallOpts::default()`. `Default` on the struct is `Default` on each field, and `bool`'s default is `false`. A default call does not hedge.
+`hedge` is public; the hedge test builds `CallOpts { hedge: true }`. Every other call in the tests and the binary passes `CallOpts::default()`. `Default` on the struct is `Default` on each field, and `bool`'s default is `false`; a default call does not hedge.
 
 `Copy` means `dispatch` receives a copy of the struct. The function reads `opts.hedge` twice: once inside the retry guard, and once as the hedge branch condition.
 
@@ -207,7 +207,7 @@ pub enum CallError {
 >
 > `Result<String, CallError>` holds either the body or one `CallError`, and `try_accept(tool)?` either binds the permit or returns `Err(CallError::Saturated)`. `#[derive(Error)]` from `thiserror` is the `Display` text: `OpenBreaker` prints `open`, `Cap`'s `{0}` prints the block sentence, and `Failed` prints `failed`, while `assert_eq!` still sees `FailureKind::Status(429)` through `PartialEq`. `Result` is in [chapter 1](chapter-01-first-contact.md).
 
-`dispatch` returns `OpenBreaker`, `Cap`, and `Failed`. The permit helpers return `Saturated` from `map_err`. `run_with_timeout` returns `Timeout` when the timer wins.
+`dispatch` returns `OpenBreaker`, `Cap`, and `Failed`; the permit helpers return `Saturated` from `map_err`. `run_with_timeout` returns `Timeout` when the timer wins.
 
 ## The scripted backend
 
@@ -223,7 +223,7 @@ pub trait Backend: Send + Sync {
 >
 > A trait is the list of methods a type promises, which is why `Script` can implement `Backend` and `dispatch` can take `&dyn Backend` without naming `Script`. `Send + Sync` is the same bound chapter 3 put on `Tool`. `call` returns `Outcome` directly, and the only `async` function in this file is `run_with_timeout`, which never calls the backend. Traits are in [chapter 3](chapter-03-tools.md).
 
-`Script::call` ignores `tool`. The gateway has already branched on the name: the breaker, the cap, and the idempotent flag are all keyed by that string.
+`Script::call` ignores `tool`; the gateway has already branched on the name: the breaker, the cap, and the idempotent flag are all keyed by that string.
 
 ### 15.8 `Script`
 
@@ -259,7 +259,7 @@ impl Backend for Script {
 }
 ```
 
-`new` takes the `Vec`. `into()` builds a `VecDeque`, and `pop_front` removes the oldest outcome. The first value I pushed is the first `call` returns.
+`new` takes the `Vec`; `into()` builds a `VecDeque`, and `pop_front` removes the oldest outcome. The first value I pushed is the first `call` returns.
 
 `calls` starts at 0, and `fetch_add(1, Ordering::SeqCst)` adds one as a single step. The old value is unused, as the sidebar just above says, and `calls()` loads the same atomic. `lock().expect("script")` panics if the mutex is poisoned, which means a thread panicked while holding it. `pop_front` then `unwrap_or` yields `Fail(Transport)` on an empty deque. The open-breaker bench's idle script is that empty deque, and the open breaker returns before `call` pops it. `_tool` is required by the trait and unread here.
 
@@ -288,7 +288,7 @@ impl ToolGate {
 }
 ```
 
-The struct is private. `Semaphore::new(32)` and `Semaphore::new(8)` are different counters. Filling accept leaves execute at 8.
+The struct is private; `Semaphore::new(32)` and `Semaphore::new(8)` are different counters; filling accept leaves execute at 8.
 
 > **Rust sidebar: `Arc` and a semaphore**
 >
@@ -304,7 +304,7 @@ struct Breaker {
 }
 ```
 
-`Default` is `failures: 0` and `open: false`. `or_default()` builds that on the first failure, then adds one. Tests see `open` through `breaker_open`. They see a cleared streak by watching later failures stay closed. Once `open` is true, `note_success` leaves both fields alone.
+`Default` is `failures: 0` and `open: false`; `or_default()` builds that on the first failure, then adds one; tests see `open` through `breaker_open`. They see a cleared streak by watching later failures stay closed. Once `open` is true, `note_success` leaves both fields alone.
 
 ## The surface chapter 23 calls
 
@@ -333,9 +333,9 @@ impl LimitedGateway {
     }
 ```
 
-The `impl` continues through the methods below. `inner` is `SessionGateway::new()`, which is `Gateway::new()`. The catalog starts empty. The three maps start empty. A tool name is inserted on first use: `set_idempotent` inserts a bool, `gate` inserts a `ToolGate`, `note_failure` inserts a `Breaker`. A tool that has only succeeded has no breaker row. `breaker_open` treats a missing row as closed.
+The `impl` continues through the methods below; `inner` is `SessionGateway::new()`, which is `Gateway::new()`; the catalog starts empty. The three maps start empty. A tool name is inserted on first use: `set_idempotent` inserts a bool, `gate` inserts a `ToolGate`, `note_failure` inserts a `Breaker`. A tool that has only succeeded has no breaker row. `breaker_open` treats a missing row as closed.
 
-`web_searches` and `subagents` are one counter each, shared by every session on this gateway. This file never stores 0 back into either atomic. `new` is the reset. The fields are private.
+`web_searches` and `subagents` are one counter each, shared by every session on this gateway. This file never stores 0 back into either atomic; `new` is the reset; the fields are private.
 
 ### 15.12 `catalog`, `open_session`, and `session_tools`
 
@@ -353,7 +353,7 @@ pub fn session_tools(&self, session_id: &str) -> Option<SessionView> {
 }
 ```
 
-`catalog` returns `&Catalog`. The inner method returns `&Gateway`. The alias makes them the same reference, borrowed for as long as `&self`. `gateway.catalog().is_empty()` is true on a new gateway.
+`catalog` returns `&Catalog`; the inner method returns `&Gateway`; the alias makes them the same reference, borrowed for as long as `&self`. `gateway.catalog().is_empty()` is true on a new gateway.
 
 `open_session` forwards the id. The inner method locks the session map, calls `session_id.into()`, and `entry(...).or_insert_with(Session::new)` inserts only when the id is new.
 
@@ -378,9 +378,9 @@ pub fn set_idempotent(&self, tool: &str, idempotent: bool) {
 }
 ```
 
-`to_string()` allocates the map key. `insert` replaces a previous bool for the same key. The hedge test sets `echo` to true and `write` to false. Those are two keys. `expect("policies")` is the poison message. The guard drops at the end of the statement, so the lock is gone before `dispatch` calls the backend.
+`to_string()` allocates the map key; `insert` replaces a previous bool for the same key. The hedge test sets `echo` to true and `write` to false; those are two keys. `expect("policies")` is the poison message. The guard drops at the end of the statement, so the lock is gone before `dispatch` calls the backend.
 
-`set_idempotent("write", false)` writes the key even though a missing key is already treated as false. `is_idempotent` then finds `Some(false)`.
+`set_idempotent("write", false)` writes the key even though a missing key is already treated as false; `is_idempotent` then finds `Some(false)`.
 
 ### 15.14 `is_idempotent`
 
@@ -395,7 +395,7 @@ fn is_idempotent(&self, tool: &str) -> bool {
 }
 ```
 
-`get` returns `Option<&bool>`. `copied()` turns that into `Option<bool>` because `bool` is `Copy`. `unwrap_or(false)` is the answer for a name nobody inserted. `search` in the breaker test was never marked, so this returns false, and a 503 on `search` does not retry.
+`get` returns `Option<&bool>`; `copied()` turns that into `Option<bool>` because `bool` is `Copy`. `unwrap_or(false)` is the answer for a name nobody inserted. `search` in the breaker test was never marked, so this returns false, and a 503 on `search` does not retry.
 
 The bool is copied out before the lock ends. `dispatch` holds that local across `backend.call`.
 

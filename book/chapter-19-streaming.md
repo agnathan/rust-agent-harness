@@ -1,8 +1,8 @@
 # Chapter 19: Streaming
 
-`<thi` arrives, and the scrubber emits nothing. The next chunk is `nk>secret</think>ok`. The two pieces meet in one buffer, the closed pair is removed, and the caller sees `ok`. The secret never becomes text. Chapter 18 can choose an adapter and a route, and the reply it handles is still buffered: the whole message arrives, then the harness looks at it. A user watching a long answer, and a loop that could overlap a safe tool with the rest of the reply, both want the tokens as they come, including a thinking block that must stay out of the text the user sees and out of the transcript the next turn sends.
+`<thi` arrives, and the scrubber emits nothing, and the next chunk is `nk>secret</think>ok`. The two pieces meet in one buffer, the closed pair is removed, and the caller sees `ok`, and the secret never becomes text. Chapter 18 can choose an adapter and a route, and the reply it handles is still buffered: the whole message arrives, then the harness looks at it. A user watching a long answer, and a loop that could overlap a safe tool with the rest of the reply, both want the tokens as they come, including a thinking block that must stay out of the text the user sees and out of the transcript the next turn sends.
 
-This chapter folds a stream into the `Event` values chapter 1 already defined. As in chapter 18, the part isn't wired into `drive_loop` yet. The tests call it. `Delta` is one chunk, `Assembler` folds chunks into the text and the tool calls, and `ThinkScrubber` has `feed`, `flush`, and `reset`. A tag that arrives split stays buffered until the scrubber can see the whole token, so a partial tag isn't emitted as text. Folding plain chunks matches joining them in a buffer, which is how you can tell the scrubber is a filter and not a rewriter of ordinary prose.
+This chapter folds a stream into the `Event` values chapter 1 already defined. As in chapter 18, the part isn't wired into `drive_loop` yet; the tests call it. `Delta` is one chunk, `Assembler` folds chunks into the text and the tool calls, and `ThinkScrubber` has `feed`, `flush`, and `reset`. A tag that arrives split stays buffered until the scrubber can see the whole token, so a partial tag isn't emitted as text. Folding plain chunks matches joining them in a buffer, which is how you can tell the scrubber is a filter and not a rewriter of ordinary prose.
 
 A read can run while later chunks arrive, and a write still waits. That overlap is the shape chapter 9 described and left for here. Chapter 39's chat gateway folds these same events into one platform message, skipping tool chunks so a chat user doesn't see the raw call. Chapter 41's caption and chapter 40's page text are different untrusted streams, and they don't go through this scrubber. What this chapter protects is the model stream itself. Chapter 20 is about to store the session, and a continuously improving harness has to store the text the user was meant to see. A leaked think block becomes a memory, then a skill, then a lesson, so scrubbing on the way through the folder is cheaper than trying to scrub history later.
 
@@ -41,19 +41,19 @@ The step is `steps/ch19-streaming`, package `ch19-streaming`, the module `stream
 
 `ThinkScrubber::feed("<think>secret</think>hello")` plus `flush` is `hello`.
 
-`feed("<thi")` returns nothing. `feed("nk>secret</think>ok")` returns `ok`. The secret is not in the output.
+`feed("<thi")` returns nothing, and `feed("nk>secret</think>ok")` returns `ok`; the secret is not in the output.
 
-`<思考>秘密</思考>ok` is `ok`. `see <think> later` is kept, because the tag is not at the start or after a newline and it never closes. A newline, then `<think>secret` with no close, flushes to an empty string.
+`<思考>秘密</思考>ok` is `ok`; `see <think> later` is kept, because the tag is not at the start or after a newline and it never closes. A newline, then `<think>secret` with no close, flushes to an empty string.
 
-`Assembler` pushes `Delta::Text` through the scrubber. `Delta::Tool { read_only: true }` is appended to `started` immediately. A write goes to a deferred list. `finish` flushes the scrubber and then appends the deferred names. The test sees `echo` before `finish`, and `echo` then `write` after.
+`Assembler` pushes `Delta::Text` through the scrubber, and `Delta::Tool { read_only: true }` is appended to `started` immediately. A write goes to a deferred list. `finish` flushes the scrubber and then appends the deferred names. The test sees `echo` before `finish`, and `echo` then `write` after.
 
-The demo chunks are `hel`, `<thi`, `nk>no</think>`, `lo`, and a read-only `echo`. The reply is `hello`. Started tools are `echo`.
+The demo chunks are `hel`, `<thi`, `nk>no</think>`, `lo`, and a read-only `echo`; the reply is `hello`, and started tools are `echo`.
 
-`fold_text` and `buffer_join` on 100 copies of `hello ` are the same string. The fold is the streamed assembly. The join is the buffered reply. Neither calls a model.
+`fold_text` and `buffer_join` on 100 copies of `hello ` are the same string; the fold is the streamed assembly, and the join is the buffered reply. Neither calls a model.
 
 ## 19.1 `stream` is not in `drive_loop`
 
-The file is `steps/ch19-streaming/crates/harness-core/src/stream.rs`. The module comment is the policy.
+The file is `steps/ch19-streaming/crates/harness-core/src/stream.rs`, and the module comment is the policy.
 
 ```rust
 //! Book chapter 19. Stream deltas fold into one reply. Think blocks are
@@ -61,15 +61,15 @@ The file is `steps/ch19-streaming/crates/harness-core/src/stream.rs`. The module
 //! stream finishes. A write waits.
 ```
 
-`lib.rs` in this step declares `pub mod stream;`. The `pub use` list does not re-export the names. Callers write `harness_core::stream::ThinkScrubber`. This crate is chapter 18 copied forward, so `pub mod adapters;` is still there too. Streaming does not go through the adapters. It has its own module.
+`lib.rs` in this step declares `pub mod stream;`. The `pub use` list does not re-export the names; callers write `harness_core::stream::ThinkScrubber`. This crate is chapter 18 copied forward, so `pub mod adapters;` is still there too; streaming does not go through the adapters, and it has its own module.
 
 As in chapter 18, the new module stays off the hot path. `agent.rs` in this step never names `stream`, `ThinkScrubber`, `Assembler`, or `fold_text`. `drive_loop` is unchanged: it still takes `&dyn Provider` and still calls `provider.complete(&send)` inside the cancel `select`, and `budget_wrap_up` and `soft_wrap_up` call `provider.complete` the same way. Those three calls are every model call in the file. `complete` returns `Vec<Event>` for a finished reply, which is a whole answer rather than a `Delta`.
 
-That is intentional. Chapter 9's loop, and the evals that drive it, still see one reply string on a `Message`. This module is how a stream of chunks becomes that string, and how a think block is removed while the chunks are still arriving. The tests construct the chunks themselves. Wiring `Assembler` into `drive_loop` would mean the loop consumes deltas the scripted provider does not yield. The folder can wait. The scrubber is already testable.
+That is intentional; Chapter 9's loop, and the evals that drive it, still see one reply string on a `Message`. This module is how a stream of chunks becomes that string, and how a think block is removed while the chunks are still arriving. The tests construct the chunks themselves; wiring `Assembler` into `drive_loop` would mean the loop consumes deltas the scripted provider does not yield. The folder can wait, and the scrubber is already testable.
 
-The callers in this step are `tests/streaming.rs`, `benches/streaming.rs`, and `src/bin/chapter_demo.rs`. Integration tests and the bin sit outside the library, so they use the `pub` items. The tag search helpers are private. The tests reach them only by what `feed` and `flush` return.
+The callers in this step are `tests/streaming.rs`, `benches/streaming.rs`, and `src/bin/chapter_demo.rs`. Integration tests and the bin sit outside the library, so they use the `pub` items; the tag search helpers are private. The tests reach them only by what `feed` and `flush` return.
 
-`fold_deltas` in the bench is not a second parser for the final answer. It calls `fold_text`. Chapter 9 still sees one reply. The stream is how that reply was assembled. Nothing here opens a socket, and nothing here parses server-sent events.
+`fold_deltas` in the bench is not a second parser for the final answer, and it calls `fold_text`; Chapter 9 still sees one reply. The stream is how that reply was assembled; nothing here opens a socket, and nothing here parses server-sent events.
 
 ## 19.2 The nine tags
 
@@ -89,11 +89,11 @@ pub const THINK_TAGS: &[&str] = &[
 ];
 ```
 
-`&[&str]` is a shared reference to an array of shared string references. The array lives for the whole program. Nothing in the file pushes a tenth tag. Every search walks this slice from the start.
+`&[&str]` is a shared reference to an array of shared string references; the array lives for the whole program; nothing in the file pushes a tenth tag. Every search walks this slice from the start.
 
-The English names are the words inside the angle brackets. `REASONING_SCRATCHPAD` is stored in uppercase. The search lowercases both the buffer and the tag with `to_ascii_lowercase` before it compares, so `<reasoning_scratchpad>` matches this entry. The four CJK names do not change under ASCII lowercase. They match as written.
+The English names are the words inside the angle brackets, and `REASONING_SCRATCHPAD` is stored in uppercase. The search lowercases both the buffer and the tag with `to_ascii_lowercase` before it compares, so `<reasoning_scratchpad>` matches this entry. The four CJK names do not change under ASCII lowercase, and they match as written.
 
-`<think>` is not a prefix of `<thinking>`. Both spellings share `<think` and then differ: the shorter tag has `>` where the longer tag has `i`. `str::find("<think>")` does not hit inside `<thinking>`. The same is true of the close tags. `</think>` is not a substring of `</thinking>`, because the `>` does not sit immediately after `k`. The list can contain both names. A buffer that holds a finished `<thinking>` pair is stripped as that longer tag. I say this because the search really is `str::find` of the whole tag, and a reader who sees `think` listed before `thinking` should know the shorter spelling does not eat the longer one.
+`<think>` is not a prefix of `<thinking>`; both spellings share `<think` and then differ: the shorter tag has `>` where the longer tag has `i`. `str::find("<think>")` does not hit inside `<thinking>`; the same is true of the close tags. `</think>` is not a substring of `</thinking>`, because the `>` does not sit immediately after `k`, and the list can contain both names. A buffer that holds a finished `<thinking>` pair is stripped as that longer tag. I say this because the search really is `str::find` of the whole tag, and a reader who sees `think` listed before `thinking` should know the shorter spelling does not eat the longer one.
 
 ## 19.3 `ThinkScrubber`: `feed`, `flush`, and `reset`
 
@@ -117,9 +117,9 @@ impl ThinkScrubber {
     }
 ```
 
-`Default` sets `in_block` to `false` and `buf` to an empty `String`. `new` is that default. The fields are private. A test cannot set `in_block` from outside. It can only see the strings `feed` and `flush` return.
+`Default` sets `in_block` to `false` and `buf` to an empty `String`, and `new` is that default; the fields are private, and a test cannot set `in_block` from outside. It can only see the strings `feed` and `flush` return.
 
-`reset` forces both fields back to the start and returns nothing. Text sitting in `buf` is dropped, including a partial tag that had not been emitted yet. `clear` keeps the allocation and sets the length to zero. No test calls `reset`. It is the public way to drop state between turns without emitting the tail. `flush` is the one that can still return text.
+`reset` forces both fields back to the start and returns nothing. Text sitting in `buf` is dropped, including a partial tag that had not been emitted yet. `clear` keeps the allocation and sets the length to zero; no test calls `reset`. It is the public way to drop state between turns without emitting the tail. `flush` is the one that can still return text.
 
 `feed` is the whole state machine.
 
@@ -168,13 +168,13 @@ impl ThinkScrubber {
     }
 ```
 
-An empty chunk returns `String::new()` before anything else. The hold buffer is not flushed and not appended to. `feed("")` while `buf` holds `<thi` leaves `<thi` there. The caller gets an empty string. No test passes an empty chunk. The branch is first so a blank delta cannot take the fast path or the scanner.
+An empty chunk returns `String::new()` before anything else. The hold buffer is not flushed and not appended to, and `feed("")` while `buf` holds `<thi` leaves `<thi` there; the caller gets an empty string. No test passes an empty chunk, and the branch is first so a blank delta cannot take the fast path or the scanner.
 
-The fast path is the next `if`. All three conditions have to be true: not inside a block, nothing held, and the chunk has no `<`. Then `feed` returns `text.to_string()` and does not call `find_tag`. The tag list is not walked. A plain delta pays one allocation, the copy into the returned `String`, and nothing else. `contains` scans the chunk for the byte `<`. These tags all use `<`. A chunk that hides a tag without that character takes the fast path and is returned as-is. The pitfall section already says a fullwidth bracket is not caught. The condition is the character `<`, ASCII `0x3C`.
+The fast path is the next `if`; all three conditions have to be true: not inside a block, nothing held, and the chunk has no `<`. Then `feed` returns `text.to_string()` and does not call `find_tag`, and the tag list is not walked. A plain delta pays one allocation, the copy into the returned `String`, and nothing else; `contains` scans the chunk for the byte `<`, and these tags all use `<`. A chunk that hides a tag without that character takes the fast path and is returned as-is. The pitfall section already says a fullwidth bracket is not caught, and the condition is the character `<`, ASCII `0x3C`.
 
-Any other chunk falls through. `self.buf.push_str(text)` appends the new bytes onto the hold. `push_str` copies the chunk onto the end of the existing allocation. When the allocation is too small, `String` grows. Growth is amortized: the buffer usually has spare capacity, and a grow copies the old bytes once so the next several appends fit. The next chunk is appended to the suffix already held, so `<thi` plus `nk>` becomes `<think>` in one buffer. Clearing `buf` at the start of every `feed` would drop that suffix, the second half of the tag would arrive with no memory of the first half, and the split-tag test would see `nk>secret` in the output.
+Any other chunk falls through, and `self.buf.push_str(text)` appends the new bytes onto the hold. `push_str` copies the chunk onto the end of the existing allocation; when the allocation is too small, `String` grows. Growth is amortized: the buffer usually has spare capacity, and a grow copies the old bytes once so the next several appends fit. The next chunk is appended to the suffix already held, so `<thi` plus `nk>` becomes `<think>` in one buffer. Clearing `buf` at the start of every `feed` would drop that suffix, the second half of the tag would arrive with no memory of the first half, and the split-tag test would see `nk>secret` in the output.
 
-Two chunks are enough to see the hold. The first is the real test's opening, not a made-up trace.
+Two chunks are enough to see the hold; the first is the real test's opening, not a made-up trace.
 
 | Chunk | Buffer afterward | What `feed` returns |
 |---|---|---|
@@ -187,19 +187,19 @@ Two chunks are enough to see the hold. The first is the real test's opening, not
 >
 > `buf` is one owned `String`. The bytes at the front are text the scrubber hasn't decided about yet, and the bytes at the end may be the start of a tag. `push_str` adds the new chunk after that tail, so the unfinished `<thi` and the next chunk's `nk>` are neighbors in the same allocation, which is what makes them one tag. Emitting means `push_str` of a prefix of `buf` into `out`, then `drain` of that same prefix. `drain(..emit)` removes the bytes the caller is allowed to see and shifts the tail down to index 0. The tail stays in `buf`. Its length comes from `partial_suffix`: the longest proper prefix of a tag that `buf` currently ends with. A finished tag isn't a hold, because the scanners above the hold have already had a chance to match it. Slicing `&self.buf[..emit]` requires `emit` to fall on a character boundary. The suffix helper checks that before it reports a hold length. A CJK tag is three bytes per character, so cutting one byte into `思` would panic.
 
-`out` starts empty on every `feed`. It is the visible text from this chunk only, not the whole reply. The caller appends the returned `String` onto its own buffer. The `loop` walks `buf` until it has to wait.
+`out` starts empty on every `feed`, and it is the visible text from this chunk only, not the whole reply. The caller appends the returned `String` onto its own buffer. The `loop` walks `buf` until it has to wait.
 
-Inside a block, `find_tag(..., false)` looks for any close tag. On a hit, `drain(..idx + len)` throws away everything up to and including that close tag. The text before the close is not copied into `out`. That is the secret disappearing. `in_block` becomes false, and `continue` runs the loop again on whatever followed the close tag. A bool does not remember which open tag started the block. The first close tag in the list-search order that `find` locates ends it. The tests close the same name they opened.
+Inside a block, `find_tag(..., false)` looks for any close tag. On a hit, `drain(..idx + len)` throws away everything up to and including that close tag. The text before the close is not copied into `out`; that is the secret disappearing. `in_block` becomes false, and `continue` runs the loop again on whatever followed the close tag. A bool does not remember which open tag started the block. The first close tag in the list-search order that `find` locates ends it, and the tests close the same name they opened.
 
 If no close tag is present, `partial_suffix(..., false)` measures a trailing prefix of a close tag only. `drain(..len - hold)` deletes the rest. The secret in front of a partial `</thi` is deleted. `</thi` stays, so the next chunk can finish `</think>`. Then `break`. Nothing from inside the block was pushed to `out`.
 
 Outside a block, the loop tries three things in order.
 
-`find_closed_pair` wins first. A finished `<think>secret</think>` anywhere in the buffer is removed, including after ordinary words. `out.push_str(&self.buf[..start])` keeps the text before the open tag. `drain(..end)` drops the open tag, the inside, and the close tag. `continue` looks at what followed. A second pair in the same buffer is handled on the next turn of the loop. `a<think>x</think>b<think>y</think>c` becomes `abc` by that `continue`. The tests pass one pair. The `continue` is why a second pair does not need a second `feed`.
+`find_closed_pair` wins first. A finished `<think>secret</think>` anywhere in the buffer is removed, including after ordinary words. `out.push_str(&self.buf[..start])` keeps the text before the open tag. `drain(..end)` drops the open tag, the inside, and the close tag; `continue` looks at what followed. A second pair in the same buffer is handled on the next turn of the loop. `a<think>x</think>b<think>y</think>c` becomes `abc` by that `continue`; the tests pass one pair. The `continue` is why a second pair does not need a second `feed`.
 
-`find_open_at_boundary` runs only when no closed pair exists. It enters the block when an open tag sits at index 0 or the byte before it is `\n`. Text before that index is kept. The open tag itself is drained and not emitted. `in_block` becomes true, and `continue` processes the inside with the in-block branch, which drops it if the close has not arrived.
+`find_open_at_boundary` runs only when no closed pair exists. It enters the block when an open tag sits at index 0 or the byte before it is `\n`, and text before that index is kept. The open tag itself is drained and not emitted. `in_block` becomes true, and `continue` processes the inside with the in-block branch, which drops it if the close has not arrived.
 
-`partial_suffix(..., true)` runs when the buffer has no closed pair and no boundary open. `emit = buf.len() - hold` is the visible prefix. That prefix is pushed to `out` and drained. The hold stays. Then `break`, because the next bytes have to come from a later `feed` or from `flush`.
+`partial_suffix(..., true)` runs when the buffer has no closed pair and no boundary open; `emit = buf.len() - hold` is the visible prefix. That prefix is pushed to `out` and drained, and the hold stays. Then `break`, because the next bytes have to come from a later `feed` or from `flush`.
 
 `flush` is the end of the stream.
 
@@ -216,9 +216,9 @@ Outside a block, the loop tries three things in order.
     }
 ```
 
-`std::mem::take` replaces `buf` with `String::default()`, which is empty, and returns the old `String`. When `in_block` is false, that old string is the return value. A held partial tag that never became a block is emitted. `feed("<thi")` returns `""` and leaves `<thi` in `buf`. `flush` then returns `"<thi"`. The hold protected the stream while another chunk might still arrive. Flush means no more chunks. A partial that never opened a block is ordinary text again.
+`std::mem::take` replaces `buf` with `String::default()`, which is empty, and returns the old `String`. When `in_block` is false, that old string is the return value. A held partial tag that never became a block is emitted; `feed("<thi")` returns `""` and leaves `<thi` in `buf`; `flush` then returns `"<thi"`. The hold protected the stream while another chunk might still arrive, and flush means no more chunks. A partial that never opened a block is ordinary text again.
 
-When `in_block` is true, `tail` is a fresh empty string. The old `buf` is then `clear`ed, which drops the unclosed thought. `in_block` is set false either way. The following `clear` is redundant after `take`, because `take` already left an empty buffer, and it is what drops the secret when `take` was skipped. An unterminated block comes back as `""`. Leaking that tail would put the thought in the reply. The function drops it.
+When `in_block` is true, `tail` is a fresh empty string. The old `buf` is then `clear`ed, which drops the unclosed thought, and `in_block` is set false either way. The following `clear` is redundant after `take`, because `take` already left an empty buffer, and it is what drops the secret when `take` was skipped. An unterminated block comes back as `""`, and leaking that tail would put the thought in the reply; the function drops it.
 
 The newline test shows the split between `feed`'s return and `flush`. `feed("\n<think>secret")` sees an open tag after a newline, emits the `"\n"` that sits before the tag, enters the block, and drops `secret`. The test writes `let _ = scrubber.feed(...)` and asserts `flush()` equals `""`. The newline was already returned by `feed` and discarded by `let _`. `hello\n<think>secret` similarly returns `"hello\n"` from `feed` and `""` from `flush`. The decision line in this chapter talks about `flush`. The bytes before the tag are the `feed` return.
 
@@ -236,7 +236,7 @@ fn close_tag(name: &str) -> String {
 }
 ```
 
-Each call allocates. `find_tag` builds nine strings per call, either every open tag or every close tag. `find_closed_pair` builds both for each name, eighteen strings. `partial_suffix` also builds both, and when `open_side` is false it still allocates the open tag before the `continue` skips it. The plain-text bench never gets here. A chunk with a `<` does.
+Each call allocates; `find_tag` builds nine strings per call, either every open tag or every close tag. `find_closed_pair` builds both for each name, eighteen strings. `partial_suffix` also builds both, and when `open_side` is false it still allocates the open tag before the `continue` skips it; the plain-text bench never gets here. A chunk with a `<` does.
 
 ```rust
 fn find_tag(buf: &str, open: bool) -> Option<(usize, usize)> {
@@ -260,11 +260,11 @@ fn find_tag(buf: &str, open: bool) -> Option<(usize, usize)> {
 }
 ```
 
-`to_ascii_lowercase` allocates a copy and changes only ASCII letters. The copy's length equals the original's, so an index into `lower` is an index into `buf`. CJK bytes are unchanged. `for name in THINK_TAGS` walks the nine names in order. `THINK_TAGS` is `&[&str]`. Iterating it yields `&&str`, and `open_tag` accepts `&str`, so the extra reference is derefenced by the argument.
+`to_ascii_lowercase` allocates a copy and changes only ASCII letters. The copy's length equals the original's, so an index into `lower` is an index into `buf`; CJK bytes are unchanged. `for name in THINK_TAGS` walks the nine names in order, and `THINK_TAGS` is `&[&str]`. Iterating it yields `&&str`, and `open_tag` accepts `&str`, so the extra reference is derefenced by the argument.
 
 `lower.find(&tag_l)` returns `Option<usize>`, the byte index of the first match, or `None`. The length stored beside it is `tag_l.len()`, in bytes. The sizes of the tags are in the aside below.
 
-`best.is_none_or(|(at, _)| idx < at)` is true when no tag has matched yet, or when this index is strictly smaller. An equal index keeps the earlier tag in the list. The first name in `THINK_TAGS` wins a tie. The tests do not build a buffer where two different tags start at the same byte. The comparison is still `<`, not `<=`.
+`best.is_none_or(|(at, _)| idx < at)` is true when no tag has matched yet, or when this index is strictly smaller. An equal index keeps the earlier tag in the list. The first name in `THINK_TAGS` wins a tie. The tests do not build a buffer where two different tags start at the same byte; the comparison is still `<`, not `<=`.
 
 `find` returns the earliest close tag when `open` is false, and the earliest open tag when `open` is true. That is what the in-block branch uses to decide how far to drain.
 
@@ -291,11 +291,11 @@ fn find_closed_pair(buf: &str) -> Option<(usize, usize)> {
 }
 ```
 
-This one requires both tags, and the close has to occur after the open of the same name. `let Some(start) = ... else { continue }` skips this name when the open tag is absent. The slice `lower[start + open.len()..]` is the bytes after the open tag, so a close tag that somehow overlapped the open tag is not considered. `rel` is the index of the close tag inside that tail. `end` is the byte just past the close tag. The returned pair is `(start, end)`, and `feed` drains `..end`, which is exclusive. The inside, from `start + open.len()` to the close, is inside the drained range. It is not copied to `out`.
+This one requires both tags, and the close has to occur after the open of the same name. `let Some(start) = ... else { continue }` skips this name when the open tag is absent. The slice `lower[start + open.len()..]` is the bytes after the open tag, so a close tag that somehow overlapped the open tag is not considered. `rel` is the index of the close tag inside that tail. `end` is the byte just past the close tag. The returned pair is `(start, end)`, and `feed` drains `..end`, which is exclusive. The inside, from `start + open.len()` to the close, is inside the drained range; it is not copied to `out`.
 
-The earliest `start` wins. A later pair in the same buffer waits for the `continue` in `feed`. `<THINK>secret</THINK>ok` matches because both the buffer and the tags are lowercased: the open becomes `<think>` and the close becomes `</think>`. The test uses lowercase. The lowercase copy is why uppercase works too. ASCII lowercase does not fold characters outside `A`–`Z`. The CJK tags do not need it.
+The earliest `start` wins, and a later pair in the same buffer waits for the `continue` in `feed`. `<THINK>secret</THINK>ok` matches because both the buffer and the tags are lowercased: the open becomes `<think>` and the close becomes `</think>`. The test uses lowercase, and the lowercase copy is why uppercase works too. ASCII lowercase does not fold characters outside `A`–`Z`, and the CJK tags do not need it.
 
-`<思考>秘密</思考>ok` is a closed pair at byte 0. `feed` keeps the empty prefix, drains through the close tag, and the next loop iteration emits `ok`. The test locks that result. The byte counts are in the aside at the end of this section.
+`<思考>秘密</思考>ok` is a closed pair at byte 0; `feed` keeps the empty prefix, drains through the close tag, and the next loop iteration emits `ok`. The test locks that result; the byte counts are in the aside at the end of this section.
 
 ```rust
 fn find_open_at_boundary(buf: &str) -> Option<(usize, usize)> {
@@ -308,11 +308,11 @@ fn find_open_at_boundary(buf: &str) -> Option<(usize, usize)> {
 }
 ```
 
-`?` returns `None` from this function when `find_tag` finds no open tag. Otherwise the tag counts only at the start of the buffer, or when the byte immediately before it is `\n` (`b'\n'`, byte `0x0A`). `idx == 0` is checked first, so the subtraction `idx - 1` does not underflow. `as_bytes().get` returns `Option<&u8>`. A missing byte is `None`, and `None` fails the comparison.
+`?` returns `None` from this function when `find_tag` finds no open tag. Otherwise the tag counts only at the start of the buffer, or when the byte immediately before it is `\n` (`b'\n'`, byte `0x0A`). `idx == 0` is checked first, so the subtraction `idx - 1` does not underflow, and `as_bytes().get` returns `Option<&u8>`. A missing byte is `None`, and `None` fails the comparison.
 
-The byte before the tag is the rule. A space fails it. `see <think> later` has a space before `<`, `find_open_at_boundary` returns `None`, and there is no close tag, so the hold logic emits the whole string. The test locks `see <think> later`. A carriage return fails the check too. The source compares against `\n` only. `\r\n<think>` still matches, because the byte directly before `<` is `\n`.
+The byte before the tag is the rule; a space fails it. `see <think> later` has a space before `<`, `find_open_at_boundary` returns `None`, and there is no close tag, so the hold logic emits the whole string. The test locks `see <think> later`; a carriage return fails the check too, and the source compares against `\n` only. `\r\n<think>` still matches, because the byte directly before `<` is `\n`.
 
-An open tag that fails this test is left for `partial_suffix`. If the tag is already complete, `partial_suffix` will not hold it. The `>` is emitted. That is why an inline `<think>` that never closes survives `flush`. A closed pair never reaches this function: `feed` tries `find_closed_pair` first. `see <think>secret</think>ok` loses the pair and keeps `see ok`. The boundary rule saves an unclosed mention. It does not save a mention that has its close tag in the same buffer.
+An open tag that fails this test is left for `partial_suffix`. If the tag is already complete, `partial_suffix` will not hold it, and the `>` is emitted. That is why an inline `<think>` that never closes survives `flush`. A closed pair never reaches this function: `feed` tries `find_closed_pair` first. `see <think>secret</think>ok` loses the pair and keeps `see ok`. The boundary rule saves an unclosed mention, and it does not save a mention that has its close tag in the same buffer.
 
 ```rust
 fn partial_suffix(buf: &str, open_side: bool) -> usize {
@@ -344,23 +344,23 @@ fn partial_suffix(buf: &str, open_side: bool) -> usize {
 }
 ```
 
-The return value is a byte length. `0` means "emit the whole buffer." A positive number is how many bytes at the end of `buf` must wait.
+The return value is a byte length; `0` means "emit the whole buffer.". A positive number is how many bytes at the end of `buf` must wait.
 
-`open_side == false` is the in-block call. The `continue` skips open tags, because `open_tag` does not start with `</`. Only a partial close tag can be held while the secret is being dropped. `open_side == true` is the outside call. Both open and close tags are candidates. A trailing `</thi` is held outside a block too, so a close tag split across chunks is not emitted early.
+`open_side == false` is the in-block call; the `continue` skips open tags, because `open_tag` does not start with `</`. Only a partial close tag can be held while the secret is being dropped; `open_side == true` is the outside call. Both open and close tags are candidates. A trailing `</thi` is held outside a block too, so a close tag split across chunks is not emitted early.
 
 The inner `for ch in tag_l.chars()` walks Unicode scalar values, not bytes. `ch.len_utf8()` is 1 for `<` and for ASCII letters, and 3 for `思`. `next` is the byte length of the prefix so far. `next >= tag_l.len()` refuses the full tag, so the hold stops before the closing `>`, and `next > lower.len()` means the prefix is already longer than the buffer.
 
-The prefix is recorded only when it is safe to slice and the buffer actually ends with it. `is_char_boundary` is true when the index isn't in the middle of a UTF-8 character, and both the lowercased copy and the original `buf` are checked. `best.max(next)` keeps the longest success. `<thi` is a prefix of `<think>` and of `<thinking>`, both of length 4, so `best` stays 4.
+The prefix is recorded only when it is safe to slice and the buffer actually ends with it. `is_char_boundary` is true when the index isn't in the middle of a UTF-8 character, and both the lowercased copy and the original `buf` are checked. `best.max(next)` keeps the longest success, and `<thi` is a prefix of `<think>` and of `<thinking>`, both of length 4, so `best` stays 4.
 
-That is why a partial token is held back. `<thi` isn't yet `<think>`, and it isn't yet ordinary text. Emitting it would show the start of a tag the next chunk might finish. The table in section 19.3 is that pair of chunks: if `feed` had returned `<thi` immediately, the secret test would fail. The hold is the memory between them.
+That is why a partial token is held back. `<thi` isn't yet `<think>`, and it isn't yet ordinary text. Emitting it would show the start of a tag the next chunk might finish. The table in section 19.3 is that pair of chunks: if `feed` had returned `<thi` immediately, the secret test would fail; the hold is the memory between them.
 
-A chunk that ends in `<` holds that one byte, because open tags and close tags both start there. `text<` emits `text` and keeps `<`. `flush` with no further chunk returns the `<`, since `in_block` is still false. The character was held for one chunk and then released.
+A chunk that ends in `<` holds that one byte, because open tags and close tags both start there, and `text<` emits `text` and keeps `<`. `flush` with no further chunk returns the `<`, since `in_block` is still false. The character was held for one chunk and then released.
 
 > The byte lengths, if you want them. `<think>` is 7 bytes, so the hold stops before the `>`. `<思考>` is 8: `<`, then `思` (3), then `考` (3), then `>`. `<思考>秘密</思考>ok` puts the open at 0 (8 bytes), `秘密` next (6), the close tag at 9, and `end` at 23, which is what `feed` drains before emitting `ok`. `<思` holds 4 bytes. `buf.len() - 1` would land inside `思`, so `is_char_boundary` refuses that cut and the slice in `feed` never sees it.
 
 ## 19.5 `Delta` and `Assembler`
 
-Deltas are an enum. Text and tools are different shapes, so one vec can carry both without a flag field that is sometimes meaningless.
+Deltas are an enum; text and tools are different shapes, so one vec can carry both without a flag field that is sometimes meaningless.
 
 ```rust
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -409,9 +409,9 @@ impl Assembler {
 }
 ```
 
-`scrubber` and `deferred` are private. `text` and `started` are public, so the overlap test can read `started` before `finish`. `Default` builds an empty scrubber, an empty reply, and two empty vecs.
+`scrubber` and `deferred` are private, and `text` and `started` are public, so the overlap test can read `started` before `finish`. `Default` builds an empty scrubber, an empty reply, and two empty vecs.
 
-`push` on `Delta::Text` feeds the chunk through the scrubber and `push_str`s the visible part onto `text`. The tool name does not go through the scrubber. A name that contained `<think>` would be stored as the tool name. No test does that. Text and tools are separate match arms so a tool cannot be stripped as if it were prose, and prose cannot be recorded as a started tool.
+`push` on `Delta::Text` feeds the chunk through the scrubber and `push_str`s the visible part onto `text`. The tool name does not go through the scrubber. A name that contained `<think>` would be stored as the tool name; no test does that. Text and tools are separate match arms so a tool cannot be stripped as if it were prose, and prose cannot be recorded as a started tool.
 
 `read_only == true` pushes the name onto `started` immediately. The stream can still be open. `read_only == false` pushes onto `deferred`. The write's name sits there until `finish`. This chapter does not run the tool. It records the name. Starting a write on a partial argument string would run a tool whose JSON was not closed. The assembler never sees argument JSON. The bool is the whole gate, the same read/write split as chapter 3, applied to a reply that is not done yet. The dispatcher from chapter 3 is not called.
 
