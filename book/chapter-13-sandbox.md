@@ -1,16 +1,18 @@
 # Chapter 13: Sandboxed Execution
 
-Chapter 11 can deny a dangerous shell command. Chapter 12 can watch a call. Neither of them runs a model-written script outside the harness process. `execute_code` that `eval`s in-process is the harness trusting the model with its own address space. This chapter adds the boundary. The crate is `steps/ch13-sandbox`, a copy of chapter 12 plus a `sandbox` module. The package is `ch13-sandbox`. The worker binary stays named `sandbox-worker`, because the tests and the bench compile `CARGO_BIN_EXE_sandbox-worker`. Later copies keep that name.
+Local is the default, and printing a Docker command doesn't put the process in a container. The loop's only sandbox call is `check_execute_code`, inside `deny_tool`. A local interactive script is approved there, and its `terminal` calls still hit chapter 11. Cron on that same local env is denied. A container env is approved even when the presence is cron, because the env check returns before presence is considered. `Worker::spawn` doesn't call `scrub_env`, so the child inherits the parent's keys unless a caller builds the list first.
 
-`deny_tool` now calls `sandbox::check_execute_code` for `execute_code`. The default loop path passes interactive presence, mode off false, yolo false, and `whole_script` false, so a local interactive script is approved here and its `terminal` calls still hit chapter 11. Cron, single-query, and unattended deny a local script. An isolated `env_type` — anything other than `local` — approves. `whole_script` asks once, not once per line. That is the script gate Hermes calls `check_execute_code_guard`, deferred from chapter 11 and closed here.
+What this chapter delivers, each piece tested on its own, is that gate, the argv a Docker run would use, the scrub function, a warm worker, a timeout that kills the child it started, and a checkpoint you can rewind. The crate is `steps/ch13-sandbox`, a copy of chapter 12 plus a `sandbox` module. The package is `ch13-sandbox`. The worker binary stays named `sandbox-worker`, because the tests and the bench compile `CARGO_BIN_EXE_sandbox-worker`, and later copies keep that name.
 
-`Backend` describes how a job would be launched. The Docker argv drops capabilities, sets `no-new-privileges`, and sets a pid limit, and the default backend is still local: the sandbox is the real boundary, and it can be off. `scrub_env` builds the child environment from an allowlist plus declared passthrough, so the child does not inherit the parent's keys. `Worker` is the child process. `run_until` is the deadline, the process-tree timeout chapter 1 deferred. Checkpoints snapshot a manifest of paths, and rewind restores it. A warm worker accepts a job without starting a process per call.
+Chapter 11 can deny a dangerous shell command, and chapter 12 can watch a call. Neither of them runs a model-written script outside this process. `execute_code` that evals in-process would be the harness trusting the model with its own address space, so the boundary is the child. `whole_script` asks once, not once per line, which is the script gate Hermes calls `check_execute_code_guard`, deferred from chapter 11 and closed here.
 
-Chapter 17's terminal runs through this worker rather than growing a second sandbox. A skill that contains a script is still a script. The place it runs is this worker. The scanner for that text is chapter 25.
+`Backend` describes how a job would be launched. The Docker argv drops capabilities, sets `no-new-privileges`, and sets a pid limit, and nothing in this chapter spawns Docker. `scrub_env` builds the child environment from an allowlist plus declared passthrough. `run_until` is the deadline, the timeout chapter 1 deferred, and it kills the process it spawned. A grandchild that worker started would survive, which is the gap beside Hermes's `kill_process_tree`. A warm worker accepts a job without starting a process per call.
 
-Rust, in the sidebars: a child process is `std::process`, and the worker is a binary so the tests can kill it. A checkpoint is a list of paths and bytes, not a filesystem snapshot library. `Result` is every branch of `check_execute_code`, written out so a cron session cannot fall through to allow.
+Chapter 17 sends the terminal through this worker after the approval floor, instead of growing a second sandbox. A skill that contains a script is still a script, the scanner for that text is chapter 25, and chapter 36 restarts a failed child agent from a heartbeat without adopting this worker.
 
-`cargo run -p ch13-sandbox` runs the demo. The exercise is `my-harness/tests/ch13.rs`: cron cannot run a local script, a container env approves, and a whole-script ask is one prompt.
+A child process is `std::process`, and the worker is a binary so the tests can kill it. A checkpoint is a list of paths and bytes, rather than a filesystem snapshot library. `check_execute_code` returns an enum, so a cron session can't fall through to allow by forgetting an arm.
+
+`cargo run -p ch13-sandbox` runs the demo. The exercise is `my-harness/tests/ch13.rs`: cron can't run a local script, a container env approves, and a whole-script ask is one prompt.
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -44,7 +46,7 @@ Rust, in the sidebars: a child process is `std::process`, and the worker is a bi
 
 `check_execute_code` ignores the script text. A non-local `env_type` is `Approved`. YOLO or mode off is `Approved`. Cron, single-query, and unattended on `local` are `Denied`. `whole_script` is `Ask`. Anything left is `Approved`. The loop calls it with `"local"`, `Presence::Interactive`, and the three flags false, so that call is `Approved`. The cron denial is a direct call in `tests/execute_code.rs`.
 
-## 13.1 `sandbox` is public, and the loop calls one function in it
+## 13.1 One call from the loop
 
 The file is `steps/ch13-sandbox/crates/harness-core/src/sandbox.rs`. Its module comment is the whole job of the file.
 
@@ -55,7 +57,7 @@ The file is `steps/ch13-sandbox/crates/harness-core/src/sandbox.rs`. Its module 
 
 `lib.rs` declares `pub mod sandbox;`. The module is public, so an integration test can write `harness_core::sandbox::Worker`. The `pub use` list at the bottom of `lib.rs` does not re-export these names. You go through the module. `approval` is also `pub mod`, which is how `deny_tool` can call `crate::sandbox::check_execute_code` and how the sandbox signature can name `crate::approval::Presence`.
 
-I searched `agent.rs` in this step. The names `Worker`, `docker_run_args`, `scrub_env`, `run_until`, and `Checkpoints` do not appear. The loop's only sandbox call is inside `deny_tool`, and that call is `check_execute_code`. The child, the argv, the scrub, and the checkpoint are what the tests, the bench, and `chapter_demo` construct. The inherited turn still runs tools in this process when `deny_tool` returns `None`.
+`Worker`, `docker_run_args`, `scrub_env`, `run_until`, and `Checkpoints` aren't in `agent.rs`. The loop's only sandbox call is inside `deny_tool`, and that call is `check_execute_code`. The child, the argv, the scrub, and the checkpoint are what the tests, the bench, and `chapter_demo` construct. When `deny_tool` returns `None`, the inherited turn still runs tools in this process.
 
 Chapter 11's `deny_tool` returned `None` for `execute_code` before `check` ever saw the script. This chapter replaces that early return with a match. The function still returns `None` for every other name, and it still runs `check` for `terminal`.
 
@@ -179,7 +181,7 @@ impl Backend {
 > - `matches!(self, Self::Docker)` is true only for the `Docker` variant. `Self` here is `Backend`. `is_sandboxed` takes `self` by value. Because of `Copy`, `Backend::Local.is_sandboxed()` does not consume a variable you still need.
 > - `Option`, `Result`, enums, and `Arc` are taught in [chapter 1](chapter-01-first-contact.md).
 
-`from_name("local")` and `from_name("")` are what the test calls. Both are `Local`, and `Backend::Local.is_sandboxed()` is false. `Backend::Docker.is_sandboxed()` is true. The test constructs that `Docker` as the variant. It does not call `from_name("docker")`. The `if` is still the mapping: any ASCII-case spelling of `docker` is the sandboxed variant, and every other string is local.
+`from_name("local")` and `from_name("")` are what the test calls. Both are `Local`, and `Backend::Local.is_sandboxed()` is false, while `Backend::Docker.is_sandboxed()` is true. The test constructs that `Docker` as the variant. Any ASCII-case spelling of `docker` is the sandboxed variant, and every other string, including `"docker "` with a trailing space, is local.
 
 ```rust
 pub fn docker_run_args(image: &str) -> Vec<String> {
@@ -223,9 +225,7 @@ assert!(args
 assert!(!args.iter().any(|arg| arg == "docker-run-executed"));
 ```
 
-`windows(2)` yields each adjacent pair. `String` compares equal to `&str`, so the pair matches the array of literals. The three asserts fail if a flag is renamed or split from its value. They do not mention `--rm` or the three `--cap-add` lines. Those strings are in the vec. `--cap-add` / `DAC_OVERRIDE`, `--cap-add` / `CHOWN`, and `--cap-add` / `FOWNER` are exercised and not locked.
-
-`docker-run-executed` is not an element. That assert is the test's record that the function returned the vec. `Command` appears later, and it starts `sandbox-worker`.
+`windows(2)` yields each adjacent pair, and `String` compares equal to `&str`, so the pair matches the array of literals. The three asserts fail if a flag is renamed or split from its value. `--rm` and the three `--cap-add` lines (`DAC_OVERRIDE`, `CHOWN`, `FOWNER`) are in the vec the function returns. The test locks the three pairs above, plus the absence of `docker-run-executed`, which records that the function returned the vec. `Command` appears later, and it starts `sandbox-worker`.
 
 ## 13.3 `scrub_env`
 
@@ -241,7 +241,7 @@ pub fn is_provider_credential(name: &str) -> bool {
 }
 ```
 
-`to_ascii_uppercase` allocates, and the comparisons read that copy. `"openai_api_key"` matches the equality. The scrubbed env includes `OPENAI_API_KEY`. The test calls `is_provider_credential` on `AUXILIARY_OPENAI_API_KEY` and `GATEWAY_RELAY_TOKEN`. The auxiliary name is true because it starts with `AUXILIARY_` and contains `API_KEY`. A name that only has the prefix, with neither `API_KEY` nor `BASE_URL`, is false. The test does not pass one. `GATEWAY_RELAY_` is true from the prefix alone. The `TOKEN` in the test's name is not what that clause reads.
+`to_ascii_uppercase` allocates, and the comparisons read that copy. `"openai_api_key"` matches the equality. The test calls `is_provider_credential` on `AUXILIARY_OPENAI_API_KEY` and `GATEWAY_RELAY_TOKEN`. The auxiliary name is true because it starts with `AUXILIARY_` and contains `API_KEY`. A name that only has the prefix, with neither `API_KEY` nor `BASE_URL`, is false. `GATEWAY_RELAY_` is true from the prefix alone, so the `TOKEN` in the test's name isn't what that clause reads.
 
 The allowlist and the secret substrings are private. `scrub_env` is what tests call.
 
@@ -326,9 +326,9 @@ The test builds five pairs and a passthrough of `TENOR_API_KEY` and `OPENAI_API_
 
 `safe_name` does not uppercase. `"path"` misses `EXACT` and is dropped unless it was passed through. `secret_name` does uppercase, so `"random_secret"` is still a secret. The test asserts names only. The kept values are `"/usr/bin"`, `"tenor"`, and `"/tmp/me"`.
 
-`LC_`, `XDG_`, and `CONDA` are prefixes on the original spelling. `CONDA_TOKEN` starts with `CONDA` and contains `TOKEN`. `secret_name` is the earlier `continue`, so the prefix does not save it. The test does not pass a prefix name, `USER`, `TMPDIR`, or the Windows names in `EXACT`.
+`LC_`, `XDG_`, and `CONDA` are prefixes on the original spelling. `CONDA_TOKEN` starts with `CONDA` and contains `TOKEN`, and `secret_name` is the earlier `continue`, so the prefix doesn't save it. `safe_name` also keeps `USER`, `TMPDIR`, and the Windows names in `EXACT` when the spelling matches.
 
-`Worker::spawn` does not call `scrub_env`. The child inherits the parent's environment. The scrub is the function a caller uses when it builds an env list.
+The child inherits the parent's environment, because `Worker::spawn` doesn't call `scrub_env`. The scrub is the function a caller uses when it builds an env list.
 
 ## 13.4 `Worker`
 
@@ -466,11 +466,11 @@ pub fn run_until(bin: &Path, job: &str, timeout: Duration) -> Result<String, San
 
 `Ok(None)` means the process is still running. The function sleeps 5 milliseconds and loops. It does not read stdout on this arm. A finished `ok ping` sitting in the pipe stays there.
 
-The worker reads until the line is `quit` or stdin closes. `run_until` holds the `Worker`, so stdin stays open, and it never writes `quit`. `ping` makes the child write `ok ping` and block on the next read. `try_wait` stays `Ok(None)` until the timeout. The success arm is for a child that exits. This worker does that on `quit`, which writes no reply, or when the parent drops stdin. The test does not send `quit`.
+The worker reads until the line is `quit` or stdin closes. `run_until` holds the `Worker`, so stdin stays open, and it never writes `quit`. `ping` makes the child write `ok ping` and block on the next read, and `try_wait` stays `Ok(None)` until the timeout. The success arm is for a child that exits, which this worker does on `quit` (no reply) or when the parent drops stdin.
 
 `a_timeout_kills_the_child` sends `sleep-ms 5000` with `Duration::from_millis(80)`. The child is inside that sleep when the timeout arm kills it, before `ok slept` is written. The test matches `Err(SandboxError::Timeout)` and asserts the elapsed time is under two seconds. `Drop` then kills and waits again. Those errors are discarded.
 
-The kill is `worker.child.kill()` on the process `spawn` started. A grandchild would keep running. `drive_loop` does not call `run_until`. The function is synchronous, and `thread::sleep` blocks the caller. The timeout test is a plain `#[test]`.
+The kill is `worker.child.kill()` on the process `spawn` started, and a grandchild would keep running. `drive_loop` doesn't call `run_until`. The function is synchronous, `thread::sleep` blocks the caller, and the timeout test is a plain `#[test]`.
 
 ## 13.6 Checkpoints
 
@@ -541,7 +541,7 @@ impl Checkpoints {
 }
 ```
 
-`Checkpoints::new(false)` sets `enabled` to false and `snaps` to an empty deque. There is no setter. `take` returns `None` before `pop_front` and before `push_back`, so the files are not saved. The test calls that with `a.txt` / `one` and asserts `is_none()`. It does not call `enabled()` or `is_empty()`.
+`Checkpoints::new(false)` sets `enabled` to false and `snaps` to an empty deque, and there is no setter. `take` returns `None` before `pop_front` and before `push_back`, so the files stay unsaved. The test calls that with `a.txt` / `one` and asserts `is_none()`.
 
 On an enabled store, `len() == MAX_SNAPSHOTS` (20) means full: `pop_front` drops the oldest, `push_back` adds the new one, and the length stays 20. Fewer than 20 skips the pop. `take` is the only push, so the deque does not grow past 20. `VecDeque` is what makes dropping the front cheap. The returned `back()` borrows the store. The test `expect`s it and drops that borrow before `latest()`.
 
@@ -609,11 +609,11 @@ pub fn restore_dir(dir: &Path, snap: &Manifest) -> io::Result<()> {
 
 `restore_dir` creates the directory and writes each manifest entry, creating parents along the way. It leaves files that are absent from the manifest. `rewind_into` replaces a vec. `restore_dir` overwrites the paths it has.
 
-`a_directory_snapshot_rewinds_one_file` uses a temp directory named with the process id. `note.txt` goes from `before` to `after` and back to `before`. The test does not add a second file. The directory is removed before the test and again at the end.
+`a_directory_snapshot_rewinds_one_file` uses a temp directory named with the process id. `note.txt` goes from `before` to `after` and back to `before`, and the directory is removed before the test and again at the end.
 
 The 500 MB total cap is Hermes's. This manifest is in memory. `take` caps the count at 20. It does not add up bytes.
 
-## 13.7 `check_execute_code`, every branch
+## 13.7 Which scripts the gate allows
 
 The gate is where the script would run. The source text is a parameter so the signature matches the call shape, and the body does not look at it.
 
@@ -672,27 +672,27 @@ pub fn check_execute_code(
 > - `Approved` carries nothing. `Denied` owns a `String`, so the enum is `Clone` and not `Copy`. `Ask` holds `&'static str`, the constant `EXECUTE_CODE_DESCRIPTION`. `PartialEq` is what `assert_eq!` uses.
 > - Each `return` leaves the function. The last line has no `return` keyword. It is the value when every `if` was false.
 
-Branch 1, `let _ = code`. Every test call passes `"print(1)"`. Another string takes the same path. `deny_tool` still reads `arguments["code"]` so the key stays `code`, then the gate ignores the string.
+The order of those returns is the policy, and the first match wins. Cron inside a non-local env is approved because the env check returns before presence is considered.
 
-Branch 2, `env_type != "local"`. The comparison is the exact bytes of `"local"`. `"container"`, `"ssh"`, `""`, and `"Local"` return `Approved` on this line. `Backend::from_name` folds ASCII case. This `if` does not. The return is above the presence match, so cron inside a non-local env is approved. The test's second call is `check_execute_code("print(1)", "container", Presence::Cron, false, false, false)`, and it expects `Approved`.
+| Check, in order | Result |
+|---|---|
+| `env_type` is anything other than the exact bytes `"local"` | `Approved`, including cron |
+| `yolo` or `mode_off` | `Approved` |
+| presence is cron, single-query, or unattended | `Denied`, with the local-Python `BLOCKED` sentence |
+| `whole_script` | `Ask`, one description, no wait inside this function |
+| whatever is left | `Approved` |
 
-Branch 3, `yolo || mode_off`. Either flag returns `Approved`, and the presence match does not run. A local cron session with yolo on, or with mode off, is approved. The test calls `check_execute_code("print(1)", "local", Presence::Interactive, true, false, false)`. The fourth argument is `mode_off`, so the `||` fires while `yolo` is false. The test does not call the other pair, `yolo` true and `mode_off` false. That pair is the same `return`.
+`let _ = code` throws the script away before any of those checks, so `print(1)` and an empty string take the same path. `deny_tool` still reads `arguments["code"]` so the key stays `code`. `"container"`, `"ssh"`, `""`, and `"Local"` are all approved on the first row, because this comparison doesn't fold case the way `Backend::from_name` does. The test's second call is `check_execute_code("print(1)", "container", Presence::Cron, false, false, false)`, and it expects `Approved`.
 
-Branch 4, the presence match. `Cron`, `SingleQuery`, and `Unattended` share one `Denied`. `Interactive` falls through. The message is this `String`:
+A local cron session with yolo on, or with mode off, is approved on the second row. The test calls the mode-off pair, `check_execute_code("print(1)", "local", Presence::Interactive, true, false, false)`, so the `||` fires while `yolo` is false. Both flags share that return. The denial runs only when the env was `"local"` and both flags were false, and it sits above `whole_script`, so a local cron call with `whole_script` true is still `Denied`. `Cron`, `SingleQuery`, and `Unattended` share that one `Denied`. `Interactive` falls through. The message is:
 
 `BLOCKED: execute_code runs arbitrary local Python (including subprocess calls that bypass shell-string approval checks).`
 
-`STOP_COMMAND` is not on that message. The test matches the prefix `BLOCKED: execute_code runs arbitrary local Python` and panics with `{other:?}` on any other variant. It passes `Presence::Cron` only. `SingleQuery` and `Unattended` are the other two patterns and return the same `Denied`. The test does not pass them.
+`STOP_COMMAND` isn't on that message. The test matches the prefix `BLOCKED: execute_code runs arbitrary local Python`.
 
-This `Denied` runs only when the env was `"local"` and both flags were false. A local cron call with `whole_script` true is still `Denied`, because the presence `if` is above the `whole_script` `if`. The test's ask call uses `Interactive`, so the source order is what puts `Denied` ahead of `Ask`.
+`whole_script` returns `Ask` with `description` set to `EXECUTE_CODE_DESCRIPTION`. The test calls `check_execute_code("print(1)", "local", Presence::Interactive, false, false, true)` and compares the description to the constant. The function returns that description without waiting for a human. The `BLOCKED` sentence with `STOP_COMMAND` is the `Ask` arm in `deny_tool`. The loop passes `whole_script: false`, so that arm isn't the path an ordinary turn takes. The arguments `deny_tool` does pass, local and interactive with all three flags false, land on the last row, which is why a local interactive `execute_code` in the loop is `Approved` and `deny_tool` returns `None`.
 
-Branch 5, `whole_script`. The variant is `Ask` and `description` is `EXECUTE_CODE_DESCRIPTION`. The test calls `check_execute_code("print(1)", "local", Presence::Interactive, false, false, true)` and compares the description to the constant. The function returns that description. It does not wait for a human. The `BLOCKED` sentence with `STOP_COMMAND` is the `Ask` arm in `deny_tool`. The loop passes `whole_script: false`, so that arm does not run.
-
-Branch 6, the final `CodeDecision::Approved`. Local env, both flags false, presence outside the cron match, `whole_script` false. `Interactive` lands here. Those are the arguments `deny_tool` passes, which is why a local interactive `execute_code` in the loop is `Approved` and `deny_tool` returns `None`.
-
-A `terminal` call inside the script is a later tool call. `deny_tool` sends that name to `check` on `Policy::manual()`. `check_execute_code` does not call `check`.
-
-`tests/execute_code.rs` is the call that passes `Presence::Cron`. The loop does not.
+A `terminal` call inside the script is a later tool call. `deny_tool` sends that name to `check` on `Policy::manual()`, and `check_execute_code` doesn't call `check`. `tests/execute_code.rs` is the call that passes `Presence::Cron`. The loop doesn't.
 
 ## 13.8 The worker binary and the demo
 

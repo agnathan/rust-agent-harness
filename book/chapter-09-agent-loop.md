@@ -1,14 +1,14 @@
 # Chapter 9: The Agent Loop
 
-The earlier chapters can each do one piece of a turn. Chapter 1 can ask a model. Chapter 2 can hold the messages and a session inbox. Chapter 3 can run tools, reads together and a write alone. Chapter 4 can run those tools in another process. Chapter 6 can keep a huge catalog off the prompt. None of them yet asks the model, runs what it asked for, and asks again. This chapter is that loop, in ten copies under `steps/ch09-*`. The section numbers stay 9.1 through 9.10 so they match the crate names. The finished loop, the one chapter 10 copies, is `steps/ch09-10-evals`. The library there is `harness_core`, package `ch09-10-harness-core`. The mock stays the default. `--live` is an opt-in that calls OpenRouter with two real tools, `echo` and `note`. CI does not pass that flag and does not set a key.
+The model asks for `echo`, the tool answers `hello`, and the model asks for `echo` again with the same arguments and the same long result. On the second repeat the loop replaces that result with a stub, and on the fourth identical call it stops the turn instead of spending the rest of the budget on a call it has already seen. That halt is why a continuously improving harness still has to finish one turn cleanly: the memory write, the skill patch, and the reflection all sit beside this loop, and they only help if the turn itself can stop.
 
-`run_loop` is the function. It calls the provider, dispatches the tool calls through chapter 3's scheduler, appends the results, and calls the provider again. A hard cancel aborts the in-flight model call or tool call and drops a pending steer. A soft stop lets the current work finish, then makes one model call and does not dispatch tools from that reply. Validation repairs a close unknown name, retries broken JSON, and leaves after three bad batches with the partial transcript. A stall is an identical call or a short cycle. An iteration warning fires at half the budget, and a wrap-up notice lands once the time budget is 80 percent spent. A tool result is capped. A steer from the session inbox is appended onto the newest tool result, so the cached prefix stays put. Tool-call arguments are sent as stable JSON. `TurnOutcome` is the enum every exit returns. A saved eval set and four stress tasks run on the mock.
+The function a session calls is `run_loop`. It calls the provider, runs what the model asked for through chapter 3's scheduler, appends the results, and calls the provider again. Ten copies under `steps/ch09-*` grow that function, and the section numbers stay 9.1 through 9.10 so they match the crate names. Along the way the loop gains a hard cancel, a soft stop that takes one more model call and leaves that reply's tools unrun, a repair for a close tool name, the stall, a budget warning at half the iterations, a cap on tool output, a steer glued onto the newest tool result so the cached prefix stays put, stable JSON on the copy that is sent, and a `TurnOutcome` for every exit. The finished loop, the one chapter 10 copies, is `steps/ch09-10-evals`. The library there is `harness_core`, package `ch09-10-harness-core`. A saved eval set and four stress tasks run on the mock.
 
-Chapter 10 makes this same loop walk a table of legal moves. Empty-response retries, length continuation, and the repetition guard wait for chapter 14. A self-improving agent is still this loop: the learning, the memory write, and the skill patch happen beside it, not instead of it.
+The mock stays the default. `--live` would call OpenRouter with `echo` and `note`, and section 9.1 shows the missing-key failure from a run with the key unset. CI doesn't pass that flag and doesn't set a key. Chapter 10 makes this same loop walk a table of legal moves. Empty-response retries, length continuation, and the repetition guard wait for chapter 14.
 
-Rust, beside the code: `TurnOutcome` and the scripted reply are enums, so every exit is named. `CancellationToken` is a flag you race against the call. `Arc<dyn Tool>` is how a native tool and an MCP tool share one dispatch path. The worker bound of 8 is the semaphore from chapter 3.
+`TurnOutcome` and the scripted reply are enums, so every exit has a name. `CancellationToken` is the flag you race against the call. `Arc<dyn Tool>` is how a native tool and an MCP tool share one dispatch path. The worker bound of 8 is the semaphore from chapter 3.
 
-`cargo run -p ch09-10-harness-core --example demo --locked --offline --quiet` runs the finished mock. `cargo run -p ch09-10-harness-cli --locked --offline --quiet -- evals` runs the saved set. `--live-evals` is the opt-in I am not treating as the default.
+`cargo run -p ch09-10-harness-core --example demo --locked --offline --quiet` runs the finished mock. `cargo run -p ch09-10-harness-cli --locked --offline --quiet -- evals` runs the saved set.
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -35,15 +35,15 @@ Rust, beside the code: `TurnOutcome` and the scripted reply are enums, so every 
 
 ## What this chapter decides
 
-The loop does not know whether a tool is native or MCP. Both are `Arc<dyn Tool>`. The tests register `EchoTool` and, separately, the chapter 4 fixture's `echo` over stdio and over streamable HTTP. The same `run_loop` handles all three.
+Native tools and MCP tools are the same `Arc<dyn Tool>`, so the loop doesn't have to know which kind it was given. The tests register `EchoTool` and, separately, the chapter 4 fixture's `echo` over stdio and over streamable HTTP, and the same `run_loop` handles all three.
 
-The provider in the tests is scripted. A `ScriptedReply` is text, or tool calls, and an optional `Usage`. The mock leaves usage empty unless a test sets it. That is the same rule as chapter 1: the mock does not invent a bill. `LiveProvider::calls` stays 0. The loop counts a call from the events.
+The provider in the tests is scripted. A `ScriptedReply` is text, or tool calls, and an optional `Usage`. The mock leaves usage empty unless a test sets it, the same rule as chapter 1: a bill is recorded only when something sent one. `LiveProvider::calls` stays 0, and the loop counts a call from the events.
 
-The gate runs before `complete`. A reply that has already arrived is part of the transcript. The budget can refuse the next request. A final answer with no tool calls returns `Finished` even when that reply's token count is over the cap, because there is no next request. The tests that expect `Budget` use a tool call as the first reply, so the loop has a wrap-up call to make.
+The gate runs before `complete`. A reply that has already arrived stays in the transcript, and the budget can still refuse the next request. A final answer with no tool calls returns `Finished` even when that reply's token count is over the cap, because there is no next request to refuse. The tests that expect `Budget` use a tool call as the first reply, so the loop has a wrap-up call to make.
 
-A hard cancel and a soft stop are different. Hard cancel aborts the in-flight model call or tool call and drops a pending steer. Soft stop lets the current work finish, then makes one model call and does not dispatch tools from that reply.
+A hard cancel aborts the in-flight model call or tool call and drops a pending steer. A soft stop lets the current work finish, then makes one model call and leaves the tools in that reply unrun. Those are different exits, and chapter 10 will refuse a caller that mixes them.
 
-Every path that accepted a tool call answers it with a tool message. An unknown name, a timeout, a tool error, a malformed payload that has used up its retries, and a subagent call over its cap all come back as `Role::Tool`. The next model call then sees assistant, then tool, then assistant.
+Every path that accepted a tool call answers it with a tool message, whether the name was unknown, the call timed out, the tool returned an error, the payload used up its JSON retries, or a subagent call went over its cap. The next model call then sees assistant, then tool, then assistant.
 
 Streaming still waits until the buffered reply is in hand, then overlaps the safe calls. Parsing a tool call out of a token stream and starting it early is chapter 19.
 
@@ -78,17 +78,17 @@ flowchart TD
 
 ## Walking `run_loop`
 
-The function a session calls is `run_loop`. It forwards to `run_loop_with_inbox` with no inbox. `turn_from_inbox` pops one user line, pushes it, and calls the same function with `Some(&self.inbox)`. The walk below is the finished function, in `steps/ch09-10-evals`.
+`run_loop` forwards to `run_loop_with_inbox` with no inbox. `turn_from_inbox` pops one user line, pushes it, and calls the same function with `Some(&self.inbox)`. What follows is the reference for the turn the opening walked, in the finished function in `steps/ch09-10-evals`. One user line is already on the transcript. The checks below run in this order on every iteration, and the bold labels are the names to grep for.
 
 The locals that survive across iterations are the event log, `AgentUsage`, a JSON-retry count, an invalid-name strike count, a `StallGuard`, the iteration number the stall guard sees, and a `NoticeLatch` so each budget sentence is appended once.
 
-**Hard cancel.** The first check is `cancel.is_cancelled()`. That reads the token. If it is set, and an inbox was passed, `drop_pending_steer` drains the inbox and throws the lines away. The turn returns `Cancelled` with whatever assistant text is already in the transcript. A steer that arrived during the aborted work does not get appended.
+**Hard cancel.** The first check reads `cancel.is_cancelled()`. If the token is set and an inbox was passed, `drop_pending_steer` drains the inbox and throws the lines away, and the turn returns `Cancelled` with whatever assistant text is already in the transcript. A steer that arrived during the aborted work stays out of the transcript.
 
-**Steer, then notices.** If the inbox is present and the transcript already has a tool message, queued lines are joined and appended to the newest tool result, after a blank line. A queue that arrives before any tool result stays queued. `append_steers` returns without popping in that case, so the line is still there after the first tool result. Then `inject_budget_notices` may append the iteration warning, the time wrap-up, or both, onto that same newest tool result. A hard cancel skips the notices. A message that already contains the sentence is left alone.
+**Steer, then notices.** When the inbox is present and the transcript already has a tool message, queued lines are joined and appended to the newest tool result, after a blank line. A queue that arrives before any tool result stays queued, because `append_steers` returns without popping, so the line is still there after the first tool result. Then `inject_budget_notices` may append the iteration warning, the time wrap-up, or both, onto that same newest tool result. A hard cancel skips the notices, and a message that already contains the sentence is left alone.
 
-**Soft stop.** `is_soft_stop` does not cancel the token. The loop calls `soft_wrap_up`: one `complete` on the canonical copy, raced with the token. A text reply is pushed and the turn returns `SoftStop`. A reply that asks for tools is not pushed and the tools are not run. Pushing it would leave an assistant tool call with no tool result.
+**Soft stop.** `is_soft_stop` leaves the token alone. The loop calls `soft_wrap_up`: one `complete` on the canonical copy, raced with the token. A text reply is pushed and the turn returns `SoftStop`. A reply that asks for tools is left unpushed, and the tools stay unrun, because pushing it would leave an assistant tool call with no tool result.
 
-**The gate.** `check_gate` returns `Cancelled` if the token is set, or `Budget` if iterations, tokens, cost, or elapsed time are past the cap. A budget hit after at least one model call goes to `budget_wrap_up`, another single `complete` that does not dispatch tools. A text reply returns `Budget` with that text. A tool-call reply returns `Partial` and keeps the previous assistant text. A budget hit when `usage.calls` is still 0, which is a time cap that was already spent, returns `Budget` and does not call the provider.
+**The gate.** `check_gate` returns `Cancelled` if the token is set, or `Budget` if iterations, tokens, cost, or elapsed time are past the cap. A budget hit after at least one model call goes to `budget_wrap_up`, another single `complete` that leaves tools undispatched. A text reply returns `Budget` with that text. A tool-call reply returns `Partial` and keeps the previous assistant text. A budget hit when `usage.calls` is still 0, a time cap that was already spent, returns `Budget` without calling the provider.
 
 **The model call.** The send is `canonical_messages(messages)`, a clone. The stored messages stay as they were. The call is raced:
 
@@ -108,11 +108,11 @@ let batch = tokio::select! {
 
 **A final answer.** Empty `tool_calls` means the turn is over. The assistant message is pushed and the outcome is `Finished`.
 
-**Validation.** `classify` uniquifies ids, repairs a close name, and tags truncated JSON, malformed JSON, and unknown names. Truncation returns `Partial` after the assistant message and the error tool results are pushed. There is no retry. Malformed JSON increments `json_retries` and `continue`s without pushing, while the count is under 3. On the third, the error tool results are pushed and the loop continues, so the model can answer. The strike counter moves only when the batch has nothing runnable and it was not this malformed-exhausted path. Three such batches return `InvalidToolCalls`. A mixed batch runs the valid calls, error-results the bad ones, and resets the strikes.
+**Validation.** `classify` uniquifies ids, repairs a close name, and tags truncated JSON, malformed JSON, and unknown names. Truncation returns `Partial` after the assistant message and the error tool results are pushed, with no retry. Malformed JSON increments `json_retries` and `continue`s without pushing while the count is under 3. On the third, the error tool results are pushed and the loop continues, so the model can answer. The strike counter moves only when the batch has nothing runnable and this wasn't the malformed-exhausted path. Three such batches return `InvalidToolCalls`. A mixed batch runs the valid calls, error-results the bad ones, and resets the strikes.
 
-**Dispatch.** `delegate` calls count toward `max_subagent_iterations` (50). One past the cap is not run. It becomes `error: subagent iteration cap`. Everything else goes to `dispatcher.run_raced`, which is the chapter 3 scheduler plus a `select!` against the same token and a 30 second timeout. A timeout or a `ToolError` becomes `error: timeout` or `error: {error}` on the tool message.
+**Dispatch.** `delegate` calls count toward `max_subagent_iterations` (50). One past the cap is left unrun and becomes `error: subagent iteration cap`. Everything else goes to `dispatcher.run_raced`, the chapter 3 scheduler plus a `select!` against the same token and a 30 second timeout. A timeout or a `ToolError` becomes `error: timeout` or `error: {error}` on the tool message.
 
-**After the tool.** The result text is truncated to 1024 characters, head and tail, before the stall guard sees it. `stall.observe` compares the tool name, the arguments, and that text with the previous call from an earlier iteration. Two calls in the same iteration are siblings. They do not extend the streak, so eight `delay_read`s in one batch do not look like a stall. A long identical result is replaced with the stub from the second repeat. The guard still remembers the original text, so the next iteration can match. A successful `execute_code` refunds one iteration. The tool message that is pushed is the stub or the truncated text, plus a notice when the streak or a cycle says so. If the guard says halt, the turn returns `Stalled` after the messages are on the transcript.
+**After the tool.** The result text is truncated to 1024 characters, head and tail, before the stall guard sees it. `stall.observe` compares the tool name, the arguments, and that text with the previous call from an earlier iteration. Two calls in the same iteration are siblings, so they don't extend the streak, and eight `delay_read`s in one batch don't look like a stall. A long identical result is replaced with the stub from the second repeat. The guard still remembers the original text, so the next iteration can match. A successful `execute_code` refunds one iteration. The tool message that is pushed is the stub or the truncated text, plus a notice when the streak or a cycle says so. If the guard says halt, the turn returns `Stalled` after the messages are on the transcript.
 
 `finish` maps a `StopReason` onto the `TurnOutcome` variant. `last_text` is the latest assistant message whose `tool_calls` are empty.
 
@@ -128,7 +128,7 @@ let batch = tokio::select! {
 
 `OpenAiCompatible` in this chapter is a second client, in `live.rs`. It posts to `https://openrouter.ai/api/v1` with model `openai/gpt-4o-mini`, and it sends the schemas for `echo` and `note`. `EchoTool` is the read. `NoteTool` is the write: it requires `text` and returns `noted:{text}`.
 
-The CLI accepts `--mock` and `--live`. Neither flag means mock. Both flags is an error. `--live` with no key prints the chapter 1 string and exits 1. I ran that with `OPENROUTER_API_KEY` unset. I did not run `--live` against OpenRouter, so this chapter has no live transcript. The request body is checked with wiremock: `the_live_client_posts_echo_and_note_and_parses_a_tool_call` posts both tool names and parses a scripted tool call from the response.
+The CLI accepts `--mock` and `--live`. Neither flag means mock, and both flags is an error. `--live` with no key prints the chapter 1 string and exits 1. I ran that with `OPENROUTER_API_KEY` unset, and I didn't run `--live` against OpenRouter, so this chapter has no live transcript to show. The request body is checked with wiremock: `the_live_client_posts_echo_and_note_and_parses_a_tool_call` posts both tool names and parses a scripted tool call from the response.
 
 The mock demo registers the chapter 4 fixture over stdio, submits `say hello`, and runs a script that calls `echo` and then answers `hello`.
 
@@ -178,13 +178,13 @@ live_tool_body          time:   [1.4322 µs 1.4379 µs 1.4437 µs]
 | `loop_8_reads` | 2.370 ms | eight 1 ms reads, then the second reply |
 | `live_tool_body` | 1.435 µs | building the echo and note request body |
 
-2.370 ms is one wave of 1 ms sleeps plus the second scripted reply. It is not eight milliseconds. Later sections add checks, so the same two names on `ch09-10-harness-core` are slower. Those numbers are in 9.10. The Benchmarks job records each section before the next one starts, and the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/) keeps `9.1/loop_iteration` apart from `9.10/loop_iteration`. Older artifacts stored one row per function name. Those seeded points sit on section 9.10, because that section ran last. Runs from before the renumbering stored them as `6.10/…`, and section 9.1 as `6.1/…`. The dashboard still plots those points on these two sections.
+2.370 ms is one wave of 1 ms sleeps plus the second scripted reply, rather than eight milliseconds. Later sections add checks, so the same two names on `ch09-10-harness-core` are slower, and those numbers are in 9.10. The pitfall at the end of the chapter is why the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/) has to keep `9.1/loop_iteration` apart from `9.10/loop_iteration`.
 
 ## 9.2 Prompt cancellation
 
-`CancelFlag` holds a `CancellationToken` and an `Arc<AtomicBool>`. `cancel` and `hard_stop` cancel the token. `soft_stop` sets the bool and leaves the token alone. `clear_soft` does not touch the inbox.
+`CancelFlag` holds a `CancellationToken` and an `Arc<AtomicBool>`. `cancel` and `hard_stop` cancel the token. `soft_stop` sets the bool and leaves the token alone, and `clear_soft` leaves the inbox alone too.
 
-Each model call uses the `select!` above. Each tool call uses another one inside `run_raced`. A fired token becomes `ToolError::Failed { message: "cancelled" }`, which the loop turns into a tool message `error: cancelled`. The rest of the batch still gets a result, so the transcript does not stop halfway through a parallel read.
+Each model call uses the `select!` above, and each tool call uses another one inside `run_raced`. A fired token becomes `ToolError::Failed { message: "cancelled" }`, which the loop turns into a tool message `error: cancelled`. The rest of the batch still gets a result, so a parallel read finishes its other calls instead of stopping halfway through the transcript.
 
 The tests:
 
@@ -452,7 +452,7 @@ steer_append            time:   [46.992 ns 48.089 ns 49.123 ns]
 
 `prompt_prefix` is the byte string the test compares: role, content, tool-call id, and `id:name:args` for each call. Two calls on `{"b":1,"a":2}` produce one string, `{"a":2,"b":1}`, and the two prefixes compare equal. The test is `unsorted_keys_become_sorted_and_the_prefix_is_byte_identical`. `the_provider_sees_the_canonical_copy` turns recording on and checks the messages `complete` received.
 
-The demo is synchronous. It does not start a runtime.
+The demo is synchronous, and it doesn't start a runtime.
 
 ### Build, run, and benchmark
 
@@ -545,7 +545,7 @@ outcome_label           time:   [5.5660 ns 5.6528 ns 5.7058 ns]
 | `unknown-tool-repair` | the model asks for `eco` | `Finished`, and the stored name is `echo` |
 | `stall` | `STALL_HALT_AFTER` echoes of a 512-character payload | `Stalled`, and a stub that says the result is byte-identical |
 
-`prepare_live_evals(None)` returns the missing-key string and does not construct a client. The CLI flag is `--live-evals`. With a key it would call `live_evals`, which uses the same OpenRouter client as `--live`. I ran the flag with the key unset. I did not run it with a key. CI does not pass the flag.
+`prepare_live_evals(None)` returns the missing-key string and doesn't construct a client. The CLI flag is `--live-evals`. With a key it would call `live_evals`, the same OpenRouter client as `--live`. I ran the flag with the key unset, the same missing-key line as section 9.1, and CI doesn't pass the flag.
 
 ### Build, run, and benchmark
 
@@ -595,11 +595,11 @@ stress_repair           time:   [20.602 µs 20.717 µs 20.871 µs]
 
 ## Pitfalls
 
-A final text reply returns `Finished` even when the token count is over the cap. The gate sits in front of the next call, and there is no next call. A budget test has to use a tool call first so the wrap-up exists.
+A final text reply returns `Finished` even when the token count is over the cap, because the gate sits in front of the next call and this reply has no next call. A budget test has to use a tool call first so the wrap-up exists.
 
-A time cap that is already spent, with `usage.calls == 0`, returns `Budget` and does not call the provider. The wrap-up is only for a turn that has already spent a call.
+A time cap that is already spent, with `usage.calls == 0`, returns `Budget` without calling the provider. The wrap-up is only for a turn that has already spent a call.
 
-A steer submitted before any tool result stays in the inbox. `append_steers` does not pop until a tool message exists. Draining it early would drop the line.
+A steer submitted before any tool result stays in the inbox. `append_steers` waits to pop until a tool message exists, because draining it early would drop the line.
 
 The [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/) charts section 9.1 and section 9.10 separately. Seeded history for the shared names is the section 9.10 mean, 608.0 ns for `loop_iteration`, because those artifacts stored one row per function name under `6.10/loop_iteration`. Quoting the section 9.1 mean of 248.5 ns as the finished loop would hide the checks.
 
@@ -621,7 +621,7 @@ Empty-response retries (J4, `agent/empty_response_guard.py`) and the repetition 
 
 - **Loop.** A scripted model call, the chapter 3 dispatcher, tool messages, and another call. Native `EchoTool` and the fixture's `echo`, over stdio and over streamable HTTP, share that path. One finished iteration with no tool call measured **608.0 ns**. The same bench on the section 9.1 crate, before the later checks, measured **248.5 ns**.
 - **Live.** `--live` and `--live-evals` call OpenRouter with `echo` and `note` when a key is present. The mock is the default. The missing-key line is `missing OPENROUTER_API_KEY: pass --api-key, or run with --mock`. The request body was checked with wiremock. There is no live transcript in this chapter.
-- **Cancel.** A `CancellationToken` is raced with each model call and each tool call. Soft stop is a separate flag. It finishes the current work, takes one wrap-up, and does not dispatch tools. Hard stop drops a pending steer.
+- **Cancel.** A `CancellationToken` is raced with each model call and each tool call. Soft stop is a separate flag: it finishes the current work, takes one wrap-up, and leaves the tools in that reply unrun. Hard stop drops a pending steer.
 - **Validation.** A unique close name is repaired. Three batches with nothing runnable return `InvalidToolCalls` and the partial transcript. Malformed JSON is retried, then answered with a tool error. Truncated arguments return `Partial` immediately. Timeouts and tool errors come back as tool results.
 - **Stall.** A long identical result becomes a stub on the second repeat. The turn halts at streak 4, or after three laps of a short cycle.
 - **Budget.** The warning at half the iterations, and the wrap-up past 80% of the time budget, are appended to the newest tool result. `execute_code` can refund one iteration. `delegate` has its own cap of 50.
@@ -630,4 +630,4 @@ Empty-response retries (J4, `agent/empty_response_guard.py`) and the repetition 
 
 ## What's next
 
-**Chapter 10: The Turn State Machine** is the transition table around `TurnOutcome`. `steps/ch10-turn-state` accepts or refuses each `(Phase, TurnEvent)` pair. It does not call `run_loop`. This chapter still stops at the value the loop returns.
+Chapter 10 puts a transition table around this loop. `steps/ch10-turn-state` is the finished harness from this chapter, and `drive_loop` asks `step` whether each `(Phase, TurnEvent)` pair is legal before it calls the model. A pair the table can't name panics the turn.
