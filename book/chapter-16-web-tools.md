@@ -1,16 +1,16 @@
 # Chapter 16: Built-in Tools I: Web Search and Extract
 
-The loop can call a tool, the approval floor can refuse a shell command, and the server can cap a tool named `web_search` at 50 calls. The harness still has no web search of its own. Asking the model to "look it up" only works if some tool actually looks it up, and if the page it reads cannot be a cloud metadata address or a URL with a secret in it. This chapter adds those two tools. The crate is `steps/ch16-web-tools`, a copy of chapter 14's harness. It is not a copy of chapter 15. Chapter 15 is the server, and the harness does not absorb it. The new module is `web`. The package is `ch16-web-tools`. The library is `harness_core`.
+`http://169.254.169.254/latest` is the address a cloud instance uses to read its own metadata, and it stays blocked even when private URLs are allowed. The loop can call a tool, the approval floor can refuse a shell command, and chapter 15 can cap a tool named `web_search` at 50 calls, but the harness still has no web search of its own. Asking the model to look something up only works if some tool actually looks it up, and if the page it reads can't be that address or a URL with a secret in it.
 
-`SearchBackend` is the trait. `FakeSearch` is what the tests and the benches call, so CI never needs a key and never dials. `EnvSearch` reads `WEB_SEARCH_API_KEY` and does not dial unless `WEB_SEARCH_ALLOW_NETWORK=1`. The tool names are `web_search` and `web_extract`. The search name is deliberate: chapter 15's cap is keyed by that string, and a second counter here would let a turn blow past 50 by calling a differently named twin. Search results are metadata: title, url, description, position. `limit` is clamped. Extract text is truncated, about three quarters head and one quarter tail, with a stored ceiling, and an inline base64 image becomes a placeholder rather than page text.
+This chapter adds `web_search` and `web_extract`. Search results are metadata: title, url, description, and position, with `limit` clamped. Extract text is truncated, about three quarters from the head and one quarter from the tail, and an inline base64 image becomes a placeholder rather than page text. The gate order is the part that matters. A URL that looks like it contains a secret is refused first, then the SSRF floor, then the backend. A cache hit, if one existed, wouldn't skip those gates. Once the result is long enough it is wrapped as untrusted, with any embedded closer neutralized, so a page can't end the wrapper early and continue as instructions. Chapter 34 and chapter 40 reuse that wrapper for other untrusted text.
 
-The gate order on extract is the order that matters. A URL that looks like it contains a secret is refused first. Then the SSRF floor: private, loopback, link-local, reserved, and CGNAT addresses are blocked, and the cloud metadata addresses stay blocked even when private URLs are allowed. Then the backend runs. A cache hit, if one existed, would not skip those gates. The result is wrapped as untrusted once it is long enough, with any embedded closer neutralized, so a page cannot end the wrapper early and continue as instructions. That wrapper is the same idea chapter 34 and chapter 40 reuse for other untrusted text.
+Search is how an agent gets past its own weights, and it is also how a poisoned page enters the conversation. A continuously improving harness will want to learn from what it read, which it can do only if the page was wrapped as data and the URL was checked before the request. Memory, in chapter 21, scans what gets written down. This chapter scans what gets fetched.
 
-Search is how an agent gets past its own weights. It is also how a poisoned page enters the conversation. The self-improving chapters will want the agent to learn from what it read. They can only do that safely if the page was wrapped as data, and if the URL was checked before the request. Memory, in chapter 21, scans what gets written down. This chapter scans what gets fetched. The two checks are different stores and the same worry.
+The crate is `steps/ch16-web-tools`, a copy of chapter 14's harness rather than of chapter 15, which stays the server. The new module is `web`, the package is `ch16-web-tools`, and the library is `harness_core`. `SearchBackend` is the trait. `FakeSearch` is what the tests and the benches call, so CI never needs a key and never dials, and `EnvSearch` reads `WEB_SEARCH_API_KEY` and won't dial unless `WEB_SEARCH_ALLOW_NETWORK=1`. The search name is deliberate: chapter 15's cap is keyed by that string, and a second counter here would let a turn blow past 50 by calling a differently named twin.
 
-Rust, at the moment the trait appears: `async` is the extract call. The trait is why a test passes a fake and never a socket. Pattern matching on an address is the SSRF floor, written as ordinary Rust rather than a firewall rule you cannot test.
+`async` is on the extract call because `Tool::call` is async for every tool, including one that never awaits. The trait is why a test passes a fake and never a socket, and matching on an address is the SSRF floor, ordinary Rust rather than a firewall rule you can't re-run.
 
-`cargo run -p ch16-web-tools --bin ch16-web-tools` runs the fake. The exercise is `my-harness/tests/ch16.rs`: a metadata address is not a safe extract URL.
+`cargo run -p ch16-web-tools --bin ch16-web-tools` prints one fake hit and the metadata refusal. `my-harness/tests/ch16.rs` expects `http://169.254.169.254/latest` to come back unsafe even with private URLs allowed.
 
 **In this chapter**
 
@@ -38,6 +38,10 @@ Rust, at the moment the trait appears: `async` is the extract call. The trait is
 > **Adapted.** Hermes picks a vendor from `_BUILTIN_AVAILABILITY` (exa, parallel, keenable, firecrawl, tavily, perplexity, searxng, brave-free, ddgs, xai) by config, then env keys such as `TAVILY_API_KEY` and `EXA_API_KEY`. This harness has one trait. `FakeSearch` is what tests and benches call. `EnvSearch` reads `WEB_SEARCH_API_KEY`. It does not open a socket unless `WEB_SEARCH_ALLOW_NETWORK=1`, and even then it refuses to ship a vendor client. Gate order here is secret URL, then SSRF, then the backend, then image rewrite, truncation, and the wrapper. There is no disk cache, so a cache hit cannot skip a gate.
 >
 > **Deferred.** The vendor ladder, keyless rescue, the TTL memo, and `tools/website_policy.py`. Chapter 32 still owns the general untrusted wrap for other tools. This chapter wraps these two names only.
+
+## What this chapter decides
+
+The search tool is named `web_search`, because that string is chapter 15's cap. `limit` missing or zero becomes a useful page size, 5 or 1, and a request for 500 becomes 100. Extract refuses a secret in the URL, including one percent-decoding of it, before it refuses a metadata or private address, and only then asks the backend. Over-long pages keep a head and a tail. Results of at least 32 characters are wrapped as data. `FakeSearch` is the backend the tests call, and `EnvSearch` prepares a body and then refuses to dial.
 
 ## 16.1 One trait, so the test never needs a key
 
@@ -169,20 +173,9 @@ Then the host is checked before any toggle:
 
 Every address is checked. `block_reason` maps IPv4-mapped `::ffff:a.b.c.d` and IPv4-translated `::ffff:0:a.b.c.d` back to the inner IPv4, which is what Hermes `_embedded_ipv4` does.
 
-Always blocked, even when `allow_private` is true:
+`169.254.169.254` is the address that matters, because it is the cloud metadata service and it stays blocked when `allow_private` is true. The same always-blocked set holds the other three metadata IPv4 addresses (`169.254.170.2`, `169.254.169.253`, `100.100.100.200`), `fd00:ec2::254`, the whole link-local range `169.254.0.0/16`, and IPv6 link-local `fe80::/10`.
 
-- the four metadata IPv4 addresses, and `fd00:ec2::254`
-- the whole link-local range `169.254.0.0/16`
-- IPv6 link-local (`fe80::/10`)
-
-Blocked only when `allow_private` is false:
-
-- private, loopback, unspecified, broadcast, multicast
-- CGNAT `100.64.0.0/10` (the first octet is 100 and the next two bits are `01`)
-- `240.0.0.0/4` except the broadcast address, which is already `is_broadcast`
-- the documentation nets `192.0.2.0/24`, `198.51.100.0/24`, `203.0.113.0/24`
-- the benchmarking net `198.18.0.0/15`
-- IPv6 unique-local `fc00::/7`
+When `allow_private` is false, the floor also blocks private, loopback, unspecified, broadcast, and multicast addresses, CGNAT `100.64.0.0/10` (first octet 100, next two bits `01`), `240.0.0.0/4` except the broadcast address, the documentation nets `192.0.2.0/24`, `198.51.100.0/24`, and `203.0.113.0/24`, the benchmarking net `198.18.0.0/15`, and IPv6 unique-local `fc00::/7`. The function that lists them is `block_reason` in the step crate.
 
 `_MAX_SSRF_CONNECT_IPS` is 8. Hermes validates every answer and would dial at most 8. This tool does not dial. It checks every address. A longer list of safe addresses is still safe. One unsafe address refuses the URL.
 
@@ -357,12 +350,19 @@ metadata: Blocked request to cloud metadata address: 169.254.169.254 -> 169.254.
 
 The first two lines are chapter 14's fallback demo, still in this binary. The search line is one fake hit. The metadata line is the floor with private URLs allowed.
 
+## Tests
+
+The library tests cover the clamp, the JSON shape, the secret URL, the metadata address with private URLs allowed, and a private address that flips with the toggle. The integration test removes `WEB_SEARCH_API_KEY` and `WEB_SEARCH_ALLOW_NETWORK`, then runs one scripted `web_search` through the loop and expects `example.com` inside the untrusted wrapper. The milestone in `my-harness/tests/ch16.rs` is the metadata URL.
+
 ## Pitfalls
 
-- Naming the tool anything but `web_search` silently steps around chapter 15's cap. The constant in this file is not a second counter. The name is the contract.
-- Checking SSRF after the backend has already fetched is too late. `extract_page` checks first.
-- Decoding the URL zero times lets `%73k-` through. Decoding forever can be a bomb. Once is the rule.
-- A resolver that returns `Ok` on DNS failure would turn a sandbox without DNS into an open proxy. `ResolveError` is a refusal.
+A tool named `search` instead of `web_search` would sail past chapter 15's cap of 50, because the constant in this file isn't a second counter. The name is the contract.
+
+Imagine the extract fetched first and checked the address after. A page that answered by pointing at `169.254.169.254` would already have been read. `extract_page` checks the URL before `backend.extract`, so that fetch never starts.
+
+`%73k-` is `sk-` after one percent-decoding. Checking the raw URL only lets that form through, and decoding in a loop is a way to burn the turn on a crafted string. Once is the rule.
+
+A resolver that returned `Ok` with no addresses on a DNS failure would turn a sandbox without DNS into an open proxy. `ResolveError` is a refusal, which is fail-closed.
 
 ## Guardrails
 
@@ -373,6 +373,13 @@ The first two lines are chapter 14's fallback demo, still in this binary. The se
 **F4, these two tools.** `wrap_untrusted` marks the result as data. Chapter 32 still owns the wrap for every other tool.
 
 **Left for later.** Vendor clients, website policy, and a disk cache. A cache, when it exists, has to sit behind the secret check and the SSRF check.
+
+## Chapter summary
+
+- **Search.** Metadata only, `limit` clamped, tool name `web_search` so chapter 15's cap applies.
+- **Extract.** A secret in the URL stops the call, and `169.254.169.254` stays blocked when private URLs are allowed.
+- **Wrap.** Long results are data, not instructions. The closer token inside the page is rewritten first.
+- **Time.** A fake search measured **5.023 µs**. The metadata check measured **335.1 ns**.
 
 ## What you implement
 

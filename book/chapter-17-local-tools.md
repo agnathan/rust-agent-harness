@@ -1,14 +1,16 @@
 # Chapter 17: Built-in Tools II: Files, Terminal, Todo, and Clarify
 
-Chapter 16 can search and extract, behind a trait, with the URL checked first. The harness still cannot read a file in the workspace, patch one, run a terminal command through the approval floor, keep a todo list, or pause to ask the user a question. Those four are the everyday tools, and each one has a way to go wrong that a bare function would miss. This chapter adds them as one module, `local_tools`, on a copy of chapter 16. The crate is `steps/ch17-local-tools`. The package is `ch17-local-tools`. The library is `harness_core`.
+An agent with a filesystem can clobber a file it never read, walk `..` out of the workspace, or run `rm -rf /` the moment a terminal exists. Chapter 16 can search and extract, with the URL checked first. It still can't read a file in the workspace, patch one, run a command through the approval floor, keep a todo list, or pause to ask the user a question. Those are the everyday tools, and each one has a way to go wrong that a bare function would miss.
 
-`Workspace::resolve` canonicalizes a path and refuses one that does not start with the workspace root. Absolute paths are held to the same prefix. A relative `..` that leaves the root is an error. `read_file` records a stamp. `write_file` of a path that was never read, or whose mtime moved, is refused as a stale write, so the model cannot clobber a file it has not seen. `patch` is the edit that matches one occurrence and replaces it. The read is capped. The terminal routes through chapter 11's `deny_tool` and then chapter 13's worker. It does not grow a second approval pipeline. Output is truncated head and tail, and the foreground timeout is bounded. `TodoStore` is agent-owned state, one list, merged by id, with a revision so a stale write can be rejected. It is not a file in the user's repository. `clarify` pauses for a user, with a cap on questions and choices. A child agent may not call it. That block is the one chapter 29 will enforce again for a specialist: `clarify`, `delegate_task`, `memory`, `send_message`, and cron stay out of a child's hands. This chapter implements `clarify` and keeps the block.
+The trick is that a path is canonicalized before it is trusted, and a write needs a stamp from a read. `Workspace::resolve` refuses a path that doesn't start with the workspace root, absolute paths included, and a relative `..` that leaves the root is an error. `read_file` records the mtime and the length. `write_file` of a path that was never read, or whose mtime moved, is refused as a stale write, so the model can't clobber a file it hasn't seen. `patch` replaces the one occurrence that matched. The read is capped. The terminal goes through chapter 11's `deny_tool` and then chapter 13's worker, rather than growing a second approval pipeline, with output cut head and tail and the foreground timeout bounded. `TodoStore` is agent-owned state, one list merged by id, with a revision so a stale write can be rejected, and it isn't a file in the user's repository. `clarify` pauses for a user, with a cap on questions and choices. A child agent may not call it. That block is the one chapter 29 will enforce again for a specialist: `clarify`, `delegate_task`, `memory`, `send_message`, and cron stay out of a child's hands.
 
-These tools are what a later skill actually does. A procedure that says "patch the file, then run the tests" is only real if patch and the terminal exist and are guarded. Chapter 25 will let the agent write that procedure down. Chapter 17 is why the procedure has something safe to call. The stale-write refusal matters for learning in particular: an agent that "fixes" a file it did not read will store a confident mistake, and reflection will then treat the mistake as experience.
+The limit belongs up front. `read_file`, `write_file`, and `patch_file` aren't `Tool` implementations, so the registry doesn't gain those names for the model to call. The tests and the demo call the functions, the same way chapter 13's tests call the worker. `ClarifyTool` is the exception, because the pause has to sit inside `Tool::call` so the turn waits on it. A later wrapper that registers the file functions would call these same functions.
 
-Rust, next to the path code: canonicalization is how `..` and symlinks stop being a string trick. A stamp is a struct you compare. `Result` is the refusal. The todo list is a `Vec` plus a revision counter, not a database. `clarify`'s pause is a future the test completes with a fake user reply.
+These tools are what a later skill actually does. A procedure that says "patch the file, then run the tests" is only real if patch and the terminal exist and are guarded, which is why chapter 25 will have something safe to call when it lets the agent write that procedure down. The stale-write refusal matters for a continuously improving harness in particular: an agent that "fixes" a file it didn't read will store a confident mistake, and reflection will then treat the mistake as experience.
 
-`cargo run -p ch17-local-tools --bin ch17-local-tools` runs the demo. The exercise is `my-harness/tests/ch17.rs`: a write without a prior read is refused.
+Canonicalization is how `..` and symlinks stop being a string trick. A stamp is a struct you compare. The todo list is a `Vec` plus a revision counter. `clarify`'s pause is a future the test completes with a fake user reply.
+
+The step is `steps/ch17-local-tools`, package `ch17-local-tools`, library `harness_core`, the module `local_tools` on a copy of chapter 16. `cargo run -p ch17-local-tools --bin ch17-local-tools` prints the escape, the stale write, the file still holding `one`, and the child refusal. `my-harness/tests/ch17.rs` is a write without a prior read.
 
 **In this chapter**
 
@@ -35,6 +37,10 @@ Rust, next to the path code: canonicalization is how `..` and symlinks stop bein
 > **Adapted.** Hermes warns when a relative path resolves outside the workspace root, and treats an absolute path as the caller's way to name a file on purpose. This harness refuses the escape. An absolute path is allowed only when `canonicalize` lands under the root. The terminal does not grow a second approval pipeline and does not port Docker or sudo. It calls `approval::deny_tool` and then chapter 13's worker. `sleep-ms` goes through `sandbox::run_until`, which kills the child on timeout. Any other command uses `Worker::spawn`, one `accept`, and `quit`, because the worker does not exit after a single line and `run_until` would wait until the timeout. The clarify pause in tests is a `VecDeque` of replies on the tool. The parent loop is `ScriptedProvider` plus that queue. There is no stdin.
 >
 > **Deferred.** SSH path resolution, container path mirrors, protected-instruction approval prompts, Docker and sudo backends, and the gateway lifecycle block. That block stays chapter 39. Chapter 29's supervisor keeps its own copy of the blocked-tool list. This chapter enforces `clarify` on the tool itself so a mistaken registration still cannot ask.
+
+## What this chapter decides
+
+A path is allowed only when `canonicalize` lands under the workspace root. An existing file can be written or patched only after a read in this task, and only while the mtime and length still match. A patch that doesn't match exactly once leaves the file untouched. The terminal asks chapter 11 before it asks chapter 13's worker. The todo list never becomes a file. `clarify` waits inside `call`, and `depth >= 1` refuses before the queued reply moves.
 
 ## 17.1 The root is a canonical path
 
@@ -365,10 +371,13 @@ child: BLOCKED: a child agent may not call clarify
 
 ## Pitfalls
 
-- Joining a relative path and then checking the string for `..` misses a symlink and misses an absolute path. `canonicalize` plus `starts_with` is the check. A warning that still returns the path is not this function. Hermes warns. This chapter refuses.
-- Patching on a count other than one, and writing anyway, would edit the wrong occurrence or invent a match. The `fs::write` stays below the count check.
-- Bumping the todo revision before the equality check would let a stale writer advance the counter and then fail, and the next honest writer would have the wrong expected number. The check returns first.
-- Putting `depth` in the tool arguments would let the model claim to be the parent. The depth is fixed when the tool is constructed.
+Joining a relative path and then scanning the string for `..` misses a symlink, and it misses an absolute path such as `/etc/passwd`. `canonicalize` plus `starts_with` is the check. A warning that still returns the path isn't this function: Hermes warns, and this chapter refuses.
+
+A patch that wrote anyway when the count wasn't one would edit the wrong occurrence, or invent a match that was never there. `fs::write` stays below the count check, so zero matches and two matches leave the file alone.
+
+If the todo revision moved before the equality check, a stale writer would advance the counter and then fail, and the next honest writer would be holding the wrong expected number. The check returns first, and the list stays as it was.
+
+`depth` in the tool arguments would let the model claim to be the parent. The depth is fixed when the tool is constructed, which is why a child built with `ClarifyTool::new(1, ...)` can't talk its way into the queue.
 
 ## Guardrails
 
@@ -386,9 +395,17 @@ child: BLOCKED: a child agent may not call clarify
 
 **Left for later.** SSH path resolution, container mirrors, protected-instruction prompts, Docker and sudo, and the gateway lifecycle block in chapter 39.
 
+## Chapter summary
+
+- **Root.** A path is allowed when canonicalization lands inside the workspace, and `..` that leaves is an error.
+- **Stamp.** A write or a patch of an existing file needs a matching read from this task.
+- **Terminal.** Chapter 11 sees the command before chapter 13's worker does. `rm -rf /` comes back denied.
+- **Pause.** `clarify` waits inside `call`. A child at `depth >= 1` doesn't get to ask.
+- **Time.** One patch measured **255.1 µs**. A todo merge measured **131.2 ns**.
+
 ## What you implement
 
-`my-harness/tests/ch17.rs` calls `chapter_17_stale_write_refused(false)` and expects `true`. The stub in `my-harness/src/milestones.rs` is `todo!("chapter 17")`. The finished check refuses a write when `read_first` is false. A write after a read in the same `FileState` is the other arm. Do not paste the step crate into `my-harness/`.
+`my-harness/tests/ch17.rs` calls `chapter_17_stale_write_refused(false)` and expects `true`. The stub in `my-harness/src/milestones.rs` is `todo!("chapter 17")`. The finished check refuses a write when `read_first` is false. A write after a read in the same `FileState` is the other arm. The step crate is the reference, as the preface says.
 
 ## What's next
 

@@ -1,16 +1,16 @@
 # Chapter 14: When Things Fail
 
-Chapter 9's loop can stop, stall, and wrap up. It still treats a failure as one outcome. An empty reply, a truncated reply, a repeated paragraph, a timeout, and a model that should have been the fallback all look different and need different next steps. Two dangerous commands also still sit outside the approval floor: deleting the binary that is running, and rewriting this crate's own git tree. This chapter classifies the failure and closes those two floor checks. The crate is `steps/ch14-when-things-fail`, a copy of chapter 13 plus a `failure` module. The package is `ch14-when-things-fail`. The library is `harness_core`.
+An empty reply that costs $0.30 is the turn spending money on nothing. The first empty drops the retry budget from three to one, because $0.30 is past the $0.25 line, and a second empty from the same model, the same provider, and zero output tokens gives that model up. The next model answers `hello`. Chapter 9's loop could already stop, stall, and wrap up, but it still treated every failure as one outcome, so an empty reply, a cut-off reply, a repeated paragraph, and a timeout all looked like the same kind of stop. Naming them is what lets a continuously improving harness spend the rest of the turn on a model that still has something to say, instead of burning the budget on a blank one.
 
-`Kind` is the classification. An empty reply retries, a repetition stops the loop, a cut-off reply can continue, and a timeout releases its permit. `run_models` is the seed of chapter 18's fallback.
+The other half is the approval floor. YOLO can wave a lot of commands through, and it still can't delete the binary that is running or `git reset --hard` the checkout this process was built from. An agent that is learning inside a tree, and that can rewrite that tree, destroys the session it was supposed to learn from. Both denials are hardline, and both run before the fast path, so the cheap allow never gets a vote.
 
-`approval::check` calls `command_deletes_runtime` and `self_repo_git_mutation` before the fast path and before YOLO. Both denials are hardline. Deleting a parent of the running binary is a hit. YOLO still denies both.
+The name on a stopped turn is `Kind`. An empty reply retries, a repetition stops the loop, a cut-off reply can continue when it isn't itself a loop, and a timeout drops the permit it was holding. `run_models` walks to the next model, which is the seed of chapter 18's fallback. `approval::check` calls `command_deletes_runtime` and `self_repo_git_mutation`, and deleting a parent of the running binary counts as a hit.
 
-Chapter 16 copies this harness, not chapter 15. Chapter 15 is the server. The failure types stay on the harness line because they classify the model's behavior and the shell the harness is about to run. A self-improving agent that retries an empty reply forever, or that can `git reset --hard` the tree it is learning inside, will destroy the session it was supposed to learn from. Chapter 52's stress set still includes the stall and the recovery. This chapter is where those failures become named kinds instead of one more stop.
+Chapter 16 copies this harness, and chapter 15, the server, stays a separate program. Chapter 52's stress set still includes the stall and the recovery, which is why those failures are named kinds here.
 
-Rust, taught at the match: `Kind` and `Reply` are enums, and `OrderedF64` exists because floating-point cost does not implement the ordering you want in a `BTree` or a sort. `Result` is the floor's denial. Matching on the error is the whole design of the retry.
+I kept `Kind` and `Reply` as enums rather than strings, because a missed arm fails the build and a new spelling can't fall through. `OrderedF64` stores the cost as an integer of millionths, since a floating-point cost can't derive `Eq` while `NaN` isn't equal to itself. The step is `steps/ch14-when-things-fail`, package `ch14-when-things-fail`, library `harness_core`: chapter 13 plus the `failure` module.
 
-`cargo run -p ch14-when-things-fail` runs the demo. The exercise is `my-harness/tests/ch14.rs`: YOLO still denies deleting the running binary and `git reset --hard` of this crate's manifest directory.
+`cargo run -p ch14-when-things-fail` prints `hello` and one fallback, from two fake models and no key. `my-harness/tests/ch14.rs` is the floor: YOLO still denies deleting the running binary and `git reset --hard` of this crate's manifest directory.
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -46,7 +46,7 @@ Two zero-output empties skip the rest of that model, including a later text repl
 
 ## 14.1 `Kind`
 
-`failure.rs` has two jobs. The first is the failure policy: a kind, an empty-reply budget, a repetition scan, a timeout that drops its permit, and a fake crashed session. Chapter 9 deferred the empty retries and the repetition guard. They land here, and this walk does not change their rules. The second job is at the bottom of the same file. `command_deletes_runtime` and `self_repo_git_mutation` are what the approval floor calls. I read the detectors first.
+`failure.rs` has two jobs, and the failure policy is the one to read first. A kind, an empty-reply budget, a repetition scan, a timeout that drops its permit, and a fake crashed session are the rules chapter 9 deferred, and this walk keeps those rules as they are. The second job sits at the bottom of the same file, where `command_deletes_runtime` and `self_repo_git_mutation` are what the approval floor calls. The detectors come after the retry, because the retry is the decision the empty reply forces.
 
 The module opens with the constants the tests match against.
 
@@ -79,7 +79,7 @@ pub enum Kind {
 }
 ```
 
-`Copy` is why `run_one` can write `kind: Some(*kind)`. The star copies the kind out of the borrowed reply. `RateLimit` and `Transport` are names in the enum. The fake models in this chapter's tests do not construct them.
+`Copy` is why `run_one` can write `kind: Some(*kind)`, the star copying the kind out of the borrowed reply. `RateLimit` and `Transport` are names in the enum so a later caller can store them, and the fake models in this chapter's tests happen to build the other variants. A string would have let those two names appear without a match arm, which is the reason the classification is an enum.
 
 ## 14.2 `EmptyAttempt`
 
@@ -122,10 +122,8 @@ pub fn retry_budget(attempt_cost_usd: Option<f64>) -> u32 {
 ```
 
 > **Rust sidebar: `Option` and a match guard**
-> - `Option<f64>` is either `Some(cost)` or `None`. There is no third case.
-> - `Some(cost) if cost > COST_THRESHOLD_USD` is a pattern plus a condition. Both have to hold.
-> - The `_` arm is everything else: `None`, and a `Some` whose cost is not greater than `0.25`.
-> - `0.25` itself takes the `_` arm. The test expects `retry_budget(Some(0.25))` to be 3. `Some(0.26)` is 1.
+>
+> `Option<f64>` is `Some(cost)` or `None`, and `Some(cost) if cost > COST_THRESHOLD_USD` is a pattern plus a condition that both have to hold, so the `_` arm is `None` and any cost that isn't greater than `0.25`. I treat the threshold as exceeded rather than met: `retry_budget(Some(0.25))` stays 3, and `Some(0.26)` is 1. `Option` itself is in [chapter 1](chapter-01-first-contact.md).
 
 ## 14.4 `deterministic_empty`
 
@@ -146,12 +144,10 @@ pub fn deterministic_empty(attempts: &[EmptyAttempt]) -> bool {
 ```
 
 > **Rust sidebar: `windows` and `let`/`else`**
-> - `windows(2)` on a slice yields overlapping pairs: indexes `(0, 1)`, then `(1, 2)`, and so on.
-> - `.last()` is the final pair. A log of three attempts compares the second and the third. It does not search the whole log for any matching pair.
-> - One attempt has no pair. `last()` is `None`. `let Some(pair) = ... else { return false }` is the early return for that case.
-> - `pair` is a `&[EmptyAttempt]` of length 2. `pair[0]` and `pair[1]` are references, so the `let` binds `&pair[0]` and `&pair[1]`.
+>
+> `windows(2)` yields overlapping pairs, and `.last()` is the final one, so a log of three attempts compares the second and the third. One attempt has no pair, `last()` is `None`, and `let Some(pair) = ... else { return false }` returns early. `pair` is a `&[EmptyAttempt]` of length 2, so the `let` binds references to `pair[0]` and `pair[1]`.
 
-Both attempts need usage. Both need zero output tokens. The model, the provider, and the finish reason have to match. A missing usage flag makes the `&&` chain false. The test builds one attempt, checks that a single attempt is false, checks that two clones are true, then flips `zero_output` on the second and checks false.
+Both attempts need usage, both need zero output tokens, and the model, the provider, and the finish reason have to match, so a missing usage flag makes the `&&` chain false. I only look at the last pair. An earlier empty that the model then recovered from shouldn't veto a later reply, which is why `windows(2).last()` is that pair and not a search of the whole log. One attempt is false, two clones are true, and flipping `zero_output` on the second is false again.
 
 ## 14.5 `is_repetition_dominated`
 
@@ -256,11 +252,10 @@ impl OrderedF64 {
 ```
 
 > **Rust sidebar: `Eq` on a float**
-> - `PartialEq` for `f64` exists. `Eq` does not, because `NaN` is not equal to itself.
-> - `Reply` derives `Eq`. A field of type `f64` would make that derive fail.
-> - `OrderedF64` stores `micros`, an `i64`. `usd` multiplies by one million and rounds. `as_f64` divides back.
+>
+> `PartialEq` for `f64` exists, and `Eq` doesn't, because `NaN` isn't equal to itself. `Reply` derives `Eq`, so a field of type `f64` would make that derive fail. `OrderedF64` stores `micros`, an `i64`: `usd` multiplies by one million and rounds, and `as_f64` divides back.
 
-The comment above the struct says cents. The field is `micros`, and `usd` multiplies by `1_000_000.0`. I follow the field.
+The comment above the struct says cents. The field is `micros`, and `usd` multiplies by `1_000_000.0`. A comment and a field that disagree can't both be the spec, and the tests match `usd`, so I follow the field.
 
 ## 14.8 `run_models`
 
@@ -453,10 +448,8 @@ where
 ```
 
 > **Rust sidebar: the permit is dropped on both arms**
-> - `work` is `FnOnce`. Calling `work()` consumes it and produces a future. `timeout` races that future against the duration.
-> - `Ok(text)` is the future finishing. `Err` is the timer. The error type is `Elapsed`. The match binds it as `_`.
-> - `drop(permit)` sits before the `match`. Both arms have already released the slot when they return.
-> - When the timer wins, `timeout` drops `work()`'s future. Dropping that future is what cancels the sleep. The permit drop is a separate line. The sleep's cancel does not, by itself, return the slot. The `drop` does.
+>
+> `work` is `FnOnce`, so calling `work()` consumes it and produces a future that `timeout` races against the duration. `Ok(text)` is the future finishing, and `Err` is the timer (`Elapsed`, bound as `_`). `drop(permit)` sits before the `match`, which means both arms have already released the slot when they return. When the timer wins, dropping the future cancels the sleep, and that cancel doesn't return the slot on its own. The `drop` does.
 
 The test uses `ToolPermits::new(PERMIT_BOUND)`. The work sleeps five seconds and would return `"late"`. The timeout is 30 milliseconds. The result is `Err(Kind::Timeout)`, `available()` is 8 again, and elapsed time is under two seconds. The sleep's future was dropped.
 
@@ -603,9 +596,8 @@ fn floor_runtime_and_repo(command: &str) -> Option<String> {
 ```
 
 > **Rust sidebar: `env!` versus `std::env::current_exe`**
-> - `std::env::current_exe()` runs when `check` runs. It returns the path of this process. A test binary lives under `target/`. `Ok` is a `PathBuf`. `display()` is the lossy string we hand to the detector. `Err` skips the runtime check and still runs the git check.
-> - `env!("CARGO_MANIFEST_DIR")` is the crate directory at compile time. Cargo sets it. The macro pastes a string literal into the binary. `cd` does not change it.
-> - The two calls protect different paths. One is the binary that is running. The other is the source tree that binary was built from. A test that passed the manifest dir as the runtime path would be checking the wrong overlap.
+>
+> `std::env::current_exe()` runs when `check` runs and returns this process's path, so a test binary lives under `target/`, `display()` is the lossy string handed to the detector, and `Err` skips the runtime check while the git check still runs. `env!("CARGO_MANIFEST_DIR")` is the crate directory at compile time, pasted in as a string literal, and `cd` can't change it. The two calls protect different paths, the binary that is running and the source tree it was built from, so a test that passed the manifest dir as the runtime path would be checking the wrong overlap.
 
 The comment on the function points the runtime delete at Hermes's `_floor_block` and the git detector at `tools/self_repo_guard.py`. It also says Hermes turns that git block on only for Windows (`guard_active`), and this harness runs the detector on every platform. A rewrite of the checkout this binary was built from is the same hazard. The denial text says to run the command on a copy.
 
@@ -704,19 +696,11 @@ pub fn command_deletes_runtime(command: &str, runtime_path: &str) -> bool {
 }
 ```
 
-An empty command or an empty runtime path is false. There is nothing to overlap.
+An empty command or an empty runtime path is false, because there is nothing to overlap. `normalized` rewrites `&&` and then `||` into newlines, and `split([';', '\n', '|'])` breaks the result on semicolon, newline, and a single pipe, so a chain becomes several segments while a lone `&` stays inside one. `fast_safe` would have rejected that `&` anyway if the floor had missed, and the git detector's split, in section 14.18, is the shorter one.
 
-`normalized` is an owned `String`. `replace("&&", "\n")` runs first, then `replace("||", "\n")`. A chain joined by `&&` or `||` becomes several lines. `split([';', '\n', '|'])` then breaks on semicolon, newline, and a single pipe. A single `&` is not in that list. Backgrounding with `&` stays inside the segment, and `fast_safe` would have rejected `&` anyway if the floor had missed. The git detector's split is shorter, and section 14.18 reads it.
+Each segment goes through `strip_wrappers`, an empty word list is skipped, and a segment that was only `sudo` becomes empty without panicking on `words[0]`. The name is the first real word after that, and `rsplit(['/', '\\'])` takes the last path component, so `/bin/rm` and `C:\Windows\rm` both yield `rm`. `to_ascii_lowercase` is why `RM` and `Remove-Item` match the lowercase table.
 
-Each segment goes through `strip_wrappers`. An empty word list is skipped. A segment that was only `sudo` becomes empty and does not panic on `words[0]`.
-
-`name` is the first real word, after the wrappers are gone. `rsplit(['/', '\\'])` takes the last path component, so `/bin/rm` and `C:\Windows\rm` both yield `rm`. `unwrap_or` is the empty-split case. `to_ascii_lowercase` means `RM` and `Remove-Item` match the lowercase table. The comparison is `*item == name`, byte for byte, after that lowercase.
-
-The `uv` branch runs before the deleting-name check. `uv` is not in `DELETING`. If the name is `uv` and `uv_uninstalls_runtime` returns true, the function returns true. Otherwise it falls through, `uv` fails the `DELETING` test, and the segment is skipped.
-
-The `find` branch is a substring check plus an overlap check. `segment.contains("-delete")` or `segment.contains("-exec rm")` looks at the raw segment, not at the word list. `-delete` as its own flag matches. The overlap then walks `words` from the second word, skips anything that starts with `-`, and asks `path_hits`. `find /opt/uv/python/... -delete` hits when that path overlaps the runtime. `find /tmp -delete` does not. `contains` is a substring, so the `-exec rm` test also matches a longer token that begins with those characters.
-
-The deleting branch is the same overlap walk. Flags are skipped, so `rm -rf /opt/uv/...` ignores `-rf` and tests the path. Any one overlapping non-flag word is enough. The function returns true on the first segment that hits. Later segments are not read.
+`uv` is checked before the deleting-name table, because `uv` isn't in `DELETING`. When the name is `uv` and `uv_uninstalls_runtime` returns true, the function returns true. Otherwise it falls through and the segment is skipped. `find` is a substring check plus an overlap: `-delete` or `-exec rm` is sought in the raw segment, flags are skipped, and `path_hits` decides, so `find /opt/uv/python/... -delete` hits when that path overlaps the runtime and `find /tmp -delete` doesn't. `contains` is a substring, which means a longer token that begins with `-exec rm` matches too. The deleting branch is the same overlap walk, flags skipped, and the first segment that hits returns true. Later segments aren't read.
 
 ## 14.15 `path_hits`
 
@@ -733,11 +717,9 @@ fn path_hits(word: &str, runtime_path: &str) -> bool {
 }
 ```
 
-`trim_matches` strips matching quote characters from both ends. `rm "/opt/uv/..."` and `rm /opt/uv/...` compare the same path. The quotes are not part of the path.
+`trim_matches` strips matching quotes from both ends, so `rm "/opt/uv/..."` and `rm /opt/uv/...` compare the same path and the quotes aren't part of it. Equality is the first arm, which is where `rm` of the exact `current_exe` string hits. `yolo_still_refuses_to_delete_the_running_binary` uses a stand-in runtime, `/opt/uv/python/cpython-3.12.7-x86_64/bin/python`, for the pure function, then calls `check` with `std::env::current_exe()` under `yolo = true` and expects `Deny` with `hardline: true`.
 
-Equality is the first arm. `rm` of the exact `current_exe` string hits here. The test `yolo_still_refuses_to_delete_the_running_binary` uses a stand-in runtime, `/opt/uv/python/cpython-3.12.7-x86_64/bin/python`, for the pure function, then calls `check` with `std::env::current_exe()` under `yolo = true` and expects `Deny` with `hardline: true`.
-
-`rm -rf /` misses. With the word `/`, `format!("{word}/")` is `//`, and a normal absolute runtime does not start with `//`. The backslash arm's format string writes `\\`, one backslash, so the needle is `/\\`. `command_deletes_runtime("rm -rf /", runtime)` is false. A parent is `runtime_path.starts_with` of the word plus `/`, so `rm /opt` hits `/opt/uv/...`. A child is the word starting with the runtime plus `/`. `rm -rf /tmp/scratch` is neither, and the test expects false.
+`rm -rf /` misses, and that miss is the point of the function. With the word `/`, `format!("{word}/")` is `//`, and a normal absolute runtime doesn't start with `//`. The backslash arm writes one backslash, so the needle is `/\\`, and `command_deletes_runtime("rm -rf /", runtime)` is false. A parent is `runtime_path.starts_with` of the word plus `/`, so `rm /opt` hits `/opt/uv/...`, while a child is the word starting with the runtime plus `/`. `rm -rf /tmp/scratch` is neither, and the expectation is false. The root delete is still denied by `hardline`.
 
 ## 14.16 `uv_uninstalls_runtime`
 
@@ -773,15 +755,13 @@ fn uv_uninstalls_runtime(words: &[&str], runtime_path: &str) -> bool {
 }
 ```
 
-`lower` owns a lowercased copy of every word, so `Python` and `UNINSTALL` still line up. `position` finds `python`. `uv tool uninstall` has no `python` and returns false. `uninstall` is sought after that index. `position` on the skipped iterator is relative, so `uninstall_at` adds `python_at + 1` back. Specs are the original words after that index. Quote trimming matches `path_hits`.
+`lower` owns a lowercased copy of every word, so `Python` and `UNINSTALL` still line up. `position` finds `python`, which is why `uv tool uninstall` returns false, and `uninstall` is sought after that index. `position` on the skipped iterator is relative, so `uninstall_at` adds `python_at + 1` back, and the specs are the original words after that index, quote-trimmed the same way `path_hits` trims.
 
-`--all`, `-a`, and `all` in any ASCII case return true without reading the path. `--all` uses `==`. The bare word `all` uses `eq_ignore_ascii_case`. A spec that starts with `-`, or a spec shorter than two characters, is skipped.
-
-Anything left hits when `runtime_path` contains `cpython-{spec}`, or when the path ends with the spec. `uv python uninstall 3.12` hits the test path because that path contains `cpython-3.12`. `3.11` does not. The test path ends in `python`, so the `3.12` hit is the `contains` arm, not `ends_with`.
+`--all`, `-a`, and `all` in any ASCII case return true without reading the path. A spec that starts with `-`, or a spec shorter than two characters, is skipped. Anything left hits when `runtime_path` contains `cpython-{spec}`, or when the path ends with the spec. `uv python uninstall 3.12` hits the test path because that path contains `cpython-3.12`, and `3.11` doesn't. The test path ends in `python`, so the `3.12` hit is the `contains` arm, not `ends_with`.
 
 ## 14.17 `strip_wrappers`
 
-`strip_wrappers` is shared. The git detector calls it too. I read it once, here.
+`strip_wrappers` is shared. The git detector calls it too, so the walk is here.
 
 ```rust
 fn strip_wrappers(segment: &str) -> Vec<&str> {
@@ -805,7 +785,7 @@ fn strip_wrappers(segment: &str) -> Vec<&str> {
 }
 ```
 
-`first()` yields `Option<&&str>`, and `copied()` copies the inner `&str`. `sudo`, `command`, `time`, and `nohup` are peeled, including a path whose base name is one of those. `sudo command rm` peels both. `env` peels itself and then every following word that contains `=`. `env FOO=1 sudo rm` peels `env` and `FOO=1`, then the outer loop peels `sudo`. The first word that is not a wrapper breaks. That word is `words[0]` for `rm`, `uv`, `find`, and `git`. `sudo -u root rm` stops on `-u`, because `-u` is not one of the five names. The delete detector then sees the command name `-u` and does not treat the segment as `rm`.
+`first()` yields `Option<&&str>`, and `copied()` copies the inner `&str`. `sudo`, `command`, `time`, and `nohup` are peeled, including a path whose base name is one of those, so `sudo command rm` peels both. `env` peels itself and then every following word that contains `=`, which means `env FOO=1 sudo rm` peels `env` and `FOO=1` and the outer loop then peels `sudo`. The first word that isn't a wrapper breaks, and that word is `words[0]` for `rm`, `uv`, `find`, and `git`. `sudo -u root rm` stops on `-u`, because `-u` isn't one of the five names, so the delete detector sees the command name `-u` and leaves the segment alone. I stopped the peel there on purpose: treating every flag as a wrapper would hide the `rm` that follows a real `sudo -u`.
 
 ## 14.18 `self_repo_git_mutation`
 
@@ -846,7 +826,7 @@ pub fn self_repo_git_mutation(command: &str, source_root: &str) -> bool {
 }
 ```
 
-Empty command, empty root, false. The split is `split([';', '\n'])`. Semicolon and newline only. This function does not replace `&&` or `||`, and it does not split on `|`. A pipeline kept in one segment stays one segment. The delete detector's split is the wider one: it rewrites `&&` and `||` to newlines, then splits on semicolon, newline, and `|`. `tests/command_guards.rs` does not shell out. It calls the functions with strings.
+An empty command or an empty root is false. The split is semicolon and newline only, so this function doesn't rewrite `&&` or `||` and doesn't split on `|`. A pipeline kept in one segment stays one segment. The delete detector's split is the wider one, and `tests/command_guards.rs` calls both functions with strings rather than shelling out.
 
 ## 14.19 `locate_git`
 
@@ -877,16 +857,16 @@ fn locate_git<'a>(words: &[&'a str]) -> Option<(usize, Option<&'a str>)> {
 ```
 
 > **Rust sidebar: the lifetime on `locate_git`**
-> - `'a` is the lifetime of the word slices. The input is `&[&'a str]`.
-> - The returned `Option<&'a str>` is the path that followed `-C`. It points into the same command text. It does not allocate.
+>
+> `'a` is the lifetime of the word slices, the input is `&[&'a str]`, and the returned `Option<&'a str>` is the path that followed `-C`. It points into the same command text and doesn't allocate.
 
-Each `-C` overwrites `dash_c`. Two `-C` flags in one segment leave the last path. `-C` at the end with no following word fails `index + 1 < words.len()` and is treated as an ordinary word. `/usr/bin/git` matches because the base name is `git`.
+Each `-C` overwrites `dash_c`, so two flags in one segment leave the last path. `-C` at the end, with no following word, fails `index + 1 < words.len()` and is treated as an ordinary word. `/usr/bin/git` matches because the base name is `git`.
 
-Back in `self_repo_git_mutation`, `rest` is the words after `git`. `targets` is true when `-C`'s path is exactly `source_root`, or when any word in the whole segment overlaps the root through `word_hits`. The `-C` comparison is `==`, not the prefix test. `git -C /tmp/other-repo checkout main` is false against the manifest dir. The test expects that. `git -C {root} checkout main` is true, because `dash_c` equals the root and `checkout` is in `GIT_MUTATIONS`.
+Back in `self_repo_git_mutation`, `rest` is the words after `git`. `targets` is true when `-C`'s path is exactly `source_root`, or when any word in the segment overlaps the root through `word_hits`. The `-C` comparison is `==`, not the prefix test, so `git -C /tmp/other-repo checkout main` is false against the manifest dir and `git -C {root} checkout main` is true, because `dash_c` equals the root and `checkout` is in `GIT_MUTATIONS`.
 
 ## 14.20 `word_hits`
 
-`word_hits` is one direction. `path_hits` looks both ways. This one asks whether the word is the root or a path inside it.
+`word_hits` looks one way, where `path_hits` looks both. This one asks whether the word is the root or a path inside it.
 
 ```rust
 fn word_hits(word: &str, root: &str) -> bool {
@@ -896,15 +876,11 @@ fn word_hits(word: &str, root: &str) -> bool {
 }
 ```
 
-Equality, or the word begins with the root plus a slash, or the word begins with the root plus two backslashes. A parent of the root does not hit. A child path under the manifest does. That is how a command can name the repo without `-C`.
+A hit is equality, or the word begins with the root plus a slash, or the word begins with the root plus two backslashes. A parent of the root misses, and a child path under the manifest hits, which is how a command can name the repo without `-C`.
 
-The subcommand is the first word of `rest` that is not a flag, not a word that `word_hits` the root, and not the `-C` path. `iter().copied()` yields `&str`, and `find` lends the closure a reference to each item, so `*word` is the `&str` compared with `dash_c`. `find` stops at the first match. `git -C {root} checkout main` skips `-C` (it starts with `-`), skips the root path, and takes `checkout`. If every remaining word is a flag or a path, `find` returns `None` and the segment continues. There is no subcommand to classify.
+The subcommand is the first word of `rest` that isn't a flag, isn't a word that `word_hits` the root, and isn't the `-C` path. `find` stops at the first match, so `git -C {root} checkout main` skips `-C`, skips the root path, and takes `checkout`. If every remaining word is a flag or a path, `find` returns `None` and the segment continues, because there is no subcommand to classify.
 
-`reset` is not in `GIT_MUTATIONS`. It hits only when some word in `rest` is `--hard`, `--merge`, or `--keep`. `sudo git -C {root} reset --hard` peels `sudo`, matches the root, sees `reset` and `--hard`, and returns true. The test then calls `check` under YOLO and expects `Deny`. `git reset` and `git reset --soft` continue. `--soft` is not in `RESET_MODES`.
-
-The other listed subcommands hit by name: `checkout`, `switch`, `rebase`, `merge`, `pull`, `restore`, `clean`, `cherry-pick`, `revert`, `bisect`. `git -C {root} status` targets the root and returns false. Alias lookup and heredocs are outside this parser. The doc comment says so.
-
-`tests/command_guards.rs` calls both functions and then `check` with `yolo = true`. The root is `env!("CARGO_MANIFEST_DIR")`. `echo hello` is still `Allow`.
+`reset` isn't in `GIT_MUTATIONS`. It hits only when some word in `rest` is `--hard`, `--merge`, or `--keep`, so `sudo git -C {root} reset --hard` peels `sudo`, matches the root, and returns true, and `check` under YOLO expects `Deny`. `git reset` and `git reset --soft` continue, because `--soft` isn't in `RESET_MODES`. The other listed subcommands hit by name: `checkout`, `switch`, `rebase`, `merge`, `pull`, `restore`, `clean`, `cherry-pick`, `revert`, and `bisect`. `git -C {root} status` targets the root and returns false. Alias lookup and heredocs are outside this parser, which is what the doc comment says. `tests/command_guards.rs` calls both functions and then `check` with `yolo = true`, the root is `env!("CARGO_MANIFEST_DIR")`, and `echo hello` is still `Allow`.
 
 ## Tests
 
@@ -990,4 +966,4 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Laye
 
 ## What's next
 
-Chapter 15 is the server. A tool gets its own concurrency limit, a retry only when it is marked idempotent, and a breaker that stops calling a backend that is already failing. The web-search cap of 50, still missing after chapter 9, is there too.
+Chapter 15 is the server, not the next harness. A tool gets its own concurrency limit, a retry only when it is marked idempotent, and a breaker that stops calling a backend that is already failing. The web-search cap of 50, still missing after chapter 9, is there too. The harness line resumes at chapter 16, which copies this chapter, and the server track continues at chapter 23.

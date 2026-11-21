@@ -1,16 +1,16 @@
 # Chapter 20: Sessions on Disk
 
-Chapter 2 can save a conversation as one JSON file, and chapter 19 can fold a stream into text worth keeping. Neither of those is a session you can resume, search, or trust with a secret that passed through the transcript. A learning agent that forgets every session can only learn inside one sitting. This chapter puts the session on disk, and it scrubs the text on the way in. The crate is `steps/ch20-sessions`, a copy of chapter 19 plus `wal` and `redact`. The package is `ch20-sessions`. The library is `harness_core`. `lib.rs` re-exports the redaction functions from here on, so later chapters call `crate::redact` instead of growing a second scrub.
+This is the start of the learning half of the book. A continuously improving harness that forgets every session can only improve inside one sitting. Memory, recall, skills, reflection, and curation, the next stretch of chapters, all assume a session is still there and that a secret in the transcript didn't become part of the lesson. Those chapters exist because this one gives the lesson a place to live.
 
-`Store` is a SQLite connection in WAL mode. Two tables hold the session and its messages. `append_turn` runs both strings through `redact_sensitive_text` before the insert, so a turn that contains a key is stored without the secret. The mask keeps the prefix through the first `-` or `_`, then stars. The patterns cover the prefix families, environment assignments, `Authorization` headers, and PEM blocks. `redact_for_egress` is that scrub plus a sweep that turns a bare bearer token into `Bearer [redacted]`. A background queue does the write. Full-text search is not built here. The ids are queued. Chapter 22 builds the search on this store.
+Chapter 2 can save a conversation as one JSON file, and chapter 19 can fold a stream into text worth keeping. Neither of those is a session you can resume, or trust with a key that passed through the transcript. `append_turn` runs both strings through `redact_sensitive_text` before the insert, so a turn that contains an `sk-` token is stored as `sk-***`. The mask keeps the prefix through the first `-` or `_`, then stars. A session row is a place a key would live forever, which is why the scrub happens on the way in.
 
-The scrub is the one later chapters are allowed to call. Chapter 21's memory writes go through it when a secret would otherwise land in the file. Chapter 39's outbound chat, chapter 47's bus delivery, and chapter 49's external-agent call all call `redact_for_egress`. They do not invent a narrower one. Chapter 52's red-team case for persistence calls this module. That is the point of copying the harness forward: the function is still there, under the same name, on the later crate.
+`Store` is a SQLite connection in WAL mode, and two tables hold the session and its messages. The patterns cover the prefix families, environment assignments, `Authorization` headers, and PEM blocks. `redact_for_egress` is that scrub plus a sweep that turns a bare bearer token into `Bearer [redacted]`. A background queue does the write. Full-text search isn't built here: the ids are queued, and chapter 22 builds the search on this store.
 
-This is the start of the learning half of the book. Memory, recall, skills, reflection, and curation all assume a session exists and that a secret in the transcript did not become part of the lesson. Hermes keeps sessions in SQLite and scrubs before text leaves or lands. The same split is here, with JSON from chapter 2 left behind as the export format rather than the store.
+The scrub is the one later chapters call. Chapter 21's memory writes go through it when a secret would otherwise land in the file. Chapter 39's outbound chat, chapter 47's bus delivery, and chapter 49's external-agent call all call `redact_for_egress`, rather than inventing a narrower scrub. Chapter 52's red-team case for persistence calls this module. Copying the harness forward is what keeps the function under the same name. Hermes keeps sessions in SQLite and scrubs before text leaves or lands. The same split is here, with JSON from chapter 2 left as the export format rather than the store.
 
-Rust, beside the connection: SQLite is a library linked into the process, WAL is the mode that lets a reader proceed while a writer appends, and a prepared statement is the insert. `redact` is plain string replacement driven by a regex set compiled once. `Result` is a disk error, which is different from a model error and should stay that way.
+SQLite is a library linked into the process. WAL lets a reader proceed while a writer appends, and a prepared statement is the insert. `redact` is string replacement driven by a regex set compiled once. A disk error stays a `rusqlite::Error`, which is a different failure from a model error and should stay that way.
 
-`cargo run -p ch20-sessions` runs the demo. The exercise is `my-harness/tests/ch20.rs`: a turn that contains an `sk-` token and `OPENAI_API_KEY=` is stored without the secret, and egress strips a bare bearer.
+The step is `steps/ch20-sessions`, package `ch20-sessions`, library `harness_core`, a copy of chapter 19 plus `wal` and `redact`. `lib.rs` re-exports the redaction functions from here on, so later chapters call `crate::redact`. `cargo run -p ch20-sessions` writes a temp database, prints the row count and `wal`, and deletes the file. `my-harness/tests/ch20.rs` stores a turn that contains an `sk-` token and `OPENAI_API_KEY=` without the secret, and egress strips a bare bearer.
 
 **In this chapter**
 
@@ -64,10 +64,7 @@ pub struct Store {
 
 > **Rust sidebar: SQLite from Rust**
 >
-> - A database here is a file. `Connection::open` takes a `&Path` and returns `Result<Connection, rusqlite::Error>`. The path is borrowed. The connection owns the open file.
-> - `Result` is the error channel. The `?` after a call means: if this is `Err`, return that error from the function; if it is `Ok`, keep the value. `open`, `migrate`, and `append_turn` all use it. A caller gets either the store or a SQLite error. I do not invent a second error enum for this file.
-> - SQL in this crate is a string. `?1`, `?2`, and `?3` are placeholders. `params!` builds the list that fills them. The text of a message is data in that list. It is not pasted into the SQL string.
-> - `execute` runs one statement. `execute_batch` runs several, separated by semicolons. `query_row` runs a statement that must return one row and maps that row with a closure.
+> A database here is a file. `Connection::open` takes a `&Path` and returns `Result<Connection, rusqlite::Error>`. The path is borrowed, and the connection owns the open file. `Result` is the error channel. The `?` after a call means: if this is `Err`, return that error from the function; if it is `Ok`, keep the value. `open`, `migrate`, and `append_turn` all use it, so a caller gets either the store or a SQLite error. This file doesn't add a second error enum. SQL in this crate is a string. `?1`, `?2`, and `?3` are placeholders, and `params!` builds the list that fills them. The text of a message is data in that list, so it isn't pasted into the SQL string. `execute` runs one statement. `execute_batch` runs several, separated by semicolons. `query_row` runs a statement that must return one row and maps that row with a closure.
 
 `open` creates the connection and an empty queue. It does not create tables.
 
@@ -229,14 +226,11 @@ The signature takes `&mut self` because the transaction borrows the connection m
 
 > **Rust sidebar: a transaction**
 >
-> - `self.conn.transaction()` starts a transaction and returns a `Transaction` value. The statements I run on `tx` are part of that transaction.
-> - `commit` writes the transaction. In WAL mode that commit is the append to the log. A reader that starts after the commit sees both message rows.
-> - `tx` owns the transaction. If an `?` returns before `commit`, `tx` is dropped at the end of that early return. Dropping an uncommitted `Transaction` rolls it back. A failure on the assistant insert does not leave the user row behind, and it does not leave a new session row behind either.
-> - The queue push is after `commit`. A rollback never enqueues an id. A commit that succeeds and then a panic before `enqueue` would leave rows with no queued id. The queue is a hint for a background job. The file is the record.
+> `self.conn.transaction()` starts a transaction and returns a `Transaction` value. The statements run on `tx` are part of that transaction. `commit` writes it, and in WAL mode that commit is the append to the log. A reader that starts after the commit sees both message rows. `tx` owns the transaction. If an `?` returns before `commit`, `tx` is dropped at the end of that early return, and dropping an uncommitted `Transaction` rolls it back. A failure on the assistant insert doesn't leave the user row behind, and it doesn't leave a new session row behind either. The queue push is after `commit`, so a rollback never enqueues an id. A commit that succeeds and then a panic before `enqueue` would leave rows with no queued id. The queue is a hint for a background job. The file is the record.
 
 The session insert is `INSERT OR IGNORE`. The primary key is `id`. The first turn for `"s1"` inserts one sessions row: source `'user'`, `parent_id` null, `started_at` set to `now`, `title` null. The source string is fixed in the SQL. This function cannot record a cron session or a subagent session. Chapter 22 has a different insert for those. A second `append_turn` for `"s1"` hits the same primary key. `OR IGNORE` skips that insert. It does not update `source`, `parent_id`, `started_at`, or `title`. The test that appends twice expects `SELECT COUNT(*) FROM sessions` to be 1.
 
-I read `last_insert_rowid` after each message insert, not after the session insert. SQLite remembers the last row id on the connection. The message insert is the statement that sets the id I care about. On a resumed session the ignored session insert does not change that, and I still read the id only after the message statement.
+The id comes from `last_insert_rowid` after each message insert, not after the session insert. SQLite remembers the last row id on the connection, and the message insert is the statement that sets the id worth keeping. On a resumed session the ignored session insert doesn't change that, so the read stays after the message statement.
 
 Both message values pass through `crate::redact::redact_sensitive_text` in the `params!` list. That call runs before `execute` sends the row. The user string is scrubbed. The assistant string is scrubbed. The session id is not scrubbed. The role is the literal `'user'` or `'assistant'` in the SQL, not a parameter I could forget to scrub. `ts` is the integer `now`.
 
@@ -275,7 +269,7 @@ The first session test calls `append_turn("s1", "hi", "pong")` and expects exact
 "SELECT COUNT(*) FROM sqlite_master WHERE name = 'messages_fts_trigram'"
 ```
 
-The count is 0. `sqlite_master` is SQLite's catalog of tables. `append_turn` never creates `messages_fts_trigram`, so the name is absent. I checked the strings against the scrub. `hi` and `pong` contain no prefix family, no `=`, and no `Authorization` header. `redact_sensitive_text` still runs on both. It allocates a new `String` and the characters are unchanged. That is why the expectation can stay `hi` and `pong`. Redaction is a no-op on those two words. The resume test uses `one`, `a`, `two`, and `b`, which miss the patterns the same way, and it expects four messages and one session row.
+The count is 0. `sqlite_master` is SQLite's catalog of tables. `append_turn` never creates `messages_fts_trigram`, so the name is absent. `hi` and `pong` contain no prefix family, no `=`, and no `Authorization` header, so the characters come back unchanged even though `redact_sensitive_text` still runs and allocates a new `String`. That is why the expectation can stay `hi` and `pong`. The resume test uses `one`, `a`, `two`, and `b`, which miss the patterns the same way, and it expects four messages and one session row.
 
 The third test calls `run_saved_evals` and `run_stress_evals`. Those functions drive the chapter 9 mock loop. They do not call `Store::open`. A pass there means the copied loop still passes.
 
@@ -295,11 +289,7 @@ Four functions each hide one `Regex` in an `OnceLock`. `patterns` is the prefix 
 
 > **Rust sidebar: `OnceLock`**
 >
-> - `OnceLock<Regex>` is a cell that starts empty. `OnceLock::new()` is a constant, so it can sit in a `static`.
-> - A `static` inside a function is still one value for the whole process. The next call does not build another cell. The name `RE` is local. The storage is not.
-> - `get_or_init` runs the closure only on the first call. If two threads race, one runs the closure, the other waits, and both then receive the same `&Regex`. The patterns live for the process.
-> - If the closure panics, the panic spreads and the cell stays empty, so a later call can try again. These closures only panic when `Regex::new` rejects the pattern. The pattern is a fixed string, so a bad one fails the first scrub in the process.
-> - `patterns`, `env_assign`, `auth_header`, and `bearer_residue` each have their own lock. Calling `redact_sensitive_text` fills the first three. It does not fill the Bearer lock. `redact_for_egress` fills that fourth lock because it calls the Bearer sweep after the scrub.
+> `OnceLock<Regex>` is a cell that starts empty. `OnceLock::new()` is a constant, so it can sit in a `static`. A `static` inside a function is still one value for the whole process. The next call doesn't build another cell. The name `RE` is local, and the storage isn't. `get_or_init` runs the closure only on the first call. If two threads race, one runs the closure, the other waits, and both then receive the same `&Regex`. The patterns live for the process. If the closure panics, the panic spreads and the cell stays empty, so a later call can try again. These closures only panic when `Regex::new` rejects the pattern. The pattern is a fixed string, so a bad one fails the first scrub in the process. `patterns`, `env_assign`, `auth_header`, and `bearer_residue` each have their own lock. Calling `redact_sensitive_text` fills the first three and doesn't fill the Bearer lock. `redact_for_egress` fills that fourth lock because it calls the Bearer sweep after the scrub.
 
 ```rust
 fn patterns() -> &'static Regex {
@@ -340,29 +330,11 @@ format!("{}{MASK}", &raw[..prefix_len])
 
 `caps.get(0)` is the whole match. `find(['-', '_'])` returns the byte index of the first `-` or the first `_`, whichever sits further left. The `map` adds one, so the prefix includes that separator. `unwrap_or(0)` is the branch where neither character exists: the prefix length is zero, and the whole match is replaced by `***`. `format!` builds a new `String`. The body of the key is not copied. A second call of the scrub sees the prefix and the stars, and that text is too short and too punctuated to match the same alternative again.
 
-I walk the alternatives in the order `concat!` lists them.
+Three of the alternatives are enough to see the policy. The listing above is the full set, and the step crate is where it lives.
 
-`sk-[A-Za-z0-9_-](?:\.?[A-Za-z0-9_-]){9,}` is the OpenAI-style key. After `sk-` it wants one character from that class, then at least nine more groups of an optional dot and one class character. `sk-abcdefghijklmnopqrstuvwxyz` matches. The first separator is the hyphen in `sk-`, so the stored text is `sk-***`. `sk-abc` has only three characters after the hyphen. It does not match, and it is left as written. `sk-abc.def.ghij` does match, because the dot is allowed inside the repeated group, and the mask is still `sk-***`.
+`sk-[A-Za-z0-9_-](?:\.?[A-Za-z0-9_-]){9,}` is the OpenAI-style key. `sk-abcdefghijklmnopqrstuvwxyz` matches, the first separator is the hyphen, and the stored text is `sk-***`. `sk-abc` is too short and is left as written. `sk-abc.def.ghij` matches too, because the dot is allowed inside the repeated group, and the mask is still `sk-***`.
 
-`ghp_[A-Za-z0-9]{10,}` is a classic GitHub personal token. Ten or more letters and digits after `ghp_`. The first separator is that underscore, so `ghp_` plus ten `a`s becomes `ghp_***`.
-
-`github_pat_[A-Za-z0-9_]{10,}` is the fine-grained GitHub token. The mask does not keep `github_pat_`. `find` stops at the first underscore, the one after `github`, so `github_pat_` plus ten `a`s becomes `github_***`. The rest of the family name is inside the match, and the match is replaced as a whole.
-
-`gho_`, `ghu_`, `ghs_`, and `ghr_` are the four GitHub token shapes that share one rule: the literal prefix, then at least ten letters or digits. OAuth, user-to-server, server-to-server, and refresh. Each mask keeps its own three letters and the underscore: `gho_***`, `ghu_***`, `ghs_***`, `ghr_***`. A token with only nine characters after the underscore does not match.
-
-`xox[baprs]-[A-Za-z0-9-]{10,}` is the Slack family. The character class is the single letter `b`, `a`, `p`, `r`, or `s`, so the literals are `xoxb-`, `xoxa-`, `xoxp-`, `xoxr-`, and `xoxs-`. Ten or more letters, digits, or hyphens follow. The first separator is that hyphen, so `xoxb-` plus ten `a`s becomes `xoxb-***`. `xoxc-` is not in the class. It is left alone.
-
-`AIza[A-Za-z0-9_-]{30,}` is the Google key. Thirty or more characters from that class. Twenty-nine does not match. The match has no `-` and no `_` when the body is only letters, and it has none in the literal `AIza` either. If a hyphen shows up inside the body, `find` stops there and the prefix includes that hyphen. A body of thirty `a`s has neither character, `prefix_len` is 0, and the whole match becomes `***`.
-
-`AKIA[A-Z0-9]{16}` is the AWS access-key id. The `{16}` is exact, not "16 or more". Sixteen uppercase letters or digits after `AKIA` match. Fifteen do not. The literal and those sixteen characters contain no hyphen and no underscore, so the match becomes `***`. A seventeenth trailing character is outside the match. `replace_all` leaves it in the string. The stars replace only the twenty characters the pattern consumed.
-
-`sk_live_[A-Za-z0-9]{10,}` and `sk_test_[A-Za-z0-9]{10,}` are the Stripe live and test keys. Both contain an underscore at index 2, before `live` or `test`. The mask keeps `sk_` and nothing more. `sk_live_` plus ten letters becomes `sk_***`. The same three characters replace a test key. A later reader cannot tell live from test by the stored prefix. They also cannot recover the key.
-
-`hf_[A-Za-z0-9]{10,}` is the Hugging Face token. Ten letters or digits. The mask is `hf_***`.
-
-`npm_[A-Za-z0-9]{10,}` is the npm token. The mask is `npm_***`.
-
-`glpat-[A-Za-z0-9_\-]{10,}` is the GitLab token. The class allows letters, digits, underscore, and hyphen. In the raw string, `\-` is a hyphen the regex engine treats as a literal hyphen inside the class. Ten of those characters after `glpat-`. The first separator is the hyphen in `glpat-`, so the mask is `glpat-***`.
+`github_pat_[A-Za-z0-9_]{10,}` is the fine-grained GitHub token, and it is the case where the mask cuts earlier than the family name. `find` stops at the first underscore, the one after `github`, so `github_pat_` plus ten `a`s becomes `github_***`. The `gho_`, `ghu_`, `ghs_`, and `ghr_` shapes keep their own three letters, because that underscore is the first separator. A token with only nine characters after it is left as written. `ghp_` plus ten letters becomes `ghp_***`.
 
 The last alternative is a PEM block.
 
@@ -370,9 +342,9 @@ The last alternative is a PEM block.
 r"|-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----"
 ```
 
-It starts at `-----BEGIN`, allows uppercase letters and spaces, requires the words `PRIVATE KEY`, and stops at the matching `-----END ... PRIVATE KEY-----` line. `[\s\S]*?` is any character, including newlines, and the `?` makes it stop at the first END line rather than the last. `-----BEGIN PRIVATE KEY-----` through `-----END PRIVATE KEY-----` matches, and so does a block whose label is `RSA PRIVATE KEY`. The first character of the match is `-`. `prefix_len` is 1. The entire block, body included, is replaced by `-***`.
+It starts at `-----BEGIN`, allows uppercase letters and spaces, requires `PRIVATE KEY`, and the `?` on `[\s\S]*?` stops at the first `-----END ... PRIVATE KEY-----` rather than the last. A block labeled `RSA PRIVATE KEY` matches too. The first character of the match is `-`, so `prefix_len` is 1 and the entire block, body included, is replaced by `-***`.
 
-`replace_all` walks non-overlapping matches of this whole alternation. Text that matches none of them is copied through. That is the path `hi` and `pong` take.
+Everything else in the alternation uses that same mask: keep through the first `-` or `_`, then `***`, and if neither character is in the match the whole match becomes `***`. That covers the Slack family `xoxb-`, `xoxa-`, `xoxp-`, `xoxr-`, and `xoxs-` (`xoxc-` isn't in the class, so it is left alone), Google `AIza` (thirty `a`s have no separator and become `***`; twenty-nine don't match), AWS `AKIA` with exactly sixteen characters after it (fifteen don't match, and a seventeenth character stays outside the match), Stripe `sk_live_` and `sk_test_` (both become `sk_***`, so a later reader can't tell them apart or recover the key), `hf_`, `npm_`, and GitLab `glpat-`. `replace_all` walks non-overlapping matches. Text that matches none of them is copied through, which is the path `hi` and `pong` take.
 
 ## 20.4 Env assignments, the auth header, and egress
 
@@ -414,11 +386,7 @@ fn auth_header() -> &'static Regex {
 
 > **Rust sidebar: a raw string**
 >
-> - A normal string `"..."` treats `\"` as a quote and `\n` as a newline.
-> - A raw string `r"..."` does not. The backslash is just a backslash. `\"` does not escape inside `r"..."`. The quote ends the string, and the backslash sits in front of that end.
-> - This pattern needs a real `"` inside the character class `[^\s"']`. I cannot write that with `r"..."` and a backslash.
-> - `r#"..."#` is a raw string whose delimiter is `"#` instead of `"`. The quote in `[^\s"']` is then an ordinary character. Extra `#` characters on both sides are how you nest a raw string that itself contains `"#`.
-> - `(?i)` is still the regex flag. The raw string does not change regex meaning. It only changes how Rust reads the source.
+> A normal string `"..."` treats `\"` as a quote and `\n` as a newline. A raw string `r"..."` doesn't. The backslash is just a backslash, so `\"` doesn't escape inside `r"..."`. The quote ends the string, and the backslash sits in front of that end. This pattern needs a real `"` inside the character class `[^\s"']`, which `r"..."` and a backslash can't write. `r#"..."#` is a raw string whose delimiter is `"#` instead of `"`. The quote in `[^\s"']` is then an ordinary character. Extra `#` characters on both sides are how you nest a raw string that itself contains `"#`. `(?i)` is still the regex flag. The raw string doesn't change regex meaning. It only changes how Rust reads the source.
 
 Group 1 is the header word, an optional `Proxy-` prefix, the colon, and the whitespace after it. Group 2 is optional. It is a scheme: a letter, then word characters or `.` `+` `-`, then whitespace. `Bearer ` matches. `Basic ` matches. Group 3 is the credential, one or more characters that are not whitespace and not a quote. The replacement is group 1 plus `***`. The scheme and the credential are dropped.
 
