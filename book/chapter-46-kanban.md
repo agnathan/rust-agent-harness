@@ -28,8 +28,7 @@ Rust, at the file: the board is serialized JSON, and the write is a temp file pl
 > I looked at the kanban database. On Hermes `main` at `9e01b44`, `hermes_cli/kanban_db.py` opens with this module docstring:
 >
 > 
-
-```python
+> ```python
 > """SQLite-backed Kanban board shared across profiles (the cross-profile coordination primitive).
 >
 > Lives under the shared Hermes root: ``default`` board DB at ``<root>/kanban.db`` (pre-boards
@@ -51,8 +50,7 @@ Rust, at the file: the board is serialized JSON, and the write is a temp file pl
 > `_claim_and_open_run` at line 2143 is that swap. The docstring says it does CAS from `source_status` to `running`, opens a run row, emits `claimed`, and returns `None` when the CAS lost. The caller holds the transaction. The update I read:
 >
 > 
-
-```python
+> ```python
 > def _claim_and_open_run(
 >     conn: sqlite3.Connection, task_id: str, source_status: str, lock: str, expires: int, now: int,
 >     *, event_extra: Optional[dict] = None,
