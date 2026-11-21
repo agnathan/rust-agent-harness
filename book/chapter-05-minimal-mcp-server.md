@@ -1,16 +1,12 @@
 # Chapter 5: A Minimal MCP Server
 
-Chapter 4 can talk to an MCP server. It cannot be one. The harness decides what enters a prompt: the task, the budget, the cached prefix. Something else has to hold the tool list and run the call. This chapter is that other program, in the smallest form that is still a server. The step crate is `steps/ch05-minimal-server`, package `ch05-minimal-server`. The types are `Gateway`, `ToolCard`, `SessionView`, `CallGate`, and `GatewayError`.
+The client from the last chapter can list tools and call them. Someone still has to hold the list and run the body, and if that someone is the harness, every agent binary is also the catalog. A change to who gets in would be a change to the prompt builder. This chapter is the other program, small enough to be a server and nothing else. The step crate is `steps/ch05-minimal-server`, package `ch05-minimal-server`, and the types worth knowing up front are `Gateway`, `ToolCard`, `SessionView`, `CallGate`, and `GatewayError`.
 
-`Gateway::new` starts empty. `register` appends a name and a description, and a second registration of the same name is `GatewayError::Duplicate`, which is the rule chapter 3 already uses. `session_tools` returns that list, in registration order, for every session id. There is no per-session filter yet. `call` looks up the name before it takes a permit, so an unknown name does not occupy a slot. `echo` reads the string field `text` and returns it. Any other registered name returns its description. A missing `text` on `echo` is `BadArgs`.
+What it offers is a fixed list, one real tool named `echo`, and a gate of 32 accepted calls with 8 running. `Gateway::new` starts empty. A second registration of the same name is `GatewayError::Duplicate`, the same refusal chapter 3 already uses. There is no per-session filter yet, and an unknown name is refused before it takes a slot. The interesting part is the gate, and the way it can stall itself, which the pitfalls walk through once the permits are on the page.
 
-The gate is two semaphores. `ACCEPT_BOUND` is 32. `EXECUTE_BOUND` is 8. `CallGate::run` tries to take an accept permit and refuses when none are free, then waits for an execute permit. The accept permit is held through that wait and through the tool body, so the 33rd call fails instead of joining a longer queue. Eight running at once is the same bound chapter 3 uses for in-flight tool work. Thirty-two is how many calls may be accepted into that gate.
+Hermes's own `mcp_serve.py` is a small stdio server with a fixed list, separate from the agent loop that calls other servers. This chapter keeps the fixed list and the registration order, and it stays in-process: it binds no socket. Streamable HTTP, replicas, and a bearer check are chapter 42. Search over a changing catalog is chapter 7. A session-sized view is chapter 8. Limits, retries, and a breaker wrap this gate in chapter 15. The process crate `mcp-gateway` will re-export the finished server, not this first slice, and it will still bind no socket.
 
-The server stays a separate program, and this chapter is where that split becomes a crate rather than a sentence. The harness from chapter 4 is the client. It lists and calls. This process owns the list. Folding the gateway into the harness would mean every agent binary is also the catalog, and a change to admission policy would be a change to the prompt builder. Hermes's own `mcp_serve.py` is a small stdio server with a fixed list, separate from the agent loop that calls other servers. This chapter keeps the fixed list and the registration order, and it stays in-process: it binds no socket. Streamable HTTP, replicas, and a bearer check are chapter 42. Search over a changing catalog is chapter 7. A session-sized view is chapter 8. Limits, retries, and a breaker wrap this gate in chapter 15. The process crate `mcp-gateway` will re-export the finished server, not this first slice, and it will still bind no socket.
-
-Rust for a new reader: a second crate is a separate compilation unit with its own public types. A struct owns the list. An enum is the error. A semaphore permit is an RAII value: dropping it releases the slot, including when the body returns `BadArgs`. `async` is the wait for an execute permit.
-
-`cargo run -p ch05-minimal-server` runs the demo. Nothing listens on a port.
+A permit is a value. Dropping it gives the slot back, including when the body returns `BadArgs`, which is why the gate can be two semaphores instead of a counter someone has to remember to decrement. `cargo run -p ch05-minimal-server` runs the demo. Nothing listens on a port.
 
 **In this chapter**
 
@@ -39,11 +35,11 @@ Rust for a new reader: a second crate is a separate compilation unit with its ow
 
 ## What this chapter decides
 
-`Gateway::new` starts empty. `register` appends a name and a description. `session_tools` returns that list, in registration order, for every session id. There is no per-session filter yet.
+`Gateway::new` starts empty, `register` appends a name and a description, and `session_tools` returns that list, in registration order, for every session id. There is no per-session filter yet.
 
-`call` looks up the name before it takes a permit. An unknown name does not occupy a slot. `echo` reads the string field `text` and returns it. Any other registered name returns its description. A missing `text` on `echo` is `BadArgs`.
+`call` looks up the name before it takes a permit, so an unknown name never occupies a slot. `echo` reads the string field `text` and returns it. Any other registered name returns its description, and a missing `text` on `echo` is `BadArgs`.
 
-The gate is two semaphores. `ACCEPT_BOUND` is 32. `EXECUTE_BOUND` is 8. `CallGate::run` tries to take an accept permit and refuses when none are free. It then waits for an execute permit. The accept permit is held through that wait and through the tool body, so the 33rd call fails instead of joining a longer queue. The test sleeps 30 ms inside 32 tasks, checks that the peak inside the body is at most 8 and at least 2, and checks that one more `run` returns `Saturated`.
+The gate is two semaphores, `ACCEPT_BOUND` 32 and `EXECUTE_BOUND` 8. `CallGate::run` tries to take an accept permit and refuses when none are free, then waits for an execute permit. The accept permit is held through that wait and through the tool body, so the 33rd call fails instead of joining a longer queue. The test sleeps 30 ms inside 32 tasks, checks that the peak inside the body is at most 8 and at least 2, and checks that one more `run` returns `Saturated`.
 
 ## The gate
 
@@ -57,7 +53,7 @@ Ok(body().await)
 
 > **Rust sidebar: a permit is a value**
 >
-> A `Semaphore` starts with N permits. `acquire_owned` returns a permit value. Dropping that value gives the permit back. Holding it across an `.await` is what caps the overlap. You do not increment a counter by hand, and you do not hold a `Mutex` across the tool body. The mutex would pin a worker. The permit does not.
+> A `Semaphore` starts with N permits. `acquire_owned` returns a permit value, and dropping that value gives the permit back. Holding it across an `.await` is what caps the overlap. A hand-counted integer would lie the first time a task panicked between the increment and the decrement. A `Mutex` held across the tool body would pin a worker for the whole call. The permit doesn't.
 
 ## Tests
 
@@ -88,24 +84,22 @@ echo: hello
 accept_bound: 32
 ```
 
-There is no model in this process, so there is no API key and no `--mock` flag. The binary registers `echo` and calls it.
+The binary registers `echo` and calls it. There is no model in this process, so there is no API key and no `--mock` flag.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
 | `echo_through_gate` | 45.53 ns | the permit round trip | one `CallGate::run` that returns `hello`, no sleep |
 | `eight_concurrent_sleeps` | 2.129 ms | eight 1 ms sleeps on the execute bound | eight tasks, each sleeping 1 ms inside `run` |
 
-`echo_through_gate` builds the runtime (4 workers) and the gate outside the sample. The timed closure takes one accept permit, waits for an execute permit, and returns the string `hello`. `eight_concurrent_sleeps` spawns eight tasks inside the sample. Each sleeps 1 ms while holding an execute permit. Setup of the runtime is excluded. Nothing is a model. The 2.129 ms number is one wave of eight 1 ms sleeps plus scheduling.
-
-I did not open a socket and I did not call OpenRouter.
+`echo_through_gate` builds the runtime (4 workers) and the gate outside the sample. The timed closure takes one accept permit, waits for an execute permit, and returns the string `hello`. `eight_concurrent_sleeps` spawns eight tasks inside the sample. Each sleeps 1 ms while holding an execute permit. Setup of the runtime is excluded. The 2.129 ms number is one wave of eight 1 ms sleeps plus scheduling.
 
 The means are `mean.point_estimate` from [run 38863938100](https://github.com/agnathan/rust-agent-harness/actions/runs/38863938100), section `5`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
-The accept permit is held while the task waits for an execute permit. A tool that waits on another call into the same gate can fill all 32 slots and then deadlock. This chapter's tools do not call back in.
+Picture thirty-two calls that have each taken an accept permit and are waiting for an execute permit, while the eight bodies that are running try to make one more call into the same gate. The accept pool is full, so that inner call can't get a permit, the bodies never finish, and the execute permits never come back. The accept permit is held while the task waits for an execute permit, which is how a tool that calls back in can fill all 32 slots and then deadlock. The tools in this chapter return a string and stop, so the tests never trip it, but the shape is still worth seeing before a later tool starts calling another tool.
 
-`call` checks the name before `run`. A burst of unknown names does not trip `Saturated`. That is deliberate. The bound is for work the server accepted.
+`call` checks the name before `run`, so a burst of unknown names leaves `Saturated` alone. The bound is for work the server accepted.
 
 `Semaphore::new(0)` would refuse every call. The constants are 32 and 8. A test that constructs `CallGate::new(0, 8)` is testing a different server.
 

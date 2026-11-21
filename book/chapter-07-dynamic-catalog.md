@@ -1,14 +1,16 @@
 # Chapter 7: Dynamic Catalog
 
-Chapter 5 can list the tools it was given at startup. A gateway that only does that cannot pick up a plugin, or a second server's tools, without a restart. Chapter 6 already measured what a 10,000-tool list costs when the client holds the index: the search is fast, and it still runs inside the agent. This chapter moves the catalog into the server. The step crate is `steps/ch07-catalog`, package `ch07-catalog`. It binds no socket. A live connection to an upstream MCP server waits until chapter 37.
+A search is already running when a reload lands. The call that cloned the old `Arc` keeps the old index, finishes on the tool it started with, and never sees the plugin that just arrived. The next call clones the new pointer and sees the new catalog. That swap is this chapter.
+
+Chapter 5's gateway could only list the tools it was given at startup, so a plugin or a second server meant a restart. Chapter 6 measured a 10,000-tool search that was fast and still ran inside the agent. Moving the index here means the agent asks and the server answers, which is the split the client chapters have been aiming at. The step crate is `steps/ch07-catalog`, package `ch07-catalog`. It binds no socket. A live connection to an upstream MCP server waits until chapter 37.
 
 `Gateway` holds a `Snapshot` behind `RwLock<Arc<Snapshot>>`. The snapshot is the merged list: native tools, a `PluginSet`, and an in-memory `Upstream`. `Origin` says which of those a card came from. `Bm25Index` ranks the way chapter 6 did, with the same k1 and b, and an exact name match ranks first. `Embedder` is the trait chapter 6 introduced, and `HashEmbedder` is the stand-in that does not call a network. `reload` builds a new index, then replaces the `Arc`. A caller that already cloned the old `Arc` keeps it. `call` clones the `Arc` before it reads the card, so a reload during the body does not change that call's tool. A duplicate name is `CatalogError`, and the previous snapshot stays.
 
-The server stays a separate program because the index is the catalog's job. The harness, in chapter 6, decides what may enter the prompt and keeps that prefix append-only. The gateway decides what the catalog contains and can search it without making every agent process carry 10,000 schemas. Hermes rebuilds a client-side catalog on every assembly, on purpose, so a session-keyed copy cannot drift from the live definitions. This server is the source of the list, so it can keep a snapshot and publish a new one by swapping an `Arc`. That is a deliberate difference, and it is why chapter 8 can key a session view: the server sends `list_changed` when the view changes, which is the notification chapter 4 already honors. Chapter 15 vendors this catalog into the limits crate so that step builds alone. Chapter 23, chapter 37, chapter 42, and chapter 51 vendor it forward again. `mcp-gateway` ultimately re-exports the chapter 51 gateway, not this crate, and still opens no port.
+The server stays a separate program because the index is the catalog's job. The harness, from chapter 6, decides what may enter the prompt and keeps that prefix append-only. The gateway decides what the catalog contains, and it can search that catalog without making every agent process carry 10,000 schemas. Hermes rebuilds a client-side catalog on every assembly, on purpose, so a session-keyed copy can't drift from the live definitions. This server is the source of the list, so it can keep a snapshot and publish a new one by swapping an `Arc`. Chapter 8 will key a session view on that snapshot, and the notification chapter 4 already honors is how the client hears about the swap. `mcp-gateway` re-exports a later copy of this gateway and still opens no port.
 
-This is also the first piece of a harness that can grow its tools without a restart. A plugin load is a new snapshot. The in-flight call keeps the old one. Later, when skills and learned tools exist, the same idea applies: publish the new offer, do not mutate the offer a running call already captured.
+A plugin load is a new snapshot, and the in-flight call keeps the old one. When skills and learned tools exist, the same publish-and-keep rule is how an offer can grow without mutating a call that already started.
 
-Rust, for a new reader: `Arc` is a shared pointer with a count. Cloning it is cheap and does not clone the index. `RwLock` lets many readers hold the current `Arc` while one writer swaps it. A trait object is the embedder. BM25 is a ranking function over term frequency, explained next to the scorer rather than assumed.
+Cloning an `Arc` copies a pointer and bumps a count. `RwLock` lets readers hold the current pointer while one writer stores a new one. The embedder is a trait object, and BM25 is the ranking, explained next to the scorer.
 
 `cargo run -p ch07-catalog` runs the demo. Nothing listens.
 
@@ -39,15 +41,17 @@ Rust, for a new reader: `Arc` is a shared pointer with a count. Cloning it is ch
 
 ## What this chapter decides
 
-`Load` has three lists: `native`, `plugins`, and `upstreams`. `Snapshot::build` walks them in that order. The first time a name appears, it is kept, and its `Origin` is `Native`, `Plugin`, or `Upstream`. The second time, `reload` returns `Duplicate` and the gateway's current `Arc` is unchanged.
+`Load` has three lists, `native`, `plugins`, and `upstreams`, because a merged catalog has to remember where a name came from when two sources disagree. `Snapshot::build` walks them in that order. The first time a name appears, it is kept, and its `Origin` is `Native`, `Plugin`, or `Upstream`. The second time, `reload` returns `Duplicate` and the gateway's current `Arc` is unchanged, so a bad load can't replace a catalog the process is already serving.
 
-`search` tokenizes on non-alphanumeric runs, drops tokens shorter than 2 characters, and lowercases the rest. There is no stopword list in this crate. An exact case-insensitive name is pulled out and placed first. The rest are BM25 hits with a score above zero, tie-broken by name.
+`search` tokenizes on non-alphanumeric runs, drops tokens shorter than 2 characters, and lowercases the rest. There is no stopword list in this crate, because a short synthetic catalog would lose real query words to a list copied from English prose. An exact case-insensitive name is pulled out and placed first. The rest are BM25 hits with a score above zero, tie-broken by name.
 
-`call` captures `snapshot()` and then reads that snapshot. `echo` still returns `text`. Every other name returns the description from the captured card.
+`call` captures `snapshot()` and then reads that snapshot, so the body and the name lookup agree even if `reload` runs halfway through. `echo` still returns `text`. Every other name returns the description from the captured card.
 
-Plugins and upstreams in this chapter are values in the `Load`. Nothing is spawned and nothing is dialed.
+Plugins and upstreams in this chapter are values in the `Load`. Nothing is spawned and nothing is dialed, because a real upstream connection is chapter 37 and I want the snapshot swap tested before any socket can fail it.
 
 ## Reload
+
+The scene from the opening is three lines. `Snapshot::build` finishes before the write lock is taken, the lock is held only long enough to store the pointer, and a `call` that already holds an `Arc` never takes that lock again. A search in flight and a reload can overlap because they don't share the index, only the pointer that names it.
 
 ```rust
 pub fn reload(&self, load: Load) -> Result<(), CatalogError> {
@@ -57,7 +61,7 @@ pub fn reload(&self, load: Load) -> Result<(), CatalogError> {
 }
 ```
 
-`Snapshot::build` runs before the write lock is taken. The lock is held only for the pointer store. A `call` that already holds an `Arc` does not take that lock again.
+The write in `reload` is that pointer store. The build has already finished, which is why a search holding the old `Arc` and a reload storing a new one don't wait on each other.
 
 > **Rust sidebar: cloning an `Arc` is not cloning the index**
 >

@@ -1,16 +1,16 @@
 # Chapter 3: Tools
 
-A conversation that can only talk is still a chat. The model needs a way to act: look something up, write something down, and receive a result it can read on the next turn. This chapter adds that shape. It does not yet ask the model which tool to call. That loop is chapter 9. It does not speak MCP on the wire. That client is chapter 4. It does not load thousands of schemas. That is chapter 6. What it adds is the shape those chapters share, in three copies: `steps/ch03-1-registry`, `steps/ch03-2-toolsets`, and `steps/ch03-3-dispatch`.
+A conversation that can only talk is still a chat. I want the model to look something up, write something down, and read the result on the next turn, and this chapter is the shape of that, but it stops before any model is asked to choose. The loop that asks is chapter 9. The wire protocol is chapter 4. The catalog of thousands of schemas is chapter 6. What lands here, in three copies (`steps/ch03-1-registry`, `steps/ch03-2-toolsets`, and `steps/ch03-3-dispatch`), is the trait, the gate, and the scheduler those chapters share.
 
-A tool has a name, a description, a JSON Schema for its arguments, and a content result. That is the same shape as an MCP tool, chosen now while every tool is still a function in this process. If a native tool and a remote tool were different types, chapter 9's loop would grow a match arm for each. One trait means the loop asks for a name and a JSON object, and the registry answers. `Tool` carries the schema, a `ToolKind`, and `call`. The registry rejects a second registration of the same name, so a later plugin cannot quietly replace a built-in. `Catalog` turns named toolsets on only when an environment map contains the expected value and a check accepts it. The library never reads `std::env` itself, so a test builds the map it wants. The list a later chapter shows the model contains only the tools that passed.
+A tool has a name, a description, a JSON Schema for its arguments, and a content result. That's the same shape as an MCP tool, chosen now while every tool is still a function in this process. If a native tool and a remote tool were different types, chapter 9's loop would grow a match arm for each, so one trait means the loop asks for a name and a JSON object and the registry answers. `Tool` carries the schema, a `ToolKind`, and `call`. The registry rejects a second registration of the same name, so a later plugin can't quietly replace a built-in. `Catalog` turns named toolsets on only when an environment map contains the expected value and a check accepts it. The library never reads `std::env` itself, so a test builds the map it wants. The list a later chapter shows the model contains only the tools that passed.
 
-`Dispatcher` runs the calls. Read-only calls in one batch overlap, up to 8 at a time. A write runs alone. The kind is a field on the tool, not a hand-maintained list of names, so a new read that forgets to join a list cannot sneak into the parallel set, and a new write cannot either. The bound of 8 is the number the rest of the book shares for in-flight tool work. The session inbox from chapter 2 is a different bound, 64, and it queues turns. This one queues calls inside a turn. Chapter 11 will put an approval decision in front of this dispatcher. Chapter 4 will wrap an MCP tool in the same trait and the same kind. Chapter 13's sandbox and chapter 17's files and terminal sit on this scheduler rather than inventing another one.
+`Dispatcher` runs the calls. Read-only calls in one batch overlap, up to 8 at a time, and a write runs alone. The kind is a field on the tool, not a hand-maintained list of names, so a new read that forgets to join a list can't sneak into the parallel set, and a new write can't either. The bound of 8 is the number the rest of the book shares for in-flight tool work. The session inbox from chapter 2 is a different bound, 64, and it queues turns, while this one queues calls inside a turn. Chapter 11 will put an approval decision in front of this dispatcher. Chapter 4 will wrap an MCP tool in the same trait and the same kind. Chapter 13's sandbox and chapter 17's files and terminal sit on this scheduler rather than inventing another one.
 
-The model is not in this chapter. `ask --mock` still prints the scripted reply from chapter 1. Nothing here sends a schema to OpenRouter, which is why the registry tests need no key. The CLI copies still know how to resolve a key, and a missing key is the chapter 1 error.
+`ask --mock` still prints the scripted reply from chapter 1. Nothing here sends a schema to OpenRouter, which is why the registry tests need no key. The CLI copies still know how to resolve a key, and a missing key is the chapter 1 error.
 
-Rust, introduced where it is used: a trait is the tool. `serde_json` and a JSON Schema are the arguments. `Arc` shares one tool with the registry and the dispatcher. A semaphore is the bound of 8. `async` is how eight reads overlap.
+Rust shows up where the design needs it: a trait is the tool, `serde_json` and a JSON Schema are the arguments, `Arc` shares one tool with the registry and the dispatcher, a semaphore is the bound of 8, and `async` is how eight reads overlap.
 
-The demos are offline. `cargo run -p ch03-3-harness-core --example demo` is the dispatcher. `cargo run -p ch03-3-harness-cli -- --mock ask "Say hello"` still takes the chapter 1 path. There is no `my-harness` exercise file for this chapter yet. The tests live in the step crates.
+The demos are offline. `cargo run -p ch03-3-harness-core --example demo` is the dispatcher. `cargo run -p ch03-3-harness-cli -- --mock ask "Say hello"` still takes the chapter 1 path. The tests for this chapter live in the step crates. There is no `my-harness/tests/ch03.rs`.
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -30,9 +30,9 @@ The demos are offline. `cargo run -p ch03-3-harness-core --example demo` is the 
 
 Four choices, before any of the code.
 
-The tool shape is MCP's shape now, while every tool is still a function in this process. Chapter 4 will list tools from another process and call them over stdio or HTTP. If the native tool and the remote tool were different types, the agent loop in chapter 9 would grow a match arm for each. One trait means the loop asks for a name and a JSON object, and the registry answers.
+The tool shape is MCP's shape now, while every tool is still a function in this process. Chapter 4 will list tools from another process and call them over stdio or HTTP. If the native tool and the remote tool were different types, the agent loop in chapter 9 would grow a match arm for each, so one trait means the loop asks for a name and a JSON object and the registry answers.
 
-The model is not in this chapter. `ask --mock` still prints the scripted reply from chapter 1. Nothing here sends a tool schema to OpenRouter. That split is what makes the registry tests able to run with no key and no wiremock. The CLI copies still know how to resolve an OpenRouter key, which is why each milestone includes the missing-key line, and why that line is an error from chapter 1 rather than a tool result.
+`ask --mock` still prints the scripted reply from chapter 1, and nothing here sends a tool schema to OpenRouter. That split is what lets the registry tests run with no key and no wiremock. The CLI copies still know how to resolve an OpenRouter key, which is why each milestone includes the missing-key line, and why that line is an error from chapter 1 rather than a tool result.
 
 The gate is data. `Catalog` takes an `EnvMap`. The library never calls `std::env::var`. A test builds the map it wants, and the CLI is the only place that reads `HARNESS_ECHO` and `HARNESS_NOTES`. Hermes's `check_fn` is a probe that can fail because Docker is busy. Caching that probe for 30 seconds is the right call over there. Caching an env string would hide a change the test just made, so this check runs every time `available` is called.
 
@@ -215,19 +215,7 @@ pub fn schemas(&self) -> Vec<ToolSchema> {
 
 ### The registry tests
 
-`cargo test -p ch03-1-harness-core --test registry` is six tests.
-
-`echo_schema_is_mcp_shaped` checks the name, a non-empty description, `type: object`, `required[0] == "text"`, and `ToolKind::Read`.
-
-`echo_returns_the_text_argument` calls echo with `{"text":"hello"}` and expects one content block, `hello`, and `is_error == false`.
-
-`echo_rejects_a_missing_required_field` calls echo with `{}` and expects `InvalidArgs { name: "echo", reason: "missing text" }`.
-
-`arguments_that_are_not_an_object_fail_when_the_schema_requires_keys` passes the string `"nope"`. The error text contains `JSON object`.
-
-`registry_lookup_and_sorted_schemas` registers `zeta` (read), `EchoTool`, and `alpha` (write). `get("missing")` is none. `alpha`'s kind is `Write`. `schemas()` comes back `alpha`, `echo`, `zeta`, which is name order, not insertion order.
-
-`a_second_tool_with_the_same_name_is_refused` registers `echo` twice. The second `register` is `Duplicate`, and `len()` stays 1.
+`cargo test -p ch03-1-harness-core --test registry` is six tests, and together they protect the schema shape, the refusal, and the order the model will see. `echo_schema_is_mcp_shaped` checks the name, a non-empty description, `type: object`, `required[0] == "text"`, and `ToolKind::Read`. `echo_returns_the_text_argument` calls echo with `{"text":"hello"}` and expects one content block, `hello`, and `is_error == false`. `echo_rejects_a_missing_required_field` calls echo with `{}` and expects `InvalidArgs { name: "echo", reason: "missing text" }`. `arguments_that_are_not_an_object_fail_when_the_schema_requires_keys` passes the string `"nope"`, and the error text contains `JSON object`. The one that surprised me is `registry_lookup_and_sorted_schemas`: it registers `zeta` (read), `EchoTool`, and `alpha` (write), `get("missing")` is none, `alpha`'s kind is `Write`, and `schemas()` comes back `alpha`, `echo`, `zeta`, which is name order rather than insertion order. I had assumed the map would remember who registered first. `a_second_tool_with_the_same_name_is_refused` registers `echo` twice, the second `register` is `Duplicate`, and `len()` stays 1.
 
 > **Rust sidebar: JSON as a value**
 > - `serde_json::json!({...})` builds a `Value` in the shape of the schema.
@@ -287,7 +275,7 @@ event: text-delta (mock) I heard you.
 event: done
 ```
 
-This copy of the CLI still speaks OpenRouter. The optional live command is the same binary without `--mock`. I did not make that call. With the key unset:
+This copy of the CLI still speaks OpenRouter. With the key unset it stops on the chapter 1 error:
 
 ```bash
 cargo run -p ch03-1-harness-cli -- ask "Say hello"
@@ -330,15 +318,7 @@ The `?` on `register` means one duplicate name fails the whole catalog. I would 
 
 ### The toolset tests
 
-Four tests share one catalog: `time` holds `clock` and watches `HARNESS_TIME`; `notes` holds `note` (a write) and watches `HARNESS_NOTES` with the `"1"` check.
-
-`only_toolsets_that_pass_are_listed` sets time to `"1"` and notes to `"0"`. The schemas are just `clock`. The notes check rejected `"0"`.
-
-`an_empty_env_var_hides_the_toolset` sets time to `""` and notes to `"1"`. The schemas are just `note`.
-
-`both_sets_pass` sets time to `"yes"` and notes to `"1"`. The registry contains `clock` and `note`.
-
-`a_duplicate_name_across_passing_sets_is_an_error` builds two sets that both register `echo` and both pass. `available` returns an error whose text contains `duplicate`.
+Four tests share one catalog: `time` holds `clock` and watches `HARNESS_TIME`, and `notes` holds `note` (a write) and watches `HARNESS_NOTES` with the `"1"` check. `only_toolsets_that_pass_are_listed` sets time to `"1"` and notes to `"0"`, and the schemas are just `clock` because the notes check rejected `"0"`. `an_empty_env_var_hides_the_toolset` sets time to `""` and notes to `"1"`, so the schemas are just `note`. `both_sets_pass` sets time to `"yes"` and notes to `"1"`, and the registry contains `clock` and `note`. `a_duplicate_name_across_passing_sets_is_an_error` builds two sets that both register `echo` and both pass, and `available` returns an error whose text contains `duplicate`.
 
 > **Rust sidebar: a boxed closure**
 > - `Fn(&str) -> bool` is a trait. The check is "some function that looks at the env value."
@@ -401,22 +381,11 @@ event: text-delta (mock) I heard you.
 event: done
 ```
 
-The optional live command was not run. With `OPENROUTER_API_KEY` unset:
-
-```bash
-cargo run -p ch03-2-harness-cli -- ask "Say hello"
-```
-
-```text
-event: error missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
-error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
-```
-
 ## 3.3 Concurrent reads, exclusive writes
 
-Eight read-only tools that each wait on the network should finish in about the time of one of them, not eight. A write should wait until nothing else is in flight, and the next call should wait until the write returns. The bound is 8, the same number the performance budget uses for the rest of the book.
+Hermes, in `_should_parallelize_tool_batch`, asks whether the whole batch is safe. If any name sits outside `_PARALLEL_SAFE_TOOLS` and isn't a path-scoped tool with a non-overlapping path, the whole batch runs one at a time, so a single unsafe tool serializes its neighbors. I want the opposite cut. Eight read-only tools that each wait should finish in about the time of one of them, and a write should be a fence rather than a reason to hold up reads that never touch it. The bound is 8, the same number the performance budget uses for the rest of the book.
 
-`Dispatcher::run` walks the batch. Consecutive reads are one group. A write ends the group, runs by itself, and the next reads start only after it. `run_sequential` is the same calls one at a time, so the bench has something to compare against.
+`Dispatcher::run` walks the batch. Consecutive reads are one group. A write ends the group, runs by itself, and the next reads start only after it. `run_sequential` is the same calls one at a time, so the bench has something to compare against. The loop peels the batch into maximal read runs, which means eight reads, one write, and eight more reads still overlap inside each read run.
 
 > **Rust sidebar: a semaphore and a JoinSet**
 > - `tokio::sync::Semaphore::new(8)` starts with 8 permits. `acquire_owned().await` waits until one is free. Dropping the permit gives it back.
@@ -468,8 +437,6 @@ for (offset, call) in calls.iter().cloned().enumerate() {
 
 The `expect` on `acquire_owned` fires only if the semaphore is closed. Nothing in this dispatcher closes it. The permit is bound to `_permit` so it stays alive until the task finishes the call. Dropping it at the end of the task is what lets a queued read start.
 
-Hermes, in `_should_parallelize_tool_batch`, asks a different question first: is the whole batch safe? If any name is outside `_PARALLEL_SAFE_TOOLS` and is not a path-scoped tool with a non-overlapping path, the whole batch runs one at a time. A single unsafe tool serializes its neighbors. This loop does the opposite cut. It peels the batch into maximal read runs and leaves each write as a barrier, so eight reads, one write, and eight more reads still overlap inside each read run. The write is the fence. It is not a reason to serialize the reads that never touch it.
-
 Path-scoped writes are the piece I am not copying yet. `_extract_parallel_scope_path` reads a `path` argument, expands `~`, and turns a relative path into an absolute one without `resolve()`, because the file may not exist yet. `_paths_overlap` is a prefix compare on the path parts: the same path overlaps, and a directory overlaps a file inside it. Echo has no path. A future `write_file` will. Until that tool exists, `ToolKind::Write` is the fence, and two writes wait even when their paths would have been independent.
 
 Take a batch of four calls, in order: read `a.txt`, read `b.txt`, write `c.txt`, read `d.txt`. Hermes looks at the whole batch. All four names sit in `_PATH_SCOPED_TOOLS`, the paths do not overlap, and the batch may run together, write included. This dispatcher splits on kind. The two reads share a wave of at most 8. The write runs on the caller after that wave joins. The last read starts only then. The write to `c.txt` waited on files it does not touch. That wait is the pitfall I am accepting in this chapter, and it is the reason the kind is on the tool where a later chapter can add a path exception without changing `execute`'s shape. The exception would be "a write whose paths are disjoint may join the wave." It is not in this code.
@@ -482,7 +449,7 @@ One more difference on the gate. Hermes `check_fn` returns a bool and takes no a
 
 `run_sequential` is the same `execute` with `parallel_reads` false. The bench needs that comparison, and a test can use it without a second scheduler.
 
-The demo uses eight read tools that each sleep 20 ms. That sleep is the stand-in for tool latency. I did not call a model.
+The demo uses eight read tools that each sleep 20 ms. That sleep stands in for tool latency, and the run stays inside the process.
 
 ```text
 read-0
@@ -596,7 +563,7 @@ Where these numbers were taken is in [How the numbers were measured](appendix-be
 
 ### Milestone demo
 
-Eight reads that each wait 20 ms. This run finished in 21.5 ms together and 168.6 ms one at a time. The earlier 21.4 ms / 170.0 ms figures are the previous run of the same example. `--mock ask` does not call those tools. It only prints the scripted reply.
+Eight reads that each wait 20 ms. This run finished in 21.5 ms together and 168.6 ms one at a time. The block above is another run of the same example, 21.4 ms and 170.0 ms. `--mock ask` prints the scripted reply and leaves these tools alone.
 
 ```bash
 cargo run -p ch03-3-harness-core --example demo
@@ -625,17 +592,6 @@ echo
 (mock) I heard you.
 event: text-delta (mock) I heard you.
 event: done
-```
-
-The optional live command was not run. With the key unset:
-
-```bash
-cargo run -p ch03-3-harness-cli -- ask "Say hello"
-```
-
-```text
-event: error missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
-error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 ```
 
 ## Pitfalls

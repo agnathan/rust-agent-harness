@@ -1,14 +1,14 @@
 # Chapter 1: First Contact
 
-Every agent framework I have looked at reduces to one act, repeated: send a list of messages to a language model and get a message back. Before this chapter the repository has no such act. There is no type for a message, no interface for a provider, and no command you can run. This chapter builds that act in four copies under `steps/ch01-1-messages`, `steps/ch01-2-provider`, `steps/ch01-3-cli`, and `steps/ch01-4-errors`. Each copy compiles, has its own tests, and keeps the earlier code, so section 1.1 still builds after 1.4 exists.
+Every agent framework I've looked at reduces to one act, repeated: send a list of messages to a language model and get a message back. Before this chapter the repository has no such act. There's no type for a message, no interface for a provider, and no command you can run, so this chapter builds that act in four copies under `steps/ch01-1-messages`, `steps/ch01-2-provider`, `steps/ch01-3-cli`, and `steps/ch01-4-errors`. Each copy compiles, has its own tests, and keeps the earlier code, so section 1.1 still builds after 1.4 exists.
 
-The types are small and they stay. `Message` and `Role` serialize to the OpenAI JSON shape, which is the shape the rest of the harness will store and resend. `Provider` is the trait every later caller uses, so the loop never learns which company answered. `Event` is one enum — text, a tool call, usage, done, or an error — and both the mock and the real client emit it. The mock can sleep, which is how a test sees latency without a network. The client speaks HTTP to OpenRouter by default, so a model id such as `openai/gpt-4o-mini` is a flag. Usage and a dollar cost are recorded only when the server sent them. Section 1.4 puts one timeout on the whole request and spells out what a buffered reply may omit.
+I expected the interesting part to be the HTTP call, but the types are what have to be right, because everything later stores them and sends them again. `Message` and `Role` serialize to the OpenAI JSON shape. `Provider` is the trait every later caller uses, so the loop never learns which company answered. `Event` is one enum — text, a tool call, usage, done, or an error — and both the mock and the real client emit it. Spoiler: I'll keep that enum for the rest of the book, and I'll be glad the mock and the HTTP client already speak it. The mock can sleep, which is how a test sees latency without a network. The client speaks HTTP to OpenRouter by default, so a model id such as `openai/gpt-4o-mini` is a flag rather than a name baked into the binary. Usage and a dollar cost are recorded only when the server sent them. Section 1.4 puts one timeout on the whole request and spells out what a buffered reply may omit.
 
-That single round trip is the seed of the harness. Chapter 2 will resend a list of these messages. Chapter 3 will attach tools. Chapter 9 will call `Provider` in a loop until the model stops asking for tools. Chapter 18 will put other adapters behind the same trait. Chapter 19 will fold a stream into the same `Event` values. None of that works if this chapter leaks provider details, invents a cost the server did not send, or retries a timeout on its own. Hermes puts each provider behind one profile and lets the loop call that profile. The same split is why a self-improving agent can later swap a cheaper model in for a summary without rewriting memory, skills, or the team code. Those stores do not exist yet. They will call this trait.
+That single round trip is the seed of the harness. Chapter 2 will resend a list of these messages, chapter 3 will attach tools, and chapter 9 will call `Provider` in a loop until the model stops asking for tools. Chapter 18 puts other adapters behind the same trait, and chapter 19 folds a stream into the same `Event` values. All of that depends on this chapter keeping provider details behind the trait, recording a cost only when the server sent one, and leaving a timeout as a single failure rather than a quiet retry. Hermes puts each provider behind one profile and lets the loop call that profile. The same split is why a later summary can swap in a cheaper model without rewriting memory, skills, or the team code. Those stores don't exist yet. They'll call this trait.
 
-If you are new to Rust, this chapter is where the language becomes concrete. A struct holds the message fields. An enum is the role and, later, the event, so a forgotten case is a compiler error rather than a silent branch. A trait is the provider. `serde` turns the struct into JSON and back. `tokio` runs the async client, and `reqwest` is the HTTP stack, created once so connections can be pooled. The sidebars sit next to the code that needs each idea.
+If you're new to Rust, the sidebars next to the code are where the language becomes concrete.
 
-At the end of section 1.4 you can run `cargo run -p ch01-4-harness-cli -- --mock ask "Say hello"` and see the events. The same binary without `--mock` fails before any request when `OPENROUTER_API_KEY` is unset. I did not invent a live transcript. The exercises for the four sections are `my-harness/tests/ch01_1.rs` through `ch01_4.rs`.
+The runs in this chapter are the mock, and one ask with `OPENROUTER_API_KEY` unset. I didn't make a live model call, so this chapter has no OpenRouter reply, token line, or dollar cost. With a key, the call is the section 1.4 binary without `--mock`: `cargo run -p ch01-4-harness-cli -- ask "Say hello"`. The exercises for the four sections are `my-harness/tests/ch01_1.rs` through `ch01_4.rs`.
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -36,7 +36,7 @@ cargo bench -p ch01-1-harness-core --bench serde_messages
 > - A workspace shares one `Cargo.lock` and one `target/` directory.
 > - `resolver = "3"` prefers dependency versions that match the declared `rust-version` (`1.85`).
 
-A message is a role and some text. This section needs three roles. `tool` arrives with tool calling.
+A message is a role and some text. This section needs three roles, and `tool` arrives with tool calling.
 
 ```rust
 use serde::{Deserialize, Serialize};
@@ -111,7 +111,7 @@ The test builds 50 messages, serializes a `ChatRequest`, and parses it back into
 
 ### Build, run, and benchmark
 
-From the repository root. This step is the library crate `ch01-1-harness-core`. A binary shows up in section 1.3.
+From the repository root. This step is the library crate `ch01-1-harness-core`, and a binary shows up in section 1.3.
 
 ```bash
 cargo build -p ch01-1-harness-core
@@ -119,9 +119,9 @@ cargo nextest run -p ch01-1-harness-core
 cargo bench -p ch01-1-harness-core --bench serde_messages -- --warm-up-time 1 --measurement-time 2 --sample-size 10
 ```
 
-Nothing in this step reads an API key or opens a socket.
+Nothing in this step reads an API key or opens a socket. The host for every table in this chapter, the CI matrix, and how to read Criterion's `time:` line are in [How the numbers were measured](appendix-benchmark-method.md). The mean in each table is the mean point estimate from the run pasted under it.
 
-The host for these timings is in [How the numbers were measured](appendix-benchmark-method.md). The build finished with:
+The build finished with:
 
 ```text
    Compiling ch01-1-harness-core v0.1.0 (/workspace/steps/ch01-1-messages/crates/harness-core)
@@ -140,8 +140,6 @@ Nextest, after it finished compiling the tests:
 ────────────
      Summary [   0.004s] 2 tests run: 2 passed, 0 skipped
 ```
-
-How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md). The mean in the table is the mean point estimate from that same run.
 
 ```text
     Finished `bench` profile [optimized] target(s) in 0.04s
@@ -163,7 +161,7 @@ Found 1 outliers among 10 measurements (10.00%)
 |---|---|---|---|
 | `serde_50_message_request` | 6.937 µs | < 1 ms | [bench host](appendix-benchmark-method.md) |
 
-Where these numbers were taken is in [How the numbers were measured](appendix-benchmark-method.md).
+6.937 µs is the whole serialize-and-parse of fifty messages. I expected JSON to be the slow part of a turn, but a number that small means the model call is going to dwarf it. The test I like most here is `request_round_trips_fifty_messages`, because it does the same work the benchmark times.
 
 ### Milestone demo
 
@@ -181,7 +179,7 @@ cargo run -p ch01-1-harness-core --example demo
 
 ## 1.2 Provider
 
-Section 1.2 copies the message types and adds the trait every later chapter will call. The library still does not open a socket. tokio is a dependency only for `sleep` in the mock. The tests and the benchmark start the runtime.
+Section 1.2 copies the message types and adds the trait every later chapter will call. The library stays off the network: tokio is here so the mock can `sleep`, and the tests and the benchmark are what start the runtime.
 
 ```bash
 cargo test -p ch01-2-harness-core
@@ -200,7 +198,7 @@ pub trait Provider: Send + Sync {
 }
 ```
 
-`complete` is still the reply. `complete_events` is the same call as the events every later chapter folds. The mock emits two: `TextDelta` with the canned text, then `Done`. It does not invent usage or a model id. `ToolCall` is in the enum so tool-calling does not create a second event type. `Error` is how a failure is reported to the same consumer. Nothing in this section emits those two yet.
+`complete` is still the reply, and `complete_events` is that same call broken into the events every later chapter folds. The mock emits two: `TextDelta` with the canned text, then `Done`. It leaves usage and the model id empty, because a mock that invented a bill would teach the printer to trust numbers nobody sent. `ToolCall` is already in the enum so tool-calling doesn't create a second event type, and `Error` is how a failure reaches the same consumer. Nothing in this section emits those two yet.
 
 ```rust
 pub enum Event {
@@ -339,11 +337,11 @@ mock_100_concurrent     time:   [107.23 µs 110.51 µs 112.81 µs]
 | `mock_turn_overhead` | 235.7 ns | < 1 ms | [bench host](appendix-benchmark-method.md) |
 | `mock_100_concurrent` | 108.9 µs | < 50 ms | same machine |
 
-Where these numbers were taken is in [How the numbers were measured](appendix-benchmark-method.md).
+108.9 µs for a hundred concurrent mock turns is still the sleep and the lock, not a network. The section stays off the socket on purpose, so this number is what the trait costs before HTTP exists.
 
 ### Milestone demo
 
-The demo is the mock. This section does not open a socket.
+The demo is the mock. OpenRouter arrives in the next section.
 
 ```bash
 cargo run -p ch01-2-harness-core --example demo
@@ -352,19 +350,6 @@ cargo run -p ch01-2-harness-core --example demo
 ```text
 event: text-delta (mock) I heard you.
 event: done
-```
-
-OpenRouter arrives in the next section. The optional live command, which I did not run, is:
-
-```bash
-cargo run -p ch01-3-harness-cli -- ask "Say hello"
-```
-
-With `OPENROUTER_API_KEY` unset, that command stops before any HTTP request:
-
-```text
-event: error missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
-error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
 ```
 
 ## 1.3 OpenRouter, the client, and `harness ask`
@@ -377,15 +362,9 @@ cargo run -p ch01-3-harness-cli -- --mock ask "Say hello"
 cargo bench -p ch01-3-harness-core --bench request_parse
 ```
 
-The default server is OpenRouter, `https://openrouter.ai/api/v1`. The default model id is `openai/gpt-4o-mini`. `--model` takes any OpenRouter id (`anthropic/claude-3.5-sonnet`, `meta-llama/llama-3.1-8b-instruct`, and the rest of that catalog). The request body is still the OpenAI chat-completions shape, and it does not set `stream`. `--base-url` points the same client at another OpenAI-compatible server: OpenAI, a local Ollama at `http://127.0.0.1:11434/v1`, or the wiremock server in the tests.
+The default server is OpenRouter, `https://openrouter.ai/api/v1`, and the default model id is `openai/gpt-4o-mini`. `--model` takes any OpenRouter id (`anthropic/claude-3.5-sonnet`, `meta-llama/llama-3.1-8b-instruct`, and the rest of that catalog). The request body stays the OpenAI chat-completions shape, with no `stream` field, and `--base-url` points the same client at another OpenAI-compatible server: OpenAI, a local Ollama at `http://127.0.0.1:11434/v1`, or the wiremock server in the tests.
 
-Which key is required depends on the host:
-
-- `openrouter.ai` reads `OPENROUTER_API_KEY`. A missing key is an error that names that variable. `--mock` is the offline path.
-- Any other host reads `OPENAI_API_KEY`, which may be empty. Ollama and the local fake accept that. An empty key omits `Authorization`.
-- `--api-key` overrides both variables.
-
-OpenRouter also accepts two optional attribution headers, `HTTP-Referer` and `X-Title`, from `--http-referer` / `OPENROUTER_HTTP_REFERER` and `--title` / `OPENROUTER_TITLE`. They are sent only when set.
+Which key the client reads depends on the host. `openrouter.ai` reads `OPENROUTER_API_KEY`, and a missing key is an error that names that variable, while `--mock` stays on this machine. Any other host reads `OPENAI_API_KEY`, which may be empty: Ollama and the local fake accept that, and an empty key omits `Authorization`. `--api-key` overrides both variables. I kept the model id on a flag because the same client has to point at OpenRouter, OpenAI, or a process on localhost, and a name baked into the binary would make that a rewrite. OpenRouter also accepts two optional attribution headers, `HTTP-Referer` and `X-Title`, from `--http-referer` / `OPENROUTER_HTTP_REFERER` and `--title` / `OPENROUTER_TITLE`. They're sent only when set.
 
 `OpenAiCompatible` owns one `reqwest::Client` for its whole life. reqwest pools idle connections per host (`pool_max_idle_per_host(8)`), so the second call can reuse the first connection. The `http2` feature and `http2_adaptive_window(true)` turn HTTP/2 on for servers that negotiate it: ALPN when the connection is TLS. A local fake speaks HTTP/1.1, and the same client talks to it without a separate code path. This section does not set a request timeout. Section 1.4 does. Retries are chapter 14.
 
@@ -407,7 +386,7 @@ pub fn from_endpoint(endpoint: &Endpoint) -> Self {
 }
 ```
 
-`complete_detailed` POSTs `{base_url}/chat/completions`. A non-success status becomes `ProviderError::Api`. An empty `choices` array becomes `ProviderError::EmptyResponse`. The reply text is `choices[0].message`. The model that actually answered is the response's `model` field, which can differ from the id we sent. Token counts are the optional `usage` object. serde still ignores the other fields (`id`, `finish_reason`).
+`complete_detailed` POSTs `{base_url}/chat/completions`. A non-success status becomes `ProviderError::Api`, an empty `choices` array becomes `ProviderError::EmptyResponse`, and the reply text is `choices[0].message`. The model that actually answered is the response's `model` field, which can differ from the id we sent, because a router may hand the prompt to another model. Token counts are the optional `usage` object, and serde still ignores the other fields (`id`, `finish_reason`).
 
 ```rust
 #[derive(Debug, Deserialize)]
@@ -453,7 +432,7 @@ cargo run -p ch01-3-harness-cli -- --mock ask "Say hello"
 cargo bench -p ch01-3-harness-core --bench request_parse -- --warm-up-time 1 --measurement-time 2 --sample-size 10
 ```
 
-`--mock` stays on this machine and prints a canned reply. I did not make a live call. A live OpenRouter call is the same command without `--mock`, with `OPENROUTER_API_KEY` set. Another server is a different base URL and `OPENAI_API_KEY`:
+`--mock` stays on this machine and prints a canned reply. A live OpenRouter call is the same command without `--mock`, with `OPENROUTER_API_KEY` set. Another server is a different base URL and `OPENAI_API_KEY`:
 
 ```bash
 OPENROUTER_API_KEY=sk-or-... HARNESS_MODEL=openai/gpt-4o-mini \
@@ -467,7 +446,7 @@ cargo run -p ch01-3-harness-cli -- \
   --base-url http://127.0.0.1:11434/v1 --model llama3.2 ask "Say hello"
 ```
 
-Those three are the command shape. I did not run them. What I ran is `--help`, the mock, and one ask with no key.
+Those three are the command shape. What this chapter captured is `--help`, the mock, and one ask with no key.
 
 ```text
      Running `target/debug/ch01-harness --help`
@@ -579,9 +558,7 @@ Cost accumulation, with no network. The first call reports `cost: 0.25` USD. The
 agent: calls=2 prompt=6 completion=3 total=9 cost=0.25
 ```
 
-An optional live OpenRouter call is the same `ask` without `--mock`, with `OPENROUTER_API_KEY` set. I did not make that call.
-
-And the bench. The `time:` line is Criterion's slope. The mean in the table is the mean point estimate from `target/criterion/build_request_and_parse_response/new/estimates.json` on this same run (2,133.0 ns).
+The mean in the table, 2.133 µs, is the mean point estimate from `target/criterion/build_request_and_parse_response/new/estimates.json` on this run.
 
 ```text
    Compiling ch01-3-harness-core v0.1.0 (/workspace/steps/ch01-3-cli/crates/harness-core)
@@ -602,7 +579,7 @@ build_request_and_parse_response
 |---|---|---|---|
 | `build_request_and_parse_response` | 2.133 µs | < 1 ms | [bench host](appendix-benchmark-method.md) |
 
-Where these numbers were taken is in [How the numbers were measured](appendix-benchmark-method.md).
+2.133 µs is the same story as section 1.1, now with a response body that carries `usage` and `cost`. Parsing is still not the turn.
 
 ### Milestone demo
 
@@ -623,17 +600,6 @@ event: text-delta (mock) I heard you.
 event: done
 ```
 
-The optional live command is the same binary without `--mock`. I did not make that call. With the key unset:
-
-```bash
-cargo run -p ch01-3-harness-cli -- ask "Say hello"
-```
-
-```text
-event: error missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
-error: missing OPENROUTER_API_KEY: pass --api-key, or run with --mock
-```
-
 ## 1.4 Timeouts and what the reply may omit
 
 Section 1.4 copies 1.3 and names two things a buffered call can do besides succeed. The package names are `ch01-4-harness-core` and `ch01-4-harness-cli`. The executable is `ch01-4-harness`.
@@ -644,7 +610,7 @@ cargo run -p ch01-4-harness-cli -- --mock ask "Say hello"
 cargo bench -p ch01-4-harness-core --bench edges
 ```
 
-The client now has a whole-request timeout, 60 seconds unless `--timeout-secs` says otherwise. reqwest's `timeout` covers connect and read. When `send` fails and `err.is_timeout()` is true, the error is `ProviderError::Timeout` and it carries the `Duration` we set. Anything else stays `ProviderError::Network`. This is one deadline, not a retry. Chapter 14 classifies failures, retries, and falls back. Chapter 19 is where a reply becomes a stream of the same events. The request body still has no `stream` field.
+The client now has a whole-request timeout, 60 seconds unless `--timeout-secs` says otherwise. reqwest's `timeout` covers connect and read, so when `send` fails and `err.is_timeout()` is true the error is `ProviderError::Timeout` and it carries the `Duration` we set, while anything else stays `ProviderError::Network`. This is one deadline, and chapter 14 is where failures get classified, retried, and fallen back from. Chapter 19 is where a reply becomes a stream of the same events. The request body still has no `stream` field.
 
 ```rust
 #[error("request timed out after {timeout:?}")]
@@ -685,7 +651,7 @@ cargo run -p ch01-4-harness-cli -- --mock ask "Say hello"
 cargo bench -p ch01-4-harness-core --bench edges -- --warm-up-time 1 --measurement-time 2 --sample-size 10
 ```
 
-Same rule as 1.3: the run below is the mock. `--help` on `ch01-4-harness` is the 1.3 help plus `--timeout-secs` (default 60). I did not call OpenRouter.
+The run below is the mock. `--help` on `ch01-4-harness` is the 1.3 help plus `--timeout-secs` (default 60).
 
 ```text
    Compiling ch01-4-harness-core v0.1.0 (/workspace/steps/ch01-4-errors/crates/harness-core)
@@ -754,7 +720,7 @@ parse_response_edges    time:   [785.72 ns 789.72 ns 797.38 ns]
 |---|---|---|---|
 | `parse_response_edges` | 792.7 ns | < 1 ms | [bench host](appendix-benchmark-method.md) |
 
-Where these numbers were taken is in [How the numbers were measured](appendix-benchmark-method.md).
+792.7 ns is a body with `cost` and a body with no `usage`, both turned into events. The missing field stays missing, which is the point of the bench.
 
 ### Milestone demo
 
@@ -770,7 +736,7 @@ event: text-delta (mock) I heard you.
 event: done
 ```
 
-The optional live command is the same binary without `--mock`. I did not make that call. With the key unset it fails before a request, the same way section 1.3 does:
+Without a key, the same binary stops before any request:
 
 ```bash
 cargo run -p ch01-4-harness-cli -- ask "Say hello"
