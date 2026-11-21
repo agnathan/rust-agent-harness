@@ -1,16 +1,14 @@
 # Chapter 23: Learned Tools
 
-Chapter 22 can search past sessions from the harness. The gateway still offers whatever the session's starter set and searches revealed. It does not yet notice that this kind of task always ends up calling the same handful of tools, or that three tools are really one procedure. This chapter is that offer, and it lives on the server. The harness decides what may enter the prompt. The server decides which names the session is shown. Putting the score inside the model call would make every request wait on a ranking. The score changes the offered set beforehand.
+A task that always ends on `read_file` should be offered `read_file` before the model starts searching the catalog. Hermes, at the commit this chapter cites, has no scorer that ranks tools from memory or from past sessions. The offered set there changes through tool search, which chapter 8 already adapted. This chapter adds the score, on the server, where two agents can share one usage log without each of them embedding the index.
 
-The crate is `steps/ch23-learned-tools`. The library is `gw_learned`. It vendors chapter 15 the way chapter 15 vendored chapters 7 and 8: `catalog`, `session`, and `limits` are modules, and there is no path dependency on `ch15-limits`. `LearnedGateway` is the type. It binds no socket. `mcp-gateway` will re-export a later copy of this gateway, from chapter 51, under the name `Gateway`.
+The harness still decides what may enter the prompt, and the server decides which names the session is shown. Scoring inside the model call would make every request wait on a ranking, so `refresh_prediction` installs an `Arc` beforehand and `session_tools` only reads that pointer. A test counts `predict_calls` across the read and expects the same number, and the offered set can change before the request, and it stays put for the length of `session_tools`. For a continuously improving harness, use can tighten the catalog without sitting on the turn's latency.
 
-The score is a plain function over usage rows and tool names. The gateway stores the chosen offer in an `Arc`. `session_tools` reads that offer and does not call the scorer, which is the test that prediction stayed off the request path. A composite or macro name expands to steps. Code mode runs a line script against the sandbox allowlist, capped at 50 calls, and the new limit sits on the tool the script is allowed to call. The offered set can change before the request. It does not change in the middle of `session_tools`.
+This is the server program, kept separate from the harness, the same line as chapters 5, 7, 8, and 15. The crate is `steps/ch23-learned-tools`, library `gw_learned`. It vendors chapter 15 the way chapter 15 vendored chapters 7 and 8: `catalog`, `session`, and `limits` are modules, with no path dependency on `ch15-limits`. `LearnedGateway` binds no socket, and `mcp-gateway` will re-export a later copy, from chapter 51, under the name `Gateway`. The Hermes pin moves here from `cf71b1aa`, the commit chapters 11 through 22 cite, to `ab3fe9dffb0a`, a later commit of the same repository. The notes below were read against that later commit, and the walk of the crate stays in the order the sections already have.
 
-The server stays a separate program because a learned catalog is still a catalog. Two agents should be able to share the usage score and the macro definitions without each of them embedding the index. The harness keeps chapter 6's append-only reveal: once the server says which names this session gets, the harness does not rewrite the prefix to insert one more. Chapter 37 vendors this gateway and adds pools and federation. Chapter 42 and chapter 51 vendor it again. Chapter 24, back on the harness, starts skills. A skill is a procedure the agent reads. A macro tool is a procedure the server can run. They are easy to confuse, and they stay in different crates so a skill file is not an alias for a gateway composite.
+A composite or a macro is a name that expands to steps. Code mode runs a line script against the sandbox allowlist, capped at 50 calls, and the new limit sits on the tool the script is allowed to call. The score itself is a plain function you can bench without a session, and the installed set is swapped the way chapter 7 swaps a snapshot. Chapter 37 vendors this gateway and adds pools and federation, and chapters 42 and 51 vendor it again. Chapter 24, back on the harness, starts skills: a procedure the agent reads, where a macro is a procedure the server can run. They stay in different crates, so a skill file stays a skill file and a gateway composite stays a composite. Once the server says which names this session gets, the harness keeps chapter 6's append-only reveal and leaves the prefix alone.
 
-Rust, at the offer: `Arc` is the installed set, swapped the way chapter 7 swaps a snapshot. The score is a function you can call in a bench without a session. A name that expands to steps is a `Vec`, and code mode is a filter on names before any call.
-
-`cargo run --locked -p ch23-learned-tools` runs the demo in-process. The exercise is `my-harness/tests/ch23.rs`: `session_tools` reads the predicted set and does not call the scorer.
+`cargo run --locked -p ch23-learned-tools` runs the demo in-process, and `my-harness/tests/ch23.rs` checks that `session_tools` reads the predicted set and leaves the scorer uncalled.
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -41,19 +39,19 @@ Rust, at the offer: `Arc` is the installed set, swapped the way chapter 7 swaps 
 
 ## What this chapter decides
 
-The score and the read are two functions. `refresh_prediction` is the offline step. `session_tools` is the request path. A test reads `predict_calls` before and after `session_tools` and the number is the same.
+The score and the read are two functions, and `refresh_prediction` is the offline step. `session_tools` is the request path, and a test reads `predict_calls` before and after `session_tools` and the number is the same.
 
-`predict` ranks names. A usage row whose tool is in the catalog and whose task shares a token of three or more characters with the current task adds 1. A mention of the tool name in memory or in the session note adds 3. A name that scores 0 is left out. The rest sort by score, then by name.
+`predict` ranks names. A usage row whose tool is in the catalog and whose task shares a token of three or more characters with the current task adds 1. A mention of the tool name in memory or in the session note adds 3. A name that scores 0 is left out, and the rest sort by score, then by name.
 
-`save_composite` and `save_macro` store a name and a list of steps. `expand` returns that list. Neither one runs the steps.
+`save_composite` and `save_macro` store a name and a list of steps, and `expand` returns that list. Neither one runs the steps.
 
-`run_code_mode` reads `call tool json` lines. A tool outside `SANDBOX_ALLOWED` is `NotAllowed`. A tool that is allowed but not in the offer is `NotOffered`. The 51st call is `TooManyCalls`, and the backend is not called. A line the parser cannot read is `BadLine`.
+`run_code_mode` reads `call tool json` lines, and a tool outside `SANDBOX_ALLOWED` is `NotAllowed`. A tool that is allowed but not in the offer is `NotOffered`, and the 51st call is `TooManyCalls`, and the backend isn't called. A line the parser cannot read is `BadLine`.
 
-`ScriptedModel` counts `complete` calls. The demo does not construct one. There is no API key.
+`ScriptedModel` counts `complete` calls, but the demo doesn't construct one. There is no API key.
 
 ## 23.1 The crate vendors chapter 15
 
-Chapter 15 used to be a path dependency. A reader who opened only `ch23-learned-tools` still needed `ch15-limits` on disk. This chapter copies the sources in, the same way chapter 15 copied the catalog and the session gateway.
+Chapter 15 used to be a path dependency, and a reader who opened only `ch23-learned-tools` still needed `ch15-limits` on disk. This chapter copies the sources in, the same way chapter 15 copied the catalog and the session gateway.
 
 `lib.rs` declares three modules and re-exports the names the rest of the book already calls.
 
@@ -67,9 +65,9 @@ pub use limits::{Catalog, LimitedGateway, SessionError, SessionView};
 
 `catalog` is the chapter 7 gateway: native tools, plugin tools, an in-memory upstream list, and BM25 search. `session` is the chapter 8 view: one session, `search_tools`, `set_task`, `describe`. `limits` is the chapter 15 wrapper: per-tool permits, an idempotent retry, a breaker, and the caps of 50 on `web_search` and `delegate_task`.
 
-`limits.rs` still says `use crate::session::SessionGateway` and `pub use crate::catalog::Gateway as Catalog`. Those paths work because the modules sit at the crate root. Nothing in this file imports `gw_limits`. `Cargo.toml` does not list `ch15-limits`.
+`limits.rs` still says `use crate::session::SessionGateway` and `pub use crate::catalog::Gateway as Catalog`, and those paths work because the modules sit at the crate root. Nothing in this file imports `gw_limits`, but `Cargo.toml` doesn't list `ch15-limits`.
 
-`mcp-gateway` depends on this package and does `pub use gw_learned::LearnedGateway as Gateway`. That type is still here. The re-export of `Catalog`, `LimitedGateway`, `SessionError`, and `SessionView` keeps the names a later server chapter will call when it vendors this crate the same way.
+`mcp-gateway` depends on this package and does `pub use gw_learned::LearnedGateway as Gateway`, and that type is still here. The re-export of `Catalog`, `LimitedGateway`, `SessionError`, and `SessionView` keeps the names a later server chapter will call when it vendors this crate the same way.
 
 `LimitedGateway::session_tools` is a one-line forward.
 
@@ -79,7 +77,7 @@ pub fn session_tools(&self, session_id: &str) -> Option<SessionView> {
 }
 ```
 
-`open_session` and `catalog` forward the same way. The learned layer calls those three. It does not reimplement the permit, the breaker, or the cap of 50. A code-mode script that names `web_search` still has to pass chapter 15's cap when something actually calls the tool. This chapter's cap of 50 is a different counter. It counts lines in one script. It does not increment `web_search`.
+`open_session` and `catalog` forward the same way, and the learned layer calls those three. It doesn't reimplement the permit, the breaker, or the cap of 50. A code-mode script that names `web_search` still has to pass chapter 15's cap when something actually calls the tool. This chapter's cap of 50 is a different counter, and it counts lines in one script. It doesn't increment `web_search`.
 
 > **Rust sidebar: `pub use` and `pub mod`**
 >
@@ -89,7 +87,7 @@ pub fn session_tools(&self, session_id: &str) -> Option<SessionView> {
 
 ## 23.2 The score is a plain function
 
-`Use` is one row of history. `PredictInput` borrows the task, the rows, the memory text, the session note, and the catalog. The lifetime `'a` says those borrows last as long as the call. `predict` does not store them.
+`Use` is one row of history, and `PredictInput` borrows the task, the rows, the memory text, the session note, and the catalog. The lifetime `'a` says those borrows last as long as the call, but `predict` doesn't store them.
 
 ```rust
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -144,7 +142,7 @@ pub fn predict(input: &PredictInput<'_>) -> Vec<String> {
 }
 ```
 
-`tokens` splits on anything that is not an ASCII letter or digit and drops words shorter than three characters. `read` does not count. `note` does. The set is a `BTreeSet`, so the same word twice is one token.
+`tokens` splits on anything that isn't an ASCII letter or digit and drops words shorter than three characters. `read` doesn't count. `note` does. The set is a `BTreeSet`, so the same word twice is one token.
 
 ```rust
 fn tokens(text: &str) -> BTreeSet<String> {
@@ -161,7 +159,7 @@ fn shares_token(task: &BTreeSet<String>, other: &str) -> bool {
 
 `shares_token` tokenizes the old task again. A row whose task is "read the note" shares `read` and `note` with a current task of the same words. A row whose task is "unrelated" shares nothing, so that row adds 0 even when the tool name matches.
 
-The memory bonus is a whole-name match, not a token match. `contains_name` lowercases the tool name and looks for it as its own word. The character before and after must not be a name character. A name character is an ASCII letter, a digit, or `_`.
+The memory bonus is a whole-name match, not a token match, and `contains_name` lowercases the tool name and looks for it as its own word. The character before and after must not be a name character, and a name character is an ASCII letter, a digit, or `_`.
 
 ```rust
 fn contains_name(haystack: &str, name: &str) -> bool {
@@ -179,11 +177,11 @@ fn is_name_char(byte: u8) -> bool {
 }
 ```
 
-`read_file` inside "prefer read_file for notes" matches. `read` inside `read_file` does not, because the next byte is `_`, and `_` is a name character. That is why the underscore is part of the tool name. I did not split on it.
+`read_file` inside "prefer read_file for notes" matches, but `read` inside `read_file` doesn't, because the next byte is `_`, and `_` is a name character. That is why the underscore is part of the tool name, but I didn't split on it.
 
-The sort is score descending, then name ascending. `b.0.cmp(&a.0)` flips the integer compare. `then_with` only looks at the name when the scores are equal. Two tools that both score 3 come out in alphabetical order, so the test can name the exact slice.
+The sort is score descending, then name ascending, and `b.0.cmp(&a.0)` flips the integer compare. `then_with` only looks at the name when the scores are equal. Two tools that both score 3 come out in alphabetical order, so the test can name the exact slice.
 
-A zero score is filtered out before the sort. An empty log, empty memory, and an empty note offer nothing, even when the catalog has four names. The function returns an owned `Vec`. It does not touch a gateway, a session, or a model.
+A zero score is filtered out before the sort, and an empty log, empty memory, and an empty note offer nothing, even when the catalog has four names. The function returns an owned `Vec`, but it doesn't touch a gateway, a session, or a model.
 
 ## 23.3 The gateway stores an Arc
 
@@ -236,9 +234,9 @@ pub fn refresh_prediction(&self, input: &PredictInput<'_>) -> Arc<Vec<String>> {
 }
 ```
 
-The counter moves first, then the score, then the store, then the flag. A caller that panics inside `predict` has already counted the attempt. Nothing in `predict` panics on ordinary strings. `lock().expect` panics only if another thread poisoned the mutex by panicking while holding it. I treat that as a bug, not as an empty offer.
+The counter moves first, then the score, then the store, then the flag, and a caller that panics inside `predict` has already counted the attempt. Nothing in `predict` panics on ordinary strings, and `lock().expect` panics only if another thread poisoned the mutex by panicking while holding it. I treat that as a bug, not as an empty offer.
 
-The returned `Arc` is a second clone of the same allocation the field now holds. The caller can keep it. A later refresh allocates a new `Vec` and a new `Arc`. The old one stays alive only while someone still holds a clone.
+The returned `Arc` is a second clone of the same allocation the field now holds. The caller can keep it, and a later refresh allocates a new `Vec` and a new `Arc`. The old one stays alive only while someone still holds a clone.
 
 `offered_arc` is the cheap read.
 
@@ -248,7 +246,7 @@ pub fn offered_arc(&self) -> Arc<Vec<String>> {
 }
 ```
 
-It does not call `predict`. It does not look at memory. The bench times this path through `session_tools`, which calls `offered_arc` and then copies the names into the view.
+It doesn't call `predict`, but it doesn't look at memory. The bench times this path through `session_tools`, which calls `offered_arc` and then copies the names into the view.
 
 ## 23.4 `session_tools` reads and does not score
 
@@ -264,7 +262,7 @@ pub fn session_tools(&self, session_id: &str) -> Option<SessionView> {
 }
 ```
 
-`?` on `Option` returns `None` when the session was never opened. The inner view is the chapter 8 list, which is empty until `search_tools` or `set_task` reveals names. If the installed offer is empty, this function leaves that view alone and does not touch `pending_change`. An empty prediction means "I have not installed a set," not "offer zero tools and mark the list changed."
+`?` on `Option` returns `None` when the session was never opened, and the inner view is the chapter 8 list, which is empty until `search_tools` or `set_task` reveals names. If the installed offer is empty, this function leaves that view alone and doesn't touch `pending_change`. An empty prediction means "I haven't installed a set," not "offer zero tools and mark the list changed."
 
 When the offer is non-empty, the view's `tools` field becomes a clone of the names. `SessionView` is a plain struct.
 
@@ -276,9 +274,9 @@ pub struct SessionView {
 }
 ```
 
-The caller can keep the view. A later refresh does not change a view you already took. That is the point of copying out of the `Arc`. Holding `offered_arc()` is the cheaper read if you only need the names and you are willing to see a later refresh when you clone again.
+The caller can keep the view, but a later refresh doesn't change a view you already took. That is the point of copying out of the `Arc`. Holding `offered_arc()` is the cheaper read if you only need the names and you are willing to see a later refresh when you clone again.
 
-`swap(false)` writes `false` and returns the previous value. The first `session_tools` after a refresh sees `list_changed == true`. The next one sees `false`. The names stay. `predict_calls` is not in this function. I checked by reading it. The test checks the same thing from the outside.
+`swap(false)` writes `false` and returns the previous value, and the first `session_tools` after a refresh sees `list_changed == true`. The next one sees `false`. The names stay. `predict_calls` isn't in this function, and I checked by reading it. The test checks the same thing from the outside.
 
 `catalog` and `open_session` are the two other forwards a caller needs before that read.
 
@@ -292,15 +290,15 @@ pub fn open_session(&self, session_id: impl Into<String>) {
 }
 ```
 
-`impl Into<String>` means the caller can pass `&str` or `String`. `open_session("desk")` allocates one `String` inside the session map. I did not add a second session table on the learned gateway. The session id has to exist in the inner gateway or `session_tools` returns `None`.
+`impl Into<String>` means the caller can pass `&str` or `String`, and `open_session("desk")` allocates one `String` inside the session map. I didn't add a second session table on the learned gateway, and the session id has to exist in the inner gateway or `session_tools` returns `None`.
 
 ### The tests
 
-`prediction_changes_the_offered_set_and_is_not_on_the_read` opens `desk`, reads an empty view, and checks `list_changed` is false. It then refreshes with two `read_file` rows on the task "read the note" and a session note that names `web_search`. The ranked `Arc` is `["web_search", "read_file"]`. Memory does not mention either name, so `web_search` gets 3 from the note and `read_file` gets 2 from the rows. 3 sorts first. `write_file` and `terminal` score 0 and drop out.
+`prediction_changes_the_offered_set_and_is_not_on_the_read` opens `desk`, reads an empty view, and checks `list_changed` is false. It then refreshes with two `read_file` rows on the task "read the note" and a session note that names `web_search`. The ranked `Arc` is `["web_search", "read_file"]`. Memory doesn't mention either name, so `web_search` gets 3 from the note and `read_file` gets 2 from the rows. 3 sorts first. `write_file` and `terminal` score 0 and drop out.
 
-The test stores `predict_calls()`, calls `session_tools`, and expects the same number. It expects `list_changed` on that first read and not on the second. The tool list is the same both times.
+The test stores `predict_calls()`, calls `session_tools`, and expects the same number, and it expects `list_changed` on that first read and not on the second. The tool list is the same both times.
 
-`a_zero_score_tool_is_left_out` calls `predict` with an empty log and empty text. The catalog still has four names. The result is empty. That test does not construct a gateway. The score is a function.
+`a_zero_score_tool_is_left_out` calls `predict` with an empty log and empty text, and the catalog still has four names. The result is empty, but that test doesn't construct a gateway. The score is a function.
 
 ## 23.5 A name expands to steps
 
@@ -329,11 +327,11 @@ pub fn expand(&self, name: &str) -> Option<Vec<String>> {
 }
 ```
 
-A composite is checked first. A macro is the fallback. The same name in both maps returns the composite. I split the maps because Hermes splits "a toolset that includes other toolsets" from "a custom toolset the user saved." In this crate both are `Vec<String>`. The difference is which map you wrote. Neither map is consulted by `session_tools`. Expanding a name is a separate call. Running the steps would be a later loop, and this chapter does not have one.
+A composite is checked first, and a macro is the fallback. The same name in both maps returns the composite. I split the maps because Hermes splits "a toolset that includes other toolsets" from "a custom toolset the user saved." In this crate both are `Vec<String>`. The difference is which map you wrote, and neither map is consulted by `session_tools`. Expanding a name is a separate call, and running the steps would be a later loop, and this chapter doesn't have one.
 
-`or_else` on `Option` runs the closure only when the composite lookup was `None`. The macro mutex is not locked when the composite hit. That keeps the two locks from nesting. Nested locks in the other order, on another thread, would be a deadlock if I ever locked macros and then composites. I do not.
+`or_else` on `Option` runs the closure only when the composite lookup was `None`, but the macro mutex isn't locked when the composite hit. That keeps the two locks from nesting. Nested locks in the other order, on another thread, would be a deadlock if I ever locked macros and then composites. I do not.
 
-The test saves `rename_flow` as `read_file` then `write_file`, and `morning` as `web_search` then `read_file`. `expand("missing")` is `None`. `Option` is the right type. An error would mean the name was illegal. A missing name is ordinary.
+The test saves `rename_flow` as `read_file` then `write_file`, and `morning` as `web_search` then `read_file`. `expand("missing")` is `None`. `Option` is the right type, and an error would mean the name was illegal. A missing name is ordinary.
 
 > **Rust sidebar: `Option` and `cloned`**
 >
@@ -357,7 +355,7 @@ pub const SANDBOX_ALLOWED: &[&str] = &[
 pub const CODE_MODE_MAX_CALLS: usize = 50;
 ```
 
-`CodeError` is the four ways a script stops. It derives `PartialEq` so a test can write `assert_eq!(result, Err(CodeError::TooManyCalls))`.
+`CodeError` is the four ways a script stops, and it derives `PartialEq` so a test can write `assert_eq!(result, Err(CodeError::TooManyCalls))`.
 
 ```rust
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -411,17 +409,17 @@ pub fn run_code_mode(
 }
 ```
 
-The parse finishes before any call. A script of 51 `read_file` lines returns `TooManyCalls` and the closure is never invoked. I checked that by reading the `return` before the `Ok(lines...)` line. The test uses a closure that would count calls, and the count stays 0 because the function never gets there. The closure in the success test counts 1.
+The parse finishes before any call, and a script of 51 `read_file` lines returns `TooManyCalls` and the closure is never invoked. I checked that by reading the `return` before the `Ok(lines...)` line. The test uses a closure that would count calls, and the count stays 0 because the function never gets there. The closure in the success test counts 1.
 
-`impl FnMut(&str, &str) -> String` is the backend. `FnMut` means the closure can change its own captured variables, which is how the test increments `calls`. The gateway does not care what the closure does. The demo passes `|_tool, _args| "ok".into()`. No process is spawned. No socket is opened.
+`impl FnMut(&str, &str) -> String` is the backend, and `FnMut` means the closure can change its own captured variables, which is how the test increments `calls`. The gateway doesn't care what the closure does, and the demo passes `|_tool, _args| "ok".into()`. No process is spawned, and no socket is opened.
 
-Blank lines and `#` comments are skipped. A line that does not start with `call ` is `BadLine`. A `call` with no argument word is `BadLine`, because `split_once` needs whitespace between the tool and the JSON. The JSON is not parsed. It is the rest of the line, trimmed, and handed to the closure as `&str`. A later chapter that wants a real object can parse it. This chapter's job is the allowlist, the offer, and the cap.
+Blank lines and `#` comments are skipped, but a line that doesn't start with `call ` is `BadLine`. A `call` with no argument word is `BadLine`, because `split_once` needs whitespace between the tool and the JSON. The JSON isn't parsed, and it is the rest of the line, trimmed, and handed to the closure as `&str`. A later chapter that wants a real object can parse it, and this chapter's job is the allowlist, the offer, and the cap.
 
-`SANDBOX_ALLOWED.contains(&tool)` works because the constant is `&[&str]` and `tool` is `&str`. The seven names match Hermes `SANDBOX_ALLOWED_TOOLS` in the order I wrote them. The order is not load-bearing. Membership is.
+`SANDBOX_ALLOWED.contains(&tool)` works because the constant is `&[&str]` and `tool` is `&str`, and the seven names match Hermes `SANDBOX_ALLOWED_TOOLS` in the order I wrote them. The order isn't load-bearing. Membership is.
 
-`memory` is not in the list, so it is `NotAllowed` before the offer is consulted. `web_search` is in the list and still `NotOffered` when the view does not name it. Both checks exist. The allowlist is the sandbox boundary. The offer is the session boundary. Hermes intersects the allowlist with the enabled tools and, if that intersection is empty, falls back to the whole allowlist. I did not take the fallback. An empty offer means no code-mode call succeeds. That is stricter, and it matches "only tools the session was offered."
+`memory` isn't in the list, so it is `NotAllowed` before the offer is consulted. `web_search` is in the list and still `NotOffered` when the view doesn't name it. Both checks exist. The allowlist is the sandbox boundary, and the offer is the session boundary. Hermes intersects the allowlist with the enabled tools and, if that intersection is empty, falls back to the whole allowlist. I didn't take the fallback, and an empty offer means no code-mode call succeeds. That is stricter, and it matches "only tools the session was offered."
 
-The 50 here is `DEFAULT_MAX_TOOL_CALLS`. It is not `MAX_WEB_SEARCHES` from chapter 15. A script of 50 `web_search` lines would pass this function and then each real call would still hit the chapter 15 cap if the caller wired the closure to `LimitedGateway`. The demo closure does not. The two caps stay separate so a reader can see which one fired.
+The 50 here is `DEFAULT_MAX_TOOL_CALLS`, but it isn't `MAX_WEB_SEARCHES` from chapter 15. A script of 50 `web_search` lines would pass this function and then each real call would still hit the chapter 15 cap if the caller wired the closure to `LimitedGateway`. The demo closure doesn't, and the two caps stay separate so a reader can see which one fired.
 
 `ScriptedModel` is the stand-in I do not call from `predict` or from `session_tools`.
 
@@ -432,7 +430,7 @@ pub fn complete(&mut self, _prompt: &str) -> String {
 }
 ```
 
-`_prompt` starts with an underscore because the body ignores it. The test constructs one, asserts `calls()` is 0, runs the demo, and only then calls `complete`. The demo's offer does not depend on the model. If a later edit calls `complete` from `refresh_prediction`, that test fails.
+`_prompt` starts with an underscore because the body ignores it, and the test constructs one, asserts `calls()` is 0, runs the demo, and only then calls `complete`. The demo's offer doesn't depend on the model, and if a later edit calls `complete` from `refresh_prediction`, that test fails.
 
 `demo` is the milestone the binary prints.
 
@@ -469,13 +467,13 @@ pub fn demo() -> (String, String) {
 }
 ```
 
-Memory contains the whole name `read_file`, so the score is 1 from the usage row plus 3 from memory. `web_search` scores 0. The offer is the one name. The script is one allowed, offered line. The body is `ok`. The assert in the middle is the same check as the integration test: the read did not score.
+Memory contains the whole name `read_file`, so the score is 1 from the usage row plus 3 from memory. `web_search` scores 0. The offer is the one name, and the script is one allowed, offered line. The body is `ok`, but the assert in the middle is the same check as the integration test: the read didn't score.
 
 ## Tests
 
-Six tests, in `tests/learned.rs`. They link `gw_learned` and call the gateway. They are not free functions in a crate that never opens a session, except `a_zero_score_tool_is_left_out` and the code-mode cases, which call `predict` or `run_code_mode` directly. The first test is the one that goes through `session_tools`.
+Six tests, in `tests/learned.rs`, and they link `gw_learned` and call the gateway. They are not free functions in a crate that never opens a session, except `a_zero_score_tool_is_left_out` and the code-mode cases, which call `predict` or `run_code_mode` directly. The first test is the one that goes through `session_tools`.
 
-The binary is `ch23-learned-tools`. The bench is `learned`. There is no second bench. Chapter 15's `limits` bench stays in the chapter 15 crate.
+The binary is `ch23-learned-tools`, and the bench is `learned`. There is no second bench, and chapter 15's `limits` bench stays in the chapter 15 crate.
 
 ## Build, run, and benchmark
 
@@ -488,7 +486,7 @@ Starting 6 tests across 3 binaries
      Summary [   0.007s] 6 tests run: 6 passed, 0 skipped
 ```
 
-Three binaries: the integration-test harness, the library's unit tests (there are none), and the doctests. nextest counts the test binaries it built for the package. The sentence is the count from this tree.
+Three binaries: the integration-test harness, the library's unit tests (there are none), and the doctests. nextest counts the test binaries it built for the package, and the sentence is the count from this tree.
 
 ```bash
 cargo run --locked -p ch23-learned-tools
@@ -506,23 +504,23 @@ The binary opens one session, refreshes from one usage row and a memory sentence
 | `apply_offered` | 76.1 ns | the offered set only | copy 32 names into a session view |
 | `predict_offline` | 149.64 µs | off the request path | score 1,000 rows against 64 names |
 
-`apply_offered` builds the gateway, opens `desk`, and calls `refresh_prediction` before the bench. One `session_tools` also runs first, so `list_changed` is already clear. The timed closure is `b.iter`. Inside: `session_tools` with the session id passed through `black_box`. That clones the `Arc` and copies 32 names. `predict` is not called.
+`apply_offered` builds the gateway, opens `desk`, and calls `refresh_prediction` before the bench, and one `session_tools` also runs first, so `list_changed` is already clear. The timed closure is `b.iter`, and inside: `session_tools` with the session id passed through `black_box`. That clones the `Arc` and copies 32 names, but `predict` isn't called.
 
-`predict_offline` builds 64 names and 1,000 usage rows before the bench. The timed closure is `b.iter`. Inside: `predict` with the input passed through `black_box`. No gateway, no session, no model.
+`predict_offline` builds 64 names and 1,000 usage rows before the bench, and the timed closure is `b.iter`. Inside: `predict` with the input passed through `black_box`, and no gateway, no session, no model.
 
-The offer is `read_file`. The code-mode body is `ok`.
+The offer is `read_file`, and the code-mode body is `ok`.
 
-The means are `mean.point_estimate` from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `23`. Bench ids: `23/apply_offered`, `23/predict_offline`, `21/apply_offered`, `21/predict_offline`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
+The means are `mean.point_estimate` from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `23`, and bench ids: `23/apply_offered`, `23/predict_offline`, `21/apply_offered`, `21/predict_offline`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
 A mention in memory is worth more than two past uses. The session note in the test names `web_search`, so that tool sorts first even though the log only contains `read_file`. If the note is stale, the offer is stale until something calls `refresh_prediction` again.
 
-`session_tools` copies the names. Holding the `Arc` from `offered_arc` is the cheaper read. The view is a snapshot. A later refresh does not change a view you already took.
+`session_tools` copies the names, and holding the `Arc` from `offered_arc` is the cheaper read. The view is a snapshot, but a later refresh doesn't change a view you already took.
 
-An empty offer does not clear the chapter 8 list. If you refresh to an empty `Vec` on purpose, the next `session_tools` still returns whatever `search_tools` revealed. "No prediction yet" and "predict nothing" are the same empty `Arc` today. Install a sentinel only if a later chapter needs to tell them apart.
+An empty offer doesn't clear the chapter 8 list, and if you refresh to an empty `Vec` on purpose, the next `session_tools` still returns whatever `search_tools` revealed. "No prediction yet" and "predict nothing" are the same empty `Arc` today, and install a sentinel only if a later chapter needs to tell them apart.
 
-`contains_name` uses byte indexes after a lowercase conversion. The tool names in this crate are ASCII. A non-ASCII name would still be a byte search against the lowercased haystack. I am not adding Unicode word breaks in this chapter.
+`contains_name` uses byte indexes after a lowercase conversion, and the tool names in this crate are ASCII. A non-ASCII name would still be a byte search against the lowercased haystack, and I'm not adding Unicode word breaks in this chapter.
 
 ## Guardrails in this chapter
 
@@ -543,7 +541,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). The 
 ## Chapter summary
 
 - **Vendor.** Chapter 15's catalog, session, and limits live in this crate. There is no path dependency. The lib name is `gw_learned`.
-- **Offer.** Installed by `refresh_prediction`. Read by `session_tools`. The score does not run on that read.
+- **Offer.** Installed by `refresh_prediction`. Read by `session_tools`. Hermes has no ranker from memory or past sessions, so `predict` is the one this crate adds, and the request path only reads the `Arc`.
 - **Rank.** A memory or session mention is 3. A matching use is 1. Zero stays out. Ties break by name.
 - **Names.** A composite and a macro expand to steps. They do not run them.
 - **Code mode.** `call tool json`, allowlist, offer, and 50 calls. The backend runs only after the script parses.
@@ -551,8 +549,8 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). The 
 
 ## What you implement
 
-`my-harness/tests/ch23.rs` calls `chapter_23_read_invokes_scorer` and asserts it is false. The stub in `my-harness/src/milestones.rs` panics with `todo!("chapter 23")` until you fill it in. The finished behavior is `LearnedGateway::session_tools` in this step: it copies the installed names and does not call `predict`. Do not paste that function into `my-harness`. The milestone only needs the boolean the test asserts.
+`my-harness/tests/ch23.rs` calls `chapter_23_read_invokes_scorer` and asserts it is false, and the stub in `my-harness/src/milestones.rs` panics with `todo!("chapter 23")` until you fill it in. The finished behavior is `LearnedGateway::session_tools` in this step: it copies the installed names and doesn't call `predict`. Do not paste that function into `my-harness`, and the milestone only needs the boolean the test asserts.
 
 ## What's next
 
-Chapter 24 is skills, on the harness line. It copies chapter 22 and adds a directory of `SKILL.md` files. The index is rendered once into an `Arc`. The full text loads when the model asks for it.
+Chapter 24 is skills, on the harness line, and it copies chapter 22 and adds a directory of `SKILL.md` files. The index is rendered once into an `Arc`, and the full text loads when the model asks for it.
