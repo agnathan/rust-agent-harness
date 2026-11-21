@@ -128,7 +128,7 @@ Browser Tools is chapter 40 and Vision is chapter 41. Both are written, in Part 
 | 30 | Handoffs | `steps/ch30-handoffs` | a pointer to the current agent | routing and ownership transfer; handoff-as-tool; a max-handoff limit; context filtered before the next agent sees it |
 | 31 | Fan-out and Gather | `steps/ch31-fan-out` | a worker limit, an aggregator | the dedicated gather: the supervisor already runs specialists in parallel; this chapter adds the worker limit's tests and the aggregator. Chapter 29 defers the queue of 100 and the `task_index` order to here |
 | 32 | The Critic | `steps/ch32-critic` | the same tool trait | an evaluator agent, both as a tool and as a final gate. It takes one permit from the chapter 29 pool. Chapter 31's summary is what it reads; it does not do the work |
-| 33 | Composing Patterns | `steps/ch33-composition` | nesting the patterns above | a supervisor that fans out and uses a handoff only when ownership should move. Chapter 32 defers the judge continuation loop, the `wait` target, and the quality-gate shell commands to here |
+| 33 | Composition and the Goal Loop | `steps/ch33-composition` | nesting the patterns above, then the goal loop | a supervisor that fans out and uses a handoff only when ownership should move. Chapter 32 defers the judge continuation loop, the `wait` target, and the quality-gate shell commands to here |
 
 **Guardrail notes**
 

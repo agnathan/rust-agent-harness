@@ -1,16 +1,14 @@
 # Chapter 29: The Supervisor
 
-Chapter 28 can run four stages in order on one context. A lot of work is not a sequence. A manager names specialists, they run, and only a summary comes back. That is the default team in this book. The crate is `steps/ch29-supervisor`, a copy of chapter 28 plus `supervisor`. The package is `ch29-supervisor`. `Job` is the specialist: a name, a scripted reply, and an optional hold. It is not the `Tool` trait from chapter 3. The pool runs jobs. The tool trait stays the way the loop calls a tool.
+Eight specialists can overlap, and a ninth waits. The overlap test sleeps each of eight jobs for 40 ms and asserts the whole run finishes under seven holds, a 280 ms ceiling, and the comment in that test records macOS CI at about 186 ms, still under the ceiling and above a fully parallel 40 ms. `max_seen` stays 8, and that bound is the default team in this book.
 
-The bound is 8. Hermes caps concurrent children higher, at 10, and that default stays in the comments as Hermes's number. The harness measurement, and the pool, is eight, the same bound the dispatcher has used since chapter 3. `acquire` waits for a permit, and `Drop` wakes one waiter, so a finished specialist releases the slot even when the caller forgets. `thread::scope` runs the jobs and joins them, which keeps the borrows honest: a specialist cannot outlive the scope that lent it the context. `child_call` is a `Result`. The blocked tools are the ones a child must not have: `delegate_task`, `clarify`, `memory`, `send_message`, and cron. Depth is 1. A child does not spawn another supervisor. The worktree is a marker, opt-in, not a git operation this chapter performs. The reflection note is a string you enqueue. It does not run chapter 26's reviewer on the team turn.
+The chapter has three parts: bound the pool, run the jobs, and restrict what a child may call. `Job` is a name, a scripted reply, and an optional hold, tool-like only in that narrow sense. The `Tool` trait from chapter 3 stays the way the loop calls a tool, and this file has no adapter that would register a specialist as one. A worktree marker and a reflection queue are recorded here for later chapters. `worktree` returns `None` unless you opt in, and the string it returns is `opt-in`, not a git worktree. `enqueue_reflection` pushes a string, and it leaves chapter 26's reviewer for a caller outside the team turn.
 
-Eight specialists share one pool and one `Arc` context. That is the shape chapter 31 will push to a queue of 100, and the shape chapter 32's critic borrows one permit from. Heartbeats are not here. Chapter 31 does not start them either. Chapter 36 implements `is_stale`. Putting the liveness check in the supervisor chapter would hide a clock inside the scheduler. The scheduler's job is the pool, the depth, and the tool slice.
+The pool is built with 8, the same bound chapter 3's dispatcher uses for in-flight tool work. Hermes's default concurrent children is 10, kept on the page as `HERMES_MAX_CONCURRENT_CHILDREN`, and the pool reads `WORKER_BOUND` instead. The file doesn't say why 8 won over 10 beyond that shared dispatcher number. `acquire` waits at the limit, and `Drop` wakes one waiter, so a finished specialist releases the slot even when the caller forgets. `thread::scope` joins the jobs before the borrow of the context can escape. `child_call` returns `Result`, and at depth 1 the blocked names are `delegate_task`, `clarify`, `memory`, `send_message`, and `cronjob_manage`. Past depth 1 every tool is refused, so a child doesn't spawn another supervisor.
 
-The learning loop stays off this path on purpose. A team run can leave a note that reflection should look at the summaries. The reviewer still has only skill and memory tools, and it still runs after the turn. A specialist that could write memory would race the others to define the lesson. The parent decides what to keep. That is the same rule chapter 48 will use for a team library: workers propose, one writer applies.
+Heartbeats wait until chapter 36, because a clock inside this scheduler would hide liveness in the pool. Chapter 31 pushes the same pool to a queue of 100, and chapter 32's critic borrows one permit from it. A continuously improving harness still decides the lesson at the parent: a specialist that could write memory would race the others to define it, so the reviewer keeps only skill and memory tools and still runs after the turn. Chapter 48 uses the same rule for a team library, workers propose and one writer applies.
 
-Rust, at the pool: a semaphore permit is a guard, and `Drop` is the release. `thread::scope` is the standard-library way to borrow data across threads without `'static`. The blocked-tool check is a match on the name before the child runs. Depth is an integer you refuse to increment past 1.
-
-`cargo run --locked -p ch29-supervisor --bin ch29-supervisor` runs the scripted specialists. The exercise is `my-harness/tests/ch29.rs`: eight specialists share one pool, and a reflection note does not run the reviewer.
+`cargo run --locked -p ch29-supervisor --bin ch29-supervisor` prints `three steps | the draft`. `my-harness/tests/ch29.rs` checks that eight specialists share one pool and that a reflection note doesn't start the reviewer.
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -38,13 +36,13 @@ Rust, at the pool: a semaphore permit is a guard, and `Drop` is the release. `th
 
 `run_specialists` uses `thread::scope`. Each job acquires a permit, optionally sleeps, clones the context `Arc`, and returns its reply. Join order is spawn order.
 
-`child_call` denies a blocked tool at depth greater than or equal to 1. It denies any tool at depth greater than 1. `read_file` at depth 1 is `Ok`. `delegate_task` at depth 0 is `Ok`.
+`child_call` denies a blocked tool at depth greater than or equal to 1, and it denies any tool at depth greater than 1. `read_file` at depth 1 is `Ok`. `delegate_task` at depth 0 is `Ok`.
 
 `worktree(false)` is `None`. `worktree(true)` is `Some("opt-in")`.
 
-`enqueue_reflection` pushes a string onto a queue of 64. It does not call `acquire`. It does not call `spawn_reviewer`. After that call alone, `max_seen` stays 0.
+`enqueue_reflection` pushes a string onto a queue of 64, and it doesn't call `acquire`. It doesn't call `spawn_reviewer`, and after that call alone, `max_seen` stays 0.
 
-`demo` runs two specialists and returns `three steps | the draft`. No key.
+`demo` runs two specialists and returns `three steps | the draft`. It reads no key.
 
 ## 29.1 The bound is 8, and the Hermes default stays 10
 
@@ -57,7 +55,7 @@ use std::thread;
 use std::time::Duration;
 ```
 
-`VecDeque` is the reflection queue. `Arc` is the shared context, the same pointer kind as chapter 28. `Condvar` is the wait that blocks a ninth job. `Mutex` guards the counters. `thread` is `thread::scope`, `thread::sleep`, and the join. `Duration` is the optional hold a test uses to prove the jobs overlapped.
+`VecDeque` is the reflection queue, `Arc` is the shared context from chapter 28, and `Mutex` guards the counters. `Condvar` is the wait inside `acquire`, which section 29.2 walks once. `thread` covers `thread::scope`, `thread::sleep`, and the join, and `Duration` is the optional hold a test uses to show the jobs overlapped.
 
 The constants are the policy.
 
@@ -76,9 +74,9 @@ pub const BLOCKED_TOOLS: &[&str] = &[
 const QUEUE_CAP: usize = 64;
 ```
 
-`WORKER_BOUND` is 8. That is the permit count. `HERMES_MAX_CONCURRENT_CHILDREN` is 10, which is `_DEFAULT_MAX_CONCURRENT_CHILDREN`. The doc comment on the 10 names the config key `delegation.max_concurrent_children`. The pool does not read the 10. The test asserts the constant equals 10 and asserts the pool's limit is not that constant.
+`WORKER_BOUND` is the permit count, 8, as the opening said. `HERMES_MAX_CONCURRENT_CHILDREN` names Hermes's 10 so the test can assert the constant and assert that `pool.limit()` is a different number. The doc comment on the 10 names the config key `delegation.max_concurrent_children`. `acquire` reads `self.limit`.
 
-`MAX_DEPTH` is a `u8` of 1. Depth 0 is the parent. Depth 1 is the child. `BLOCKED_TOOLS` is the five names from `DELEGATE_BLOCKED_TOOLS`, in that order. `QUEUE_CAP` is private and is 64. It caps the reflection deque. It is not chapter 31's public `QUEUE_CAP` of 100. Two different queues, two different numbers.
+`MAX_DEPTH` is a `u8` of 1. Depth 0 is the parent. Depth 1 is the child. `BLOCKED_TOOLS` is the five names from `DELEGATE_BLOCKED_TOOLS`, in that order. `QUEUE_CAP` is private and is 64, and it caps the reflection deque. It isn't chapter 31's public `QUEUE_CAP` of 100, and two different queues, two different numbers.
 
 `TeamError` is the `Err` side of `child_call`.
 
@@ -91,7 +89,7 @@ pub enum TeamError {
 
 The string is the tool name that was refused. Tests match `TeamError::Blocked(name)` against the name they passed in.
 
-`Context` in this module is smaller than chapter 28's. The pipeline's `Context` had messages and notes. The supervisor's `Context` is the notes mutex alone. `pipeline.rs` is still in the crate, with its own `Context`. `supervisor::Context` is a different type.
+`Context` in this module is smaller than chapter 28's, and the pipeline's `Context` had messages and notes. The supervisor's `Context` is the notes mutex alone. `pipeline.rs` is still in the crate, with its own `Context`. `supervisor::Context` is a different type.
 
 ```rust
 pub struct Context {
@@ -109,7 +107,7 @@ pub struct Job {
 }
 ```
 
-`name` is a static string. `run_specialists` does not read `name`. The demo sets it to `outline` and `draft` so the job is labeled. The reply is what the thread returns. `hold` is `Some(duration)` when a test wants the thread to sleep inside the permit, and `None` when the bench wants no sleep.
+`name` is a static string. `run_specialists` doesn't read `name`, and the demo sets it to `outline` and `draft` so the job is labeled. The reply is what the thread returns. `hold` is `Some(duration)` when a test wants the thread to sleep inside the permit, and `None` when the bench wants no sleep.
 
 `State` is private. Callers use methods.
 
@@ -142,7 +140,7 @@ pub struct Permit<'a> {
 }
 ```
 
-The lifetime `'a` is the borrow of the `Pool`. A permit cannot outlive the pool reference it was acquired from. `acquire` returns `Permit<'_>`, which ties that lifetime to `&self`.
+The lifetime `'a` is the borrow of the `Pool`, and a permit can't outlive the pool reference it was acquired from. `acquire` returns `Permit<'_>`, which ties that lifetime to `&self`.
 
 `Pool::new` builds all of that.
 
@@ -163,7 +161,7 @@ pub fn new(limit: usize) -> Self {
 }
 ```
 
-`limit.max(1)` means a caller who passes 0 still gets a limit of 1. The tests pass `WORKER_BOUND`, so the stored limit is 8. `inflight` and `max_seen` start at 0. The deque is empty. `Condvar::new` is a fresh condvar with no waiters. `Arc::new` is one context for the life of the pool.
+`limit.max(1)` means a caller who passes 0 still gets a limit of 1, and the tests pass `WORKER_BOUND`, so the stored limit is 8. `inflight` and `max_seen` start at 0, and the deque is empty. `Condvar::new` is a fresh condvar with no waiters. `Arc::new` is one context for the life of the pool.
 
 The small readers lock or clone and return.
 
@@ -185,7 +183,7 @@ pub fn reflection_len(&self) -> usize {
 }
 ```
 
-`limit` reads the field. No lock, because the field is not behind the mutex and nothing writes it after `new`. `context` clones the `Arc`. That increments the strong count and returns another pointer to the same `Context`. `max_seen` and `reflection_len` lock, copy a `usize` out, and drop the guard at the end of the statement. A `usize` is `Copy`, so the caller does not hold the lock. `expect("state")` panics if that mutex is poisoned.
+`limit` reads the field. No lock, because the field isn't behind the mutex and nothing writes it after `new`. `context` clones the `Arc`, and that increments the strong count and returns another pointer to the same `Context`. `max_seen` and `reflection_len` lock, copy a `usize` out, and drop the guard at the end of the statement. A `usize` is `Copy`, so the caller doesn't hold the lock. `expect("state")` panics if that mutex is poisoned.
 
 ## 29.2 `acquire` waits, and `Drop` wakes one thread
 
@@ -203,11 +201,11 @@ pub fn acquire(&self) -> Permit<'_> {
 }
 ```
 
-`lock` takes the mutex. The `while` is the wait. If `inflight` is already at `limit`, this caller cannot increment yet. `Condvar::wait` takes the guard, unlocks the mutex, and blocks the thread. When it wakes, it locks again and returns the guard. The assignment `state = ...` is that new guard. The `while` checks the count again. A wake can be spurious, and another thread can take the slot between the wake and this check. The loop goes back to `wait` if the count is still at the limit.
+`lock` takes the mutex, and the `while` is the wait, and if `inflight` is already at `limit`, this caller can't increment yet. `Condvar::wait` takes the guard, unlocks the mutex, and blocks the thread, and when it wakes, it locks again and returns the guard. The assignment `state = ...` is that new guard, and the `while` checks the count again. A wake can be spurious, and another thread can take the slot between the wake and this check. The loop goes back to `wait` if the count is still at the limit.
 
-Once `inflight` is below the limit, the code adds one and sets `max_seen` to the greater of the old peak and the new `inflight`. Eight concurrent acquires on a limit of 8 leave `max_seen` at 8. A ninth acquire stays inside `wait` until a `Drop` runs. That ninth job does not push `max_seen` to 9.
+Once `inflight` is below the limit, the code adds one and sets `max_seen` to the greater of the old peak and the new `inflight`. Eight concurrent acquires on a limit of 8 leave `max_seen` at 8, and a ninth acquire stays inside `wait` until a `Drop` runs. That ninth job doesn't push `max_seen` to 9.
 
-`Permit { pool: self }` stores the borrow. The guard in `state` drops at the end of `acquire`, which unlocks the mutex before the caller does its work. The permit is the token. The lock is not held during the specialist's reply.
+`Permit { pool: self }` stores the borrow. The guard in `state` drops at the end of `acquire`, which unlocks the mutex before the caller does its work. The permit is the token, and the lock isn't held during the specialist's reply.
 
 > **Rust sidebar: `Condvar`**
 >
@@ -227,11 +225,11 @@ impl Drop for Permit<'_> {
 }
 ```
 
-`saturating_sub` subtracts one and stops at zero. A permit is only dropped after `acquire` incremented, so the count should be at least one. The saturating form is what the source writes. Then `notify_one` wakes a thread parked in `wait`, if any. The guard drops at the end of `drop`, so the woken thread can lock.
+`saturating_sub` subtracts one and stops at zero. A permit is only dropped after `acquire` incremented, so the count should be at least one. The saturating form is what the source writes, and then `notify_one` wakes a thread parked in `wait`, if any. The guard drops at the end of `drop`, so the woken thread can lock.
 
-The `'_` in `impl Drop for Permit<'_>` is the anonymous lifetime. `Drop` does not name it because the method only needs `&mut self`.
+The `'_` in `impl Drop for Permit<'_>` is the anonymous lifetime. `Drop` doesn't name it because the method only needs `&mut self`.
 
-This is the M6 bound in this crate. Hermes documents 10 concurrent children. This pool hands out 8 permits. The constant 10 remains in the file so the test can show the two numbers side by side.
+This is the M6 bound in this crate. Hermes documents 10 concurrent children, and this pool hands out 8 permits. The constant 10 remains in the file so the test can show the two numbers side by side.
 
 ## 29.3 `thread::scope` runs the jobs and joins them
 
@@ -267,13 +265,13 @@ pub fn run_specialists(pool: &Pool, jobs: &[Job]) -> Vec<String> {
 > - The closure borrows `pool` and `job`. `pool` is `&Pool`. `job` is `&Job` from the slice. Neither has to be `'static`. An ordinary `thread::spawn` would require the closure to own its data or use an `Arc`, because that thread might outlive the caller. Scoped threads do not outlive `thread::scope`.
 > - `join` returns `Result`. `Ok` is the closure's return value, here a `String`. `Err` means the thread panicked. `expect("specialist")` panics the caller with that message. The replies vec is spawn order, because the handles were collected in spawn order and joined in that same order. Finish order can differ. The vec does not.
 
-Inside the thread, `_permit` is the acquire. The underscore name means the binding exists so `Drop` runs at the end of the closure, not so later lines read the permit. `job.hold` is copied out of the `Option` because `Duration` is `Copy`. `thread::sleep` blocks that worker for the hold. The other workers keep their own permits. Eight sleeps of 40 ms overlap. Nine jobs on a limit of 8 cannot all sleep at once. The ninth waits in `acquire` until one `Drop` notifies.
+Inside the thread, `_permit` is the acquire. The underscore name means the binding exists so `Drop` runs at the end of the closure, not so later lines read the permit. `job.hold` is copied out of the `Option` because `Duration` is `Copy`, and `thread::sleep` blocks that worker for the hold while the other workers keep their own permits. Eight sleeps of 40 ms overlap. The ninth job is the case section 29.2 already described: it waits in `acquire` until one `Drop` notifies.
 
-`pool.context()` clones the `Arc` into `_shared`. The clone is the touch of the shared context. The reply does not read the notes. The `Arc` drops at the end of the closure, then the permit drops, in reverse order of the bindings: `_shared` first, then `_permit`. The context's strong count goes down before the slot is released. The pool's own `Arc` stays.
+`pool.context()` clones the `Arc` into `_shared`, and the clone is the touch of the shared context. The reply doesn't read the notes. The `Arc` drops at the end of the closure, then the permit drops, in reverse order of the bindings: `_shared` first, then `_permit`. The context's strong count goes down before the slot is released, and the pool's own `Arc` stays.
 
-`job.reply.clone()` is the thread's return value. The parent's vec is those strings.
+`job.reply.clone()` is the thread's return value, and the parent's vec is those strings.
 
-The overlap test is the full function in `tests/supervisor.rs`. The helper above it builds `n` jobs.
+The overlap test is the full function in `tests/supervisor.rs`, and the helper above it builds `n` jobs.
 
 ```rust
 fn jobs(n: usize, hold: Option<Duration>) -> Vec<Job> {
@@ -305,15 +303,15 @@ fn eight_specialists_share_the_bound_and_the_context() {
 }
 ```
 
-`jobs` uses the range `0..n`. Each reply is `reply {i}`. The same `hold` is stored in every job, which is legal because `Option<Duration>` is `Copy` when `Duration` is `Copy`. `pool.context()` before the run and `pool.context()` after the run are two `Arc::clone` calls. `ptr_eq` asks whether the pool still holds the allocation it was born with. `run_specialists` only clones that `Arc` inside the worker and drops the clone. It does not replace `Pool.context`.
+`jobs` uses the range `0..n`, and each reply is `reply {i}`. The same `hold` is stored in every job, which is legal because `Option<Duration>` is `Copy` when `Duration` is `Copy`. `pool.context()` before the run and `pool.context()` after the run are two `Arc::clone` calls. `ptr_eq` asks whether the pool still holds the allocation it was born with. `run_specialists` only clones that `Arc` inside the worker and drops the clone, and it doesn't replace `Pool.context`.
 
-`Instant::now` and `elapsed` wrap the call. The clock includes thread start, the eight sleeps, and the join. It is not a Criterion mean. The Criterion mean for eight jobs with `hold: None` is `149.22 µs`, from `schedule_eight`. This test's job is the overlap assert, the peak of 8, and the side-by-side of 8 and 10.
+`Instant::now` and `elapsed` wrap the call, and the clock includes thread start, the eight sleeps, and the join. It isn't a Criterion mean, and the Criterion mean for eight jobs with `hold: None` is `149.22 µs`, from `schedule_eight`. This test's job is the overlap assert, the peak of 8, and the side-by-side of 8 and 10.
 
-The assertion is `elapsed < hold * 7`. Seven holds of 40 ms is 280 ms. Eight serial sleeps would be `hold * 8`, which is 320 ms. The comment in the test says macOS CI measured about 186 ms, still under seven holds and above a fully parallel 40 ms. The `assert!` is the upper bound. The comment is the comment. `replies.len()` is 8. `pool.max_seen()` is 8. `Arc::ptr_eq` on a context cloned before the run and `pool.context()` after the run is true. `HERMES_MAX_CONCURRENT_CHILDREN` equals 10. `pool.limit()` is not 10.
+The assertion is `elapsed < hold * 7`. Seven holds of 40 ms is 280 ms, and eight serial sleeps would be 320 ms, so the assert fails if the jobs ran one after another. The comment above it's the measurement the opening quoted: macOS CI at about 186 ms. `replies.len()` is 8, `pool.max_seen()` is 8, and `Arc::ptr_eq` on a context cloned before the run and `pool.context()` after the run is true. The same test locks the 8-versus-10 split: `HERMES_MAX_CONCURRENT_CHILDREN` equals 10, and `pool.limit()` is the other number.
 
-The ninth-job test uses `WORKER_BOUND + 1` jobs and a hold of 20 ms. `replies.len()` is 9. `pool.max_seen()` is 8. All nine strings come back. The peak stays at the limit.
+The ninth-job test uses `WORKER_BOUND + 1` jobs and a hold of 20 ms, and all nine strings come back, and `pool.max_seen()` stays at the limit.
 
-The bench `schedule_eight` uses the same eight jobs with `hold: None`. No sleep. The mean is `149.22 µs`.
+The bench `schedule_eight` uses the same eight jobs with `hold: None`, and no sleep, and the mean is `149.22 µs`.
 
 ## 29.4 `child_call` is a `Result`
 
@@ -340,13 +338,13 @@ pub fn child_call(tool: &str, depth: u8) -> Result<(), TeamError> {
 
 `MAX_DEPTH` is 1. Walk the three cases the test uses.
 
-Depth 1 and a name in `BLOCKED_TOOLS`: `depth >= 1` is true, `contains` is true, the function returns `Blocked` with that name. That is every entry: `delegate_task`, `clarify`, `memory`, `send_message`, `cronjob_manage`. This is M5. A child does not delegate, clarify, write memory, send a message, or manage a cron job.
+Depth 1 and a name in `BLOCKED_TOOLS`: `depth >= 1` is true, `contains` is true, the function returns `Blocked` with that name. That is every entry: `delegate_task`, `clarify`, `memory`, `send_message`, `cronjob_manage`, and this is M5. A child doesn't delegate, clarify, write memory, send a message, or manage a cron job.
 
-Depth 1 and `read_file`: `read_file` is not in the slice, so the first `if` is false. `1 > 1` is false, so the second `if` is false. The result is `Ok(())`. A child may call a tool that is not on the list, at depth 1.
+Depth 1 and `read_file`: `read_file` isn't in the slice, so the first `if` is false. `1 > 1` is false, so the second `if` is false, and the result is `Ok(())`. A child may call a tool that isn't on the list, at depth 1.
 
-Depth 0 and `delegate_task`: `0 >= 1` is false, so the blocked list is not consulted. `0 > 1` is false. The result is `Ok(())`. The parent is allowed to call `delegate_task`. The same name at depth 1 is `Blocked`. The depth argument is the difference.
+Depth 0 and `delegate_task`: `0 >= 1` is false, so the blocked list isn't consulted. `0 > 1` is false, and the result is `Ok(())`. The parent is allowed to call `delegate_task`, and the same name at depth 1 is `Blocked`. The depth argument is the difference.
 
-Depth 2 and `read_file`: the first `if` is false because `read_file` is not blocked. The second `if` is true because `2 > 1`. The result is `Blocked("read_file")`. Any tool at depth greater than 1 is denied, including a tool the child at depth 1 could call. The test writes `MAX_DEPTH + 1`, which is 2.
+Depth 2 and `read_file`: the first `if` is false because `read_file` isn't blocked, and the second `if` is true because `2 > 1`. The result is `Blocked("read_file")`. Any tool at depth greater than 1 is denied, including a tool the child at depth 1 could call. The test writes `MAX_DEPTH + 1`, which is 2.
 
 `BLOCKED_TOOLS.contains(&tool)` passes `&&str` because `tool` is already `&str` and `contains` wants a reference to the slice's item. The slice items are `&str`.
 
@@ -368,9 +366,9 @@ pub fn worktree(opt_in: bool) -> Option<&'static str> {
 }
 ```
 
-`_get_worktree_isolation` defaults to false. `worktree(false)` returns `None`. `worktree(true)` returns `Some("opt-in")`, a static string. The function does not call git. `tools/subagent_worktree.py` exists on the Hermes side. This harness returns the marker and stops. A real git worktree is deferred.
+`_get_worktree_isolation` defaults to false. `worktree(false)` returns `None`. `worktree(true)` returns `Some("opt-in")`, a static string, and the function doesn't call git. `tools/subagent_worktree.py` exists on the Hermes side, and this harness returns the marker and stops, and a real git worktree is deferred.
 
-The guardrails doc lists D6 as subagent worktree isolation, opt-in through `delegation.worktree_isolation`. The flag in this crate is the `bool`. The isolation the doc describes is not built here.
+The guardrails doc lists D6 as subagent worktree isolation, opt-in through `delegation.worktree_isolation`, and the flag in this crate is the `bool`. The isolation the doc describes isn't built here.
 
 `enqueue_reflection` is the team-run note.
 
@@ -384,11 +382,11 @@ pub fn enqueue_reflection(&self, note: &str) {
 }
 ```
 
-The lock is the same mutex as `inflight`. The function does not read `inflight` and does not write `max_seen`. If the deque length is already 64, `pop_front` removes the oldest string. `push_back` appends the new owned string. A call on an empty deque makes the length 1. The 65th call drops the oldest and the length stays 64.
+The lock is the same mutex as `inflight`, and the function doesn't read `inflight` and doesn't write `max_seen`. If the deque length is already 64, `pop_front` removes the oldest string. `push_back` appends the new owned string, and a call on an empty deque makes the length 1. The 65th call drops the oldest and the length stays 64.
 
-`VecDeque` is a double-ended queue. `pop_front` takes from the head. `push_back` adds at the tail. The kept notes are the newest 64.
+`VecDeque` is a double-ended queue. `pop_front` takes from the head. `push_back` adds at the tail, and the kept notes are the newest 64.
 
-The test `the_worktree_is_off_unless_asked_and_reflection_is_a_queue` calls `enqueue_reflection("team run finished")` on a fresh pool and expects `reflection_len()` of 1 and `max_seen()` of 0. No specialist ran, so the peak stays at the initial zero. That is the sentence this chapter has to keep: the reflection push does not look like a worker.
+The test `the_worktree_is_off_unless_asked_and_reflection_is_a_queue` calls `enqueue_reflection("team run finished")` on a fresh pool and expects `reflection_len()` of 1 and `max_seen()` of 0. No specialist ran, so the peak stays at the initial zero. That is the sentence this chapter has to keep: the reflection push doesn't look like a worker.
 
 Chapter 26's reviewer is still in this crate, in `reflection.rs`, copied forward. `spawn_reviewer` is the function a review fork uses.
 
@@ -409,9 +407,9 @@ pub fn spawn_reviewer(review_memory: bool) -> Fork {
 }
 ```
 
-`MEMORY_TOOLS` is `memory`, `skill_view`, `skill_manage`, `read_file`, `search_files`. `SKILL_TOOLS` is that list without `memory`. `Loop::finalize` calls `spawn_reviewer` when a nudge is due. `enqueue_reflection` does not call `finalize` and does not call `spawn_reviewer`. I read the body. The statements are the lock, the optional `pop_front`, and the `push_back`. The milestone `chapter_29_reflection_starts_reviewer` is false for that reason. A string on the deque is not a `Fork`.
+`MEMORY_TOOLS` is `memory`, `skill_view`, `skill_manage`, `read_file`, `search_files`. `SKILL_TOOLS` is that list without `memory`. `Loop::finalize` calls `spawn_reviewer` when a nudge is due. `enqueue_reflection` doesn't call `finalize` and doesn't call `spawn_reviewer`. The body is the lock, the optional `pop_front`, and the `push_back`. The milestone `chapter_29_reflection_starts_reviewer` is false for that reason, and a string on the deque isn't a `Fork`.
 
-The bench `enqueue_reflection` times that push of `"team run finished"`. The mean is `18.4 ns`. A long Criterion sample will hit the cap of 64 and start dropping the front. The timed function is still the one above. No reviewer is constructed inside it.
+The bench `enqueue_reflection` times that push of `"team run finished"`, and the mean is `18.4 ns`. A long Criterion sample will hit the cap of 64 and start dropping the front. The timed function is still the one above, and no reviewer is constructed inside it.
 
 `demo` joins two replies and then enqueues.
 
@@ -436,7 +434,7 @@ pub fn demo() -> String {
 }
 ```
 
-`Pool::new(8)` is the bound. Two jobs, no hold. `run_specialists` returns the replies in spawn order, so index 0 is `three steps` and index 1 is `the draft`. The format string puts ` | ` between them. The reflection string is pushed and is not part of the return value. The test expects `three steps | the draft`.
+`Pool::new(8)` is the bound, and two jobs, no hold. `run_specialists` returns the replies in spawn order, so index 0 is `three steps` and index 1 is `the draft`. The format string puts ` | ` between them, and the reflection string is pushed and isn't part of the return value. The test expects `three steps | the draft`.
 
 The binary is `src/bin/chapter_demo.rs`.
 
@@ -483,23 +481,23 @@ criterion_group!(benches, schedule_eight, enqueue_reflection);
 criterion_main!(benches);
 ```
 
-`schedule_eight` builds the pool and the eight jobs before `b.iter`. Replies are `reply 0` through `reply 7`. `hold` is `None`. The timed closure starts eight scoped threads, takes eight permits, clones the context `Arc`, and joins. `black_box` wraps the pool, the jobs, and the replies. No model is called. The 40 ms sleep from the overlap test is not in this sample.
+`schedule_eight` builds the pool and the eight jobs before `b.iter`. Replies are `reply 0` through `reply 7`. `hold` is `None`. The timed closure starts eight scoped threads, takes eight permits, clones the context `Arc`, and joins. `black_box` wraps the pool, the jobs, and the replies, and no model is called, and the 40 ms sleep from the overlap test isn't in this sample.
 
-`enqueue_reflection` builds a pool and times the push. No `run_specialists`. No `spawn_reviewer`.
+`enqueue_reflection` builds a pool and times the push, and no `run_specialists`, and no `spawn_reviewer`.
 
-`Cargo.toml` names the bench `supervisor` with `harness = false`. The workflow section is `29`, label `chapter 29 supervisor`, package `ch29-supervisor`.
+`Cargo.toml` names the bench `supervisor` with `harness = false`, and the workflow section is `29`, label `chapter 29 supervisor`, package `ch29-supervisor`.
 
 ## Tests
 
 Five tests in `tests/supervisor.rs`.
 
-Eight jobs that each sleep 40 ms share one context pointer. `max_seen` is 8. Elapsed stays under `hold * 7`. The Hermes constant is 10 and `pool.limit()` is not 10.
+Eight jobs that each sleep 40 ms share one context pointer. `max_seen` is 8. Elapsed stays under `hold * 7`, and the Hermes constant is 10 and `pool.limit()` isn't 10.
 
 Nine jobs with a 20 ms hold still peak at `max_seen` 8, and nine replies come back.
 
 Each blocked name at depth 1 is `TeamError::Blocked`. `read_file` at depth 1 is `Ok`. `delegate_task` at depth 0 is `Ok`. `read_file` at depth 2 is `Blocked`.
 
-`worktree(false)` is `None`. `worktree(true)` is `Some("opt-in")`. One `enqueue_reflection` leaves `reflection_len` at 1 and `max_seen` at 0.
+`worktree(false)` is `None`. `worktree(true)` is `Some("opt-in")`, and one `enqueue_reflection` leaves `reflection_len` at 1 and `max_seen` at 0.
 
 `demo` equals `three steps | the draft`.
 
@@ -524,53 +522,53 @@ cargo run --locked -p ch29-supervisor --bin ch29-supervisor
 three steps | the draft
 ```
 
-The binary runs two scripted specialists and enqueues a reflection note that is not in the printed line. No key.
+The binary runs two scripted specialists and enqueues a reflection note that isn't in the printed line. No key.
 
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
 | `schedule_eight` | 149.22 µs | eight specialists, one context | `run_specialists` on eight jobs that do not sleep |
 | `enqueue_reflection` | 18.4 ns | the note, without a reviewer | `push_back` of one string |
 
-`schedule_eight` excludes pool setup and job setup. The timed work is the scope, the permits, the context clone, and the join.
+`schedule_eight` excludes pool setup and job setup, and the timed work is the scope, the permits, the context clone, and the join.
 
-`enqueue_reflection` excludes `Pool::new`. The timed work is the lock and the push. `max_seen` stays 0 across that call. The queue cap inside the function is 64.
+`enqueue_reflection` excludes `Pool::new`, and the timed work is the lock and the push. `max_seen` stays 0 across that call, and the queue cap inside the function is 64.
 
 The two replies are `three steps` and `the draft`.
 
-The means are `mean.point_estimate` from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `29`. Bench ids: `29/schedule_eight`, `29/enqueue_reflection`, `27/schedule_eight`, `27/enqueue_reflection`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
+The means are `mean.point_estimate` from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `29`. Bench ids: `29/schedule_eight`, `29/enqueue_reflection`, `27/schedule_eight`, `27/enqueue_reflection`, and how to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
-`WORKER_BOUND` is 8. `_DEFAULT_MAX_CONCURRENT_CHILDREN` is 10. Passing 10 to `Pool::new` would be the Hermes default. This chapter's tests construct the pool with `WORKER_BOUND` and assert the limit is not 10. The constant `HERMES_MAX_CONCURRENT_CHILDREN` is documentation in the type system. `acquire` reads `self.limit`.
+Passing 10 to `Pool::new` would store Hermes's default, and this chapter's tests construct the pool with `WORKER_BOUND` instead. `acquire` reads `self.limit`, which is the number `new` stored.
 
-`delegate_task` at depth 0 is `Ok`. The same string at depth 1 is `Blocked`. A caller who forgets the depth argument is not this function. The function takes the depth. The parent path and the child path are the two numbers.
+`delegate_task` at depth 0 is `Ok`, and the same string at depth 1 is `Blocked`. A caller who forgets the depth argument isn't this function, and the function takes the depth. The parent path and the child path are the two numbers.
 
-`worktree(true)` returns the static string `opt-in`. Two opted-in callers still share the process and the pool's `Arc`. The marker is the decision. The git worktree is not created.
+`worktree(true)` returns the static string `opt-in`, and two opted-in callers still share the process and the pool's `Arc`. The marker is the decision, and the git worktree isn't created.
 
-`schedule_eight` includes thread start and join. It is not the overlap test. The overlap test is the 40 ms hold and the assert against `hold * 7`. The bench sets `hold` to `None`.
+`schedule_eight` includes thread start and join, and it isn't the overlap test. The overlap test is the 40 ms hold and the assert against `hold * 7`. The bench sets `hold` to `None`.
 
 ## Guardrails in this chapter
 
-The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). This chapter closes M5 and M6.
+The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md), and this chapter closes M5 and M6.
 
-**M5.** `BLOCKED_TOOLS` is `delegate_task`, `clarify`, `memory`, `send_message`, `cronjob_manage`. That is `DELEGATE_BLOCKED_TOOLS` in `tools/delegate_tool_toolsets.py`. `child_call` returns `TeamError::Blocked` for those names when `depth >= MAX_DEPTH`.
+**M5.** `BLOCKED_TOOLS` is `delegate_task`, `clarify`, `memory`, `send_message`, `cronjob_manage`, and that is `DELEGATE_BLOCKED_TOOLS` in `tools/delegate_tool_toolsets.py`. `child_call` returns `TeamError::Blocked` for those names when `depth >= MAX_DEPTH`.
 
 **M6.** `MAX_DEPTH` is 1. Depth greater than 1 is `Blocked` for every tool, including `read_file`. The concurrency cap in Hermes is `_DEFAULT_MAX_CONCURRENT_CHILDREN` of 10, and the config key is `delegation.max_concurrent_children`. This pool's `limit` is `WORKER_BOUND`, 8. `acquire` waits on the condvar at that limit. `max_seen` records the peak.
 
-**D6.** The guardrails doc names subagent worktree isolation as opt-in. `_get_worktree_isolation` defaults to false. `worktree(false)` is `None`. `worktree(true)` is the marker `opt-in`. `tools/subagent_worktree.py` is the Hermes module. This function does not create a git worktree.
+**D6.** The guardrails doc names subagent worktree isolation as opt-in. `_get_worktree_isolation` defaults to false. `worktree(false)` is `None`. `worktree(true)` is the marker `opt-in`. `tools/subagent_worktree.py` is the Hermes module, and this function doesn't create a git worktree.
 
-**Reflection.** `enqueue_reflection` pushes a string. `chapter_29_reflection_starts_reviewer` stays false. The mean of that push is `18.4 ns`.
+**Reflection.** `enqueue_reflection` pushes a string. `chapter_29_reflection_starts_reviewer` stays false, and the mean of that push is `18.4 ns`.
 
-**Left for later.** Heartbeats are chapter 36. Chapter 31 is the queue of 100 and the gather in `task_index` order. Chapter 32's critic takes one permit from this pool. A real git worktree stays out.
+**Left for later.** Heartbeats are chapter 36. Chapter 31 is the queue of 100 and the gather in `task_index` order. Chapter 32's critic takes one permit from this pool, and a real git worktree stays out.
 
 ## Chapter summary
 
-- **Bound.** Eight permits. A ninth waits in `acquire`. Hermes's default concurrent children is 10. `max_seen` peaks at 8.
+- **Bound.** Eight permits, and a ninth waits in `acquire`, so `max_seen` peaks at 8, and the Hermes 10 is the named constant the pool doesn't read.
 - **Context.** One `Arc` inside the pool. Specialists clone the pointer with `context()`.
-- **Child.** The five blocked tools at depth 1. Any tool at depth greater than 1. The parent at depth 0 may call `delegate_task`.
-- **Worktree.** `None` unless opt-in. The opt-in value is `opt-in`. No git worktree is created.
-- **Reflection.** A `push_back` on a deque of 64. `max_seen` stays 0. `spawn_reviewer` is not called.
-- **Time.** `schedule_eight` mean `149.22 µs`. `enqueue_reflection` mean `18.4 ns`. Both are `mean.point_estimate`.
+- **Child.** The five blocked tools at depth 1, and any tool at depth greater than 1. The parent at depth 0 may call `delegate_task`.
+- **Worktree.** `None` unless opt-in, and the opt-in value is `opt-in`, and no git worktree is created.
+- **Reflection.** A `push_back` on a deque of 64. `max_seen` stays 0. `spawn_reviewer` isn't called.
+- **Time.** `schedule_eight` mean `149.22 µs`. `enqueue_reflection` mean `18.4 ns`, and both are `mean.point_estimate`.
 
 ## What you implement
 
@@ -598,8 +596,8 @@ pub fn chapter_29_reflection_starts_reviewer() -> bool {
 }
 ```
 
-`todo!("chapter 29")` is the panic. The test wants the limit equal to 8, and it wants `chapter_29_reflection_starts_reviewer()` to be false. 
+`todo!("chapter 29")` is the panic. The test wants the limit equal to 8, and it wants `chapter_29_reflection_starts_reviewer()` to be false.
 
 ## What's next
 
-Chapter 30 moves ownership to the next agent. The transcript is filtered first. Role `scratch` is dropped. `MAX_HANDOFFS` is 4, and that cap is this harness. Platform re-bind stays in chapter 39.
+Ownership can move next. The transcript is filtered first, role `scratch` is dropped, and `MAX_HANDOFFS` is 4, a cap that belongs to this harness. Platform re-bind stays in chapter 39.
