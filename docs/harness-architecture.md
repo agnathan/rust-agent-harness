@@ -40,7 +40,7 @@ ch09-10-evals
   → ch53-the-loop-closes
 ```
 
-Chapter 33 copies chapter 32. Chapter 38 copies chapter 36. Chapter 40 copies chapter 39. Chapter 43 copies chapter 41. Chapter 45 copies chapter 44. Chapter 46 copies 45, and so on through chapter 50. Chapter 52 copies chapter 50. Chapter 51 is the server copy of chapter 42.
+Chapter 33 copies chapter 32. Chapter 38 copies chapter 36. Chapter 40 copies chapter 39. Chapter 43 copies chapter 41. Chapter 45 copies chapter 44. Chapter 46 copies 45, and so on through chapter 50. Chapter 52 copies chapter 50. Chapter 53 copies chapter 52. Chapter 51 is the server copy of chapter 42.
 
 Chapter 16 copies chapter 14, not chapter 15. Chapter 17 copies chapter 16. Chapter 18 copies chapter 17. Team chapters copy the previous harness chapter. Chapter 24 copies chapter 22. Chapter 28 copies chapter 27, and so on. Do not restart from a standalone demo.
 
@@ -159,7 +159,7 @@ Chapters 1–4 run about 3,500–7,000 words. Every chapter from 10 through 53 m
 
 The word-count band is the result of walking the code. A paragraph that does not teach a type, a branch, or a design reason does not belong. Do not repeat the summary to inflate the count.
 
-## Per-chapter plan, 11–52
+## Per-chapter plan, 11–53
 
 "Milestone" is the file `my-harness/tests/chNN.rs`. The stub panics with `todo!("chapter NN")` until the reader fills it in. The my-harness workflow records the failure and exits 0 unless someone dispatches it with "fail the workflow" set. The tests must compile: `cargo clippy --workspace --all-targets` builds them.
 
@@ -343,7 +343,7 @@ The harness modules are `browser` (`PageBackend`, `FakeBrowser`) and `vision` (`
 
 ## What batch 4 changed that later batches must not undo
 
-- Chapters 45–50 and 52 are copies of the previous harness. Chapter 45 copies chapter 44. Chapter 52 copies chapter 50. Do not replace them with standalone crates. The new modules are `blackboard`, `kanban`, `bus`, `team_skills`, `a2a`, `spans`, and `suite`. `lib.rs` does not glob-reexport them.
+- Chapters 45–50, 52, and 53 are copies of the previous harness. Chapter 45 copies chapter 44. Chapter 52 copies chapter 50. Chapter 53 copies chapter 52. Do not replace them with standalone crates. The new modules are `blackboard`, `kanban`, `bus`, `team_skills`, `a2a`, `spans`, `suite`, and `improve`. `lib.rs` does not glob-reexport them.
 - Chapter 51 copies chapter 42. Lib name `gwservice`, module `capstone`. It is not in the harness copy chain. `mcp-gateway` re-exports `gwservice::LearnedGateway` as `Gateway` and `gw_session` from chapter 8. No socket.
 - `bus::deliver` and `a2a::call` call `crate::redact::redact_for_egress`. There is no second scrubber in those files.
 - `team_skills::allow_install` calls chapter 25 `scan_text` and `should_allow_install`. The local `rm -rf /` check stays, because that scanner does not name the command. Community plus `force` does not override a dangerous body.

@@ -2,7 +2,7 @@
 
 The workers can already talk. A skill they want to keep is a different kind of message.
 
-On the bus from chapter 47, a peer can publish without knowing the subscriber. A skill proposal is a different path: `skill_propose` pushes a `Proposal` onto a `VecDeque` capped at 64, and it doesn't call `publish`. The librarian, the function `librarian_accept`, is the only writer. Workers don't patch the team store.
+On the bus from chapter 47, a peer can publish without knowing the subscriber. A skill proposal is a different path: `skill_propose` pushes a `Proposal` onto a `VecDeque` capped at 64, and it doesn't call `publish`. The librarian, the function `librarian_accept`, is the only writer. Workers don't patch the team store. This queue is the team half of a continuously improving harness. A skill becomes shared only when one librarian accepts the proposal, and the workers still leave the index alone.
 
 The crate is `steps/ch48-team-skills`, a copy of chapter 47 plus `team_skills`, and the package is `ch48-team-skills`. A `Library` holds an `Arc` index that `swap_index` replaces, and the rendered rows are bundled or team. Workers return from `skill_propose` without waiting. The librarian calls chapter 25's scanner, and community plus `force` doesn't install a dangerous body.
 

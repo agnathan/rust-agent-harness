@@ -6,7 +6,7 @@ Chapter 3's registry holds a few dozen tools and shows the model every schema th
 
 This chapter is the client half of that catalog. It keeps the chapter 3 shape, a name, a description, a JSON Schema, and it leaves the MCP connection to chapter 4. Chapter 5 is the separate server that will hold the list. The benches still need a catalog of 1,000 and 10,000 tools, so a deterministic generator fills it. The five copies are `steps/ch06-1-schema-cost`, `ch06-2-tool-index`, `ch06-3-search-tool`, `ch06-4-routing`, and `ch06-5-lazy-list`. Section numbers stay 6.1 through 6.5 so they match those crates. The table is the map of the five sections.
 
-`SyntheticSource::list` is the stand-in the benches call. The chapter 3 dispatcher stays. What the harness has to own, even after chapter 7 moves the index into the gateway, is which names may enter the prompt and in which order, because a search that rewrites the front of the prompt pays the cache again on every turn. Revealing append-only, and evicting at a checkpoint, is how the prefix chapter 2 locked stays valid while the catalog grows. Learned prediction of which tools a task tends to use is chapter 23, on the server, and it changes the offered set rather than the middle of a request.
+`SyntheticSource::list` is the stand-in the benches call. The chapter 3 dispatcher stays. What the harness has to own, even after chapter 7 moves the index into the gateway, is which names may enter the prompt and in which order, because a search that rewrites the front of the prompt pays the cache again on every turn. Revealing append-only, and evicting at a checkpoint, is how the prefix chapter 2 locked stays valid while the catalog grows. Learned prediction of which tools a task tends to use is chapter 23, on the server, and it changes the offered set rather than the middle of a request. A continuously improving harness still has to find the one tool a kept procedure names, and ten thousand schemas would bury that name. The offered set stays small so the chapter 2 prefix can stay put.
 
 An inverted index is a map from a token to the tools that contain it. A trait hides the embedder so the tests can use a hash. Append-only is a `Vec` you only push to, and the cache is an ordinary struct you replace.
 
@@ -23,6 +23,10 @@ The runnable demo is offline. `cargo run -p ch06-5-harness-cli -- --mock ask "re
 > **How Hermes does it**
 >
 > Hermes keeps the full registry in `tools/registry.py` and then decides what the model is allowed to see. A toolset plus a `check_fn` drops tools that are not available. Descriptions are rewritten so they only mention tools that passed that check. This chapter's index takes the same gate: `build_available` never inserts a card whose check returns false. Section 6.4's `rewrite_description` drops a sentence that names `tool:` plus a name outside the available set. The model is not told about a tool it cannot call, and it is not told to go look at one either.
+
+## What this chapter decides
+
+Ten thousand tools tie on a keyword search until the server name routes first. The model sees a schema only for a tool that passed the available-set check. `search_tools` reveals names on a later turn, and the reveal appends so the cached prefix survives. Each agent holds its own list cache, and one notification drops that cache. The benches fill the catalog with a generator, which is a stand-in for a live `tools/list`. A kept procedure can name a tool while the prompt carries only the cards this turn revealed. That limit is the room a continuously improving harness needs beside a large catalog. Prediction of which names to offer waits on the server, in chapter 23.
 
 ## 6.1 Why many tools hurt
 
@@ -424,6 +428,4 @@ Hermes F3 (`agent/prompt_builder.py`, `CONTEXT_FILE_MAX_CHARS`, 20,000 character
 
 ## What's next
 
-Chapter 4 is the MCP client. A session there lists tools and hears `list_changed`. `cards_from_listed` is how that list becomes the cards this chapter already caches. The generator stays for the benches.
-
-This chapter is the client half of the catalog. It decides what enters the prompt: the task, the budget, the cache, and which servers an agent may see. Chapter 5 is the process that holds a fixed list and a 32/8 call gate. It still binds no socket. Chapter 7 is the server-side catalog and search, on that process. Chapter 9 is the agent loop: the model chooses a tool, the dispatcher runs it, and the result comes back as a message. `search_tools` is one of those choices. The loop is also where a cancellation token and a budget show up, and where the saved eval set starts.
+Chapter 7 puts this index on the server. A reload builds a new snapshot and swaps the `Arc`, and a call that already cloned the old one finishes on it. The process underneath is chapter 5: a fixed list, `echo`, and a 32/8 gate, still with no socket. The client from chapter 4 is how a session hears `list_changed`, and `cards_from_listed` is how that list becomes the cards this chapter caches. Chapter 9 is the agent loop, back on the harness, where `search_tools` is one choice the model can make. The loop is also where a cancellation token and a budget show up, and where the saved eval set starts.

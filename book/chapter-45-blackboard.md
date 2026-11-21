@@ -27,8 +27,7 @@ Running `cargo run -p ch45-blackboard --bin ch45-blackboard` runs the demo. The 
 > I looked for a blackboard type. Hermes does not ship one. On Hermes `main` at `9e01b44` the thin scheduler is the kanban dispatcher tick. `hermes_cli/kanban_db_dispatch.py` defines `dispatch_once`. The body takes a non-blocking dispatch lock, runs the tick, and then fires the observer. The comment at line 2029 is the rule I copied the shape of:
 >
 > 
-
-```python
+> ```python
 >     with _kbc._dispatch_tick_lock(db_path) as held:
 >         if not held:
 >             result = DispatchResult(skipped_locked=True)
@@ -46,8 +45,7 @@ Running `cargo run -p ch45-blackboard --bin ch45-blackboard` runs the demo. The 
 > Line 2348 repeats that the dispatch lock has been released before the observer. The comment sits above `def _dispatch_once_locked`, and the words are:
 >
 > 
-
-```python
+> ```python
 > # The dispatch lock has been released here. Fire the tick observer strictly OUTSIDE the single-writer
 > # critical section (#56066 sweeper finding / #64231 disposition): a slow subscriber must never extend the
 > # lock hold and stall a sibling dispatcher's tick.
@@ -59,8 +57,7 @@ Running `cargo run -p ch45-blackboard --bin ch45-blackboard` runs the demo. The 
 > Pause is `agent/estop.py`. `is_engaged` at line 52 is true when any candidate sentinel exists, and it fails safe:
 >
 > 
-
-```python
+> ```python
 > def is_engaged() -> bool:
 >     """True if ANY candidate sentinel exists; fail SAFE (True) on stat errors."""
 >     saw_stat_error = False
@@ -77,8 +74,7 @@ Running `cargo run -p ch45-blackboard --bin ch45-blackboard` runs the demo. The 
 > `check_paused` at line 122 returns true when engaged. It logs once per component per engagement, then returns true. When the sentinel is gone it returns false and drops that component from the logged set:
 >
 > 
-
-```python
+> ```python
 > def check_paused(component: str, logger: logging.Logger) -> bool:
 >     """Return True when engaged, logging once per engagement per component (re-armed after a resume)."""
 >     if not is_engaged():
@@ -104,8 +100,7 @@ Running `cargo run -p ch45-blackboard --bin ch45-blackboard` runs the demo. The 
 > The injection phrases come from `tools/threat_patterns.py`. The module comment at line 8 says filler between tokens is the bounded `_FILLER`. Line 19 defines that filler as `(?:\w+\s+){0,8}`. Line 27 is the pattern:
 >
 > 
-
-```python
+> ```python
 > (rf'ignore\s+{_FILLER}(previous|all|above|prior)\s+{_FILLER}instructions', "prompt_injection", "all"),
 > ```
 

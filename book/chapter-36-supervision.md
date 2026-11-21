@@ -23,8 +23,7 @@ The step is a copy of chapter 35 plus `supervision`, at `steps/ch36-supervision`
 > The heartbeat constants sit together in `tools/delegate_tool.py`:
 >
 > 
-
-```text
+> ```text
 > 105  DEFAULT_MAX_ITERATIONS = 250
 > 106  _HEARTBEAT_INTERVAL = 30  # seconds between parent activity heartbeats during delegation
 > 107  # Stale-heartbeat thresholds (cycles of _HEARTBEAT_INTERVAL with no progress). Progress = iteration, current_tool OR
@@ -39,8 +38,7 @@ The step is a copy of chapter 35 plus `supervision`, at `steps/ch36-supervision`
 > `_start_heartbeat` is defined in `tools/delegate_tool_child_run.py` and imported back into `delegate_tool.py` (the import is at lines 27–29). `_run_single_child` calls it at line 363. The comment above that call says the heartbeat keeps the parent's activity timestamp moving, and once the child looks stale it also ends the wait. `_Heartbeat.tick` is where the cycle count is chosen:
 >
 > 
-
-```text
+> ```text
 > 321  last_seen["stale"] += 1
 > 322  stale_cycles = _HEARTBEAT_STALE_CYCLES_IN_TOOL if child_tool else _HEARTBEAT_STALE_CYCLES_IDLE
 > 323  if last_seen["stale"] >= stale_cycles:
