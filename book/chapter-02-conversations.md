@@ -14,6 +14,7 @@ Rust, for a new reader: ownership is why the conversation is a value the session
 
 **In this chapter**
 
+- What this chapter decides
 - What Hermes taught me about conversations
 - The Conversation type
 - A mock that can hold a conversation
@@ -32,6 +33,10 @@ Rust, for a new reader: ownership is why the conversation is a value the session
 > Hermes writes the message-list rules down in `agent/AGENTS.md` ("Message-flow invariants"). Roles alternate (`agent/message_sanitization.py`). The system prompt is built once per session (`agent/system_prompt.py::build_system_prompt`) and stays byte-stable so a provider can cache that prefix. The only sanctioned rewrite of history is compression (`agent/context_compressor.py`). This chapter's `Conversation` is that list: private fields, a single `push` that refuses a bad alternation, and a system prompt the history cannot touch. Hermes stores the list in SQLite (`hermes_state.py`). I store JSON. The slash commands in Hermes live in one registry (`hermes_cli/commands.py`); mine are a small enum.
 >
 > Hermes also has one place a new turn arrives, rather than each client calling the model itself. This chapter's `SessionInbox` is that place. `harness chat` and `harness ask` submit a line, the session pops it, then the provider runs. Later chapters keep the cap of 64. The gateway and the editor each hold a queue of their own, cron chains onto the actor mailbox, and none of them call `SessionInbox::submit`.
+
+## What this chapter decides
+
+The program keeps one list and sends it again, and the system prompt is a prefix the history cannot rewrite. `push` refuses two user turns in a row and two assistant turns in a row. A trim drops the oldest exchange and leaves that prefix and the newest message in place. The inbox holds 64 turns, and the provider runs only after a pop. A memory line and a skill land beside that prefix. That is how a continuously improving harness learns a fact without dropping the cache. JSON is the save format in this chapter, and the SQLite session waits until chapter 20.
 
 ## What Hermes taught me about conversations
 

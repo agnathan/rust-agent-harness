@@ -2,6 +2,10 @@
 
 Each chapter adds one piece of the harness and shows the tests for that piece. Read in order if you are learning Rust. The sidebars are optional if you already know the language.
 
+The thing being built is a continuously improving harness: it can run a team of agents, and it can get better at a kind of task because it keeps what it learned. Chapter 0 names the stores. Reflection, skills, curation, the team, and evals are where that sentence becomes a function. Chapter 53 is where one score moves. The model in that run is the fake one, and the chapter says so.
+
+When the chapters say "I expected," they mean a reading the file then contradicted. The early chapters use that voice often. Later chapters use it at the seams, where a guess about the design meets the function that is actually there. There is no diary in that sentence, and it names no one but the person reading the code with you.
+
 ## The two trees
 
 `steps/chNN-…` is the finished reference for that chapter. `my-harness/` is the crate you fill in. The milestone in `my-harness/tests/chNN.rs` compiles, then panics on `todo!` until your function makes the assertion pass. The step crate is the reference. Do not copy it into `my-harness/`.

@@ -12,11 +12,16 @@ Rust shows up in sidebars when the design needs it: a struct for a message, an e
 
 **In this chapter**
 
+- What this chapter decides
 - What is an "agent harness"?
 - The reference: Hermes Agent
 - Why rebuild ideas from it in Rust?
 - The plan
 - How to read this book
+
+## What this chapter decides
+
+The book commits to one harness that keeps what it learned, and to a second program that only offers tools. Sessions, memory, skills, and reflection are the stores behind that promise, and they arrive before any team exists. Curation, the librarian, and the eval suite come after those stores. Chapter 53 is the run where those stores share one task and a score is allowed to change. The gateway chapters stay on their own lineage, so a catalog lesson never rewrites the prompt. A later sentence that says it expected something is naming a wrong guess, and the next sentence is the file.
 
 ## What is an "agent harness"?
 
