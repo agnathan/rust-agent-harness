@@ -1,14 +1,14 @@
 # Chapter 51: Load and Token Capstone
 
-Chapter 8 defined three ways to offer tools for one fake task and counted schema tokens, call tokens, and result tokens. Chapter 50's research team is a harness story. It does not answer the catalog question: how many tokens does the dynamic offer cost, does the task still succeed, and what does a hundred in-process dispatches cost? This chapter answers that on a sample of 32 cards. Each schema is `{"name":"tool_NN"}`, 18 bytes. `approx_tokens` is `div_ceil` of that length by 4, so one card is 5 tokens and the three arms are 160, 40, and 5. That is the arithmetic of this sample, not a tokenizer and not chapter 6's 10,000-tool list. The crate is `steps/ch51-capstone`. It copies chapter 42, library name `gwservice`, new module `capstone`. It is not on the harness copy chain. It binds no socket. `oha` is not run, because there is no listener to point it at. `mcp-gateway` re-exports `LearnedGateway` from this crate as `Gateway`, and it re-exports chapter 8's session types beside it.
+A smaller offer only counts when the task still succeeds. This is the MCP server program, the same line as chapters 5, 7, 8, 15, 23, 37, and 42, and it isn't the harness, because chapter 52 doesn't copy this directory. The sample is 32 cards, each schema `{"name":"tool_NN"}` is 18 bytes, and `approx_tokens` is integer `div_ceil` of that length by 4, so each card is 5 tokens. Every-tool is 160, the static arm of the first eight is 40, and the dynamic arm on `tool_07` is 5. `tool_07` sits inside the first eight, so with no deadline all three arms succeed, while a deadline equal to the dynamic total fails the wide arms and keeps the dynamic arm. That is this toy catalog's arithmetic, not a tokenizer and not chapter 6's 10,000-tool list.
 
-`Card` is a tool in the sample catalog. `Arm` is dynamic, static, or every tool. `sample_catalog` builds the fixed set the three arms share. `approx_tokens` divides by four and rounds up with `div_ceil`, so the count is deterministic and does not call a tokenizer. `tokens_of` and `offers_needed` are the arithmetic. `compare` runs the three arms and reports tokens and task success for each. The dynamic arm offers the names the task needs. The static arm offers a fixed eight. The every-tool arm offers the whole sample. `task_arms` is the rename task, the same shape as chapter 8's fake task. `load` admits 100 in-memory dispatches. `p99` is the nearest-rank percentile inside that process, not a network percentile. `admit` is the gate the load passes through. `demo` prints the arms and the load line.
+A self-improving harness that adds tools without an offer policy eventually puts every schema in the prompt. The dynamic arm is the counterexample, and it has to succeed at the task or it is only a smaller prompt. Continuously improving is this book's name for that harness, which is why the session toolset, the learned offer, and the limits sit beside the comparison.
 
-The server stays a separate program because the token cost of a catalog is a property of the catalog. Measuring it inside the harness would mix prompt-building overhead with the offer. The client, chapter 6, already measured what a 10,000-tool schema list costs when the agent holds it. This chapter measures the three offers the gateway can make, with success beside the number, so a smaller offer that fails the task does not win. That comparison is why the session toolset, the learned offer, and the limits exist. A self-improving harness that adds tools without an offer policy will eventually put every schema in the prompt. The dynamic arm is the counterexample, and it has to succeed at the task or it is only a smaller prompt.
+The crate is `steps/ch51-capstone`, a copy of chapter 42, with library name `gwservice` and a new module `capstone`. It binds no socket, so `oha` isn't run, because there's no listener to point it at, and `mcp-gateway` re-exports `LearnedGateway` from this crate as `Gateway` beside chapter 8's session types. A `Card` is one tool in the sample catalog, the struct `Arm` is one row of the comparison, and `sample_catalog` builds the fixed set the three arms share. `tokens_of` and `offers_needed` are the arithmetic behind `compare`, `task_arms` is the rename task in the same shape as chapter 8's fake task, and `load` admits 100 in-memory dispatches whose percentile stays inside the process. `admit` is the gate that load passes through, and `demo` prints the arms and the load line.
 
-Rust, at the arithmetic: integer `div_ceil` is the token estimate, a `struct` per arm keeps the three results from collapsing into one number, and the percentile is a sort plus an index. The load is a loop of in-memory calls. No socket, no HTTP framework, no key.
+Integer `div_ceil` is the token estimate, a struct per arm keeps the three results from collapsing into one number, and the percentile is a sort plus an index, because the load is a loop of in-memory calls with no socket, no HTTP framework, and no key.
 
-`cargo run -p ch51-capstone` prints the arms. The exercise is `my-harness/tests/ch51.rs`: the dynamic, static, and every-tool arms each report tokens and task success.
+Running `cargo run -p ch51-capstone` prints the arms, and the exercise is `my-harness/tests/ch51.rs`, where the dynamic, static, and every-tool arms each report tokens and task success.
 
 | Section | What it walks |
 |---|---|
@@ -36,13 +36,11 @@ Rust, at the arithmetic: integer `div_ceil` is the token estimate, a `struct` pe
 
 ## What this chapter decides
 
-`sample_catalog` builds 32 cards. Each schema is the JSON object `{"name":"tool_NN"}`. That string is 18 bytes. `schema_tokens` calls `approx_tokens`. `div_ceil(18 / 4)` is 5. The every arm is `32 * 5`, which is 160. The static arm is the first 8 cards, `8 * 5`, which is 40. The dynamic arm is the one matching name, which is 5.
+The opening already fixed the token totals and which arms succeed with no deadline, so this section keeps the other decisions. `compare` returns three `Arm` values in the order `every`, `static`, `dynamic`, and success means the needed name is offered and the token count sits inside the deadline when a deadline is set, with `None` meaning no deadline. `tool_31` misses the static set, and the name `missing` fails all three.
 
-`compare` returns three `Arm` values in that order: `every`, `static`, `dynamic`. Success is the needed name being offered, and the token count sitting inside the deadline when a deadline is set. `None` means no deadline. `tool_07` is inside the first 8, so all three arms succeed when the deadline is `None`. `tool_31` misses the static set. The name `missing` fails all three.
+`task_arms` calls `session::run_rename_task` for the session enum's three variants, and all three succeed. Those reports carry schema tokens from the session telemetry, which are a different measurement from the compare totals, and the demo prints both results.
 
-`task_arms` calls `session::run_rename_task` for `Arm::Every`, `Arm::Static`, and `Arm::Dynamic`. All three succeed. Those reports carry schema tokens from the session telemetry. They are not the 160, 40, and 5 figures. The demo prints both results.
-
-`load(100)` builds a `SessionGateway`, reloads `catalog::synthetic(32)`, searches once, and calls the revealed tool 100 times. `CALL_BOUND` is 8. The wave counter increments when `in_flight` is 0 at the start of a call, and it resets `in_flight` when the count hits 8. One hundred divided by 8 is 12 full waves, and the leftover calls open one more wave, so the report says 13. `p99` runs on the per-call samples. The demo does not print it. The number moves from run to run. `oha` is not invoked.
+`load(100)` builds a `SessionGateway`, reloads `catalog::synthetic(32)`, searches once, and calls the revealed tool 100 times, with `CALL_BOUND` at 8. The wave counter lands on 13, which section 51.7 states without walking every call, and `p99` runs on the per-call samples while the demo leaves that field off the printed line. `oha` isn't invoked, because this crate binds no socket.
 
 `demo` prints one line:
 
@@ -52,7 +50,7 @@ capstone: every=160 static=40 dynamic=5 success=1/1/1 task=1/1/1 load=100/100 wa
 
 ## 51.1 The constants, `Card`, `Arm`, and `LoadReport`
 
-`capstone.rs` is the new module. The file starts with the constants and the three structs the rest of the functions pass around.
+`capstone.rs` is the new module, and the file starts with the constants and the three structs the rest of the functions pass around.
 
 ```rust
 //! Chapter 51. Three token arms and an in-memory load. No socket.
@@ -95,17 +93,13 @@ pub struct LoadReport {
 }
 ```
 
-`CHARS_PER_TOKEN` documents the Hermes rule. `schema_tokens` does not read this constant. The division lives in `session::approx_tokens`, which has its own `CHARS_PER_TOKEN` of 4. Both numbers match. Changing only the capstone constant would not change a token count.
+`CHARS_PER_TOKEN` documents the Hermes rule, and `schema_tokens` doesn't read this constant, because the division lives in `session::approx_tokens`, which has its own `CHARS_PER_TOKEN` of 4. Both numbers match, so changing only the capstone constant wouldn't change a token count, which is why a drift in the unused constant would slip past the test that pins `schema_tokens`.
 
-`CALL_BOUND` is 8. `admit` uses it. `load` uses it as the width of a wave. `CATALOG_LEN` is 32. `STATIC_LEN` is 8. `sample_catalog` and `compare` and `task_arms` all take the catalog length from that constant. The static slice is `take(STATIC_LEN)`.
+`CALL_BOUND` is 8, and both `admit` and the width of a wave in `load` use it. `CATALOG_LEN` is 32 and `STATIC_LEN` is 8, so `sample_catalog`, `compare`, and `task_arms` take the catalog length from that constant, and the static slice is `take(STATIC_LEN)`.
 
-`Card` is a name and a schema string. Both fields are public. `Arm` is one row of the comparison. `name` is a static string, `every` or `static` or `dynamic`. `tokens` is the sum. `success` is the bit. `offered` is how many cards that arm kept. `LoadReport` is the load. `requests` and `successes` are the counts the demo prints as `load=100/100`. `waves` is the counter the demo prints. `p99_ns` and `elapsed_ns` are filled and then left off the printed line.
+A `Card` is a name and a schema string, and both fields are public. The struct `Arm` is one row of the comparison: `name` is a static string, `every` or `static` or `dynamic`, `tokens` is the sum, `success` is the bit, and `offered` is how many cards that arm kept. The session module has an enum with the same name, and section 51.5 is where a search hits both. `LoadReport` is the load, `requests` and `successes` are the counts the demo prints as `load=100/100`, `waves` is the counter the demo prints, and `p99_ns` and `elapsed_ns` are filled and then left off the printed line.
 
-`PartialEq` is why a test can compare arms by field. The tests in this chapter compare fields one at a time.
-
-> **Rust sidebar: a public constant the function does not read**
->
-> A `pub const` is part of the crate's API. The compiler does not warn that `capstone::CHARS_PER_TOKEN` is unread, because a downstream crate could name it. The function that divides is `approx_tokens`, and it names `session::CHARS_PER_TOKEN`. Two constants with the same value can drift. The test pins the token count through `schema_tokens`, so a drift in the session constant would fail `three_arms_share_a_success_and_not_a_token_count`. A drift in the unused capstone constant would not.
+`PartialEq` is why a test can compare arms by field, and the tests in this chapter compare fields one at a time. A `pub const` is part of the crate's API, and the compiler doesn't warn that `capstone::CHARS_PER_TOKEN` is unread, because a downstream crate could name it. The function that divides is `approx_tokens`, and it names `session::CHARS_PER_TOKEN`, so two constants with the same value can drift. The test pins the token count through `schema_tokens`, which means a drift in the session constant would fail `three_arms_share_a_success_and_not_a_token_count`, while a drift in the unused capstone constant would not.
 
 ## 51.2 `schema_tokens` and `approx_tokens`
 
@@ -115,7 +109,7 @@ pub fn schema_tokens(schema: &str) -> u64 {
 }
 ```
 
-That is the whole function. It forwards the schema string. The session module is the one that knows the character rule. I am quoting only `approx_tokens` from `session.rs`. The rest of that module is the vendored chapter 8 gateway, and this chapter does not paste it.
+That forwarder is the whole function, and the session module is the one that knows the character rule. The rest of `session.rs` is the vendored chapter 8 gateway, and this chapter quotes only `approx_tokens`.
 
 ```rust
 pub fn approx_tokens(text: &str) -> u64 {
@@ -123,13 +117,7 @@ pub fn approx_tokens(text: &str) -> u64 {
 }
 ```
 
-`text.len()` is the byte length. The schemas in this chapter are ASCII, so bytes and characters match. `div_ceil` rounds a remainder up. `18.div_ceil(4)` is 5, because 18 is `4 * 4 + 2`. Integer division without the ceil would be 4. Hermes uses `math.ceil` of a float. `4.0` in Python makes `len(text) / CHARS_PER_TOKEN` a float, and `math.ceil` of that float is the same integer for these lengths. The Rust function never builds a float. An empty string is `0.div_ceil(4)`, which is 0.
-
-`schema_tokens` is what `tokens_of` calls for each card. The session gateway uses `approx_tokens` on other strings too: a search listing, a describe block, call arguments, and the call result. Those calls are inside `load` and inside `run_rename_task`. They do not change the `Arm.tokens` figures. Those figures are only the card schemas.
-
-> **Rust sidebar: `usize::div_ceil`**
->
-> `div_ceil` is a method on the integer. `a.div_ceil(b)` is the smallest integer greater than or equal to `a / b`, for a positive divisor. The cast to `u64` happens after the rounding. A schema longer than `usize` is not a case this function sees. The cards here are 18 bytes.
+`text.len()` is the byte length, and the schemas in this chapter are ASCII, so bytes and characters match. `div_ceil` rounds a remainder up, which is the rule the opening already applied to the 18-byte schema, and integer division without the ceil would drop that remainder. Hermes uses `math.ceil` of a float, because `4.0` in Python makes `len(text) / CHARS_PER_TOKEN` a float, and `math.ceil` of that float is the same integer for these lengths. The Rust function never builds a float, and an empty string is `0.div_ceil(4)`, which is 0. `schema_tokens` is what `tokens_of` calls for each card, and the session gateway also uses `approx_tokens` on a search listing, a describe block, call arguments, and the call result, and those calls sit inside `load` and inside `run_rename_task`. They don't change the `Arm.tokens` figures, because those figures are only the card schemas. `div_ceil` is a method on the integer, `a.div_ceil(b)` is the smallest integer greater than or equal to `a / b` for a positive divisor, and the cast to `u64` happens after the rounding. A schema longer than `usize` isn't a case this function sees.
 
 ## 51.3 `sample_catalog`
 
@@ -147,15 +135,9 @@ pub fn sample_catalog() -> Vec<Card> {
 }
 ```
 
-The range is `0..32`. The name format is `tool_` plus the index in width 2, so the names are `tool_00` through `tool_31`. `tool_07` is index 7. `tool_31` is the last card.
+The range is `0..32`, and the name format is `tool_` plus the index in width 2, so the names run from `tool_00` through `tool_31`. `tool_07` is index 7, and `tool_31` is the last card. The schema format is a raw string whose doubled braces are the `format!` escape, and the value that lands in `Card.schema` is `{"name":"tool_NN"}`, which the opening counted at 18 bytes. Every index from 0 to 31 has a two-digit suffix, so every schema in this catalog has that same length, and `sample_catalog` doesn't call the session gateway or run a search.
 
-The schema format is a raw string whose doubled braces are the `format!` escape. The value that lands in `Card.schema` is `{"name":"tool_NN"}`. Count it. The opening brace is 1. `"name"` is 6. The colon is 1. `"tool_00"` is 9, because the name itself is 7 characters and the quotes add 2. The closing brace is 1. That is 18 bytes. Every index from 0 to 31 has a two-digit suffix, so every schema in this catalog is 18 bytes. `approx_tokens` of one schema is 5.
-
-`sample_catalog` does not call the session gateway. It does not search. The bench builds it once, outside the timed loop, and passes the vec into `compare`.
-
-> **Rust sidebar: `{index:02}` and `{{` in a format string**
->
-> `:02` is the fill and the width. A value under 10 is padded with a zero. `0` prints as `00`. `31` already has two digits, so it prints as `31`. A raw string does not treat `\` as an escape. `format!` still treats `{{` as a literal `{` and `}}` as a literal `}`. The `{name}` in the middle is the placeholder. The string that comes out is JSON with one field.
+The bench builds the catalog once, outside the timed loop, and passes the vec into `compare`. `:02` is the fill and the width, so a value under 10 is padded with a zero, `0` prints as `00`, and `31` already has two digits so it prints as `31`. A raw string doesn't treat `\` as an escape, while `format!` still treats `{{` as a literal `{` and `}}` as a literal `}`, and `{name}` in the middle is the placeholder that becomes the tool name.
 
 ## 51.4 `tokens_of`, `offers_needed`, `compare`, and `arm`
 
@@ -192,25 +174,15 @@ fn arm(name: &'static str, cards: &[&Card], needed: &str, deadline: Option<u64>)
 }
 ```
 
-`compare` borrows the catalog. It builds three slices of references. `every` is the whole catalog, 32 references. `static_set` is `take(8)`, which is `tool_00` through `tool_07`. `dynamic` keeps the cards whose name equals `needed`. For `tool_07` that is one card. For `missing` that is an empty vec.
+`compare` borrows the catalog and builds three slices of references. `every` is the whole catalog, 32 references, `static_set` is `take(8)`, which is `tool_00` through `tool_07`, and `dynamic` keeps the cards whose name equals `needed`. For `tool_07` that filter is one card, and for `missing` it is an empty vec.
 
-`arm` sums tokens, checks presence, and checks the deadline. `deadline.is_none_or(...)` is true when the option is `None`. A `Some(limit)` is true only when `tokens <= limit`. Success is both bits. An arm can offer the tool and still fail, because the deadline failed. An arm can be under the deadline and still fail, because the name was absent. The dynamic arm for a missing name has zero cards, zero tokens, and `success` false. Zero tokens would pass any non-negative deadline. Presence still fails it.
+`arm` sums tokens, checks presence, and checks the deadline. `deadline.is_none_or(...)` is true when the option is `None`, a `Some(limit)` is true only when `tokens <= limit`, and success is both bits. An arm can offer the tool and still fail, because the deadline failed, and an arm can sit under the deadline and still fail, because the name was absent. The dynamic arm for a missing name has zero cards, zero tokens, and `success` false, so zero tokens would pass any non-negative deadline while presence still fails it.
 
-The return type is `[Arm; 3]`. Index 0 is every. Index 1 is static. Index 2 is dynamic. The bench reads `arms[2].tokens`.
+The return type is `[Arm; 3]`, index 0 is every, index 1 is static, and index 2 is dynamic, which is the slot the bench reads as `arms[2].tokens`. For `tool_07` and `deadline = None` the totals are the ones the opening fixed, and `tool_07` is one of the first eight names, so presence is true on all three and all three succeed. For `tool_31` and no deadline, every still offers it and dynamic keeps that one card, while static stopped at `tool_07`, so presence is false on the static arm, that arm's success bit is false, and its token count is still the static total. The failure is the missing name, not the tokens.
 
-For `tool_07` and `deadline = None` the numbers are fixed. Every offers 32 and sums to 160. Static offers 8 and sums to 40. Dynamic offers 1 and sums to 5. `tool_07` is one of the first 8 names, so presence is true on all three. All three succeed.
+For `missing`, every and static don't contain that name, dynamic's filter is empty, and all three success bits are false. The deadline test takes the dynamic token count and passes `Some` of that count back into `compare` for `tool_07`. Every and static sit above that limit, dynamic sits on it, and presence is still true on all three because the name didn't change. The wide arms fail on the deadline alone, and the dynamic arm stays successful.
 
-For `tool_31` and no deadline, every still offers it, and dynamic keeps that one card. Static stopped at `tool_07`. Presence is false on the static arm, so that arm's success bit is false. Its token count is still 40. The failure is the missing name, not the tokens.
-
-For `missing`, every and static do not contain that name. Dynamic's filter is empty. All three success bits are false.
-
-The deadline test takes the dynamic token count, which is 5, and passes `Some(5)` back into `compare` for `tool_07`. Every is 160, which is above 5. Static is 40, which is above 5. Dynamic is 5, which is not above 5. Presence is still true on all three, because the name did not change. The wide arms fail on the deadline alone. The dynamic arm stays successful.
-
-> **Rust sidebar: `Option::is_none_or` and a fixed array**
->
-> `is_none_or` takes a predicate. `None` skips the predicate and returns true. `Some` runs it. Writing `deadline.map(|limit| tokens <= limit).unwrap_or(true)` is the same branch. The method is the short form.
->
-> `[Arm; 3]` is a value with a length the compiler knows. The caller cannot push a fourth arm without changing the type. A `Vec` would make `arms[2]` a runtime check. The array makes the three-arm shape part of the signature. `compare` always returns three, including when the dynamic filter is empty.
+`is_none_or` takes a predicate, `None` skips the predicate and returns true, and `Some` runs it. Writing `deadline.map(|limit| tokens <= limit).unwrap_or(true)` is the same branch, and the method is the short form. `[Arm; 3]` is a value with a length the compiler knows, so the caller can't push a fourth arm without changing the type. A `Vec` would make `arms[2]` a runtime check, and the array makes the three-arm shape part of the signature, which is why `compare` always returns three, including when the dynamic filter is empty.
 
 ## 51.5 `task_arms` and the rename task
 
@@ -225,25 +197,17 @@ pub fn task_arms(count: usize) -> [session::TaskReport; 3] {
 }
 ```
 
-`task_arms` does not call `compare`. It calls the vendored session function three times. `count` is `CATALOG_LEN` when `demo` calls it, so each call builds a synthetic catalog of 32 tools. The return type is `[TaskReport; 3]`. A `TaskReport` has `success`, `schema_tokens`, `call_tokens`, and `result_tokens`. The demo prints only the three success bits, as `task=1/1/1`.
+`task_arms` doesn't call `compare`, because it calls the vendored session function three times, and `count` is `CATALOG_LEN` when `demo` calls it, so each call builds a synthetic catalog of 32 tools. The return type is `[TaskReport; 3]`, a `TaskReport` has `success`, `schema_tokens`, `call_tokens`, and `result_tokens`, and the demo prints only the three success bits, as `task=1/1/1`.
 
-I read `run_rename_task` in `steps/ch51-capstone/src/session.rs`. It builds a `SessionGateway`, reloads `synthetic(count)` as the native cards, and opens a session named `task`. It finds the card whose server is `files` and whose name contains `rename_file`. That card is the target.
+Two types share the name `Arm`, and a reader who searches the name hits both. The capstone module's `Arm` is a struct, one row of the comparison, with `name`, `tokens`, `success`, and `offered`. The session module's `Arm` is an enum with variants `Every`, `Static`, and `Dynamic`, which is what `task_arms` passes as `session::Arm`. A bare `Arm` inside `capstone.rs` is the struct, the array `task_arms` returns is `TaskReport` rather than that struct, and the demo reads `.success` on both even though the fields behind that name differ, and neither name changes.
 
-`synthetic` cycles eight servers, eight verbs, and eight nouns. For a count of 32 the noun index stays on `file`, because the noun only advances every 64 tools. The files server's rename card is in that set. `catalog::call` returns the card's description for every name other than `echo`. The description is the sentence that says to use that server to perform that verb on that noun. It contains `rename` and `file`, and it is not empty.
+`run_rename_task` in `steps/ch51-capstone/src/session.rs` builds a `SessionGateway`, reloads `synthetic(count)` as the native cards, and opens a session named `task`. It finds the card whose server is `files` and whose name contains `rename_file`, and that card is the target. `synthetic` cycles eight servers, eight verbs, and eight nouns, and for a count of 32 the noun index stays on `file`, because the noun only advances every 64 tools. The files server's rename card is in that set. `catalog::call` returns the card's description for every name other than `echo`, and the description is the sentence that says to use that server to perform that verb on that noun. It contains `rename` and `file`, and it isn't empty.
 
-The `Every` arm reveals every card, sets `schema_tokens` from `approx_tokens` of `schema_blob` over the whole catalog, and calls the target with `{"text":"a.txt"}`. Success is the result containing `rename`, or the result being non-empty. The description satisfies both.
+The `Every` arm reveals every card, sets `schema_tokens` from `approx_tokens` of `schema_blob` over the whole catalog, and calls the target with `{"text":"a.txt"}`. Success is the result containing `rename`, or the result being non-empty, and the description satisfies both. The `Static` arm reveals the target, then reveals up to seven more cards whose server is `files`, sets `schema_tokens` from the blob of the cards that were actually revealed, and calls the target with `{"to":"b.txt"}`. Success is the result containing `rename` or `file`, and the description satisfies that too.
 
-The `Static` arm reveals the target, then reveals up to seven more cards whose server is `files`. It sets `schema_tokens` from the blob of the cards that were actually revealed, and it calls the target with `{"to":"b.txt"}`. Success is the result containing `rename` or `file`. The description satisfies that too.
+The `Dynamic` arm calls `search_tools` with the query `rename a file`, takes the first listing line, and splits on ` — `, the space-emdash-space separator `search_tools` writes between the name and the blurb. If that name is non-empty it describes the name, calls it with `{"to":"b.txt"}`, and succeeds when the name contains both `rename` and `file`. The search hits the rename card, and the name check passes. The schema tokens on these reports are the telemetry totals, because `schema_blob` joins name, server, and description, and those strings are longer than `{"name":"tool_NN"}`. The test checks that each report succeeded and that `schema_tokens` is greater than 0, and that the every arm's schema tokens are at least the dynamic arm's. It doesn't assert the compare totals, because those three numbers belong to `compare`.
 
-The `Dynamic` arm calls `search_tools` with the query `rename a file`. It takes the first listing line and splits on ` — `, the space-emdash-space separator `search_tools` writes between the name and the blurb. If that name is non-empty it `describe`s the name, calls it with `{"to":"b.txt"}`, and succeeds when the name contains both `rename` and `file`. The search hits the rename card. The name check passes.
-
-The schema tokens on these reports are the telemetry totals. `schema_blob` joins name, server, and description. Those strings are longer than `{"name":"tool_NN"}`. The test checks that each report succeeded and that `schema_tokens` is greater than 0, and that the every arm's schema tokens are at least the dynamic arm's. It does not assert 160, 40, or 5. Those three numbers belong to `compare`.
-
-`task_arms` is not what the bench times. `dynamic_tokens` calls `compare`. `load_100` calls `load`.
-
-> **Rust sidebar: two arm types**
->
-> `capstone` has a struct named `Arm`. `session` has an enum named `Arm`, with variants `Every`, `Static`, and `Dynamic`. `task_arms` spells the enum as `session::Arm`. A bare `Arm` inside `capstone.rs` is the struct. The array it returns is `TaskReport`, not the struct. The demo reads `.success` on both. The fields behind that name differ.
+`task_arms` isn't what the bench times, because `dynamic_tokens` calls `compare` and `load_100` calls `load`.
 
 ## 51.6 `admit` and `p99`
 
@@ -264,15 +228,9 @@ pub fn p99(mut samples: Vec<u128>) -> u128 {
 }
 ```
 
-`admit` is true while `in_flight` is below 8. `admit(7)` is true. `admit(8)` is false. `load` calls `admit` before it increments, and it resets the counter when the counter reaches 8, so the assert inside the loop stays true for a normal run. The function itself is the gate. Filling it to 8 and asking again returns false.
+`admit` is true while `in_flight` is below 8, so `admit(7)` is true and `admit(8)` is false. `load` calls `admit` before it increments, and it resets the counter when the counter reaches 8, so the assert inside the loop stays true for a normal run. The function itself is the gate, and filling it to 8 and asking again returns false.
 
-`p99` sorts a copy. The argument is `mut` because `sort_unstable` needs it. An empty vec returns 0 and does not index. Otherwise the rank is `len * 99`, divided by 100 with `div_ceil`, then minus 1, saturating at 0. For 100 samples, `100 * 99` is 9900, and `9900.div_ceil(100)` is 99. The index is 98. That is the comment on the function. The test builds the series `1..=100` and expects the value at that index. This chapter does not print a `p99` from `load`. The samples in `load` are elapsed nanoseconds. They move. The rank formula does not.
-
-`saturating_mul` and `saturating_sub` clamp instead of panicking on overflow. A length that overflows `usize` on the multiply is not a length this load produces. The load passes 100 samples.
-
-> **Rust sidebar: nearest rank on a sorted vec**
->
-> The index is into the sorted vec, low to high. Index 0 is the smallest sample. Index 98 of 100 sorted samples is near the top. `sort_unstable` does not preserve the order of equal keys. The load's samples are times, and ties are possible. The function does not break ties by insertion order. The demo leaves the result off the line because a reader would treat one debug process's rank as a benchmark. The bench times the whole `load`, including this sort, and reports a Criterion mean of that whole call. The mean cell is `122.77 µs`. It is not a `p99`.
+On the series `1..=100` the rank is index 98, because `100 * 99` is 9900, `div_ceil` by 100 is 99, and the index is that rank minus one, which is the comment on the function. An empty vec returns 0 and doesn't index, and `saturating_mul` together with `saturating_sub` clamp instead of panicking, which this load never needs because it passes 100 samples. `load` fills `p99_ns` from those per-call samples and the demo doesn't print it, since the samples move from run to run while the rank formula doesn't, and `sort_unstable` can reorder equal keys without breaking ties by insertion order. The bench mean `122.77 µs` is the whole `load(100)`, not a p99.
 
 ## 51.7 `load`
 
@@ -331,23 +289,13 @@ pub fn load(requests: u32) -> LoadReport {
 }
 ```
 
-`load` does not call `sample_catalog` and it does not call `compare`. The cards are `catalog::synthetic(32)`, the same generator `run_rename_task` uses. Plugins and upstreams are empty. The session id is `load`.
+`load` doesn't call `sample_catalog` and it doesn't call `compare`. The cards are `catalog::synthetic(32)`, the same generator `run_rename_task` uses, plugins and upstreams are empty, and the session id is `load`. `search_tools` takes one query, the word `file`, which is under `MAX_QUERIES_PER_CALL`, the limit the session module sets at 7. The search reveals the hits and returns a listing, each line is a name, then ` — `, then a trimmed description, and the load keeps the first line's name. `search_tools` has already revealed that name, so `call` doesn't return `NotOffered`.
 
-`search_tools` takes one query, the word `file`. That is under `MAX_QUERIES_PER_CALL`, which the session module sets at 7. The search reveals the hits and returns a listing. Each line is a name, then ` — `, then a trimmed description. The load keeps the first line's name. `search_tools` has already revealed that name, so `call` does not return `NotOffered`.
+`catalog::call` returns the description for a synthetic tool, the description is non-empty, and each of the 100 calls increments `successes`, which the test locks at 100. The wave counter is a plain integer on one thread, and nothing is spawned. One hundred calls with 8 in flight make 12 full waves, which is 96 calls, and a partial wave, so `waves` is 13, and call 97 opens that partial wave. The `admit` check runs after the zero-test and before the increment, so the counter is 0 through 7 at the check, and the reset happens after the call, which means the next check sees 0 rather than 8.
 
-`catalog::call` returns the description for a synthetic tool. The description is non-empty. Each of the 100 calls increments `successes`. The test locks that at 100.
+Each call records `elapsed` in nanoseconds and pushes it, and after the loop `p99` stores that rank while `elapsed_ns` covers the whole function. The search sits outside the per-call samples and inside `elapsed_ns`, and catalog construction, `reload`, `open_session`, and the search are all inside `load`, so the bench that times `load` pays for them. There is no socket in this function, and the crate's Rust sources have no listener, no bind, and no `oha`, so the calls are `SessionGateway::call` on the value built here.
 
-The wave counter is a plain integer. The loop is one thread. Nothing is spawned. At the start, `in_flight` is 0, so the first call increments `waves` to 1 and then increments `in_flight` to 1. Calls continue. When `in_flight` reaches 8, it is set back to 0 at the bottom of the loop. The next call sees 0 again and increments `waves`. Eight calls are one full wave. One hundred divided by 8 is 12 full waves, which is 96 calls. After call 96 the counter is 0 again. Call 97 increments `waves` to 13. Calls 97 through 100 are the partial wave. The code increments `waves` when `in_flight` returns to 0 at the start of a call, so the partial counts. The report's `waves` is 13.
-
-`admit` is checked after the zero-test and before the increment. The counter is 0, 1, 2, 3, 4, 5, 6, or 7 at the check. All of those are below 8. The reset happens after the call, so the next check sees 0 rather than 8.
-
-Each call records `elapsed` in nanoseconds and pushes it. After the loop, `p99` sorts that vec and stores the rank. `elapsed_ns` is the whole loop, including the search that happened before the loop. The search is outside the per-call samples and inside `elapsed_ns`. Catalog construction, `reload`, `open_session`, and the search are all inside `load`. The bench times `load`, so they are inside the sample.
-
-There is no socket in this function. I searched the crate for a listener, a bind, and `oha`. None of those names are in the Rust sources. The calls are `SessionGateway::call` on the value built in this function.
-
-> **Rust sidebar: the assert is a bound check, not a benchmark**
->
-> `assert!(admit(in_flight))` panics if a wave ever asks for a ninth in-flight call without resetting. A release build of this binary still keeps `assert!`. It is not `debug_assert!`. The panic path is not the measured path. The measured path resets at 8 and admits every call. The samples include the `call`, the emptiness check, and the push. They do not include `p99`. `p99` runs once, after the loop, and its sort is still inside `load`, so the bench pays for it once per `load(100)`.
+`assert!(admit(in_flight))` panics if a wave ever asks for a ninth in-flight call without resetting, and a release build of this binary still keeps `assert!`, because it isn't `debug_assert!`. The panic path isn't the measured path, because the measured path resets at 8 and admits every call, the samples include the `call`, the emptiness check, and the push, and they don't include `p99`, which runs once after the loop. That sort is still inside `load`, so the bench pays for it once per `load(100)`.
 
 ## 51.8 `demo`
 
@@ -375,7 +323,7 @@ pub fn demo() -> String {
 }
 ```
 
-`demo` builds the 32-card catalog, compares `tool_07` with no deadline, runs the three rename tasks at catalog length 32, and loads 100. The format string is the whole line. Bools print as `1` or `0` because of `as u8`. `report.p99_ns` is not a placeholder in that string. `report.elapsed_ns` is not either.
+`demo` builds the 32-card catalog, compares `tool_07` with no deadline, runs the three rename tasks at catalog length 32, and loads 100. The format string is the whole line, bools print as `1` or `0` because of `as u8`, and `report.p99_ns` isn't a placeholder in that string, nor is `report.elapsed_ns`. A bool casts to `0u8` or `1u8`, `format` then prints the number, and the test looks for the substring `success=1/1/1` and for `task=1/1/1`. A failed arm would print `0` in that slot. The deadline path isn't what `demo` runs, because `demo` passes `None`.
 
 `main` is five lines:
 
@@ -387,15 +335,11 @@ fn main() {
 }
 ```
 
-`cargo run -p ch51-capstone --bin ch51-capstone` prints the line above. I ran it. The line was `capstone: every=160 static=40 dynamic=5 success=1/1/1 task=1/1/1 load=100/100 waves=13`. No key. No socket.
-
-> **Rust sidebar: `as u8` on a bool**
->
-> A bool casts to `0u8` or `1u8`. `format` then prints the number. The test looks for the substring `success=1/1/1` and for `task=1/1/1`. A failed arm would print `0` in that slot. The deadline path is not what `demo` runs. `demo` passes `None`.
+Running `cargo run -p ch51-capstone --bin ch51-capstone` prints the line above. I ran it, and the line was `capstone: every=160 static=40 dynamic=5 success=1/1/1 task=1/1/1 load=100/100 waves=13`, with no key and no socket.
 
 ## 51.9 The package tests
 
-The 23 tests are the package. Five of them are `tests/capstone.rs`. The other eighteen are the inherited files `balancing.rs`, `learned.rs`, and `service.rs`. Nextest starts six binaries: the lib harness, the `ch51-capstone` binary harness, and those four integration-test binaries. The lib and the binary have no `#[test]` functions. The 23 tests sit in the four integration binaries.
+The 23 tests are the package, five of them live in `tests/capstone.rs`, and the other eighteen are the inherited files `balancing.rs`, `learned.rs`, and `service.rs`. Nextest starts six binaries: the lib harness, the `ch51-capstone` binary harness, and those four integration-test binaries. The lib and the binary have no `#[test]` functions, so the 23 tests sit in the four integration binaries.
 
 ```bash
 cargo nextest run --locked -p ch51-capstone
@@ -408,15 +352,15 @@ cargo nextest run --locked -p ch51-capstone
 
 ### `three_arms_share_a_success_and_not_a_token_count`
 
-The test builds `sample_catalog` and checks the length against `CATALOG_LEN`. It takes `schema_tokens` of the first schema and checks that the count is greater than 0. It compares `tool_07` with no deadline. The names are `every`, `static`, and `dynamic`. Offered counts are 32, 8, and 1. Every arm succeeds. Every's tokens are greater than static's, and static's are greater than dynamic's. Every's tokens equal one card's tokens times 32. Dynamic's tokens equal that one card. With the 18-byte schema, that one card is 5, every is 160, and static is 40 because 8 times 5 is 40. The test expresses static as the ordered inequality rather than as a second product. It then compares `tool_31`. Every and dynamic succeed. Static fails. It compares `missing`. Every arm fails.
+The test builds `sample_catalog`, checks the length against `CATALOG_LEN`, and takes `schema_tokens` of the first schema to confirm the count is greater than 0. It compares `tool_07` with no deadline, expects the names `every`, `static`, and `dynamic` with offered counts 32, 8, and 1, and expects every arm to succeed, with every's tokens above static's and static's above dynamic's. Every's tokens equal one card's tokens times 32, dynamic's tokens equal that one card, and the test expresses static as the ordered inequality rather than as a second product, which is how the opening's totals show up without a second multiplication in the assertion. It then compares `tool_31`, where every and dynamic succeed and static fails, and it compares `missing`, where every arm fails.
 
 ### `the_session_gateway_arms_each_report_tokens_and_success`
 
-The test calls `task_arms(CATALOG_LEN)`. It asserts that every `TaskReport` has `success` true and `schema_tokens` greater than 0. It asserts that the every report's schema tokens are at least the dynamic report's. It does not read `Arm.tokens`. A failure here is a rename task that missed, not a 160-versus-40 comparison.
+The test calls `task_arms(CATALOG_LEN)` and asserts that every `TaskReport` has `success` true and `schema_tokens` greater than 0, and that the every report's schema tokens are at least the dynamic report's. It doesn't read `Arm.tokens`, so a failure here is a rename task that missed rather than a comparison of the two token measurements.
 
 ### `a_tight_deadline_fails_the_wide_arm_only`
 
-This is the deadline guard. The test reads the dynamic token count with no deadline, then compares `tool_07` again with `Some(dynamic)`.
+This is the deadline guard, and the test reads the dynamic token count with no deadline, then compares `tool_07` again with `Some(dynamic)`.
 
 ```rust
 fn a_tight_deadline_fails_the_wide_arm_only() {
@@ -429,91 +373,91 @@ fn a_tight_deadline_fails_the_wide_arm_only() {
 }
 ```
 
-`arms[0]` is every. `arms[1]` is static. `arms[2]` is dynamic. The assertions fail the first two and keep the third. The limit equals the dynamic total, so a token count of 5 is inside the limit and a token count of 40 or 160 is outside it. The needed name is still `tool_07`, which all three arms offer. The wide arms fail because they are past the deadline.
+`arms[0]` is every, `arms[1]` is static, and `arms[2]` is dynamic, so the assertions fail the first two and keep the third. The limit equals the dynamic total, which means a token count sitting on that total is inside the limit and the wide totals are outside it. The needed name is still `tool_07`, which all three arms offer, and the wide arms fail because they are past the deadline.
 
 ### `the_load_stays_inside_the_bound_and_ranks_p99`
 
-`admit(CALL_BOUND - 1)` is true. `admit(CALL_BOUND)` is false. The test builds `1..=100` as `u128` samples and checks `p99` of that series. That check is the rank formula on a known series. It is not a timed load. Then it calls `load(100)` and checks `successes == 100`, `requests == 100`, `waves == 13`, and `p99_ns > 0`. The last check says the rank ran and produced a non-zero sample. It does not pin a nanosecond count. This chapter does not quote one.
+`admit(CALL_BOUND - 1)` is true and `admit(CALL_BOUND)` is false, and the test then builds `1..=100` as `u128` samples and checks `p99` of that series, which is the rank from the `p99` section rather than a timed load. It calls `load(100)` and checks `successes == 100`, `requests == 100`, `waves == 13`, and `p99_ns > 0`. That last check says the rank ran and produced a non-zero sample, and it doesn't pin a nanosecond count, so this chapter doesn't quote one.
 
 ### `demo_reports_three_successes`
 
-The test calls `demo` and looks for `success=1/1/1`, `task=1/1/1`, `load=100/100`, and `waves=13`. It does not look for a `p99` field. The printed line has no place for one.
+The test calls `demo` and looks for `success=1/1/1`, `task=1/1/1`, `load=100/100`, and `waves=13`. It doesn't look for a `p99` field, because the printed line has no place for one.
 
 ### `least_outstanding_picks_the_quietest_backend`
 
-This is the inherited balancer. Four backends carry outstanding counts 3, 1, 4, and 2. `pick(LeastOutstanding)` returns index 1, the backend named `b`. `call` returns `echo via b`. A second pick is still index 1. The test is about the copied pool, not about token arms.
+The inherited balancer starts four backends at outstanding counts 3, 1, 4, and 2, and `pick(LeastOutstanding)` returns index 1, the backend named `b`, whose `call` returns `echo via b`. A second pick is still index 1, because this test is about the copied pool rather than the token arms.
 
 ### `power_of_two_picks_the_quieter_of_the_pair`
 
-Three backends, outstanding 5, 1, and 4. Power-of-two between index 0 and 1 picks 1. Power-of-two between index 2 and 0 picks 2. Least-outstanding on that pool returns some index. An empty pool returns `None`.
+Three backends sit at outstanding counts 5, 1, and 4, power-of-two between index 0 and 1 picks 1, and power-of-two between index 2 and 0 picks 2. Least-outstanding on that pool returns some index, and an empty pool returns `None`.
 
 ### `federation_groups_a_tool_across_upstreams`
 
-Two upstreams, `alpha` with `echo` and `time`, `beta` with `echo`. `federate` maps `echo` to both servers, alpha then beta. `pool_for("echo")` has length 2 and calls `echo via alpha`. `pool_for("missing")` is empty.
+Two upstreams, `alpha` with `echo` and `time` and `beta` with `echo`, are what `federate` groups, mapping `echo` to both servers with alpha then beta. `pool_for("echo")` has length 2 and calls `echo via alpha`, and `pool_for("missing")` is empty.
 
 ### `discovery_stays_at_four`
 
-`discover(6, Duration::from_millis(40))` returns `DISCOVERY_CONCURRENCY`, and that constant is 4. The sleep is why this test is the slow one in the package. The capstone load does not call `discover`.
+`discover(6, Duration::from_millis(40))` returns `DISCOVERY_CONCURRENCY`, and that constant is 4, which is why the sleep makes this the slow test in the package, while the capstone load doesn't call `discover`.
 
 ### `the_demo_picks_alpha`
 
-`gwservice::federation::demo()` equals `pick: echo via alpha`. That is the inherited federation demo. `capstone::demo` is a different function. The binary prints the capstone line.
+`gwservice::federation::demo()` equals `pick: echo via alpha`, which is the inherited federation demo, and `capstone::demo` is a different function, so the binary prints the capstone line.
 
 ### `prediction_changes_the_offered_set_and_is_not_on_the_read`
 
-`LearnedGateway` opens `desk`. The first `session_tools` view is empty and `list_changed` is false. A usage log of two `read_file` rows, memory that mentions notes in files, and a session note that mentions `web_search` produce the ranked offer `web_search`, then `read_file`. `session_tools` returns that offer and sets `list_changed`. `predict_calls` does not increase on the read. A second `session_tools` clears `list_changed` and keeps the same names. This is the chapter 23 prediction path, still in the copied `lib.rs`. The capstone does not call `refresh_prediction`.
+`LearnedGateway` opens `desk`, the first `session_tools` view is empty, and `list_changed` is false. A usage log of two `read_file` rows, memory that mentions notes in files, and a session note that mentions `web_search` produce the ranked offer `web_search`, then `read_file`. `session_tools` returns that offer and sets `list_changed`, `predict_calls` doesn't increase on the read, and a second `session_tools` clears `list_changed` while keeping the same names. This is the chapter 23 prediction path, still in the copied `lib.rs`, and the capstone doesn't call `refresh_prediction`.
 
 ### `a_zero_score_tool_is_left_out`
 
-`predict` on a catalog of `read_file`, `web_search`, `write_file`, and `terminal`, with an unrelated task and empty memory, returns an empty vec. A score of 0 is dropped.
+`predict` on a catalog of `read_file`, `web_search`, `write_file`, and `terminal`, with an unrelated task and empty memory, returns an empty vec, because a score of 0 is dropped.
 
 ### `composite_and_macro_expand_to_steps`
 
-`save_composite("rename_flow", [read_file, write_file])` and `save_macro("morning", [web_search, read_file])` round-trip through `expand`. `expand("missing")` is `None`.
+`save_composite("rename_flow", [read_file, write_file])` and `save_macro("morning", [web_search, read_file])` round-trip through `expand`, and `expand("missing")` is `None`.
 
 ### `code_mode_refuses_a_tool_outside_the_allowlist_or_the_offer`
 
-`run_code_mode` of `call memory {}` returns `NotAllowed("memory")`. `call web_search {}` against an offer of only `read_file` returns `NotOffered`. `call read_file {"path":"a"}` runs once and returns `ok`. `SANDBOX_ALLOWED` contains `terminal` and does not contain `memory`.
+`run_code_mode` of `call memory {}` returns `NotAllowed("memory")`, `call web_search {}` against an offer of only `read_file` returns `NotOffered`, and `call read_file {"path":"a"}` runs once and returns `ok`, while `SANDBOX_ALLOWED` contains `terminal` and doesn't contain `memory`.
 
 ### `code_mode_stops_at_fifty_calls`
 
-A script of `CODE_MODE_MAX_CALLS + 1` lines, and that constant is 50, returns `TooManyCalls`. The check happens before the calls run.
+A script of `CODE_MODE_MAX_CALLS + 1` lines, and that constant is 50, returns `TooManyCalls`, because the check happens before the calls run.
 
 ### `the_scripted_model_is_optional_and_keyless`
 
-A fresh `ScriptedModel` reports 0 calls. `gwservice::demo()` returns the offered name `read_file` and the body `ok`. That `demo` is the learned-gateway demo in `lib.rs`, not `capstone::demo`. Completing the scripted model once returns `unused` and bumps the call count to 1. No key is read.
+A fresh `ScriptedModel` reports 0 calls, and `gwservice::demo()` returns the offered name `read_file` and the body `ok`. That `demo` is the learned-gateway demo in `lib.rs`, not `capstone::demo`, and completing the scripted model once returns `unused` and bumps the call count to 1, with no key read.
 
 ### `kill_moves_the_session_to_the_next_replica`
 
-`Service::new` on replicas `a` and `b` places session `s1` on `a`. `reload` bumps the generation from 1 to 2. The held config arc's strong count is 1 after the reload. `kill("a")` routes `s1` to `b`. The service stays healthy and ready.
+`Service::new` on replicas `a` and `b` places session `s1` on `a`, `reload` bumps the generation from 1 to 2, and the held config arc's strong count is 1 after the reload. `kill("a")` routes `s1` to `b`, and the service stays healthy and ready.
 
 ### `quota_audit_and_drain`
 
-`bearer_ok` accepts `Bearer token` and rejects `token` and `Bearer ` with the trailing space and nothing after it. The first `accept` returns an id. A second session for the same tenant hits `Quota`. A bad token hits `BadToken`. The audit line starts with `accept `. The span list is `gateway.call 1`. `start_drain` clears ready. A new accept hits `Draining`. `finish` drains the inflight count to 0. A `FakeModel` completes `a` to `ok`. This service is the copied chapter 42 router. `load` does not construct it.
+`bearer_ok` accepts `Bearer token` and rejects `token` and `Bearer ` with the trailing space and nothing after it. The first `accept` returns an id, a second session for the same tenant hits `Quota`, a bad token hits `BadToken`, and the audit line starts with `accept `. The span list is `gateway.call 1`, `start_drain` clears ready, a new accept hits `Draining`, and `finish` drains the inflight count to 0. A `FakeModel` completes `a` to `ok`, this service is the copied chapter 42 router, and `load` doesn't construct it.
 
 ### `a_dead_pool_refuses_the_call`
 
-Killing the only replica makes `healthy` false. `accept` returns `NoReplica`.
+Killing the only replica makes `healthy` false, and `accept` returns `NoReplica`.
 
 ### `sampling_stops_at_ten_per_minute`
 
-`SAMPLING_MAX_RPM` is 10. The loop allows that many calls at timestamp 0. The next `allow(0)` is false. `allow(60)` is true.
+`SAMPLING_MAX_RPM` is 10, the loop allows that many calls at timestamp 0, the next `allow(0)` is false, and `allow(60)` is true.
 
 ### `url_elicitation_is_declined`
 
-`elicit(false)` is an approval with `ELICIT_TIMEOUT_SECONDS`. `elicit(true)` is `Declined`. A URL elicitation does not proceed.
+`elicit(false)` is an approval with `ELICIT_TIMEOUT_SECONDS`, `elicit(true)` is `Declined`, and a URL elicitation doesn't proceed.
 
 ### `osv_blocks_malware_and_fails_open_on_the_network`
 
-An `echo` check is `Skipped` and leaves the cache empty. A clean `npx` result is `Clean`. A later check inside the TTL that cannot reach the network stays `Clean`. A `uvx` package with a malware id and no network is `FailOpen` and occupies one cache slot. The same package with a network and `MAL-9` is `Blocked`. A check one second inside `OSV_CACHE_TTL_SECONDS` still returns the blocked malware id.
+An `echo` check is `Skipped` and leaves the cache empty, a clean `npx` result is `Clean`, and a later check inside the TTL that can't reach the network stays `Clean`. A `uvx` package with a malware id and no network is `FailOpen` and occupies one cache slot, the same package with a network and `MAL-9` is `Blocked`, and a check one second inside `OSV_CACHE_TTL_SECONDS` still returns the blocked malware id.
 
 ### `demo_routes_to_the_first_replica`
 
-`service::demo()` equals `route: a`. The capstone binary does not print that line.
+`service::demo()` equals `route: a`, and the capstone binary doesn't print that line.
 
 ## Build, run, and benchmark
 
-The run command and the line are in the sections above. The bench command is the one the workflow uses.
+The run command and the line are in the sections above, and the bench command is the one the workflow uses.
 
 ```bash
 cargo bench -p ch51-capstone --bench capstone --locked -- --warm-up-time 1 --measurement-time 2 --sample-size 10
@@ -545,19 +489,15 @@ fn load_100(c: &mut Criterion) {
 }
 ```
 
-`load_100` has no setup outside the iteration. Every sample calls `load(100)` and `black_box` of the report.
-
-The means are `mean.point_estimate` from [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196), section `51`. Bench ids: `51/dynamic_tokens`, `51/load_100`, `49/dynamic_tokens`, `47/dynamic_tokens`, `49/load_100`, `47/load_100`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
+`load_100` has no setup outside the iteration, so every sample calls `load(100)` and then `black_box` of the report. The means are `mean.point_estimate` from [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196), section `51`, and the bench ids are `51/dynamic_tokens`, `51/load_100`, `49/dynamic_tokens`, `47/dynamic_tokens`, `49/load_100`, and `47/load_100`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
-The two token totals are different measurements. `compare` sums 18-byte schemas and gets 160, 40, and 5. `run_rename_task` sums `schema_blob` text through the session telemetry. Printing the task schema tokens on the demo line would show a different triple. The demo prints the `compare` triple and the task success bits.
+The two token totals are different measurements, because `compare` sums the 18-byte schemas into the totals from the opening while `run_rename_task` sums `schema_blob` text through the session telemetry. Printing the task schema tokens on the demo line would show a different triple, so the demo prints the `compare` triple and the task success bits.
 
-`p99` of the load is a rank of nanosecond samples. The test of `1..=100` checks the index math. `load`'s `p99_ns > 0` checks that a sample existed. Putting either number on the demo line would look like a benchmark. The benchmark is `load_100`'s mean of the whole function. Those are different jobs.
+Integer `div_ceil` makes an 18-byte schema into 5 tokens, and dropping the ceil would make 4, so the arms would be 128, 32, and 4. Hermes calls `math.ceil` on a float, and for this length the two roundings agree, but they aren't the same function, because a length that is a multiple of 4 agrees either way and a length with a remainder is where `div_ceil` and truncating division split.
 
-Integer `div_ceil` makes 18 bytes into 5 tokens. Dropping the ceil would make 4, and the arms would be 128, 32, and 4. The Hermes call is `math.ceil` of a float. For this length the two roundings agree. They are not the same function. A length that is a multiple of 4 agrees either way. A length with a remainder is where `div_ceil` and truncating division split.
-
-`assert!(admit(...))` inside `load` aborts the process if the bound is broken. The bench assumes the happy path. A change that stopped resetting at 8 would fail the bench by panicking, and it would fail `the_load_stays_inside_the_bound_and_ranks_p99` only if that panic happened inside `load(100)`. `admit(8)` is checked on its own, before `load`.
+`assert!(admit(...))` inside `load` aborts the process if the bound is broken, and the bench assumes the happy path. A change that stopped resetting at 8 would fail the bench by panicking, and it would fail `the_load_stays_inside_the_bound_and_ranks_p99` only if that panic happened inside `load(100)`, because `admit(8)` is checked on its own before `load`.
 
 ## Guardrails in this chapter
 
@@ -573,7 +513,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). The 
 
 ## What you implement
 
-`my-harness/tests/ch51.rs` is the milestone.
+`my-harness/tests/ch51.rs` is the milestone for this chapter.
 
 ```rust
 use my_harness::chapter_51_arm_succeeded;
@@ -586,7 +526,7 @@ fn each_arm_reports_success() {
 }
 ```
 
-The stub panics.
+The stub panics until the milestone is filled in.
 
 ```rust
 pub fn chapter_51_arm_succeeded(name: &str) -> bool {
@@ -595,17 +535,25 @@ pub fn chapter_51_arm_succeeded(name: &str) -> bool {
 }
 ```
 
-`todo!("chapter 51")` is the panic. The test asks the function about `every`, `static`, and `dynamic`, and it wants `true` for each. In the step crate that is `compare` of `tool_07` with no deadline: all three `Arm.success` bits are true, and `task_arms` reports the same three successes from `run_rename_task`. The stub stays `todo!`. 
+`todo!("chapter 51")` is the panic, and the test asks the function about `every`, `static`, and `dynamic`, wanting `true` for each. In the step crate that is `compare` of `tool_07` with no deadline, where all three `Arm.success` bits are true, and `task_arms` reports the same three successes from `run_rename_task`, while the stub stays `todo!`.
 
 ## Chapter summary
 
-- **Arms.** `compare` scores every card, the first 8, and the one named card. For `tool_07` the tokens are 160, 40, and 5, and all three succeed.
-- **Tokens.** `approx_tokens` is `len.div_ceil(4)`. An 18-byte schema is 5.
-- **Tasks.** `task_arms` runs the rename task on `SessionGateway` three times. All three succeed. Their schema tokens are the telemetry blobs.
-- **Load.** 100 in-memory calls, bound 8, 13 waves. `p99` is computed and not printed.
-- **Process.** `mcp-gateway` re-exports `LearnedGateway` as `Gateway`. It binds no socket.
-- **Time.** `dynamic_tokens` mean `264.8 ns`. `load_100` mean `122.77 µs`. Both are `mean.point_estimate`.
+- `compare` scores every card, the first 8, and the one named card, and for `tool_07` the tokens are 160, 40, and 5, with all three succeeding.
+- `approx_tokens` is `len.div_ceil(4)`, so an 18-byte schema is 5 tokens, which is the rule the opening applied to the sample.
+- `task_arms` runs the rename task on `SessionGateway` three times, all three succeed, and their schema tokens are the telemetry blobs rather than the compare totals.
+- One hundred in-memory calls at bound 8 produce 13 waves, and `p99` is computed and left off the printed line.
+- `mcp-gateway` re-exports `LearnedGateway` as `Gateway`, and the process binds no socket.
+- `dynamic_tokens` has mean `264.8 ns` and `load_100` has mean `122.77 µs`, and both figures are `mean.point_estimate`.
+
+## Where the server line stands
+
+The server line is a separate program from the harness, and the measurement of that program stops in this chapter. Chapter 5 is the minimal server, a fixed list and a call gate that binds no socket. Chapter 7 is the catalog, reloaded behind an `Arc` so an in-flight search keeps the index it started with. Chapter 8 is the session toolset, where a session sees a smaller set than the whole catalog and the three offer shapes first show up. Chapter 15 is the limit and the breaker on that gateway. Chapter 23 is the learned offer: usage, memory, and a session note can change the names `session_tools` returns, a zero score stays out of the set, and the read itself doesn't call `predict`. Chapter 37 is pools and discovery, least-outstanding and power-of-two across backends, one tool name grouped across upstreams, and discovery held at four. Chapter 42 is the service front this crate copies, with `route` by session id, a drain that stops new accepts and lets accepted calls finish, sampling capped at ten a minute, URL elicitation declined, and an in-memory malware cache that fails open when the network is down.
+
+This chapter copies that crate, adds `capstone`, and compares the three offers on 32 cards of 18 bytes, then runs an in-memory load of 100 through `SessionGateway`. The dynamic arm is the small offer that still finishes the task, and a deadline equal to that arm's total is what fails the wide arms while the dynamic arm stays successful. The load admits eight calls in a wave, reports 13 waves, and fills `p99_ns` without printing it. `mcp-gateway` re-exports `LearnedGateway` from this library as `Gateway`, beside the session types, and the library is still `gwservice`. The process still binds no socket, so there is still no `oha` run, and the token count is still integer `div_ceil` on those schemas rather than a tokenizer or the 10,000-tool list from chapter 6.
+
+That is the server line as the book leaves it: a catalog, a session toolset, limits, a learned offer, pools and discovery, a service front, and this comparison of three offers plus the load of 100. The limits that were already true stay true here, which means no socket, no `oha`, no tokenizer, and 32 cards of 18 bytes.
 
 ## What's next
 
-Chapter 52 re-runs chapter 9's saved tasks on the full harness. Chapter 52 copies chapter 50, the tracing harness, not this server crate. The server line ends here.
+Chapter 52 re-runs the saved tasks on the tracing harness, not on this crate.
