@@ -13,6 +13,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: "1.99.1"
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
         with:
@@ -43,6 +44,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.99.1"
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: .
@@ -85,6 +88,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.99.1"
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: .
@@ -116,6 +121,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.99.1"
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: .
@@ -158,6 +165,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.99.1"
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: .
@@ -199,6 +208,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.99.1"
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: .
