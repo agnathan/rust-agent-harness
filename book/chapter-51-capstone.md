@@ -552,8 +552,8 @@ The server line is a separate program from the harness, and the measurement of t
 
 This chapter copies that crate, adds `capstone`, and compares the three offers on 32 cards of 18 bytes, then runs an in-memory load of 100 through `SessionGateway`. The dynamic arm is the small offer that still finishes the task, and a deadline equal to that arm's total is what fails the wide arms while the dynamic arm stays successful. The load admits eight calls in a wave, reports 13 waves, and fills `p99_ns` without printing it. `mcp-gateway` re-exports `LearnedGateway` from this library as `Gateway`, beside the session types, and the library is still `gwservice`. The process still binds no socket, so there is still no `oha` run, and the token count is still integer `div_ceil` on those schemas rather than a tokenizer or the 10,000-tool list from chapter 6.
 
-That is the server line as the book leaves it: a catalog, a session toolset, limits, a learned offer, pools and discovery, a service front, and this comparison of three offers plus the load of 100. The limits that were already true stay true here, which means no socket, no `oha`, no tokenizer, and 32 cards of 18 bytes.
+That is the server line as the book leaves it: a catalog, a session toolset, limits, a learned offer, pools and discovery, a service front, and this comparison of three offers plus the load of 100. The limits that were already true stay true here, which means no socket, no `oha`, no tokenizer, and 32 cards of 18 bytes. The harness continues one chapter past the eval suite. Chapter 53 copies that harness, not this crate, and runs one task twice.
 
 ## What's next
 
-Chapter 52 re-runs the saved tasks on the tracing harness, not on this crate.
+Chapter 52 re-runs the saved tasks on the tracing harness, not on this crate. Chapter 53 is the harness after that, and it still doesn't copy this directory.

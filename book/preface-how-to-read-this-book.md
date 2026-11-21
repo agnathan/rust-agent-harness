@@ -18,6 +18,10 @@ The MCP gateway is a separate program, `mcp-gateway/`, not a module of the harne
 
 A sidebar is a blockquote labeled **Rust sidebar**. It explains the language feature the code next to it just used. `Option`, `Result`, enums, and `Arc` are taught in [chapter 1](chapter-01-first-contact.md). Matching on an enum is in [chapter 2](chapter-02-conversations.md). Later chapters point back there when the same feature shows up again, and they keep a sidebar only for what is new in that chapter.
 
+## The last chapter
+
+Chapter 53 runs one task twice on the fake model. The first score fails. The skill, the curator, and the librarian run. The second score passes. That chapter is the harness, copied forward from chapter 52. It is not another server chapter, and the run does not call OpenRouter. The command that does take an API key is the older ask path, and chapter 53 says so.
+
 ## The numbers
 
 The commands and the measured means stay in the chapter. What Criterion's `time:` line means, which machine produced the early tables, and how a later mean was taken from a Benchmarks run is [How the numbers were measured](appendix-benchmark-method.md).

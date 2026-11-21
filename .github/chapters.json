@@ -405,5 +405,12 @@
     "step": "ch52-evals",
     "part": "VI",
     "track": "harness"
+  },
+  {
+    "n": 53,
+    "title": "The Loop Closes",
+    "step": "ch53-the-loop-closes",
+    "part": "VI",
+    "track": "harness"
   }
 ]

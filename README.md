@@ -57,7 +57,7 @@ mdbook build book
 
 The chapter 1 and chapter 2 clients default to OpenRouter (`https://openrouter.ai/api/v1`), `OPENROUTER_API_KEY`, and `HARNESS_MODEL` (default `openai/gpt-4o-mini`). `--base-url` points the same client at another OpenAI-compatible server and then reads `OPENAI_API_KEY` (empty is allowed for Ollama). `--mock` uses the offline provider. Chapter 2 submits each turn to a session inbox before the provider runs.
 
-Chapters 0 through 52, in six parts. Eight chapters are a standalone MCP gateway, marked *(server)* and interleaved with the harness: chapters 5, 7, 8, 15, 23, 37, 42, and 51. The split, and the notes from Hermes and from existing gateways, are [docs/mcp-gateway.md](docs/mcp-gateway.md). Performance is a budget on every chapter, starting with tokio in chapter 1. The targets are [docs/performance.md](docs/performance.md). MCP is first-class: tools are MCP-shaped (chapter 3), the harness is an MCP client (chapter 4, via `rmcp`), and the gateway is the MCP server (chapter 5, then chapters 7, 8, 15, 23, 37, 42, and 51). Part II is learning, and that work stays off the hot path: sessions, memory, recall, skills, reflection, and curation. The design is [docs/self-improvement.md](docs/self-improvement.md). Which team pattern to use is [docs/team-patterns.md](docs/team-patterns.md). The default is a supervisor that calls specialists as tools and fans them out under a bound. Part V runs the harness as a service, and chapter 42 runs the gateway as one. Chapter 39 is the chat gateway into the session inbox. It is a different process from the MCP server.
+Chapters 0 through 53, in six parts. Eight chapters are a standalone MCP gateway, marked *(server)* and interleaved with the harness: chapters 5, 7, 8, 15, 23, 37, 42, and 51. The split, and the notes from Hermes and from existing gateways, are [docs/mcp-gateway.md](docs/mcp-gateway.md). Performance is a budget on every chapter, starting with tokio in chapter 1. The targets are [docs/performance.md](docs/performance.md). MCP is first-class: tools are MCP-shaped (chapter 3), the harness is an MCP client (chapter 4, via `rmcp`), and the gateway is the MCP server (chapter 5, then chapters 7, 8, 15, 23, 37, 42, and 51). Part II is learning, and that work stays off the hot path: sessions, memory, recall, skills, reflection, and curation. The design is [docs/self-improvement.md](docs/self-improvement.md). Which team pattern to use is [docs/team-patterns.md](docs/team-patterns.md). The default is a supervisor that calls specialists as tools and fans them out under a bound. Part V runs the harness as a service, and chapter 42 runs the gateway as one. Chapter 39 is the chat gateway into the session inbox. It is a different process from the MCP server.
 
 **Part I: One agent**
 
@@ -141,8 +141,9 @@ Chapters 0 through 52, in six parts. Eight chapters are a standalone MCP gateway
 | 50 | Seeing Inside | `steps/ch50-tracing` | spans on the chapter 1 events and across the gateway |
 | 51 | Load and Token Capstone *(server)* | `steps/ch51-capstone` | load test plus tokens per completed task. No socket |
 | 52 | Evals | `steps/ch52-evals` | re-run the chapter 9 task names, plus trajectories, still with no fail threshold |
+| 53 | The Loop Closes | `steps/ch53-the-loop-closes` | one task, scored twice: the first attempt fails, a skill is kept, the second attempt passes |
 
-Chapters 1 through 52 have step crates. Chapter 5 has the `mcp-gateway` skeleton. The server steps, including `steps/ch51-capstone`, do not bind a socket. The same list drives CI (`.github/chapters.json`).
+Chapters 1 through 53 have step crates. Chapter 5 has the `mcp-gateway` skeleton. The server steps, including `steps/ch51-capstone`, do not bind a socket. The same list drives CI (`.github/chapters.json`).
 
 The book builds with [mdBook](https://rust-lang.github.io/mdBook/): `mdbook build` in `book/` (output in `book/_build/`, not committed).
 
