@@ -1,16 +1,16 @@
 # Chapter 12: Hooks and Plugins
 
-Chapter 11 can refuse a command. It cannot yet let some other code watch the call, rewrite the arguments, or keep a note about the turn. Plugins, a memory backend, and the reflection fork all need a place to stand that is not a copy of `drive_loop`. This chapter adds that place. The crate is `steps/ch12-hooks`, a copy of chapter 11 plus a `hooks` module. The package is `ch12-hooks`.
+A plugin that can refuse `rm`, rewrite an argument, or keep a note about the turn needs a place to stand that isn't a copy of `drive_loop`. This chapter builds that place, and then leaves it unwired on purpose. `drive_loop` doesn't call the hook runner. The chapter's tests do. Memory, reflection, and curation, when they arrive, call their own functions, because pasting each new lesson into the hot path would make every skill and every memory write a change to the loop a continuously improving harness is trying to keep stable.
 
-The loop does not call the hook runner. The chapter's own tests do. Later chapters keep that split: memory, reflection, and curation call their own functions, and `drive_loop` still does not name the runner. A hook must not hold the dispatch permit across a human wait. That rule is chapter 11's, and a plugin does not get to break it.
+Chapter 11 can already refuse a command. It can't yet let other code watch the call. The crate is `steps/ch12-hooks`, a copy of chapter 11 plus a `hooks` module. The package is `ch12-hooks`.
 
-`ToolHook` is the plugin. `dispatch_pre` walks the hooks until one blocks. The memory trait is defined here, and chapter 21 is the file implementation. `scan_plugin_shape` checks the structural caps and never returns `Dangerous` by itself. The pattern engine that can return dangerous is chapter 25.
+`ToolHook` is the plugin. `dispatch_pre` walks the hooks until one blocks, and a block wins over an approve even when the approve was registered first. A hook error is skipped, so a broken plugin doesn't become a silent allow of a later block. The memory trait is defined here, and chapter 21 is the file implementation. A queue of 64 turns is the background write, and it doesn't open a file. `scan_plugin_shape` checks three size caps and returns caution when a plugin is too big. It never returns `Dangerous` by itself. The pattern engine that can is chapter 25, and `force` can't override that verdict.
 
-This module is the extension point the learning chapters hang on. If those writes were pasted into `drive_loop`, every new lesson would be a change to the hot path.
+A hook also must not hold the dispatch permit across a human wait. That rule is chapter 11's, and a plugin doesn't get to break it.
 
-Rust, where the feature needs it: a trait is the plugin and the memory backend. A borrow is why the API hook does not copy a thousand messages. An enum is the pre-action, so a hook returns one directive. The queue is the background write.
+A trait is the plugin and the memory backend. The API hook borrows the messages, so a thousand of them aren't copied on the way in. An enum is the one directive a hook returns.
 
-`cargo run -p ch12-hooks` runs the scripted block. The exercise is `my-harness/tests/ch12.rs`: an oversized plugin is caution, and force does not pass a dangerous verdict.
+`cargo run -p ch12-hooks` runs the scripted block. The exercise is `my-harness/tests/ch12.rs`: an oversized plugin is caution, and force doesn't pass a dangerous verdict.
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -39,19 +39,11 @@ Rust, where the feature needs it: a trait is the plugin and the memory backend. 
 | `Approve` | Remember the first one. A later block still wins |
 | error | Skip the hook |
 
-`Approve` does not run the tool. The caller passes the reason through `escalation_block`, which calls chapter 11's `check`. Cron mode denies a dangerous command, so the hook's escalate becomes the denial text. `Ask` is also a block in this function: the synchronous path has no human. Chapter 11's `run_call` is the wait. `gate_failed` is the string used when the gate cannot be asked.
+`Approve` doesn't run the tool. The caller passes the reason through `escalation_block`, which calls chapter 11's `check`, and cron mode denies a dangerous command, so the hook's escalate becomes the denial text. `Ask` is also a block in this function, because the synchronous path has no human and chapter 11's `run_call` is the wait. `gate_failed` is the string used when the gate can't be asked.
 
-`dispatch_post` lets each hook replace the result string. The last `Some` wins.
+`dispatch_post` lets each hook replace the result string, and the last `Some` wins. `run_api_hook` passes the slice through. The test stores `messages.as_ptr()` and checks it against the vec the caller still owns. `MemoryQueue::enqueue_turn` pushes `user assistant` and drops the oldest job past 64, without opening a file. `Registry::available` is true only when the tool's check passed and its toolset was enabled by a hook, so enabling `notes` leaves `secret` hidden when the check failed. `run_script` is the fake model, and a block ends the list.
 
-`run_api_hook` passes the slice through. The test stores `messages.as_ptr()` and checks it against the vec the caller still owns.
-
-`MemoryQueue::enqueue_turn` pushes `user assistant` and drops the oldest job past 64. It does not open a file.
-
-`Registry::available` is true only when the tool's check passed and its toolset was enabled by a hook. Enabling `notes` does not make `secret` available when the check failed.
-
-`run_script` is the fake model. A block ends the list.
-
-## 12.1 The module is `hooks`, and `drive_loop` does not call it
+## 12.1 A module the loop doesn't call
 
 The file is `steps/ch12-hooks/crates/harness-core/src/hooks.rs`. The module comment is the job of the file.
 
@@ -71,7 +63,7 @@ use serde_json::{Map, Value};
 
 `registry.rs` has been here since chapter 3. `ToolRegistry` stores `Arc<dyn Tool>`. The `Registry` later in this file stores checks and toolset names. `drive_loop` still takes `&ToolRegistry`.
 
-I searched `agent.rs`. `dispatch_pre`, `dispatch_post`, `run_api_hook`, and `scan_plugin_shape` do not appear. `drive_loop` is where `run_loop`, `run_loop_driven`, and `run_loop_with_inbox` end up.
+`dispatch_pre`, `dispatch_post`, `run_api_hook`, and `scan_plugin_shape` aren't in `agent.rs`. `drive_loop` is where `run_loop`, `run_loop_driven`, and `run_loop_with_inbox` end up.
 
 ```rust
 #[allow(clippy::too_many_arguments)]
@@ -102,11 +94,11 @@ for call in runnable {
     }
 ```
 
-`deny_tool` is the approval floor. Survivors go to `dispatcher.run_raced`. Nothing between those lines asks a `ToolHook`. The inherited evals still use `ScriptedProvider` and `ToolRegistry`. The new tests build hooks themselves.
+`deny_tool` is the approval floor, and survivors go to `dispatcher.run_raced`. Nothing between those lines asks a `ToolHook`. The inherited evals still use `ScriptedProvider` and `ToolRegistry`, and the new tests build hooks themselves.
 
-`drive_loop` does not call the hook runner. The chapter tests do. `tests/hooks.rs` calls `dispatch_pre`, `dispatch_post`, `escalation_block`, `run_api_hook`, `run_script`, and `MemoryQueue`. `tests/plugin_guard.rs` calls the plugin scan. `benches/hooks.rs` times three functions. `src/bin/chapter_demo.rs` calls `run_script`.
+`tests/hooks.rs` calls `dispatch_pre`, `dispatch_post`, `escalation_block`, `run_api_hook`, `run_script`, and `MemoryQueue`. `tests/plugin_guard.rs` calls the plugin scan, `benches/hooks.rs` times three functions, and `src/bin/chapter_demo.rs` calls `run_script`. The loop, as the opening said, doesn't.
 
-## 12.2 `HookError` is a message the runner drops
+## 12.2 A hook error is skipped
 
 ```rust
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -122,7 +114,7 @@ pub struct HookError {
 
 The failing-hook test builds `HookError { message: "plugin down".into() }`. The runner never reads `message`. A failure is a skip. The tool result is a `PreAction::Block` message, and a failure is not a block. The field is there so the hook author has a place to put the reason.
 
-## 12.3 `PreAction` is one directive
+## 12.3 One directive per hook
 
 One hook can ask for several things. Each thing is one variant. The hook returns them in a `Vec`, in the order it means.
 
@@ -143,13 +135,13 @@ pub enum PreAction {
 > - `Clone` is why a test hook can store a `Vec<PreAction>` and return a copy. The runner then moves each action into `match`.
 > - `Option`, `Result`, enums, and `Arc` are taught in [chapter 1](chapter-01-first-contact.md).
 
-`Continue` and an empty `Vec` are both no-ops. `Block` is the veto: the message becomes the tool result, and later hooks do not run. `Approve` does not run the tool and does not stop the walk. The runner keeps the first pair. `Modify` is a patch merged into the arguments later hooks see. Section 12.7 covers a patch that is not an object.
+`Continue` and an empty `Vec` are both no-ops. `Block` is the veto: the message becomes the tool result, and later hooks don't run. `Approve` doesn't run the tool and doesn't stop the walk, so the runner keeps the first pair. `Modify` is a patch merged into the arguments later hooks see, and section 12.7 covers a patch that isn't an object.
 
-The block-after-approve test returns `Modify` then `Approve` from the first hook. I apply that vec in order until a block returns. I do not sort it into the Hermes scan order.
+The block-after-approve test returns `Modify` then `Approve` from the first hook. The runner applies that vec in order until a block returns, and it doesn't sort the actions into the Hermes scan order.
 
-## 12.4 `ToolHook` is the plugin
+## 12.4 The plugin trait
 
-A plugin here is a type that implements `ToolHook`. The runner does not name the concrete struct.
+A plugin here is a type that implements `ToolHook`, and the runner doesn't name the concrete struct.
 
 ```rust
 pub trait ToolHook: Send + Sync {
@@ -184,7 +176,7 @@ pub struct NopHook;
 impl ToolHook for NopHook {}
 ```
 
-`NopHook` is a unit struct. No fields. The bench passes `&NopHook` where the parameter is `&dyn ToolHook`. A local reference is enough when the hook does not have to outlive the call. There is no `Arc` on that path.
+`NopHook` is a unit struct with no fields. The bench passes `&NopHook` where the parameter is `&dyn ToolHook`. A local reference is enough when the hook doesn't have to outlive the call, and there is no `Arc` on that path.
 
 > **Rust sidebar: `Result` is success or failure**
 >
@@ -203,7 +195,7 @@ impl ToolHook for NopHook {}
 
 `pre_tool_call` sees `args` as they stand. An earlier hook's patch is already there. This hook's own patches are merged after it returns, so the next hook sees them.
 
-## 12.5 `Dispatch` is what the walk returns
+## 12.5 What the walk returns
 
 The walk hands back three facts: whether to stop, what the arguments are now, and whether anyone asked for a human.
 
@@ -223,7 +215,7 @@ pub struct Dispatch {
 
 `approve` is the pair the comment names: message, then rule key. `None` means nobody asked, or a later block wiped the request. `Some(("first", "a"))` is what the second test asserts. I did not give the pair its own struct. Nothing else in the file passes it around except this field and the local inside `dispatch_pre`.
 
-## 12.6 `dispatch_pre` walks hooks until a block
+## 12.6 Walking hooks until one blocks
 
 Block wins over approve. Modify patches accumulate until a block. A hook error is ignored, which is the same as "hook failures never block."
 
@@ -280,7 +272,7 @@ pub fn dispatch_pre(hooks: &[Arc<dyn ToolHook>], name: &str, mut args: Value) ->
 
 `Approve` writes the pair only while `first_approve` is `None`. The second approve does not replace the first, and it does not return, so a later block can still win. The bottom return is the only path that keeps an approve. An empty hook slice returns the original `args` with neither a block nor an approve.
 
-## 12.7 `merge_args` is a shallow patch
+## 12.7 A shallow patch of the arguments
 
 Only `dispatch_pre` calls this. It is private.
 
@@ -308,9 +300,9 @@ The arguments are not an object. The first `else` clones the patch over `args` a
 
 The arguments are an object and the patch is not. The second `else` returns and `args` stays. A string patch does not wipe a good object.
 
-Both are objects. `insert` adds the key or replaces the value. Both the key and the value are cloned. A nested object is replaced whole. The function does not call itself. That is the shallow merge. The test starts from `{}` and inserts `path`. A key the patch does not mention is left alone. The patch stays borrowed. The clone is what enters `args`.
+Both are objects, so `insert` adds the key or replaces the value, and both the key and the value are cloned. A nested object is replaced whole, because the function doesn't call itself, and that replacement is the shallow merge. The test starts from `{}` and inserts `path`. A key the patch doesn't mention is left alone. The patch stays borrowed, and the clone is what enters `args`.
 
-## 12.8 `dispatch_post` lets the last `Some` win
+## 12.8 The last replacement wins
 
 The tool has already produced a string. Every hook may replace it. Nobody stops the walk.
 
@@ -331,7 +323,7 @@ pub fn dispatch_post(hooks: &[Arc<dyn ToolHook>], name: &str, mut result: String
 
 There is no `Result` here. A post hook cannot skip itself by failing, and it cannot veto. The name is passed so a hook can rewrite one tool and leave another. `run_script` does not call `dispatch_post` when `dispatch.block` is `Some`. The block message is the result, and the post hooks do not see it.
 
-## 12.9 `escalation_block` turns an unapproved escalate into a block
+## 12.9 An unapproved escalate becomes a block
 
 `Dispatch.approve` is a request. This function is what a caller does with it. `run_script` does not call it. The cron test does.
 
@@ -368,7 +360,7 @@ pub fn cron_policy() -> Policy {
 
 `Allow` returns `None`: do not block. This function still does not run the tool. `Deny` returns `Some(message)`, the pipeline's text unchanged. The test accepts `"has NOT consented"` or `"BLOCKED"`. `Ask` ignores the verdict's description and returns `BLOCKED: plugin approval required for {tool}. The user has NOT consented.` `Ask` is a block because this function does not wait. Chapter 11's `run_call` is the real wait. The `..` in each pattern leaves the unused fields unbound.
 
-## 12.10 `gate_failed` is the string when the gate cannot run
+## 12.10 When the gate cannot run
 
 A denial is a `Verdict`. A gate that cannot be asked is not one. Hermes blocks that call. This is the string.
 
@@ -380,7 +372,7 @@ pub fn gate_failed(tool: &str) -> String {
 
 It does not call `check`. The only input is the tool name. `gate_failed("rm")` is `BLOCKED: plugin approval gate failed for rm`. The test uses `contains("plugin approval gate failed")`. I split it from `escalation_block` so a log can tell "the pipeline said no" apart from "the pipeline could not be run." The adopted line in the Hermes box names this sentence.
 
-## 12.11 `ApiHook` and `run_api_hook` borrow the messages
+## 12.11 Borrowing the messages
 
 The third hook sees the messages about to be sent. It does not replace them.
 
@@ -414,7 +406,7 @@ This `Message` is two owned strings. `crate::message::Message` has a `Role` enum
 
 The test stores `messages.as_ptr() as usize` and the length, then compares the pointer with the vec the caller still holds. Same address, length 1. The method takes `&self` and the trait requires `Sync`, so the test uses `AtomicUsize`. The library function only forwards the slice.
 
-## 12.12 `TurnRecord` and `MemoryQueue`
+## 12.12 A queue for the finished turn
 
 The memory hook records one finished turn and returns. It does not open a file. Chapter 21 is the backend that does.
 
@@ -483,9 +475,9 @@ impl MemoryBackend for MemoryQueue {
 
 The test's stored string is `hello ok`. It asserts `len() == 1` and `name() == "queue"`. There is no public pop. Chapter 21 is the copy a caller can read. `name` returns the literal `"queue"`.
 
-## 12.13 `Registry` in this file is not the chapter 3 tool registry
+## 12.13 A second registry, for toolsets
 
-Chapter 3's registry is `ToolRegistry` in `registry.rs`. `drive_loop` takes `&ToolRegistry`. It stores tools. This `Registry` lives in `hooks.rs`. It stores a check bit, the names in each set, and the sets a hook enabled. The tests call this one. The loop does not. This is not the chapter 3 tool registry.
+Chapter 3's registry is `ToolRegistry` in `registry.rs`. `drive_loop` takes `&ToolRegistry` and stores tools there. This `Registry` lives in `hooks.rs` and stores a check bit, the names in each set, and the sets a hook enabled. The tests call this one. The loop doesn't, and it isn't the chapter 3 tool registry.
 
 ```rust
 #[derive(Debug, Clone)]
@@ -551,7 +543,7 @@ When the bit is true, `any` needs a set that is both enabled and lists the name.
 
 `Default` calls `new()`. Chapter 3's `ToolRegistry` still decides availability on the loop. This map is the hook rule: a plugin may turn a set on, and a failed check still hides the tool. Hermes's whitelist narrows. This enable is the other direction.
 
-## 12.14 `BlockName` blocks one tool
+## 12.14 Blocking one name
 
 The demo needs a hook that stops `rm` and lets any other name through.
 
@@ -580,7 +572,7 @@ Both branches are `Ok`. This hook does not fail.
 
 `post_tool_call` and `enable_toolset` stay the defaults. The fields are `pub` so another crate can write `BlockName { name: "rm".into(), message: "BLOCKED: hook refused rm".into() }`. `.into()` allocates the `String`.
 
-## 12.15 `run_script` is the fake model
+## 12.15 The fake model
 
 The model in this chapter is a list of calls. No HTTP and no key.
 
@@ -628,7 +620,7 @@ The other path formats `ran {name}`, runs every post hook, and pushes. The tool 
 
 The demo binary builds the same `BlockName` inside `Arc::new`, coerces it to `Arc<dyn ToolHook>`, and passes `std::slice::from_ref`. It prints `result: BLOCKED: hook refused rm` and `stopped: 1`. The `assert_eq` of length 1 is in `main`. No key.
 
-## 12.16 `sample_block` is the one-call form of that script
+## 12.16 One blocked call the demo never makes
 
 ```rust
 pub fn object_map(entries: &[(&str, &str)]) -> Value {
@@ -655,11 +647,9 @@ pub fn sample_block() -> String {
 }
 ```
 
-The doc comment says this touches the map so a denied escalation still type-checks in the binary. The body does not call `escalation_block`. It runs one scripted `rm` and returns the result string. The demo and the tests do not call `sample_block`. It is the library form of that one blocked call.
+The comment says the function exists so a denied escalation still type-checks in the binary. The body runs one scripted `rm` through `run_script` and returns `BLOCKED: hook refused rm`. It doesn't call `escalation_block`, and neither the demo nor the tests call `sample_block`. `object_map` is the helper those calls share: each pair becomes an owned key and a `Value::String`, `object_map(&[])` is `{}`, and `object_map(&[("path", "/")])` is the demo's object. `pop` takes the one outcome, `expect("one call")` panics if the vec is empty, and `BlockName` ignores `path`.
 
-`object_map` copies each pair into an owned key and a `Value::String`, then wraps `Value::Object`. `object_map(&[])` is `{}`. `object_map(&[("path", "/")])` is the demo's object, without `json!`. `pop` takes the one outcome. `expect("one call")` panics if the vec is empty. `.result` is `BLOCKED: hook refused rm`. `BlockName` ignores `path`.
-
-## 12.17 Three caps, and the verdict types
+## 12.17 How big a plugin may be
 
 A plugin install is the moment a hook enters the process. The structural half of Hermes `tools/plugin_guard.py` is these constants and the two functions under them. The pattern engine stays chapter 25.
 
@@ -669,7 +659,7 @@ pub const MAX_PLUGIN_TOTAL_BYTES: u64 = 10 * 1024 * 1024;
 pub const MAX_PLUGIN_SINGLE_FILE_BYTES: u64 = 1024 * 1024;
 ```
 
-The file cap is 400, a `usize`, because it counts entries in the slice. The total cap is `10 * 1024 * 1024` bytes, 10 MB. The one-file cap is `1024 * 1024` bytes, 1 MB. Both byte constants are `u64`, and the multiplication is compile-time. The tests add one when they want to step over a cap, so the numbers live here.
+The file cap is 400, a `usize`, because it counts entries in the slice. The total cap is 10 MB and the one-file cap is 1 MB, both `u64` products the compiler folds. The tests add one when they want to step over a cap, which is why the numbers live here rather than only in the milestone.
 
 ```rust
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -693,11 +683,9 @@ pub struct PluginFile {
 }
 ```
 
-`PluginVerdict` is the scan. `InstallDecision` is the install. Both are `Copy`, so a call copies the discriminant. `Dangerous` exists so the install function can refuse it. `scan_plugin_shape` does not construct it. A pattern hit is chapter 25.
+`PluginVerdict` is what the scan returns, and `InstallDecision` is whether to install. Both are `Copy`, so a call copies the discriminant. `Dangerous` exists so the install function can refuse it. `scan_plugin_shape` doesn't construct it, because a pattern hit is chapter 25. `PluginFile` is the caller's measurement: `bytes` is the size already counted, `path` is a `String` so the struct isn't `Copy`, and the scanner reads the size without opening the path.
 
-`PluginFile` is the caller's measurement. `bytes` is the size already counted. The struct is not `Copy`, because `path` is a `String`. The scanner reads `bytes` and does not open `path`.
-
-## 12.18 `scan_plugin_shape` never returns `Dangerous`
+## 12.18 Size is caution, not danger
 
 Oversized is caution, not a hard block.
 
@@ -729,13 +717,9 @@ pub fn scan_plugin_shape(files: &[PluginFile]) -> PluginVerdict {
 > - `saturating_add` returns `u64::MAX` instead. That value is still over `MAX_PLUGIN_TOTAL_BYTES`, so the verdict stays caution.
 > - File count uses `+= 1`. A slice cannot be longer than `usize::MAX`, so that increment does not use the saturating form.
 
-`count`, `total`, and `caution` start at 0, 0, and false. A zero-byte file still counts. Every comparison is `>`, so exactly 400 files, exactly 10 MB, and exactly 1 MB stay clear.
+`count`, `total`, and `caution` start at 0, 0, and false. A zero-byte file still counts, and every comparison is `>`, so exactly 400 files, exactly 10 MB, and exactly 1 MB stay `Safe`. One file of `MAX_PLUGIN_SINGLE_FILE_BYTES + 1` trips only the single-file check. 401 one-byte files trip only the count, since their total is 401. One file of `MAX_PLUGIN_TOTAL_BYTES + 1` is also over 1 MB, so both checks fire, and several files each at or under 1 MB that sum past 10 MB trip only the total. The loop doesn't return early: one flag, decided after the slice, and oversized is `Caution`. There is no third arm. An empty slice, and the 32-byte file `ok.txt`, are `Safe`. `PluginVerdict::Dangerous` isn't constructed here.
 
-One file of `MAX_PLUGIN_SINGLE_FILE_BYTES + 1` sets the flag inside the loop. Count is 1 and the total is under 10 MB, so that input trips only the single-file check. 401 one-byte files trip only the count check. Their total is 401. One file of `MAX_PLUGIN_TOTAL_BYTES + 1` is also over 1 MB, so both the in-loop check and the total check fire. Several files each at or under 1 MB that sum past 10 MB would take the total check alone. The loop does not return early. One flag, decided after the slice. Oversized is `Caution`.
-
-`caution` true returns `Caution`. Otherwise the function returns `Safe`. There is no third arm. `PluginVerdict::Dangerous` is not constructed. `scan_plugin_shape` never returns `Dangerous`. An empty slice returns `Safe`. The 32-byte file `ok.txt` returns `Safe`. Setting the flag twice is still `Caution`.
-
-## 12.19 `should_allow_plugin_install` lets force override caution only
+## 12.19 Force overrides caution only
 
 The scan says what the shape looks like. This function says whether to install. `force` cannot override `Dangerous`.
 
@@ -755,13 +739,7 @@ pub fn should_allow_plugin_install(verdict: PluginVerdict, force: bool) -> Insta
 > - Arms run top to bottom. The plain `Caution` arm handles caution when the guard failed, which is `force == false`.
 > - Put the plain arm first and the guarded arm would never run. The order in the file is what makes force do something.
 
-`Safe` returns `Allow` and does not read `force`. `Caution if force` returns `Allow`. That is the only arm that reads `force`. Force overrides caution. The test expects `Allow` for `Caution` with `true`.
-
-The plain `Caution` arm returns `Confirm`. 401 files scan as `Caution` because 401 is over 400, and force false is confirm. The milestone's `"confirm"` is this arm. The test expects `Confirm` for `Caution` with `false`.
-
-`Dangerous` returns `Block` with no guard. `force` is not read. Force overrides caution only. Force does not override dangerous. The test expects `Block` for `Dangerous` with `true`. Force false is the same arm.
-
-`scan_plugin_shape` never produces `Dangerous`. Chapter 25 will. The test passes the variant directly. The step crate returns the enum. The milestone words are `"confirm"` and `"block"`. I am not pasting a solution into `my-harness/`.
+`Safe` returns `Allow` without reading `force`. `Caution` with `force` returns `Allow`, which is the only arm that reads the flag, and caution without it returns `Confirm`. 401 files scan as `Caution` because 401 is over 400, and that confirm arm is the milestone's `"confirm"`. `Dangerous` returns `Block` with no guard, so force can't override it, and the test expects `Block` for `Dangerous` with `true` and with `false`. `scan_plugin_shape` never produces that variant, so the test passes it directly. The step crate returns the enum. The milestone words are `"confirm"` and `"block"`, and I'm not pasting a solution into `my-harness/`.
 
 ## 12.20 What the benches time
 
@@ -783,7 +761,7 @@ The name is the literal `"echo"`. `expect("nop")` panics on `Err`. `NopHook` ret
 
 ## Tests
 
-Eight hook tests, plus the plugin test. A modify sticks when a later hook blocks. The first approve is kept, and a failing hook is skipped. A post hook replaces the result. Cron escalation denies. A failed check stays hidden. The API hook sees the same pointer. The queue length is 1. A block stops the script before `echo`.
+Eight hook tests, plus the plugin test. A modify sticks when a later hook blocks, the first approve is kept, and a failing hook is skipped. A post hook replaces the result. Cron escalation denies, a failed check stays hidden, the API hook sees the same pointer, and the queue length is 1. A block stops the script before `echo`.
 
 ## Build, run, and benchmark
 
@@ -815,7 +793,7 @@ The binary installs one hook that blocks `rm`, then a script of `rm` and `echo`.
 
 `empty_pre_post` calls `NopHook::pre_tool_call` and `post_tool_call` inside `b.iter`. The JSON arguments `{}` are built before the bench. No tool runs.
 
-`api_request_hook` builds a vec of 1,000 `Message` values before the bench. Each content is `hello`. The timed closure calls `run_api_hook`, which calls `pre_api_request` on that slice. The hook reads `len`. It does not clone the vec. Building the 1,000 messages is excluded.
+`api_request_hook` builds a vec of 1,000 `Message` values before the bench, and each content is `hello`. The timed closure calls `run_api_hook`, which calls `pre_api_request` on that slice. The hook reads `len` and doesn't clone the vec, so building the 1,000 messages is excluded.
 
 `memory_enqueue` locks the queue, drops the front if the length is already 64, and pushes one formatted string. The queue is built before the bench. The string format is inside the sample. Nothing is written to disk.
 
@@ -863,4 +841,4 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Laye
 
 ## What's next
 
-Chapter 13 runs code outside this process. The approval gate from chapter 11 still sees the script before the child starts. The sandbox is off unless you ask for it.
+Chapter 13 runs code outside this process. The approval gate from chapter 11 still sees the script before the child starts, and the sandbox stays off unless you ask for it.
