@@ -1,0 +1,5 @@
+# Rust 1.100 moved test executables out of target/debug/deps. The step
+# crates find sibling binaries by walking current_exe(), which then looks
+# in the wrong directory. 1.99.1 is the stable this book's CI last passed on.
+[toolchain]
+channel = "1.99.1"
