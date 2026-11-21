@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792911720645,
+  "lastUpdate": 1795278806042,
   "repoUrl": "https://github.com/agnathan/rust-agent-harness",
   "entries": {
     "Harness criterion": [
@@ -62306,6 +62306,81 @@ window.BENCHMARK_DATA = {
           {
             "name": "9.9/validate_repair",
             "value": 263.4613568993224,
+            "unit": "ns"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "agnathan",
+            "username": "agnathan"
+          },
+          "committer": {
+            "name": "agnathan",
+            "username": "agnathan"
+          },
+          "id": "80ec7e4c0c0f7896bfd685b63a9b66baef2c8e5d",
+          "message": "Revision pass 1: facts, placeholders, and shared reading notes",
+          "timestamp": "2026-10-19T14:31:31Z",
+          "url": "https://github.com/agnathan/rust-agent-harness/pull/15/commits/80ec7e4c0c0f7896bfd685b63a9b66baef2c8e5d"
+        },
+        "date": 1795278804746,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "1.1/serde_50_message_request",
+            "value": 8422.126283188114,
+            "unit": "ns"
+          },
+          {
+            "name": "1.2/mock_100_concurrent",
+            "value": 115695.12042124543,
+            "unit": "ns"
+          },
+          {
+            "name": "1.2/mock_turn_overhead",
+            "value": 275.1087185153124,
+            "unit": "ns"
+          },
+          {
+            "name": "1.3/build_request_and_parse_response",
+            "value": 2718.630617851536,
+            "unit": "ns"
+          },
+          {
+            "name": "1.4/parse_response_edges",
+            "value": 940.9145945856023,
+            "unit": "ns"
+          },
+          {
+            "name": "2/chat_turn_overhead",
+            "value": 673.6475785455248,
+            "unit": "ns"
+          },
+          {
+            "name": "2/inbox_submit",
+            "value": 36.1403744328678,
+            "unit": "ns"
+          },
+          {
+            "name": "3.1/registry_lookup",
+            "value": 18.08440246510482,
+            "unit": "ns"
+          },
+          {
+            "name": "3.2/available_tools_50",
+            "value": 27032.54832713755,
+            "unit": "ns"
+          },
+          {
+            "name": "3.3/dispatch_8_reads_concurrent",
+            "value": 2136066.723529412,
+            "unit": "ns"
+          },
+          {
+            "name": "3.3/dispatch_8_reads_sequential",
+            "value": 16619661.733333334,
             "unit": "ns"
           }
         ]
