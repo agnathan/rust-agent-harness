@@ -1,10 +1,8 @@
 # Chapter 31: Fan-out and Gather
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 29 can run eight specialists at once. Chapter 30 can hand a task to one next owner. Neither of them is the question "what if there are a hundred independent tasks, and I need their replies in order?" A fan-out that allocates without a cap will start a hundred tasks and then a hundred more. This chapter adds the queue, the refusal, and the gather. The crate is `steps/ch31-fan-out`, a copy of chapter 30 plus `fanout`. The package is `ch31-fan-out`. Heartbeats are not this chapter. They were deferred by chapter 29 and they stay deferred until chapter 36.
 
-A task is an index, a reply, and a trace. `schedule` accepts up to 100 and rejects the 101st. The cap is this book's, not a Hermes config key. Hermes's concurrent-children cap is a different number, and the harness queue of 100 is the one the tests lock. `gather` sorts replies and leaves the trace behind. The sort is by `task_index`, so a reply that finishes first is not the reply that prints first. The demo schedules out of order and prints sorted lines. The bench fills the queue and does not gather, which is how you measure scheduling without measuring the joins. The permit `gather` takes is still chapter 29's pool. Fan-out does not invent a second bound for the work it actually runs. The queue of 100 is how many tasks may be waiting. The pool of 8 is how many run.
+A task is an index, a reply, and a trace. `schedule` accepts up to 100 and rejects the 101st. The cap is this book's, not a Hermes config key. Hermes's concurrent-children cap is a different number, and the harness queue of 100 is the one the tests lock. `gather` sorts replies and leaves the trace behind. The sort is by `task_index`, so a reply that finishes first is not the reply that prints first. The demo schedules out of order and prints sorted lines. The bench fills the queue and does not gather, which is how you measure scheduling without measuring the joins. The permit `gather` takes is still chapter 29's pool. Fan-out does not invent a second bound for the work it actually runs. The queue of 100 is how many tasks may be waiting. The pool of 8 is how many run. `gather` starts one scoped thread per queued task, and each thread blocks in `pool.acquire` until a permit is free. A full queue can therefore leave up to 100 threads waiting on a pool of 8. A worker pool that pulled from the queue would not park a thread per task. This chapter keeps the thread per task so the gather can reuse chapter 29's pool.
 
 Chapter 32's critic reads the summary this gather produces. It does not do the hundred tasks. Chapter 33 refuses a nested fan-out whose width would exceed the pool, before any task starts. Chapter 35 will put each agent on its own mailbox, which is a different bound, 64, on turns rather than on tasks. Keeping those numbers apart is the design. One global "max concurrency" would make a full inbox and a full fan-out the same failure.
 
@@ -42,8 +40,6 @@ Rust, at the queue: the cap is a length check before `push`. The index is an int
 > **Adapted.** `QUEUE_CAP` is 100. The cap is a queue of 100, not the concurrent-children number. The 101st `schedule` returns `FanError::Full`. `gather` sorts by `task_index` and returns replies only, not `tool_trace`. The pool that runs the tasks is still `WORKER_BOUND` of 8. The queue of 100 and the `task_index` order were deferred from chapter 29 to here.
 >
 > **Deferred.** Heartbeats, to chapter 36. This chapter does not beat. It schedules, refuses at 100, and gathers.
-
-[personal note: a fan-out that came back in a different order than you launched it]
 
 ## What this chapter decides
 
@@ -150,9 +146,10 @@ The tests call `Board::new()`. The default is the same empty deque.
 
 > **Rust sidebar: `Result`**
 >
-> - `Result<(), FanError>` uses `()` as the success payload. The task has already been moved into the deque on the `Ok` path. The caller does not get the task back. On `Err`, the `task` binding is dropped at the end of the function because `push_back` never took it. The queue does not contain it.
+> - `Result<(), FanError>` uses `()` as the success payload. On `Err`, the `task` binding is dropped at the end of the function because `push_back` never took it.
 > - The length check and the `push_back` share one guard. Another `schedule` cannot pass the length check until this guard drops. The cap holds for concurrent `schedule` calls because they serialize on this mutex.
-> - `return Err` happens while the guard is still alive. The guard drops during unwind of that return, which unlocks. The length is unchanged.
+> - `return Err` happens while the guard is still alive.
+> - `Option`, `Result`, enums, and `Arc` are taught in [chapter 1](chapter-01-first-contact.md).
 
 `QUEUE_CAP` is 100. Lengths 0 through 99 push. The call that observes length 100 returns `Full`. Hermes rejects a new async dispatch when the concurrency cap is hit, and it does not queue that dispatch. This board queues, and the rejection is the 101st `schedule`. The adaptation is the number and the place: a queue of 100, not the concurrent-children count. The concurrent limit is still the pool of 8, applied later in `gather`, not here.
 
@@ -353,7 +350,7 @@ criterion_main!(benches);
 
 `iter_batched` takes a setup closure, a timed closure, and a batch size. `Board::new` is the setup. It is not the timed work. The timed closure schedules indexes `0..100`, which is 0 through 99, one hundred tasks. Reply text is `reply {index}`. The trace is `secret-tool` again. `expect("schedule")` is safe inside this loop because the board starts empty and the loop stops at 100. `black_box(board.len())` keeps the pushes in the sample. `len` locks and returns 100.
 
-No `Pool` is built. No `thread::scope` runs. No `gather`. The mean is the cost of filling the queue, which is the rejection boundary the next `schedule` would hit. The mean is `4.12 µs`. It is `mean.point_estimate`. The printed Criterion `time:` line is the slope, not the mean.
+No `Pool` is built. No `thread::scope` runs. No `gather`. The mean is the cost of filling the queue, which is the rejection boundary the next `schedule` would hit. The mean is `4.12 µs`. It is `mean.point_estimate`.
 
 `BatchSize::SmallInput` is the Criterion batch size argument on this call. The setup produces a small board, an empty deque, and the routine fills it.
 
@@ -460,11 +457,9 @@ The binary schedules three tasks out of order and prints the gathered replies. N
 
 `schedule_100` does not include `Board::new` in the timed closure. It does not include `gather`. The tool trace is stored on the task and never formatted into the bench's `black_box` value, which is `len`.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `31`. The id is `31/schedule_100`. The old id `29/schedule_100` is an alias in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The printed Criterion `time:` line is the slope, not the mean.
+The lines are `a`, `b`, and `c`.
 
-### Milestone demo
-
-The `cargo run` above. The lines are `a`, `b`, and `c`.
+The means are `mean.point_estimate` from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `31`. Bench ids: `31/schedule_100`, `29/schedule_100`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -475,12 +470,6 @@ The queue cap and the permit cap are different numbers. `QUEUE_CAP` is 100. `WOR
 Sort uses `task_index`, not finish time. A fast task with a high index is still last after `sort_by_key`. Join order before the sort is spawn order. The string the caller sees is the sorted one.
 
 Hermes rejects a new async dispatch at the concurrency cap and does not queue it. This `schedule` queues until 100 and then returns `Full`. Both are a refusal at a cap. The cap in this file is the queue length. The cap in `acquire` is 8, and it waits instead of returning `Full`. A task already on the board is not rejected when the pool is busy. It waits for a permit.
-
-`drain` empties the board before the threads run. A `schedule` that arrives during `gather` lands on an empty deque and is not part of this gather. The test does not do that. It schedules, then gathers, then checks length 0.
-
-The reflection queue of 64 in `supervisor.rs` is not this queue. `enqueue_reflection` does not call `schedule`. `schedule` does not push a reflection string.
-
-Heartbeats are not hiding in `thread::sleep`. The sleep is the test hold. `gather` passes a zero duration and skips it. Chapter 36 is the heartbeat chapter.
 
 ## Guardrails in this chapter
 
@@ -500,9 +489,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
 - **Bound.** `gather` uses the supervisor pool. `WORKER_BOUND` is 8. `max_seen` peaks at 8.
 - **Aggregator.** `sort_by_key` on `task_index`. The summary is the replies joined with newlines.
 - **Trace.** `tool_trace` is not in the summary. The demo's trace is `secret-tool` and the printed lines are `a`, `b`, `c`.
-- **Time.** `schedule_100` mean `4.12 µs`. That is `mean.point_estimate`. The Criterion `time:` line is the slope.
-
-[personal note: a batch that came back sorted, and the tool log you were glad the parent never saw]
+- **Time.** `schedule_100` mean `4.12 µs`. That is `mean.point_estimate`.
 
 ## What you implement
 
@@ -527,7 +514,7 @@ pub fn chapter_31_refuses_overflow(already: usize) -> bool {
 }
 ```
 
-`todo!("chapter 31")` is the panic. The test wants `chapter_31_refuses_overflow(99)` to be false and `chapter_31_refuses_overflow(100)` to be true. The step crate is the reference. Do not copy it into `my-harness/`.
+`todo!("chapter 31")` is the panic. The test wants `chapter_31_refuses_overflow(99)` to be false and `chapter_31_refuses_overflow(100)` to be true. 
 
 ## What's next
 

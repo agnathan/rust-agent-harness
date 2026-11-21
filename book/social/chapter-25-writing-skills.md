@@ -15,8 +15,6 @@ A reviewer that has not called view is refused. The guard is tools/skill_manager
 4/
 Scanning one skill measured 155.3 ns. An unsolicited enqueue measured 17.4 ns ([run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589)). Those figures are the means. The demo scan is safe. No key.
 
-[personal note]
-
 5/
 Next is the reflection loop: a reviewer fork after the turn, with memory only when the memory nudge fired.
 
@@ -30,8 +28,6 @@ Chapter 25 is out: Writing Skills.
 Loading a skill and writing one are different jobs. Hermes Agent's INSTALL_POLICY has four rows, and should_allow_install refuses to let force override a dangerous verdict on a community or trusted skill. The write-approval gate stays off unless skills.write_approval is set. I kept that table and that force rule. The pattern list here is five rules, a subset of THREAT_PATTERNS. A reviewer has to view the current file before a patch.
 
 Scanning one skill measured 155.3 ns. An unsolicited enqueue measured 17.4 ns ([run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589)). Those figures are the means. A write the model did not ask for is queued.
-
-[personal note: one takeaway from writing this chapter]
 
 Next: a reviewer fork after the turn, cancelled with a flag when the user returns. Read Chapter 25: [link]
 

@@ -1,28 +1,14 @@
 # Chapter 18: Providers
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 1 can call OpenRouter, and every later harness copy still can. A harness that is serious about more than one model needs a native adapter beside that client, a way to fall through when a route is invalid, a way to rotate a key without building a new HTTP client, and a cheaper model for the summaries it will soon want. This chapter adds that module. It is `adapters`, on a copy of chapter 17. The crate is `steps/ch18-providers`. The package is `ch18-providers`. The library is `harness_core`. `drive_loop` does not call this module yet. The chapter's tests and the demo do. The chapter 9 provider stays the loop's client until a later edit wires the route in.
 
-`Msg` is the message this module sends. Two request bodies, both JSON values, cover the OpenAI-compatible shape and the native Anthropic shape. Bedrock sits beside them. TLS stays on the operating system's trust store. `Preferences` and the route picker choose the next model. An invalid route falls through to the fallback. Key rotation returns the same pooled client chapter 1 created, so a new key is not a new connection pool. The side model is named for summaries and is not invoked on the user turn unless that turn asked for a summary. Duplicate tool-call ids in one batch are uniquified, and a dangling tool row is repaired, which is the rest of the body-repair work chapter 9 started.
+`Msg` is the message this module sends. Two JSON bodies cover the OpenAI-compatible shape and the native Anthropic shape, and Bedrock sits beside them. An invalid route falls through to the fallback. Key rotation keeps the pooled client. The side model is for summaries, not the user turn, unless that turn asked for one.
 
-Chapter 19 will stream these same adapters. Chapter 34 will ask the side model for a structured summary when it compresses. Chapter 26's reviewer reuses the parent's model so the provider can cache the shared prefix. All three of those depend on this chapter having somewhere to put "a different model" that is not a rewrite of `Provider`. A self-improving harness uses the side model on purpose: reflection and compression are extra calls, and they should be cheap calls. Running them on the user-facing model, inline, would make every lesson as expensive as the task.
+Chapter 19 streams these adapters. Chapter 34 asks the side model for a summary when it compresses. Reflection and compression should be the cheap calls, not a second run of the user-facing model.
 
 Rust, in the sidebars: another impl of the same trait is how a new provider appears. An enum is the route. The client id is a value you can assert stayed put across rotation, which is the test that the pool was reused. `serde_json::Value` is the body, so the two request shapes can differ without two HTTP stacks.
 
 `cargo run -p ch18-providers` runs the fake turn. The exercise is `my-harness/tests/ch18.rs`: an invalid route falls through to the fallback model, and rotation keeps the same client.
-
-**In this chapter**
-
-- 18.1 The module is `adapters`, and `drive_loop` does not call it
-- 18.2 `Msg`, two enums, and the TLS decision
-- 18.3 Two request bodies, both a `Value`
-- 18.4 Preferences, the route, and the next model
-- 18.5 One pool, one client id, and the side model
-- 18.6 Duplicate ids, then a dangling tool row
-- 18.7 The fake turn the binary runs
-- 18.8 What each test locks
-- 18.9 What the two benches time
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -39,8 +25,6 @@ Rust, in the sidebars: another impl of the same trait is how a new provider appe
 > **Adapted.** There is no HTTP client in this crate. The per-model output-ceiling table is not ported. A `max_tokens` of 0 is an error. Fallbacks are a `models` array on the route object. I did not find Hermes writing that array inside `build_anthropic_kwargs` or `build_converse_kwargs`. Hermes keeps the list on `fallback_model`. Rotation advances an index in one `Pool` and the client id stays `1`. The side model is a string choice, not a second request.
 >
 > **Deferred.** OAuth transforms, thinking budgets, and cache points stay out. Live certificate verification stays out with the socket. Chapter 19 strips think blocks from a stream.
-
-[personal note: a provider body that failed because one field was missing]
 
 ## What this chapter decides
 
@@ -87,10 +71,9 @@ pub trait Provider: Send + Sync {
 ```
 
 > **Rust sidebar: a trait is a list of methods**
-> - A struct is one shape. A trait is a promise that a type has certain methods. `ScriptedProvider` implements `Provider`. The live client in `live.rs` implements it too.
-> - `drive_loop` asks for `&dyn Provider`. `dyn` means "a type that implements this trait, and this function does not name which one." The value sits behind a pointer because the compiler no longer knows its size.
-> - `Send` and `Sync` are traits. They are how the type is allowed to move across threads and be shared. `async_trait` is what makes `async fn complete` callable through that pointer, the same reason `Tool` used it in chapter 3.
-> - `adapters.rs` defines no trait. Anthropic and Bedrock are functions. They return a `serde_json::Value`. There is no `impl Provider for` an Anthropic type in this file. A later chapter can put one of these bodies behind `complete`. This chapter stops when the `Value` exists.
+> - `ScriptedProvider` implements `Provider`. The live client in `live.rs` implements it too. `drive_loop` takes `&dyn Provider`: the function does not name which type, so the value sits behind a pointer.
+> - `async_trait` makes `async fn complete` callable through that pointer, the same reason `Tool` used it in chapter 3.
+> - `adapters.rs` defines no trait. Anthropic and Bedrock are functions that return a `serde_json::Value`. There is no `impl Provider for` an Anthropic type in this file.
 
 I searched `agent.rs` in this step. The name `adapters` does not appear. `drive_loop` is the private function `run_loop`, `run_loop_driven`, and `run_loop_with_inbox` all end up in. Its signature still takes the chapter 9 trait object.
 
@@ -147,10 +130,7 @@ impl Msg {
 ```
 
 > **Rust sidebar: `impl Into<String>`**
-> - `Into<String>` is a trait. `role.into()` asks the value to become an owned `String`.
-> - A string literal is `&str`. It implements `Into<String>` by allocating a copy. An existing `String` implements it by moving, so the caller does not allocate twice.
-> - `impl Into<String>` in the argument list means "any one type that can become a `String`." The test calls `Msg::new("user", "hi")`. Both arguments are literals. Each `.into()` allocates.
-> - `Self` is `Msg`. Writing the fields out in `Self { ... }` is the same as `Msg { ... }`.
+> - `Msg::new` takes `impl Into<String>`. A literal becomes an owned `String` by allocating. An existing `String` moves, so the caller does not allocate twice. The test calls `Msg::new("user", "hi")`.
 
 `Debug` is what `{:?}` prints. `Clone` is an explicit copy of both strings. `PartialEq` and `Eq` are `==`. The tests compare `Msg` values with `assert_eq!` on the content of the last row, which needs `PartialEq` on the string, and the error enum below derives the same pair so a test can compare `ProviderError::InsecureTls` by value.
 
@@ -167,10 +147,9 @@ pub enum ProviderError {
 ```
 
 > **Rust sidebar: an enum is one of several shapes**
-> - A struct always has the same fields. An enum is a choice. `ProviderError` is either `MaxTokens` or `InsecureTls`, and a value is exactly one of those.
-> - `Result<Value, ProviderError>` is an enum too. `Ok` holds the body. `Err` holds one of these variants. The `?` operator in a caller returns early on `Err`. These functions use an explicit `return Err(...)`.
-> - `#[derive(Error)]` comes from `thiserror`. `#[error("...")]` is the text `Display` prints. The TLS test compares the variant with `assert_eq!`. It does not match on the sentence. The sentence is still what a `?` in `main` would print.
-> - These variants carry no fields. A later error that needs a status code would add `{ status: u16 }` or a `String` inside the variant. This chapter's errors are flags.
+> - `ProviderError` is either `MaxTokens` or `InsecureTls`. `#[derive(Error)]` from `thiserror` is the text `Display` prints. The TLS test compares the variant with `assert_eq!`.
+> - A later error that needs a status code would add `{ status: u16 }` inside the variant.
+> - `Option`, `Result`, and enums are taught in [chapter 1](chapter-01-first-contact.md).
 
 The TLS result is a second enum. It is the success type, so it does not implement `Error`.
 
@@ -258,12 +237,10 @@ pub fn bedrock_body(
 The shape of the function is the same. The keys are not. Bedrock's model field is `modelId`. The cap is nested: `inferenceConfig` is an object, and `maxTokens` sits inside it. The same zero check returns the same `ProviderError::MaxTokens`. The test locks zero on the Anthropic function (`is_err`) and locks `4096` on the Bedrock function. Bedrock's zero branch is the same `if` and is not called by the test. Anthropic's empty-system branch is the same `if !system.is_empty()` and is not called by the test either. The Bedrock test is the one that passes `""` and then checks the key is absent.
 
 > **Rust sidebar: a `Value` is an enum, and the body is one on purpose**
-> - `serde_json::Value` is an enum: null, bool, number, string, array, object. `json!({ "model": model, ... })` builds the object variant. `json!(system)` builds the string variant. `json!(max_tokens)` builds a number.
-> - One function can return that enum for Anthropic and for Bedrock. A struct with a `max_tokens` field could not also have `inferenceConfig.maxTokens` unless I made every field optional and then had two structs. The APIs do not share a field list. `Value` is the shared type.
-> - There is no trait of fields here. A trait would say "every body has `max_tokens()`." Bedrock does not have that key. Returning `Value` keeps the key names in the data.
-> - The cost is a typo. `body["max_tokns"]` compiles. The compiler does not know the Anthropic key list. `anthropic["max_tokens"]` in the test is what fails the build of the chapter when the key is wrong. The test also checks `model`, `system`, and `messages[0].role`.
-> - `IndexMut` is the trait behind `body["system"] = ...`. On a JSON object, a missing string key is inserted. That is why the assignment adds `system` after `json!` built the object without it. Reading with `value["system"]` is a different trait, `Index`. A missing key reads back as JSON null, which is also what an explicit `"system": null` reads back as. `get("system")` returns `Option<&Value>`, and `None` means the key was left out. The Bedrock test uses `bedrock.get("system").is_none()` for that reason. Comparing to null would not tell those two cases apart.
-> - `let mut body` is required because the later assignment changes the object. The `json!` value starts mutable only because of `mut`.
+> - One function returns `serde_json::Value` for both APIs. A struct with `max_tokens` could not also have `inferenceConfig.maxTokens`. Bedrock has no `max_tokens` key, so `Value` is the shared type. JSON as a value is taught in [chapter 3](chapter-03-tools.md).
+> - `body["max_tokns"]` compiles. The test's `anthropic["max_tokens"]` is what fails when the key is wrong.
+> - `body["system"] = ...` inserts a missing key. Reading a missing key with `value["system"]` is JSON null, the same as an explicit `"system": null`. `get("system")` returns `None` when the key was left out. The Bedrock test uses `bedrock.get("system").is_none()`.
+> - `let mut body` is required because the later assignment changes the object.
 
 `wire_messages` is the private helper both bodies share.
 
@@ -277,10 +254,8 @@ fn wire_messages(messages: &[Msg]) -> Vec<Value> {
 ```
 
 > **Rust sidebar: an iterator is a trait you usually do not call**
-> - `Iterator` is a trait with `next`. `.iter()` on a slice produces an iterator of `&Msg`. Nothing has been copied yet.
-> - `.map(|message| ...)` is lazy. It returns another iterator. The closure runs once per element, and only when something asks for the next item. `json!` allocates one object per message at that moment.
-> - `.collect()` is the thing that asks. It walks `next` until the iterator ends and builds a `Vec<Value>`. The `Vec` is owned. The original `&[Msg]` is only borrowed for the duration of the call.
-> - `for message in messages` would do the same walk. `map` plus `collect` is the walk written as a pipeline. `choose_next` uses a third iterator method, `position`, which stops at the first match and returns `Option<usize>`.
+> - `.iter().map(...).collect()` walks the slice when `collect` asks. `json!` allocates one object per message then. The `Vec<Value>` is owned. The original `&[Msg]` is only borrowed.
+> - `choose_next` uses `position`, which stops at the first match and returns `Option<usize>`.
 
 Each object has exactly two keys, `role` and `content`. Tool-call ids, raw arguments, and the `Role` enum never enter this vec, because `Msg` does not have those fields. The Anthropic test builds one message with `Msg::new("user", "hi")` and asserts `messages[0].role == "user"`. It does not assert the content `"hi"`. The role check is enough to prove `wire_messages` ran. A swapped key would still fail that assert.
 
@@ -602,17 +577,17 @@ fn main() {
 
 ## 18.8 What each test locks
 
-`tests/providers.rs` is six tests. They are the public surface. A private helper is locked only by what a public function returns.
+`tests/providers.rs` is six tests. They are the public surface.
 
-`anthropic_and_bedrock_bodies_carry_the_fields_their_apis_require` builds `hello()` as one `Msg` of role `user` and content `hi`. `anthropic_body("claude", "be brief", &hello(), 128)` must be `Ok`. The asserts read `["model"] == "claude"`, `["max_tokens"] == 128`, `["system"] == "be brief"`, and `["messages"][0]["role"] == "user"`. Then `anthropic_body("claude", "", &hello(), 0)` must be `Err`. The test uses `is_err()`. It does not match `ProviderError::MaxTokens`. That is the only `Err` this function returns. `bedrock_body("anthropic.claude", "", &hello(), 4096)` must be `Ok`, with `["modelId"] == "anthropic.claude"`, `["inferenceConfig"]["maxTokens"] == 4096`, and `get("system")` equal to `None`. The nested index is how the test sees `maxTokens` inside `inferenceConfig`. `4096` is the number the test passes. The function does not special-case it.
+`anthropic_and_bedrock_bodies_carry_the_fields_their_apis_require` builds `hello()` as one `Msg` of role `user` and content `hi`. `anthropic_body("claude", "be brief", &hello(), 128)` must be `Ok`.
 
-`an_invalid_sort_is_dropped_and_the_next_model_is_the_fallback` builds a `Prefs` with `only: ["anthropic"]`, `ignore: []`, `order: ["anthropic", "amazon"]`, `sort: Some("Price")`, `require_parameters: false`, and `data_collection: Some("deny")`. On the map it asserts `get("sort").map(|value| value.as_str())` equals `Some(Some("price"))`. That type is `Option<Option<&str>>`. `get` is the outer option: `None` would mean the key was omitted. `as_str` is the inner option: `None` would mean the value was not a string. `Some(Some("price"))` locks both. It asserts `get("require_parameters")` is `None`, and `map["data_collection"] == "deny"`. A second `Prefs` is `sort: Some("fastest")` plus `..Default`, and `get("sort")` must be `None`. Then `openrouter_route` on `["primary", "fallback"]` must have `["models"]` equal to `json!(models)`. `choose_next(..., Some("primary"))` must be `Some("fallback")`. `choose_next(..., None)` must be `Some("primary")`. Sort and route selection are asserted in this one function. Neither call feeds the other.
+`an_invalid_sort_is_dropped_and_the_next_model_is_the_fallback` builds a `Prefs` with `only: ["anthropic"]`, `ignore: []`, `order: ["anthropic", "amazon"]`, `sort: Some("Price")`, `require_parameters: false`, and `data_collection: Some("deny")`. On the map it asserts `get("sort").map(|value| value.as_str())` equals `Some(Some("price"))`.
 
-`rotation_keeps_the_client_and_the_side_model_stays_off` builds a pool of `sk-one` and `sk-two`. `client_id()` must equal `CLIENT_ID`. `mark_exhausted_and_rotate()` must equal `"sk-two"`. `client_id()` must still equal `CLIENT_ID`. `side_model(false, "primary", "side")` must be `"primary"`. `side_model(true, "primary", "side")` must be `"side"`.
+`rotation_keeps_the_client_and_the_side_model_stays_off` builds a pool of `sk-one` and `sk-two`. `client_id()` must equal `CLIENT_ID`.
 
-`duplicate_tool_ids_and_a_dangling_tool_row_are_repaired` starts from `["call_0", "call_0", "call_1"]` and expects `["call_0", "call_0_d2", "call_1"]` after `uniquify_tool_call_ids`. It then builds `[Msg::new("assistant", ""), Msg::new("tool", "partial")]`. `close_interrupted` must return true. The last row's content must equal `INTERRUPTED_PLACEHOLDER`. A second `close_interrupted` must return false.
+`duplicate_tool_ids_and_a_dangling_tool_row_are_repaired` starts from `["call_0", "call_0", "call_1"]` and expects `["call_0", "call_0_d2", "call_1"]` after `uniquify_tool_call_ids`. It then builds `[Msg::new("assistant", ""), Msg::new("tool", "partial")]`.
 
-`tls_stays_on_the_os_store_unless_the_dev_flag_is_set` expects `resolve_tls(true, false)` to be `Ok(OsTrust)`, `resolve_tls(false, false)` to be `Err(InsecureTls)` via `expect_err`, and `resolve_tls(false, true)` to be `Ok(DevInsecure)`. `expect_err` turns the `Result` inside out. The error value is compared with `==`, which is why `ProviderError` derives `PartialEq`.
+`tls_stays_on_the_os_store_unless_the_dev_flag_is_set` expects `resolve_tls(true, false)` to be `Ok(OsTrust)`, `resolve_tls(false, false)` to be `Err(InsecureTls)` via `expect_err`, and `resolve_tls(false, true)` to be `Ok(DevInsecure)`. `expect_err` turns the `Result` inside out.
 
 `the_fake_turn_uses_the_fallback_model` calls `run_turn` with primary reply `"no"`, fallback reply `"pong"`, and `failed_first` true. The tuple must be `("pong", "fallback")`.
 
@@ -687,11 +662,7 @@ The binary rotates once, then picks the second fake model because the first one 
 
 `rotate_key` builds a pool of three keys before the bench. Each sample calls `mark_exhausted_and_rotate` and black-boxes the new key. The client id is not rebuilt. The pool wraps from the last key back to the first across samples, so the sample is the index update, not a client constructor.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `16`.
-
-### Milestone demo
-
-The `cargo run` above. The reply is `pong`. The client is `1`.
+The means are `mean.point_estimate` from [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `18`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -721,11 +692,9 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Laye
 - **Wire.** `call_0` twice becomes `call_0` and `call_0_d2`. A dangling tool row is closed.
 - **Time.** Choosing the next route measured **5.990 ns**. Rotating a key measured **3.465 ns**.
 
-[personal note: a key rotation that built a second client, and what the pool was supposed to keep]
-
 ## What you implement
 
-`my-harness/tests/ch18.rs` is the milestone. It compiles, then panics in `todo!("chapter 18")` until `chapter_18_fallback_model` returns `"fallback"` when `sort_ok` is false. An invalid sort does not get to pick a model. The step crate is the reference. Do not copy it into `my-harness/`.
+`my-harness/tests/ch18.rs` is the milestone. It compiles, then panics in `todo!("chapter 18")` until `chapter_18_fallback_model` returns `"fallback"` when `sort_ok` is false. An invalid sort does not get to pick a model. 
 
 ## What's next
 

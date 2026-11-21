@@ -15,8 +15,6 @@ The API-request hook borrows the messages. It does not copy them. The memory bac
 4/
 An empty before/after pair measured 10.90 ns. The borrow of 1,000 messages measured 2.182 ns. One enqueue measured 61.70 ns.
 
-[personal note]
-
 5/
 Next is a child process for code, and a checkpoint you can rewind. The sandbox stays off unless you turn it on. That is how Hermes ships it too.
 
@@ -30,8 +28,6 @@ Chapter 12 is out: Hooks and Plugins.
 The approval pipeline from the previous chapter sees shell commands. A plugin still needed a way to veto any tool, change its arguments, or escalate that tool into the same human prompt. Hermes Agent does this with a pre_tool_call hook that returns a block message and the final arguments, and a block wins even if another plugin already asked for approval.
 
 I kept that order. The hook that sees the outbound messages borrows them. A memory backend records the turn on a bounded queue and does not write a file yet. An empty hook pair measured 10.90 ns.
-
-[personal note: one takeaway from writing this chapter]
 
 Next: running code in a child process. Read Chapter 12: [link]
 

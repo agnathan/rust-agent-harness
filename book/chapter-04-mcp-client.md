@@ -1,7 +1,5 @@
 # Chapter 4: MCP Client
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 3 can call a tool that lives in this process. A real workspace does not keep every tool there. A file server, a browser, a notes database: each is its own program, and the way those programs advertise tools is MCP. This chapter is the client. It speaks MCP over a child process's stdin and stdout, and over streamable HTTP on `127.0.0.1`. The tools that come back are the same `Tool` values chapter 3 already dispatches. The four copies are `steps/ch04-1-stdio`, `steps/ch04-2-http`, `steps/ch04-3-registry`, and `steps/ch04-4-cache`. The library in every copy is still `harness_core`.
 
 `McpSession` is the connection. `McpTool` is the registry entry. `readOnlyHint` becomes `ToolKind`, and a missing hint means `Write`, because treating silence as a read would let a mutating tool overlap its neighbors. A duplicate name is `ToolError::Duplicate`. The test server is the fixture in `steps/ch04-fixture`, included into each step so the tests can see `CARGO_BIN_EXE_mcp_fixture`. It does not dial an external host. Linux, macOS, and Windows all run it. `echo` returns its text and is read-only. `note` stores a line and is a write. `grow` reveals a fourth tool, `extra`, and sends `notifications/tools/list_changed`. Section 4.4's `ToolListCache` remembers the last `tools/list` for one connection and drops it on that notification.
@@ -13,13 +11,6 @@ The split matters for everything that comes later. Chapter 9's loop will call an
 Rust, in sidebars: a child process and stdio, an HTTP session, `async` across the call, and a cache that is just a value you drop. The fixture is pulled in with `include!` because a binary dependency of the kind Cargo prefers needs a nightly flag this repo does not use.
 
 `cargo run -p ch04-4-harness-core --example demo --quiet` runs the fixture. `cargo run -p ch04-4-harness-cli -- --mock ask "hello"` is the CLI. No step calls OpenRouter. A key that is present is refused with the message that this demo does not place a live call.
-
-**In this chapter**
-
-- 4.1 Stdio
-- 4.2 Streamable HTTP
-- 4.3 The same registry
-- 4.4 A cache, and the chapter 6 seam
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -35,8 +26,6 @@ Rust, in sidebars: a child process and stdio, an HTTP session, `async` across th
 > `notifications/tools/list_changed` triggers a refresh: list again, drop tools that disappeared, register tools that appeared. A burst of those notifications is coalesced in `tools/mcp_tool_health.py`, in `_schedule_tools_refresh`: one refresh runs, and at most one follow-up is queued behind it. Prompt and resource list-changed notifications are received and not fully acted on. The embedded `hermes mcp serve` command is stdio-only. The client speaks both stdio and HTTP.
 >
 > This chapter's client is the same split. `McpSession` is the connection. `McpTool` is the registry entry. `readOnlyHint` becomes `ToolKind`. A duplicate name is `ToolError::Duplicate`. The cache in 4.4 drops on every notification. It does not coalesce a burst. That difference is a pitfall at the end of the chapter.
-
-[personal note: the first MCP server you pointed a client at, and what it listed]
 
 ## What this chapter decides
 
@@ -126,9 +115,9 @@ stdio_echo_round_trip   time:   [70.240 µs 70.665 µs 71.238 µs]
 
 | Benchmark | Mean | Target | Machine |
 |---|---|---|---|
-| `stdio_echo_round_trip` | 71.29 µs | one local stdio call, no model | 4 vCPU, sample size 10, warm-up 1 s, measurement 2 s |
+| `stdio_echo_round_trip` | 71.29 µs | one local stdio call, no model | [bench host](appendix-benchmark-method.md) |
 
-CI runs the fixture and this step on Ubuntu, macOS, and Windows. The bench runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml). A push to `main` appends the medians to the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/).
+Where these numbers were taken is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ### Milestone demo
 
@@ -365,10 +354,6 @@ A missing `readOnlyHint` is a write. A server that forgets the hint on a search 
 
 Every `list_changed` drops the cache. Hermes coalesces a burst into one refresh plus one follow-up. A server that notifies on a timer will make this client list on every timer tick. Coalescing belongs with the health loop, and this chapter does not have one yet.
 
-`shutdown` needs the session by value. Code that has only an `Arc` should drop the `Arc`. The child dies in `Drop`. Calling `shutdown` and also dropping a second clone will not compile, which is the point of taking `self`.
-
-The HTTP URL's port changes every run. A test that asserts a fixed port will fail. Read `MCP_URL=` from stderr.
-
 ## Guardrails in this chapter
 
 Still layer L5, for tools that arrive from another process. The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md).
@@ -387,11 +372,9 @@ Sampling and elicitation limits (M7, `tools/mcp_tool_sampling.py`) are not in th
 - **Cache.** Two reads of `tools/list` increment `list_calls` once. `grow` sends `list_changed`, and the next read sees `extra`. The cold list measured 82.87 µs. The hit measured 168.0 ns.
 - **Chapter 6.** `cards_from_listed`, `ListCache::from_cards`, and `replace_cards` take a real list without linking `rmcp`. The 10,000-tool benches still use the generator. The section crates for that chapter stay `steps/ch06-*`.
 
-[personal note: which part of MCP was harder than the protocol, the process lifetime or the list cache]
-
 ## What's next
 
-Chapter 5 is a minimal MCP server, a separate process from this client. The skeleton is `mcp-gateway/`. It offers an empty catalog and binds no socket. The chapter is not written yet. That process is where the catalog will live.
+Chapter 5 is a minimal MCP server, a separate process from this client. The skeleton is `mcp-gateway/`. The step crate offers a fixed list, `echo`, and a 32/8 gate, and it binds no socket. That process is where the catalog lives.
 
 Chapter 6 already measured what happens when the list is thousands of tools long. The generator stays. A session from this chapter can feed that cache through `cards_from_listed`. That chapter is the client half: it decides what enters the prompt.
 

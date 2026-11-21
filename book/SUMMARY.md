@@ -2,6 +2,8 @@
 
 [Book outline](book-outline.md)
 
+[How to read this book](preface-how-to-read-this-book.md)
+
 Server-track chapters are marked *(server)*. They are interleaved with the harness. Chapters 5, 7, 8, 15, 23, 37, 42, and 51 are the server track. The process crate is `mcp-gateway/`. The harness from chapter 10 on is one growing crate; the plan is [`docs/harness-architecture.md`](../docs/harness-architecture.md).
 
 # Part I: One agent
@@ -74,3 +76,7 @@ Server-track chapters are marked *(server)*. They are interleaved with the harne
 - [Chapter 50: Seeing Inside](chapter-50-tracing.md)
 - [Chapter 51: Load and Token Capstone](chapter-51-capstone.md) *(server)*
 - [Chapter 52: Evals](chapter-52-evals.md)
+
+# Appendix
+
+- [How the numbers were measured](appendix-benchmark-method.md)

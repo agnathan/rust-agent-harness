@@ -15,8 +15,6 @@ A memory mention is worth 3. A past use that shares a task token is worth 1. A z
 4/
 Copying 32 names measured 76.1 ns. Scoring 1,000 rows measured 149.64 µs. The demo offer is read_file. No key. No socket.
 
-[personal note]
-
 5/
 That is chapter 23. The next harness chapter is skills: a cache-stable index of SKILL.md files.
 
@@ -32,8 +30,6 @@ This is the server crate. It vendors the chapter 15 gateway instead of path-depe
 Hermes Agent allows seven tools inside code execution and stops a script at 50 calls. The Rust script is `call tool json` lines, checked against that allowlist and against the offer. A composite or a macro is a saved name. Expanding it does not run the steps.
 
 Copying 32 names measured 76.1 ns. Scoring 1,000 rows measured 149.64 µs. The demo prints read_file and ok. No key.
-
-[personal note: one takeaway from writing this chapter]
 
 Next: skills, on the harness. Read Chapter 23: [link]
 

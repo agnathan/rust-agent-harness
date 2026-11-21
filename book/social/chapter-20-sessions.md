@@ -15,8 +15,6 @@ This crate writes the two tables and queues the new ids, capped at 64. It does n
 4/
 One WAL append measured 139.2 µs. The demo reply is pong. Two rows. Journal mode wal. No key.
 
-[personal note]
-
 5/
 Next is MEMORY.md and USER.md: a frozen snapshot, a char budget, and a scan before the write.
 
@@ -30,8 +28,6 @@ Chapter 20 is out: Sessions on Disk.
 The conversation finally survives the process. One turn is a single SQLite transaction: a user row and an assistant row, in WAL mode. The session row is inserted once. Search does not run on that path. The new row ids sit on a queue until the recall chapter builds the index.
 
 I re-ran the chapter 9 eval set on the mock. It still passes. One WAL append measured 139.2 µs.
-
-[personal note: one takeaway from writing this chapter]
 
 Next: memory files, and a snapshot that a mid-session write does not change. Read Chapter 20: [link]
 

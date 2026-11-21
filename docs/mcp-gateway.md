@@ -10,7 +10,7 @@ Priority 1 is token efficiency through dynamic toolsets. Priority 2 is high avai
 
 **Server.** It holds the catalog: native tools, tools federated from upstream MCP servers, and tools loaded from runtime plugins. It searches that catalog itself (BM25 plus embeddings). It exposes `search_tools`, a filtered toolset per session and per client, and `set_task` for a task-shaped starter set. When the offered set changes it sends `notifications/tools/list_changed`. Schemas on the wire stay compact; the full docs are a separate request. It can offer a composite (macro) tool and a code-mode tool. Large results are paged or summarized. Per session it records schema tokens, call tokens, result tokens, and tools that were offered and never called.
 
-The harness chapter that is already written (book chapter 6, crates `steps/ch06-*`) is the client half of this split. It measures schema cost, builds a BM25 index, reveals tools append-only, and caches `tools/list`. It does not search a remote catalog. Book chapter 5 is the process that will hold the catalog. Book chapter 7 is the server-side index.
+Book chapter 6 (crates `steps/ch06-*`) is the client half of this split. It measures schema cost, builds a BM25 index, reveals tools append-only, and caches `tools/list`. It does not search a remote catalog. Book chapter 5 is the process that holds the catalog. Book chapter 7 is the server-side index.
 
 ## What I read
 
@@ -68,7 +68,7 @@ These are the designs that sit in front of many MCP servers. The notes are from 
 - Hosted-room replica promotion is not the MCP replica design. MCP replicas are mostly stateless, routed by session id, with shared state in Redis or something like it.
 - OAuth 2.1 on the server follows the MCP spec (the resource server). Hermes's `mcp_oauth.py` is the client that will talk to it. This server does not implement the client flow.
 
-**In chapters 5, 7, 8, and 15.** A 34/8 call gate, BM25 over native, plugin, and in-memory upstream tools, an `Arc` reload, `search_tools`, `set_task`, `describe`, a `list_changed` flag, paging, schema/call/result tokens, and per-tool permits, idempotent retries, a breaker, and 429/503 backpressure.
+**In chapters 5, 7, 8, and 15.** A 32/8 call gate, BM25 over native, plugin, and in-memory upstream tools, an `Arc` reload, `search_tools`, `set_task`, `describe`, a `list_changed` flag, paging, schema/call/result tokens, and per-tool permits, idempotent retries, a breaker, and 429/503 backpressure.
 
 **In chapter 23.** A usage score installed as the offered set, composite and macro names, and a line-script code mode capped at 50 calls on the sandbox allowlist. The score does not run inside `session_tools`.
 
@@ -85,7 +85,7 @@ Server-track chapters are marked *(server)*. Each one sits after the harness cha
 | Ch | Track | After | What it adds |
 |---|---|---|---|
 | 4 | harness | — | MCP client. Written. |
-| 5 | *(server)* | chapter 4 | Minimal MCP server. Written. A fixed list, `echo`, and a 34/8 gate. No socket. |
+| 5 | *(server)* | chapter 4 | Minimal MCP server. Written. A fixed list, `echo`, and a 32/8 gate. No socket. |
 | 6 | harness | — | Thousands of Tools. Written. The client half of the catalog. |
 | 7 | *(server)* | chapter 6 | Dynamic catalog and server-side BM25 plus embeddings. |
 | 8 | *(server)* | chapter 7 | Per-session toolsets, `set_task`, `list_changed`, compact schemas, token telemetry. |

@@ -1,26 +1,14 @@
 # Chapter 11: Approvals and Guardrails
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
+Chapter 10's loop will call whatever tool the model names, as long as the name resolves and the scheduler has a permit. That is the right default for `echo`. It is the wrong default for a shell. This chapter puts a decision in front of dispatch. The crate is `steps/ch11-approvals`, a copy of chapter 10's harness plus an `approval` module. The package is `ch11-approvals` and the library is `harness_core`. The loop calls `approval::deny_tool` before `dispatcher.run_raced`. A denial is pushed as the tool result, and the tool body does not run.
 
-Chapter 10's loop will call whatever tool the model names, as long as the name resolves and the scheduler has a permit. That is the right default for `echo`. It is the wrong default for a shell. This chapter puts a decision in front of dispatch. The crate is `steps/ch11-approvals`, a copy of chapter 10's harness plus an `approval` module. The package is `ch11-approvals`, the library is `harness_core`, and the demo binary is `ch11-approvals`. The loop calls `approval::deny_tool` before `dispatcher.run_raced`. A denial is pushed as the tool result, and the tool body does not run.
+`check` is the single entry. The order is the table under What this chapter decides. Hardline is denied even in YOLO. Only `terminal` and `execute_code` are gated, and `echo` still runs.
 
-`check` is the single entry. The order is the floor, then YOLO or mode off, then the allowlist, then unattended mode, then a smart check, then ask. Hardline patterns — `rm -rf /`, `mkfs`, a raw `dd`, a fork bomb, `kill -1`, shutdown — are denied with `hardline: true`, and YOLO does not move that branch. Dangerous commands are a wider class. They are normalized, stripping wrappers such as `sudo` and `env NAME=value`, and an interactive session asks while cron denies them. Only `terminal` and `execute_code` are gated. `echo` and `delegate` are unchanged. An inherited chapter 9 test that expects `echo` to run must still pass. If a new guard would deny `echo`, the guard is wrong.
-
-The human wait is the part that has to be careful about the chapter 3 bound. `Ask` with no prompt installed becomes a denial, so a headless run cannot block forever. When a prompt is installed, concurrent calls share one prompt, and the wait does not hold a tool-concurrency permit. `run_call` drops the permit before it waits. A person thinking must not pin one of the eight slots. The denial text tells the model the user has not consented, which is the brake on a model that would otherwise rephrase the same command until one variant slipped through.
+`Ask` with no prompt installed becomes a denial. When a prompt is installed, the wait drops the tool-concurrency permit first, so a person thinking does not pin one of the eight slots.
 
 Later chapters reuse this floor rather than growing a second one. Chapter 13 calls it for `execute_code` and adds the script gate. Chapter 14 adds two more floor checks, before YOLO: deleting the running binary, and a git mutation of this crate's own tree. Chapter 17's terminal goes through `deny_tool` before the sandbox worker. Chapter 25's skill-write gate is a different question, and it stays off unless configured. The self-improving loop depends on this chapter in a blunt way. An agent that can write a skill, remember a fact, or patch its own procedure is an agent that can also be talked into a destructive command. Learning does not get to bypass the floor.
 
-Rust, next to the code: the verdict is an enum, so allow, ask, and deny do not collapse into a boolean with a side channel. A mutex is the one prompt. A permit guard is dropped before the `.await`, which is the pattern you want whenever a human, a socket, or a child process might take a while.
-
 `cargo run -p ch11-approvals` prints the denial. The exercise is `my-harness/tests/ch11.rs`: a hardline `terminal` command is denied, and the tool body does not run.
-
-**In this chapter**
-
-- 11.1 Labels, policy, and the verdict
-- 11.2 `check`, in the order the branches return
-- 11.3 Masking, wrappers, hardline, and dangerous
-- 11.4 One prompt, and the permit it does not hold
-- 11.5 `deny_tool` before `run_raced`
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -37,8 +25,6 @@ Rust, next to the code: the verdict is an enum, so allow, ask, and deny do not c
 > **Adapted.** The pattern table is a short set of the commands I read in `HARDLINE_PATTERNS` (root `rm -rf`, `mkfs`, `dd` onto a raw disk, a fork bomb, `kill -1`, shutdown). Hermes's `DANGEROUS_PATTERNS` list is much longer; this chapter treats recursive `rm`, a write under `/etc` or `.ssh` or `.env`, a `curl` upload, and an interpreter `-c`/`-e` as the dangerous class. Quote masking is a character scan, not Hermes's quote-and-heredoc rewriter. A safe command with an empty deny list returns before that scan allocates. The smart step is `fake_smart_review`, not an auxiliary model. The human wait is one `tokio::sync::Mutex`.
 >
 > **Deferred.** Deleting the running binary (`agent/runtime_self_protection.py`, B6) and the self-repo git guard (B5, `tools/self_repo_guard.py`) are chapter 14, on this same floor, before YOLO. The gateway lifecycle block (B4, `tools/terminal_tool_guards.py` `gateway_lifecycle_block`) is chapter 39, because the chat gateway does not exist yet. Persisting "always" to a file is A7 and is not this chapter. A plugin that escalates to the human gate is chapter 12 (A8). The whole-script `execute_code` gate is chapter 13 (A2); until then `deny_tool` returns `None` for `execute_code` and the script is not blocked here.
-
-[personal note: a command you expected the allowlist to pass, and which floor still refused it]
 
 ## What this chapter decides
 
@@ -59,11 +45,7 @@ Rust, next to the code: the verdict is an enum, so allow, ask, and deny do not c
 | Smart | `fake_smart_review` returns deny or approve | `Deny` or `Allow` |
 | Ask | Manual mode, or smart escalates | `Ask` |
 
-`run_script` is the fake model. It is a list of `ScriptCall` values. The first `Deny` ends the list. The demo is `rm -rf /` followed by `echo hello`. The second call never runs.
-
-`hardline_message` names `--yolo` and `approvals.mode=off`. It does not append `STOP_COMMAND`. The other `Deny` arms do. `breaker_addendum` appends the circuit-breaker sentence when `session.denials` has reached the threshold, and only on the arms that call it. An approval resets the tally. Hardline denials count too.
-
-The human path is `run_call`. It acquires a permit from a semaphore of 8, which is the same bound chapter 3 uses. If the verdict is `Ask`, it drops that permit, then locks the prompt. The test records how many permits were free at the start of the wait, and the peak number of callers inside the lock. The peak is 1. A silent prompt waits for `Policy.timeout` and denies. The default timeout is 300 seconds. The test uses 30 milliseconds so the suite does not sit there.
+`run_script` stops on the first `Deny`. `hardline_message` names `--yolo` and does not append `STOP_COMMAND`. The other denials do. The third denial carries the breaker sentence. An `Ask` drops the permit before the prompt, and the test's peak inside the lock is 1. The default timeout is 300 seconds. The test uses 30 milliseconds.
 
 ## 11.1 Labels, policy, and the verdict
 
@@ -79,10 +61,12 @@ pub enum Risk {
 ```
 
 > **Rust sidebar: `enum` and `Copy`**
+>
 > - `Risk` is one of three variants. A `match` with no `_` stops compiling if I add a fourth and forget an arm.
-> - The derive includes `Copy`. Assignment duplicates the tag. `check` can return `Verdict::Allow { risk }` by copying `Risk::Safe` and still use the same label again.
-> - `Mode`, `Unattended`, `Presence`, and `SmartVote` are `Copy` for the same reason. They own no heap data.
-> - `Policy` is not `Copy`. It owns two `Vec<String>`s, the deny list and the allowlist. Copying it would duplicate those lists and let two sessions diverge. Callers pass `&Policy`.
+> - `check` can return `Verdict::Allow { risk }` by copying `Risk::Safe` and still use the same label again.
+> - `Mode`, `Unattended`, `Presence`, and `SmartVote` are `Copy` for the same reason.
+> - `Policy` is not `Copy`. Callers pass `&Policy`.
+> - `Option`, `Result`, enums, and `Arc` are taught in [chapter 1](chapter-01-first-contact.md).
 
 ```rust
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -874,7 +858,7 @@ The session on this path is manual and interactive, so the deny-list arm and the
 
 ## Tests
 
-The approval tests are the original fourteen, plus the loop test that a hardline `terminal` command never reaches the tool. Hardline still denies under YOLO and mode off. `echo "rm -rf /"` is allowed. `bash -c 'rm -rf /'` is not. `sudo -S` is a floor under YOLO. A user deny rule matches before YOLO. An allowlist entry skips the human. Cron denies `rm -rf ./build` and still allows `echo hello`. The default timeout is 300 seconds and the unattended modes are deny. Smart mode denies a `curl` upload and escalates `rm`. The third denial adds the breaker. The script stops. Two asks share one prompt and both saw a free permit. A silent prompt denies in well under two seconds and the permit is back.
+Fourteen approval tests plus the loop test that a hardline `terminal` command never reaches the tool. `echo "rm -rf /"` is allowed. `bash -c 'rm -rf /'` is not. Two asks share one prompt, and both saw a free permit.
 
 ## Build, run, and benchmark
 
@@ -902,13 +886,7 @@ The binary runs the two-call script. No key. `stopped: 1` is the fake model refu
 |---|---|---|---|
 | `skip_decision` | 249.6 ns | under 1 µs | `check` of `echo hello` |
 
-`skip_decision` calls `skip_decision("echo hello")`, which is `check` on `Policy::manual()` with a fresh session. The string is passed through `black_box`. The timed closure is `b.iter`. Building the policy is inside the call, not a separate setup step. There is no runtime, no sleep, and no prompt. The fast path scans the bytes and returns `Allow`. It does not allocate a normalized copy.
-
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `11`.
-
-### Milestone demo
-
-The `cargo run` above. The verdict is `deny`.
+The means are `mean.point_estimate` from [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `11`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -947,11 +925,9 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Laye
 - **Fake model.** `rm -rf /` then `echo hello` produces one verdict, `deny`.
 - **Time.** The skip of `echo hello` measured **249.6 ns**. The target is under 1 µs.
 
-[personal note: the first command you put on the allowlist, and whether the floor still caught a cousin of it]
-
 ## What you implement
 
-`my-harness/tests/ch11.rs` is the milestone. It compiles, then panics in `todo!("chapter 11")` until `chapter_11_terminal_verdict` in `my-harness/src/milestones.rs` matches this chapter. The function takes a command. For `rm -rf /` the returned text contains `BLOCKED`, and it does not contain `echo hello ran`, because the tool body never ran. The step crate is the reference. Do not copy it into `my-harness/`.
+`my-harness/tests/ch11.rs` is the milestone. It compiles, then panics in `todo!("chapter 11")` until `chapter_11_terminal_verdict` in `my-harness/src/milestones.rs` matches this chapter. The function takes a command. For `rm -rf /` the returned text contains `BLOCKED`, and it does not contain `echo hello ran`, because the tool body never ran. 
 
 ## What's next
 

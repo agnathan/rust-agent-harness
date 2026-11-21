@@ -1,7 +1,5 @@
 # Chapter 6: Thousands of Tools
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 3 can hold a few dozen tools, and the model was shown every schema that passed its gate. That stops working when the catalog is the size of a real MCP workspace: several servers, each with its own list, easily a thousand tools and sometimes ten thousand. Three costs arrive together. The prompt grows by the schema text, so the provider bills more input tokens. The model has more near-matches to choose from, so it calls the wrong tool more often. And every turn pays that cost even when the user asked for one rename.
 
 This chapter is the client half of the catalog. It keeps the chapter 3 shape — a name, a description, a JSON Schema — and it does not open an MCP connection. Chapter 4 is the client that does. Chapter 5 is the separate server that will hold the list. The benches here still need a catalog of 1,000 and 10,000 tools, so a deterministic generator fills it. The five copies are `steps/ch06-1-schema-cost`, `ch06-2-tool-index`, `ch06-3-search-tool`, `ch06-4-routing`, and `ch06-5-lazy-list`. Section numbers stay 6.1 through 6.5 so they match those crates.
@@ -13,16 +11,6 @@ The server track exists so this work does not have to live inside the agent fore
 Rust, as it shows up: an inverted index is a map from token to postings. A trait hides the embedder so the tests use a hash. Append-only is a `Vec` you only push to. The cache is an ordinary struct you replace.
 
 The runnable demo is offline. `cargo run -p ch06-5-harness-cli -- --mock ask "rename a file"` is the end state. A live OpenRouter call is optional on that CLI and was not run for this chapter. The missing-key error is a real run with the key unset.
-
-**In this chapter**
-
-- 6.1 Why many tools hurt
-- 6.2 A searchable index
-- 6.3 search_tools and lazy loading
-- 6.4 Route, then shrink
-- 6.5 The registry at scale
-
-[personal note: the first time a tool list was too long to read]
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -89,10 +77,10 @@ schema_tokens_10000     time:   [21.036 ms 21.061 ms 21.084 ms]
 
 | Benchmark | Mean | Target | Machine |
 |---|---|---|---|
-| `schema_tokens_1000` | 923.1 µs | under the 10,000-tool budget | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0, sample size 10 |
+| `schema_tokens_1000` | 923.1 µs | under the 10,000-tool budget | [bench host](appendix-benchmark-method.md) |
 | `schema_tokens_10000` | 21.06 ms | < 50 ms | same |
 
-The `time:` line is the slope. The table is the mean point estimate. Counting the tokens is cheap next to sending half a million of them on every turn.
+ The table is the mean point estimate. Counting the tokens is cheap next to sending half a million of them on every turn.
 
 ### Milestone demo
 
@@ -421,7 +409,7 @@ agent_filter_10000      time:   [76.699 µs 76.885 µs 77.268 µs]
 | `cache_hit_10000` | 17.56 ns | < 1 µs | same |
 | `agent_filter_10000` | 77.00 µs | < 1 ms | same |
 
-CI runs these five steps on Ubuntu, macOS, and Windows. The benches run on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml). A push to `main` appends the medians to the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/).
+Where these numbers were taken is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ### Milestone demo
 
@@ -478,10 +466,8 @@ Hermes F3 (`agent/prompt_builder.py`, `CONTEXT_FILE_MAX_CHARS`, 20,000 character
 - **Routing.** "rename a file" stays on the files server. That search took 16.00 µs. Shrinking 2,000 short descriptions went from 412,249 bytes to 401,057. Sentences that name an unavailable tool are dropped.
 - **Cache.** Two reads of the stand-in `tools/list` call the source once. A stand-in `tools/list_changed` makes the next read call it again. A real list uses the same cache through `from_cards` and `replace_cards`. The cache hit was 17.56 ns. One agent's server filter over 10,000 tools was 77.00 µs.
 
-[personal note: which number changed how you think about putting tools in the prompt]
-
 ## What's next
 
 Chapter 4 is the MCP client. A session there lists tools and hears `list_changed`. `cards_from_listed` is how that list becomes the cards this chapter already caches. The generator stays for the benches.
 
-This chapter is the client half of the catalog. It decides what enters the prompt: the task, the budget, the cache, and which servers an agent may see. Chapter 5 is the process that holds a fixed list and a 34/8 call gate. It still binds no socket. Chapter 7 is the server-side catalog and search, on that process. Chapter 9 is the agent loop: the model chooses a tool, the dispatcher runs it, and the result comes back as a message. `search_tools` is one of those choices. The loop is also where a cancellation token and a budget show up, and where the saved eval set starts.
+This chapter is the client half of the catalog. It decides what enters the prompt: the task, the budget, the cache, and which servers an agent may see. Chapter 5 is the process that holds a fixed list and a 32/8 call gate. It still binds no socket. Chapter 7 is the server-side catalog and search, on that process. Chapter 9 is the agent loop: the model chooses a tool, the dispatcher runs it, and the result comes back as a message. `search_tools` is one of those choices. The loop is also where a cancellation token and a budget show up, and where the saved eval set starts.

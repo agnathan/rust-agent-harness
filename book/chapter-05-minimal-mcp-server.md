@@ -1,7 +1,5 @@
 # Chapter 5: A Minimal MCP Server
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 4 can talk to an MCP server. It cannot be one. The harness decides what enters a prompt: the task, the budget, the cached prefix. Something else has to hold the tool list and run the call. This chapter is that other program, in the smallest form that is still a server. The step crate is `steps/ch05-minimal-server`, package `ch05-minimal-server`. The types are `Gateway`, `ToolCard`, `SessionView`, `CallGate`, and `GatewayError`.
 
 `Gateway::new` starts empty. `register` appends a name and a description, and a second registration of the same name is `GatewayError::Duplicate`, which is the rule chapter 3 already uses. `session_tools` returns that list, in registration order, for every session id. There is no per-session filter yet. `call` looks up the name before it takes a permit, so an unknown name does not occupy a slot. `echo` reads the string field `text` and returns it. Any other registered name returns its description. A missing `text` on `echo` is `BadArgs`.
@@ -39,8 +37,6 @@ Rust for a new reader: a second crate is a separate compilation unit with its ow
 >
 > **Deferred.** A socket, streamable HTTP, and OAuth 2.1 as a resource server wait for chapter 42. Server-side search waits for chapter 7. Per-session filtering waits for chapter 8.
 
-[personal note: the moment a client and a server stopped being the same process in your head]
-
 ## What this chapter decides
 
 `Gateway::new` starts empty. `register` appends a name and a description. `session_tools` returns that list, in registration order, for every session id. There is no per-session filter yet.
@@ -59,9 +55,9 @@ let _execute = self.execute.clone().acquire_owned().await.expect("execute semaph
 Ok(body().await)
 ```
 
-### Rust: a permit is a value
-
-A `Semaphore` starts with N permits. `acquire_owned` returns a permit value. Dropping that value gives the permit back. Holding it across an `.await` is what caps the overlap. You do not increment a counter by hand, and you do not hold a `Mutex` across the tool body. The mutex would pin a worker. The permit does not.
+> **Rust sidebar: a permit is a value**
+>
+> A `Semaphore` starts with N permits. `acquire_owned` returns a permit value. Dropping that value gives the permit back. Holding it across an `.await` is what caps the overlap. You do not increment a counter by hand, and you do not hold a `Mutex` across the tool body. The mutex would pin a worker. The permit does not.
 
 ## Tests
 
@@ -80,7 +76,7 @@ Starting 3 tests across 3 binaries
      Summary [   0.129s] 3 tests run: 3 passed, 0 skipped
 ```
 
-The three tests are the empty gateway, echo plus the duplicate, and the 34/8 gate. The gate test is the slow one, about 128 ms, because the tasks sleep.
+The three tests are the empty gateway, echo plus the duplicate, and the 32/8 gate. The gate test is the slow one, about 128 ms, because the tasks sleep.
 
 ```bash
 cargo run -p ch05-minimal-server
@@ -94,8 +90,6 @@ accept_bound: 32
 
 There is no model in this process, so there is no API key and no `--mock` flag. The binary registers `echo` and calls it.
 
-The bench is `benches/gate.rs`. Criterion warm-up is 1 second, measurement is 2 seconds, and the sample size is 10. The mean is `estimates.json` `mean.point_estimate`.
-
 | Benchmark | Mean | Target | What it is |
 |---|---|---|---|
 | `echo_through_gate` | 45.53 ns | the permit round trip | one `CallGate::run` that returns `hello`, no sleep |
@@ -103,11 +97,9 @@ The bench is `benches/gate.rs`. Criterion warm-up is 1 second, measurement is 2 
 
 `echo_through_gate` builds the runtime (4 workers) and the gate outside the sample. The timed closure takes one accept permit, waits for an execute permit, and returns the string `hello`. `eight_concurrent_sleeps` spawns eight tasks inside the sample. Each sleeps 1 ms while holding an execute permit. Setup of the runtime is excluded. Nothing is a model. The 2.129 ms number is one wave of eight 1 ms sleeps plus scheduling.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38863938100](https://github.com/agnathan/rust-agent-harness/actions/runs/38863938100), section `5` (recorded as `gw5`).
+I did not open a socket and I did not call OpenRouter.
 
-### Milestone demo
-
-The `cargo run` above is the demo. I did not open a socket and I did not call OpenRouter.
+The means are `mean.point_estimate` from [run 38863938100](https://github.com/agnathan/rust-agent-harness/actions/runs/38863938100), section `5`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -133,8 +125,6 @@ This process does not authenticate a caller. Default-deny and pairing are chapte
 - **Call.** `echo` returns `text`. A second `echo` is `Duplicate`. An unknown name is `Unknown` and takes no permit.
 - **Gate.** 32 calls may be inside. 8 may run the body. One more is `Saturated`. A permit round trip measured **45.53 ns**. Eight 1 ms sleeps measured **2.129 ms**.
 
-[personal note: what was harder, the semaphore or deciding the server is not the harness]
-
 ## What's next
 
-Chapter 6 is already written. It is the client half: schema cost, BM25, and a lazy prompt. Chapter 7 puts that index in this process and reloads it by swapping an `Arc`.
+Chapter 6 is the client half: schema cost, BM25, and a lazy prompt. Chapter 7 puts that index in this process and reloads it by swapping an `Arc`.

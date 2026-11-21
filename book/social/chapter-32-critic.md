@@ -15,8 +15,6 @@ This parser scans the reply for the word verdict. as_tool and final_gate both ca
 4/
 The mean for judge_one_permit is 278.9 ns, mean.point_estimate from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589). The demo prints "accepted: done". No key.
 
-[personal note]
-
 5/
 Next is composition: fan-out under the same pool, a handoff when ownership moves, and the loop around this critic.
 
@@ -30,8 +28,6 @@ Chapter 32 is out: The Critic.
 A finished reply still needs a verdict. Hermes Agent caps a goal at 20 turns, times the judge out at 30.0 seconds, and keeps a 4,000 character snippet. I stored 20 and 30, cut the snippet at 4,000 bytes on a character boundary, and scanned the reply for the word verdict. Done is the only accept. The critic takes one permit, locks the shared notes, and does not push. It does not sleep the 30 seconds.
 
 The mean for judge_one_permit is 278.9 ns.
-
-[personal note]
 
 Next: composing the supervisor, the fan-out, the handoff, and this critic. Read Chapter 32: [link]
 

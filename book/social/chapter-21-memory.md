@@ -15,8 +15,6 @@ The approval gate stays off. Chapter 25 is where a human accepts a memory write.
 4/
 Enqueue of one turn measured 54.59 ns. The demo file says "likes tea". The snapshot prints frozen. No key.
 
-[personal note]
-
 5/
 Next is recall: FTS5 over the session file, and a search that runs only when the tool is called.
 
@@ -30,8 +28,6 @@ Chapter 21 is out: Memory Files.
 The memory tool finally has files. MEMORY.md and USER.md, entries split by a section mark, with the character budgets Hermes Agent uses. The system-prompt snapshot is an Arc taken at open. Writing an entry updates the file and leaves that Arc alone, so the prompt prefix does not change mid-session.
 
 A strict scan blocks authorized_keys, a zero-width space, a context exfiltration phrase, and a hardcoded key. The write-approval gate stays off until the skills chapter. One enqueue measured 54.59 ns.
-
-[personal note: one takeaway from writing this chapter]
 
 Next: searching past sessions. Read Chapter 21: [link]
 

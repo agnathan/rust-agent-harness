@@ -15,8 +15,6 @@ I read DESIGN.md around the bind bullet and the true-abort bullet. No token mean
 4/
 The demo prints "a2a: ok". The bench id is 49/cancel_inflight. The aliases are 47/cancel_inflight and 45/cancel_inflight. The mean is 46.13 µs, mean.point_estimate from [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196).
 
-[personal note]
-
 5/
 Next is chapter 50, seeing inside. A span per event. The field is the event name.
 
@@ -32,8 +30,6 @@ The harness is the chapter 48 tree copied forward, plus an A2A module. ExternalA
 I read Hermes at 9e01b44. security.py frames every inbound message and scrubs outbound text, including emails. DESIGN.md binds 127.0.0.1 unless a token and A2A_HOST are both set. Peer identity comes from tokens. tasks/cancel marks the task canceled and drops the reply, and it cannot abort the live in-flight turn.
 
 The demo prints "a2a: ok". The bench id is 49/cancel_inflight. Aliases: 47/cancel_inflight and 45/cancel_inflight. The mean is 46.13 µs, mean.point_estimate from [run 39137469196](https://github.com/agnathan/rust-agent-harness/actions/runs/39137469196).
-
-[personal note]
 
 Next: chapter 50, seeing inside. A span per event. The field is the event name. Read Chapter 49: [link]
 

@@ -1,4 +1,4 @@
-//! Book chapter 40. The MCP gateway service, in this process. Replicas are
+//! Book chapter 42. The MCP gateway service, in this process. Replicas are
 //! names. A session id picks one. Nothing here listens on a socket.
 
 use std::collections::{HashMap, VecDeque};

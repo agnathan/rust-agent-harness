@@ -1,6 +1,6 @@
 //! The MCP gateway process.
 //!
-//! Chapter 5's step crate is the fixed list and the 34/8 gate. Chapter 7's
+//! Chapter 5's step crate is the fixed list and the 32/8 gate. Chapter 7's
 //! step crate is the catalog and the `Arc` reload. Chapter 8's step crate
 //! is the session toolset. Chapter 15 wraps that gateway with per-tool
 //! permits, idempotent retries, and a breaker. Chapter 23 installs a

@@ -1,7 +1,5 @@
 # Chapter 20: Sessions on Disk
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 2 can save a conversation as one JSON file, and chapter 19 can fold a stream into text worth keeping. Neither of those is a session you can resume, search, or trust with a secret that passed through the transcript. A learning agent that forgets every session can only learn inside one sitting. This chapter puts the session on disk, and it scrubs the text on the way in. The crate is `steps/ch20-sessions`, a copy of chapter 19 plus `wal` and `redact`. The package is `ch20-sessions`. The library is `harness_core`. `lib.rs` re-exports the redaction functions from here on, so later chapters call `crate::redact` instead of growing a second scrub.
 
 `Store` is a SQLite connection in WAL mode. Two tables hold the session and its messages. `append_turn` runs both strings through `redact_sensitive_text` before the insert, so a turn that contains a key is stored without the secret. The mask keeps the prefix through the first `-` or `_`, then stars. The patterns cover the prefix families, environment assignments, `Authorization` headers, and PEM blocks. `redact_for_egress` is that scrub plus a sweep that turns a bare bearer token into `Bearer [redacted]`. A background queue does the write. Full-text search is not built here. The ids are queued. Chapter 22 builds the search on this store.
@@ -36,8 +34,6 @@ Rust, beside the connection: SQLite is a library linked into the process, WAL is
 > **Adapted.** The FTS virtual table is not created here. `append_turn` pushes the new row ids onto a queue of 64 and drops the oldest. Nothing in this crate runs a `MATCH` query. `rusqlite` is bundled so CI does not need a system SQLite.
 >
 > **Deferred.** Trigram search, hiding subagent sessions, and demoting cron are chapter 22. The triggers in `FTS_TRIGRAM_SQL` land there, in a smaller form.
-
-[personal note: a session you expected to resume, and what was actually on disk]
 
 ## What this chapter decides
 
@@ -490,7 +486,6 @@ The test calls `redact_for_egress` on a bare `Bearer abcdefghijklmnopqrstuvwxyz0
 
 `tests/redact.rs` is the new test. One function checks all three. `redact_sensitive_text` on the openai sentence must contain `sk-***` and `OPENAI_API_KEY=***` and must not contain `super-secret-value`. `redacting_formatter` on the Authorization line must contain `Authorization: ***` and must not contain the token. `redact_for_egress` on the bare Bearer sentence must contain `Bearer [redacted]` and must not contain the token. The three session tests are unchanged in what they expect to read back. `hi` and `pong` still round-trip. The journal mode is still `wal`. The trigram table still does not exist.
 
-
 ## Tests
 
 Three tests. A turn appends two rows, the journal is `wal`, and the trigram table does not exist. A second turn resumes the same session. The chapter 9 saved evals and the four stress evals pass.
@@ -521,13 +516,11 @@ The binary is one fake reply in a temp database. The file is removed when the pr
 |---|---|---|---|
 | `wal_append` | 139.2 µs | under 1 ms | one transaction, two message rows |
 
-`wal_append` opens a temp database and runs `migrate` before the bench. The timed closure is `b.iter`. Inside: `append_turn` of session `bench`, user `hi`, assistant `pong`, with each argument passed through `black_box`. The sample is the transaction and the queue push. Opening the file and creating the tables are excluded. No FTS insert runs. The queue is capped at 64, so later samples drop the oldest id instead of growing without a bound.
+The reply is `pong`. Two rows. The journal is `wal`.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `18`.
+`wal_append` opens a temp database and runs `migrate` before the bench. The timed closure is `b.iter`.
 
-### Milestone demo
-
-The `cargo run` above. The reply is `pong`. Two rows. The journal is `wal`.
+The means are `mean.point_estimate` from [run 39104733918](https://github.com/agnathan/rust-agent-harness/actions/runs/39104733918), section `20`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -549,7 +542,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Laye
 
 **What did not.** Subagent sessions are stored if you pass that source. Hiding them is chapter 22. Memory writes and the approval gate (A9) are chapter 21 and chapter 25. This chapter does not scan message text.
 
-**Left for later.** Secret redaction (E1, E2) is still absent.
+**Left for later.** Plugin-registered patterns and the vault. `append_turn` stores the E1 scrub and does not call `redact_for_egress`.
 
 ## Chapter summary
 
@@ -559,11 +552,9 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Laye
 - **Evals.** The chapter 9 mock set still passes.
 - **Time.** One WAL append measured **139.2 µs**.
 
-[personal note: a resume that came back empty, and which file you had opened]
-
 ## What you implement
 
-`my-harness/tests/ch20.rs` is the milestone. It compiles, then panics in `todo!("chapter 20")` until `chapter_20_stored_line("sk-abcdefghijklmnopqrstuvwxyz")` contains `sk-***` and does not contain the rest of that key. The store redacts before the insert. The step crate is the reference. Do not copy it into `my-harness/`.
+`my-harness/tests/ch20.rs` is the milestone. It compiles, then panics in `todo!("chapter 20")` until `chapter_20_stored_line("sk-abcdefghijklmnopqrstuvwxyz")` contains `sk-***` and does not contain the rest of that key. The store redacts before the insert. 
 
 ## What's next
 

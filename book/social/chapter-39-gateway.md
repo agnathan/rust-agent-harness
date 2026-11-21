@@ -15,8 +15,6 @@ tools/terminal_tool_guards.py gateway_lifecycle_block returns immediately when t
 4/
 One enqueue measured 152.0 ns, mean.point_estimate from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The demo prints "gateway: queued". submit of a turn does not call FakeModel.
 
-[personal note]
-
 5/
 Next is the browser: a page opens only after the secret-URL check and the SSRF check. The snapshot is capped. The text is untrusted.
 
@@ -32,8 +30,6 @@ The chat gateway decides who may talk to the agent. Hermes Agent default-denies 
 A shell command that would restart, stop, or uninstall the gateway is refused while the process is supervised. tools/terminal_tool_guards.py gateway_lifecycle_block is that check. An unsupervised process is left alone. Outbound text goes through redact_for_egress from chapter 20. A platform message, including a mid-turn steer, is a push onto an inbox of 64. submit does not call the model.
 
 One enqueue measured 152.0 ns, mean.point_estimate from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The demo prints "gateway: queued".
-
-[personal note: one takeaway from writing this chapter]
 
 Next: browser tools. A metadata URL is not opened. Read Chapter 39: [link]
 

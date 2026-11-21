@@ -15,8 +15,6 @@ The harness returns Result instead of raising. The maps are HashMaps. There is n
 4/
 The bench is resolve_profile, the scoped hit. The mean is 96.7 ns, mean.point_estimate from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The demo prints "profile: writer". The key stays in the map.
 
-[personal note]
-
 5/
 Next is chapter 39, the chat gateway. A stranger is denied. A pairing code is eight characters and expires. A platform message lands on the session inbox.
 
@@ -30,8 +28,6 @@ Chapter 38 is out: Profiles.
 One process can hold more than one persona. Hermes Agent's get_secret fails closed when the multiplex gateway has no profile scope installed: UnscopedSecretError, rather than reading another profile's environment. I kept that. Writer and reader each have an API_KEY. The scope selects one map. The prompt is the persona, "you write", and the secret is not copied into it. An unscoped read is the error. The demo prints "profile: writer" and does not print the key.
 
 The mean for resolve_profile is 96.7 ns.
-
-[personal note]
 
 Next: the chat gateway. Who is allowed to speak, a pairing code, and a platform message on the inbox. Read Chapter 38: [link]
 

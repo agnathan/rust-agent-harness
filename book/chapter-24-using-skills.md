@@ -1,29 +1,14 @@
 # Chapter 24: Using Skills
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 22's harness can remember a fact and search a session. It cannot yet carry a procedure for a kind of task: the steps, the pitfalls, the files you always open. Stuffing that procedure into `MEMORY.md` would mix instructions with facts, and stuffing it into the system prompt would bust the cache every time a skill changed. This chapter adds skills as something you read. Writing them is chapter 25. The crate is `steps/ch24-skills`, a copy of chapter 22 — chapter 23 is the server and is not on this line — plus a `skills` module. The package is `ch24-skills`.
 
-A skill is a folder, category then name, with `SKILL.md` at the top: YAML frontmatter and a markdown body. The caps match Hermes: the name at most 64 characters, the description that appears in the index at most 60, the body at most 100,000 characters. `load_tree` walks categories, then skill folders. `parse_skill` reads the keys this chapter needs. `SkillSession` stores the rendered index in an `Arc`. `render_index` writes one `<available_skills>` block, category then name, fixed formatting. The block is computed once and left untouched for the rest of the session, so loading 500 skills does not change the index bytes when one is viewed. `skills_list` filters by category. `skill_view` reads one file, the whole of it, with no offset. `change_note` compares names so a later message can say what appeared or disappeared without rewriting the system prompt.
+A skill is a folder, category then name, with `SKILL.md` at the top: YAML frontmatter and a markdown body. The caps match Hermes: the name at most 64 characters, the description that appears in the index at most 1,024 characters, the body at most 100,000 characters. `load_tree` walks categories, then skill folders. `parse_skill` reads the keys this chapter needs. `SkillSession` stores the rendered index in an `Arc`. `render_index` writes one `<available_skills>` block, category then name, fixed formatting. The block is computed once and left untouched for the rest of the session, so loading 500 skills does not change the index bytes when one is viewed. `skills_list` filters by category. `skill_view` reads one file, the whole of it, with no offset. `change_note` compares names so a later message can say what appeared or disappeared without rewriting the system prompt.
 
 That index is the harness's half of self-improvement. The agent can see which procedures exist. It loads the one it needs, as a tool result or as a user message, which is where chapter 2 said new text has to go. The system prompt stays put. Chapter 25 adds create, patch, and delete, with a scanner. Chapter 26's reviewer is allowed to call `skill_view` and, once writes exist, to patch. Chapter 34 leaves a `[SKILL_PRUNED]` marker if compression drops a loaded skill, and the agent reloads with `skill_view` if it still needs it. Chapter 48 shares a team library on top of this shape. None of those work if viewing a skill reshuffles the prompt prefix.
 
 Rust, beside the loader: the directory walk is `std::fs`, and the frontmatter parse is a small pull of a few keys rather than a general YAML lesson. `Arc<str>` or an `Arc` of the rendered block is how five hundred skills become one cheap clone. Byte-stability is an assertion on the bytes, which is the test you want for a cache.
 
 `cargo run --locked -p ch24-skills --bin ch24-skills` writes one skill and views it. The exercise is `my-harness/tests/ch24.rs`: loading 500 skills does not change the index bytes when one is viewed.
-
-**In this chapter**
-
-- 24.1 The caps and the two types
-- 24.2 `ScriptedModel` replies with a stored line
-- 24.3 `SkillSession` stores the index in an `Arc`
-- 24.4 `load_tree` walks categories, then skill folders
-- 24.5 `parse_skill` reads three keys
-- 24.6 `render_index` writes the block
-- 24.7 `skills_list` filters by category
-- 24.8 `skill_view` reads one file
-- 24.9 `change_note` compares names
-- 24.10 `demo` writes one skill and views it
 
 | Section | What it walks |
 |---|---|
@@ -51,8 +36,6 @@ Rust, beside the loader: the directory walk is `std::fs`, and the frontmatter pa
 > **Deferred.** The live hub. Prompt-cache byte identity with the parent model request. That stays a note in chapter 26.
 
 > **Guardrails.** This chapter reads. A name over 64 characters, a description over 1,024, or a body over 100,000 characters does not enter the index. `skill_view` refuses a relative path that contains `..`, an absolute path, and a file whose first component is outside `references`, `templates`, `scripts`, and `assets`. The stored block is one `Arc`. The scan and the write gate are chapter 25.
-
-[personal note: a skill you loaded late, and the step it would have saved]
 
 ## What this chapter decides
 
@@ -675,13 +658,11 @@ The binary writes one skill under a temp directory, renders the index, and views
 |---|---|---|
 | `load_render_500` | 4.15 ms | load 500 skills and render the index |
 
-`load_render_500` writes 500 `SKILL.md` files before the bench. Category is `cat` plus `n % 10`. Name is `skill` plus the index zero-padded to three digits, from `skill000` through `skill499`. The description is `Skill {n}`. The body is `Body {n}.` The timed closure is `b.iter`. Inside it: `load_tree` and `render_index`, the root and the slice and the connected list passed through `black_box`. The writes sit outside the timer. No model is called. The bench deletes the directory after the samples.
+The skill is `rename`. The body line is `Rename a file by its path.`
 
-The Mean cell is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `24`. The id is `24/load_render_500`. The old id `22/load_render_500` is an alias in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. Criterion also prints a `time:` line. That line is the slope. It is not the mean.
+`load_render_500` writes 500 `SKILL.md` files before the bench. Category is `cat` plus `n % 10`.
 
-### Milestone demo
-
-The `cargo run` above. The skill is `rename`. The body line is `Rename a file by its path.`
+The means are `mean.point_estimate` from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `24`. Bench ids: `24/load_render_500`, `22/load_render_500`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -693,10 +674,6 @@ One file over the body cap, or one name over 64 characters, fails `load_tree` fo
 
 `support_path` treats `..` as a substring. A supporting file whose name contains those two characters is refused. The check is not a component-only check.
 
-`skill_view` reads the whole file. The 100_000 character cap is on `load_tree`. A file edited after `open` can come back larger than the cap. The index does not move.
-
-`render_index` does not sort. It emits a category header whenever the category changes. Pass it the vec `load_tree` returned.
-
 ## Guardrails in this chapter
 
 The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Skills sit on L6 and L8 once they can be written. This chapter only reads.
@@ -707,7 +684,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Skil
 
 **Index.** `SkillSession` stores one `Arc<String>`. `change_note` returns a separate `String`. The bytes inside the `Arc` stay. That is the note from `stage_skills_index_note`, with the index left where `_render_skills_index` put it.
 
-**Left for later.** The skills-guard scan (H1) and the write-approval gate (A9) are chapter 25. The live hub is deferred. Prompt-cache byte identity with the parent model request stays a note in chapter 26. Secret redaction (E1, E2) is still absent.
+**Left for later.** The skills-guard scan (H1) and the write-approval gate (A9) are chapter 25. The live hub is deferred. Prompt-cache byte identity with the parent model request stays a note in chapter 26. Secret redaction (E1, E2) is chapter 20, already in this crate. `skills.rs` does not call it.
 
 ## Chapter summary
 
@@ -718,13 +695,11 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). Skil
 - **Note.** Added and removed names become the note. The `Arc` stays.
 - **Time.** Loading and rendering 500 skills measured **4.15 ms**. That is the mean.
 
-[personal note: a procedure that belonged in a skill instead of in the prompt]
-
 ## What you implement
 
 `my-harness/tests/ch24.rs` is the milestone. The test is `loading_skills_does_not_change_the_index_bytes_when_one_is_viewed`. It builds an index string and asserts `chapter_24_index_changes_when_viewed(index, index)` is false. The same bytes in and the same bytes out means viewing a skill did not change the index.
 
-The function in `my-harness` is a stub. It ends in `todo!("chapter 24")` and panics until the assertion can pass. The step crate is the reference. Do not copy it into `my-harness/`.
+The function in `my-harness` is a stub. It ends in `todo!("chapter 24")` and panics until the assertion can pass. 
 
 ## What's next
 

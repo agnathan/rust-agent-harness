@@ -1,7 +1,5 @@
 # Chapter 8: Session Toolsets
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 7's gateway has one catalog. Every caller who can search it can see every name. A session should see a smaller set: the tools a task starter picked, plus the names a search revealed. The full schema stays off that list until something asks for it. This chapter adds that view, and it counts schema tokens, call tokens, and result tokens for three ways of doing the same fake task. The step crate is `steps/ch08-session-toolsets`. It depends on `ch07-catalog`. It binds no socket.
 
 `SessionGateway` is the type a client holds. `set_task` installs a starter set for a task description. `search_tools` returns a short line per hit, `name — blurb`, and refuses more than 7 queries. `describe` returns the server and the full description, and refuses more than 10 names. Those two caps are the ones Hermes puts on its bridge tools. Revealed names accumulate on the session. `SessionView` is what `session_tools` returns: the names this session may see, not the whole catalog. `take_list_changed` flips a flag back to false, which is the bit a later socket would send as `notifications/tools/list_changed`. Results page at 2,000 characters. `Telemetry` records schema tokens, call tokens, and result tokens. `Arm` and `TaskReport` are the three-way comparison: every tool, a static set, and a dynamic set. `run_rename_task` is the fake task those arms share. Token estimates divide bytes by 4.
@@ -39,8 +37,6 @@ Rust, as it arrives: a session is a struct keyed by an id, not a global. A flag 
 >
 > **Deferred.** Putting `list_changed` on the wire waits for chapter 42. Untrusted-output wrapping (F4, `agent/tool_dispatch_helpers.py`) waits for chapter 34. The load-test capstone that reports these three arms under real traffic is chapter 51.
 
-[personal note: the first time the full schema was obviously the expensive part]
-
 ## What this chapter decides
 
 A new session's revealed list is empty. `call` returns `NotOffered` until `search_tools` or `set_task` has revealed that name. The catalog can hold the tool. The session still cannot call it.
@@ -73,9 +69,9 @@ dynamic: success=true schema_tokens=135 call_tokens=4 result_tokens=15
 
 All three succeed. Dynamic sends fewer schema tokens than the static set, and the static set sends fewer than every tool. Call tokens are the JSON arguments. Result tokens are the description `call` returns. These are character estimates, not a tokenizer and not a bill.
 
-### Rust: drop the mutex guard before the tool runs
-
-`call` locks the session map, checks that the name is revealed, and drops the guard before `catalog.call`. The tool body must not run while the map is locked. A body that tried to `search_tools` on the same gateway would deadlock if the guard were still held. The lock is for the session record. It is not for the tool.
+> **Rust sidebar: drop the mutex guard before the tool runs**
+>
+> `call` locks the session map, checks that the name is revealed, and drops the guard before `catalog.call`. The tool body must not run while the map is locked. A body that tried to `search_tools` on the same gateway would deadlock if the guard were still held. The lock is for the session record. It is not for the tool.
 
 ## Tests
 
@@ -105,11 +101,9 @@ The output is the three lines in the fake-task section. No API key.
 
 Both benches call `run_rename_task` inside the sample, including catalog build. The 2,000-tool `synthetic` vec is built inside the timed closure. There is no model and no sleep. The dynamic arm measured 5.687 ms and the every-tool arm measured 8.355 ms. The demo, not the bench, records 135 schema tokens against 45,104 for every tool, on the same 2,000-tool catalog. The bench is the time. The demo is the token count.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 38863938100](https://github.com/agnathan/rust-agent-harness/actions/runs/38863938100), section `8` (recorded as `gw8`).
+Success is true on all three arms.
 
-### Milestone demo
-
-The `cargo run` above. Success is true on all three arms.
+The means are `mean.point_estimate` from [run 38863938100](https://github.com/agnathan/rust-agent-harness/actions/runs/38863938100), section `8`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -140,8 +134,6 @@ Secret redaction (E1, E2) is still not in this process. Rate limits and the per-
 - **Three arms, 2,000 tools.** Every tool 45,104 schema tokens, static 153, dynamic 135. All three succeed. The dynamic arm measured **5.687 ms**. The every-tool arm measured **8.355 ms**.
 - **Flag.** `take_list_changed` is true once after the revealed set grows.
 
-[personal note: which of the three token numbers you would show someone who wants every tool in the prompt]
-
 ## What's next
 
-Chapter 9, the agent loop, is already written. It does not call this gateway. The loop's `search_tools` is the client-side one from chapter 6. Wiring the loop to this session view comes after both exist. Chapter 10 is the transition table around the loop's exits.
+Chapter 9 is the agent loop. It does not call this gateway. The loop's `search_tools` is the client-side one from chapter 6. Wiring the loop to this session view comes after both exist. Chapter 10 is the transition table around the loop's exits.

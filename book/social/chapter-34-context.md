@@ -15,8 +15,6 @@ agent/tool_dispatch_helpers.py wraps web_extract, web_search, browser_, and mcp_
 4/
 The bench id is 34/share_snapshot. The mean is 4.86 ns, mean.point_estimate from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573). The demo prints "shared: clean". No key.
 
-[personal note]
-
 5/
 Next is actors: one tokio task per agent, an inbox of 64, a steer that waits for the turn, an interrupt that skips the model.
 
@@ -30,8 +28,6 @@ Chapter 34 is out: Managing Context.
 A rules file is not the same thing as a prompt you meant to send. Hermes Agent scans context files in agent/prompt_builder.py, replaces a project hit with a BLOCKED line, and still loads the user's own file. The cap is 20,000 characters, with a 70% head and a 20% tail. tools/threat_patterns.py stops the scan at 65,536. agent/tool_dispatch_helpers.py wraps high-risk tool output and neutralizes an embedded closer. I kept those checks, compiled four of the patterns, and shared the snapshot with Arc::clone. Compression runs only when the transcript is over the cap. The hot path does not rebuild that Arc.
 
 The bench id is 34/share_snapshot. The mean is 4.86 ns, mean.point_estimate from [run 39128817573](https://github.com/agnathan/rust-agent-harness/actions/runs/39128817573).
-
-[personal note]
 
 Next: one mailbox per agent, capacity 64, steer and interrupt. Read Chapter 34: [link]
 

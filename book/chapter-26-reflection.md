@@ -1,7 +1,5 @@
 # Chapter 26: The Reflection Loop
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Chapter 25 can write a skill when something asks it to. Nothing yet asks. A turn can finish, the user can correct a style or a workflow, and the harness will store the session and otherwise move on. The lesson sits in the transcript until it scrolls out. This chapter adds the nudge and the fork that reads the turn afterward. The crate is `steps/ch26-reflection`, a copy of chapter 25 plus `reflection`. The package is `ch26-reflection`.
 
 Two counters live on the loop. A memory nudge fires every 10 user turns. A skill nudge fires every 10 tool iterations. Both defaults can be changed. `finalize` returns the fork and clears the flags. `spawn_reviewer` builds a tool slice that contains only the skill and memory tools, and it zeroes the intervals so the same turn cannot fork twice. The reviewer is a supervised child with its own cancellation. A new user turn cancels it. `execute` runs the scripted model one tool at a time. The parent transcript is not edited, so the prompt cache from the user turn stays valid. The reviewer uses the parent's model and the same system-prompt prefix for that reason.
@@ -13,17 +11,6 @@ The fork is how the harness moves toward the closed loop without putting the clo
 Rust, beside the fork: a child is a thread the cancel bench can join. The tool slice is a set of names you build once. An interval counter is an integer, and the flag is the nudge. `Drop` or an explicit cancel is how the child stops when the user types again.
 
 `cargo run --locked -p ch26-reflection --bin ch26-reflection` forks after ten user turns. The exercise is `my-harness/tests/ch26.rs`: spawning the reviewer does not run it on the user turn.
-
-**In this chapter**
-
-- 26.1 Two intervals, one timeout, two slices
-- 26.2 `Loop` counts, and the flags are the nudge
-- 26.3 `finalize` returns the fork and clears the flags
-- 26.4 `spawn_reviewer` builds the slice and zeroes the intervals
-- 26.5 `execute` runs the script, one tool at a time
-- 26.6 `ReviewRun` is the thread the cancel bench joins
-- 26.7 `demo` forks after ten user turns
-- 26.8 The skill index is still a note
 
 | Section | What it walks |
 |---|---|
@@ -49,8 +36,6 @@ Rust, beside the fork: a child is a thread the cancel bench can join. The tool s
 > **Deferred.** Running the reviewer inside `drive_loop`. `Loop::finalize` returns the fork. The user turn's `run_loop` does not call it.
 
 > **Guardrails.** The fork's tool slice is the whitelist. `terminal` is refused. A skill nudge omits `memory`. Intervals on the fork are 0, so the reviewer does not schedule another reviewer. Cancel is an `AtomicBool`. `HERMES_CANCEL_TIMEOUT` is two seconds and this crate does not sleep it. The user turn does not run the reviewer.
-
-[personal note: a turn you wished the agent had reviewed after you left]
 
 ## What this chapter decides
 
@@ -463,7 +448,7 @@ async fn drive_loop(
 ) -> TurnOutcome {
 ```
 
-`drive_loop` checks `cancel.is_cancelled()` on the turn's `CancelFlag`. That flag is the chapter 15 cancel, the one that stops the user turn. It is not `Fork::cancel`. The body of `drive_loop` does not name `reflection`, `finalize`, or `spawn_reviewer`. I looked for those names in `agent.rs`. The only hit in that file is the `drive_loop` definition itself, and the calls that reach it. The reviewer stays outside the user turn.
+`drive_loop` checks `cancel.is_cancelled()` on the turn's `CancelFlag`. That flag is the chapter 9 `CancelFlag`, the token that stops the user turn. Chapter 15 is the server's limit gate, not this flag. It is not `Fork::cancel`. The body of `drive_loop` does not name `reflection`, `finalize`, or `spawn_reviewer`. I looked for those names in `agent.rs`. The only hit in that file is the `drive_loop` definition itself, and the calls that reach it. The reviewer stays outside the user turn.
 
 `CancelFlag` and `Fork`'s `AtomicBool` are different types. Stopping the user turn does not by itself cancel a fork, because nothing in `drive_loop` holds a fork. Starting a fork does not by itself stop the user turn. The schedule and the turn are two objects.
 
@@ -528,11 +513,9 @@ The binary counts ten user turns, forks, and runs the scripted memory line. No k
 
 `cancel_review` uses `iter_batched` with `BatchSize::SmallInput`. The setup closure is `ReviewRun::spawn_spinner`. The timed closure is `cancel_and_join`. The worker sleeps 1 millisecond between flag checks, so the join waits out at most one of those sleeps.
 
-The Mean cells are `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `26`. The ids are `26/spawn_reviewer` and `26/cancel_review`. The old ids `24/spawn_reviewer` and `24/cancel_review` are aliases in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. Criterion also prints a `time:` line. That line is the slope. It is not the mean.
+The note is `prefer short notes`. The fork line says `after 10 user turns`.
 
-### Milestone demo
-
-The `cargo run` above. The note is `prefer short notes`. The fork line says `after 10 user turns`.
+The means are `mean.point_estimate` from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `26`. Bench ids: `26/spawn_reviewer`, `26/cancel_review`, `24/spawn_reviewer`, `24/cancel_review`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
@@ -543,12 +526,6 @@ A memory nudge and a skill nudge on the same `finalize` produce one fork, and th
 `execute` consumes a scripted line before it checks cancel. A cancelled fork returns `Cancelled` and does not push a note. The model's `calls` counter has moved.
 
 `HERMES_CANCEL_TIMEOUT` is two seconds. `cancel_and_join` does not sleep that long. A worker that never loads the flag would not come back. The spinner loads it every millisecond.
-
-`skill_manage` on the slice returns the formatted line. It does not write `SKILL.md`. A patch is still `Writer::patch`, and a reviewer there still has to `view`.
-
-The note vec is a `Vec<String>` in the caller. It is not `MEMORY.md`. Chapter 21's scan does not run on it.
-
-`run_loop` will not notice that you built a `Loop`. The counters move only when something calls `note_user_turn` and `note_tool_iter`.
 
 ## Guardrails in this chapter
 
@@ -564,7 +541,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). The 
 
 **Prompt cache.** The advertised list in Hermes stays the parent's. This harness does not advertise a schema. The fork only has its tool slice. The skill-index `Arc` from chapter 24 is still the index. A later skill is still a note.
 
-**Left for later.** Running the reviewer inside `drive_loop` is deferred. E1 and E2 are still absent. Chapter 27 archives skills off the request path. It does not start this fork.
+**Left for later.** Running the reviewer inside `drive_loop` is deferred. E1 and E2 are chapter 20, already in this crate. The reviewer does not call them. Chapter 27 archives skills off the request path. It does not start this fork.
 
 ## Chapter summary
 
@@ -575,13 +552,11 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). The 
 - **Turn.** `run_loop` and `drive_loop` do not call `finalize`.
 - **Time.** Building the fork measured **47.5 ns**. Cancelling the spinner measured **873.74 µs**. Those are the means.
 
-[personal note: a review that was worth running after the turn, not during it]
-
 ## What you implement
 
 `my-harness/tests/ch26.rs` is the milestone. The test is `spawning_the_reviewer_does_not_run_it_on_the_user_turn`. It asserts `chapter_26_review_runs_on_user_turn()` is false. Spawning the reviewer does not run it on the user turn.
 
-The function in `my-harness` is a stub. It ends in `todo!("chapter 26")` and panics until the assertion can pass. The step crate is the reference. Do not copy it into `my-harness/`.
+The function in `my-harness` is a stub. It ends in `todo!("chapter 26")` and panics until the assertion can pass. 
 
 ## What's next
 

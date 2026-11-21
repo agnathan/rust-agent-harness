@@ -25,8 +25,6 @@ Repair was 188.8 ns. A stall check was 100.0 ns. The budget notice was 58.20 ns.
 6/
 Seven mock evals pass: echo, a direct answer, eight overlapping reads, a tool that fails once and then recovers, the iteration cap, an unknown name that repairs to echo, and a stall. No live model call.
 
-[personal note]
-
 7/
 Next, chapter 10, the turn state machine: TurnOutcome is already one variant per exit. That chapter is the transition table around it.
 
@@ -44,8 +42,6 @@ Nous Research's Hermes Agent runs the same shape in agent/conversation_loop.py. 
 Empty-response retries, length continuation, and the repetition guard are deferred to When Things Fail. Preflight compression is deferred to Managing Context. The stop-gate nudges in turn_stop_gates.py wait until this harness has a verifier and a board.
 
 The mock is the default. An optional `--live` flag calls OpenRouter with echo and note. CI does not pass it. One finished mock iteration measured 608.0 ns. check_gate measured 11.92 ns. Eight 1 ms reads in one turn measured 2.421 ms. Seven saved and stress tasks pass on the mock.
-
-[personal note: one takeaway from writing this chapter]
 
 Next up: chapter 10, the turn state machine. Read Chapter 9: [link]
 

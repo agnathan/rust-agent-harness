@@ -15,8 +15,6 @@ Hermes Agent caps a turn at 50 web_search calls and 50 delegate_task spawns (age
 4/
 The open-breaker check measured 31.97 ns. Taking one execute permit and dropping it measured 57.73 ns. The demo is a fake script. No socket. No key.
 
-[personal note]
-
 5/
 Next is providers: an Anthropic body, a Bedrock body, an OpenRouter route, and a key rotation that keeps the same client.
 
@@ -30,8 +28,6 @@ Chapter 15 is out: Limits and Breakers.
 The failure chapter decides retry or fallback in the harness. The gateway still needs its own bound. I gave each tool 32 accept permits and 8 execute permits. A timeout drops both. A second attempt runs only when the tool is marked idempotent, and a 429 or 503 does not retry at all. Three failures open a breaker.
 
 Hermes Agent already stops a turn at 50 web searches and 50 subagent spawns. Those caps landed here, including the batch count and the control actions that still run. The open-breaker check measured 31.97 ns.
-
-[personal note: one takeaway from writing this chapter]
 
 Next: native provider adapters and key rotation. Read Chapter 15: [link]
 

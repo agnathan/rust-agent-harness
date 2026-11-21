@@ -1,7 +1,5 @@
 # Chapter 28: The Sequential Pipeline
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 One agent can now remember, search, read a skill, write one under a scanner, reflect, and curate. It still does every stage of a piece of work inside one conversation. Outline, draft, critique, and revise have different jobs, and stuffing them into one transcript makes each stage fight the previous stage's notes. This chapter runs them as four agent runs, in order, on one shared context. The crate is `steps/ch28-pipeline`, a copy of chapter 27 plus `pipeline`. The package is `ch28-pipeline`. It does not write a skill and it does not write a memory file. Those stores stay where chapters 21 and 25 put them.
 
 The context is one allocation. `run` appends a note and returns the same `Arc`. `hand_off` is the pointer the next stage is given. Copying the transcript would be legal and wasteful, and it would tempt a stage to mutate a private copy that the next stage never sees. The demo runs the four names — outline, draft, critique, revise — and prints the last note. The benches time the pointer and, beside it, the cost of copying 100 messages, so the difference is a measurement rather than a slogan.
@@ -13,14 +11,6 @@ Sharing the context by `Arc` is also how a team stays cheap enough to learn. Cha
 Rust, at the hand-off: `Arc` is a clone of a pointer, and the clone is what you time. The context owns the notes. A stage that needs to add a note takes the `Arc` and pushes, under the rule that the allocation does not change. Mutation of the inner notes is explicit. The demo's model is scripted, so four stages do not mean four network calls.
 
 `cargo run --locked -p ch28-pipeline --bin ch28-pipeline` prints the last note. The exercise is `my-harness/tests/ch28.rs`: the next stage receives the `Arc`.
-
-**In this chapter**
-
-- 28.1 The context is one allocation
-- 28.2 `run` appends a note and returns the same `Arc`
-- 28.3 `hand_off` is the pointer the next stage is given
-- 28.4 The demo runs the four names and prints the last note
-- 28.5 The benches time the pointer and the copy
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -41,8 +31,6 @@ Rust, at the hand-off: `Arc` is a clone of a pointer, and the clone is what you 
 > **Adapted.** Four scripted stages share one `Arc<Context>`. `hand_off` returns the same `Arc`. The replies are values in the stage slice. A separate bench clones 100 messages so the copy has a mean. The pipeline does not call that clone.
 >
 > **Deferred.** Live reference models. Chapter 29 runs specialists under a bound. Those specialists stay scripted too.
-
-[personal note: a draft you wish had gone through a critique stage before you saw it]
 
 ## What this chapter decides
 
@@ -93,10 +81,10 @@ There is no `Clone` derive on `Context`. `Mutex` does not implement `Clone`, so 
 
 > **Rust sidebar: `Arc`**
 >
-> - `Arc::new` puts the `Context` in a heap allocation and returns a pointer with a strong count of one. That pointer is cheap to clone. `Arc::clone` increments the strong count and returns another pointer to the same allocation. It does not clone `messages` and it does not clone the notes vec.
-> - Moving an `Arc` into a function does not increment the count. The move hands the pointer over. Returning that same pointer hands it back. The allocation stays.
+> - `Arc::new` puts the `Context` in a heap allocation and returns a pointer with a strong count of one. `Arc::clone` increments the strong count and returns another pointer to the same allocation. It does not clone `messages` and it does not clone the notes vec.
 > - `Arc::ptr_eq` compares the address of the allocation. Two `Arc`s that came from the same `Arc::new` compare equal. Two `Arc::new` calls compare unequal, even when the messages inside look the same.
-> - Dropping an `Arc` decrements the count. The `Context` is freed when the last `Arc` drops. `run` returns the `Arc`, so the caller still holds it.
+> - The `Context` is freed when the last `Arc` drops. `run` returns the `Arc`, so the caller still holds it.
+> - `Option`, `Result`, enums, and `Arc` are taught in [chapter 1](chapter-01-first-contact.md).
 
 > **Rust sidebar: `Mutex`**
 >
@@ -364,7 +352,7 @@ fn arc_pass(c: &mut Criterion) {
 
 `bench_function` names the sample `arc_pass`. `b.iter` is the timed loop. Inside, `Arc::clone` bumps the strong count, `black_box` keeps the compiler from deleting the clone, `hand_off` moves that `Arc`, and `Arc::ptr_eq` compares it with the original. `black_box` comes from `std::hint::black_box`. It is an identity function the optimizer has to treat as unknown. The result of `ptr_eq` is true for this sample. The bench does not assert that. It passes the bool through `black_box` so the compare stays in the sample.
 
-No `Stage` is built. No `format!` runs. No note is pushed. The mean for this function is `9.15 ns`. That number is `mean.point_estimate` from the Benchmarks workflow. It is the mean. The `time:` line Criterion prints on the runner is the slope, and it is not the number in the table.
+No `Stage` is built. No `format!` runs. No note is pushed. The mean for this function is `9.15 ns`, `mean.point_estimate` from the Benchmarks workflow. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 `copy_transcript` times the clone the pipeline does not do.
 
@@ -382,7 +370,7 @@ fn copy_transcript(c: &mut Criterion) {
 
 `&context.messages` is `&Vec<Message>`. `clone` on that vec clones every `Message`, and each `Message` clones two `String`s. `black_box` on the borrow and on the result keeps the clone alive for the measurement. The notes mutex is not cloned. `Message`'s `Clone` derive is why this line compiles. `Context` has no such derive, which is why the pipeline cannot "just clone the context" and why the bench has to name the vec.
 
-The mean for this function is `6.12 µs`. Same workflow, same rule: `mean.point_estimate`, and the printed `time:` line is the slope.
+The mean for this function is `6.12 µs`. Same workflow, same rule: `mean.point_estimate`.
 
 ```rust
 criterion_group!(benches, arc_pass, copy_transcript);
@@ -461,25 +449,17 @@ The binary builds one context, runs outline, draft, critique, and revise, and pr
 
 `copy_transcript` uses the same context. The timed closure clones `messages`. `run` does not call this. `hand_off` does not call this.
 
-The table is `mean.point_estimate` from the Benchmarks workflow on ubuntu-latest, [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `28`. The ids are `28/arc_pass` and `28/copy_transcript`. The old ids `26/arc_pass` and `26/copy_transcript` are aliases in `benchmarks/descriptions.json`. I did not rewrite gh-pages history. The printed Criterion `time:` line is the slope, not the mean.
+The last note is `revise: the revision`.
 
-### Milestone demo
-
-The `cargo run` above. The last note is `revise: the revision`.
+The means are `mean.point_estimate` from [run 39121462589](https://github.com/agnathan/rust-agent-harness/actions/runs/39121462589), section `28`. Bench ids: `28/arc_pass`, `28/copy_transcript`, `26/arc_pass`, `26/copy_transcript`. How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ## Pitfalls
 
 `run` locks `notes`. It does not append to `messages`. A stage that pushed a new `Message` would grow the transcript. This chapter grows the note log. The user's sentence stays the one string the demo stored.
 
-The notes mutex is not held across stages. Each `push` is its own statement, and the guard drops at the semicolon. That is the sequential pipeline. Chapter 29 is the chapter that has more than one thread in `acquire` at once.
-
 `hand_off` does not filter. A `scratch` role would still be in `messages` after the call. Chapter 30 is the filter. This chapter's messages in the tests are all role `user`.
 
-A scripted reply does not read the previous note. The revise reply is the literal `the revision` even if the critique note had said something else. The shared `Arc` is the part that is real. The reading model is deferred with the reference models.
-
 `copy_transcript` is in the bench file so the copy has a mean. Calling it from `run` would build the second transcript this chapter is here to avoid.
-
-`Arc::ptr_eq` checks the `Context` allocation. A reallocation inside the notes `Vec` does not change that address. If you log pointer equality and also expect the note buffer's address to stay put, those are two different allocations.
 
 `demo` asserts `ptr_eq` before it returns. A broken `run` panics the binary. The test that only compares the string would never run its `assert_eq!` if `demo` panicked first. Fix the pointer, then read the note.
 
@@ -499,9 +479,7 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). This
 - **Context.** One `Arc<Context>`. `hand_off` returns it. `Arc::ptr_eq` holds. `messages` is not cloned between stages.
 - **Notes.** Each stage pushes `name: reply` under the mutex. The demo's last line is `revise: the revision`.
 - **Replies.** Scripted. No key. No model.
-- **Time.** `arc_pass` mean `9.15 ns`. `copy_transcript` mean `6.12 µs`. Both are `mean.point_estimate`. The Criterion `time:` line is the slope.
-
-[personal note: a pipeline stage that only made sense because it could see the previous note]
+- **Time.** `arc_pass` mean `9.15 ns`. `copy_transcript` mean `6.12 µs`. Both are `mean.point_estimate`.
 
 ## What you implement
 
@@ -525,7 +503,7 @@ pub fn chapter_28_same_context(left: usize, right: usize) -> bool {
 }
 ```
 
-`todo!("chapter 28")` is the panic. The test wants `chapter_28_same_context(1, 1)` to be true. The step crate is the reference. Do not copy it into `my-harness/`.
+`todo!("chapter 28")` is the panic. The test wants `chapter_28_same_context(1, 1)` to be true. 
 
 ## What's next
 

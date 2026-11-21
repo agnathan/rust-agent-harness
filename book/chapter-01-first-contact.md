@@ -1,7 +1,5 @@
 # Chapter 1: First Contact
 
-*Draft. Bracketed notes like [personal note] are where my own story goes.*
-
 Every agent framework I have looked at reduces to one act, repeated: send a list of messages to a language model and get a message back. Before this chapter the repository has no such act. There is no type for a message, no interface for a provider, and no command you can run. This chapter builds that act in four copies under `steps/ch01-1-messages`, `steps/ch01-2-provider`, `steps/ch01-3-cli`, and `steps/ch01-4-errors`. Each copy compiles, has its own tests, and keeps the earlier code, so section 1.1 still builds after 1.4 exists.
 
 The types are small and they stay. `Message` and `Role` serialize to the OpenAI JSON shape, which is the shape the rest of the harness will store and resend. `Provider` is the trait every later caller uses, so the loop never learns which company answered. `Event` is one enum — text, a tool call, usage, done, or an error — and both the mock and the real client emit it. The mock can sleep, which is how a test sees latency without a network. The client speaks HTTP to OpenRouter by default, so a model id such as `openai/gpt-4o-mini` is a flag. Usage and a dollar cost are recorded only when the server sent them. Section 1.4 puts one timeout on the whole request and spells out what a buffered reply may omit.
@@ -11,15 +9,6 @@ That single round trip is the seed of the harness. Chapter 2 will resend a list 
 If you are new to Rust, this chapter is where the language becomes concrete. A struct holds the message fields. An enum is the role and, later, the event, so a forgotten case is a compiler error rather than a silent branch. A trait is the provider. `serde` turns the struct into JSON and back. `tokio` runs the async client, and `reqwest` is the HTTP stack, created once so connections can be pooled. The sidebars sit next to the code that needs each idea.
 
 At the end of section 1.4 you can run `cargo run -p ch01-4-harness-cli -- --mock ask "Say hello"` and see the events. The same binary without `--mock` fails before any request when `OPENROUTER_API_KEY` is unset. I did not invent a live transcript. The exercises for the four sections are `my-harness/tests/ch01_1.rs` through `ch01_4.rs`.
-
-**In this chapter**
-
-- 1.1 Messages
-- 1.2 Provider
-- 1.3 OpenRouter, the client, and `harness ask`
-- 1.4 Timeouts and what the reply may omit
-
-[personal note: where I was with Rust when I started this chapter]
 
 | Section | Step | What it adds |
 |---|---|---|
@@ -132,7 +121,7 @@ cargo bench -p ch01-1-harness-core --bench serde_messages -- --warm-up-time 1 --
 
 Nothing in this step reads an API key or opens a socket.
 
-I ran those commands on a 4-vCPU Intel Xeon guest under KVM, with 16 GiB of RAM, Linux, rustc 1.99.0, and cargo-nextest 0.9.148. The build finished with:
+The host for these timings is in [How the numbers were measured](appendix-benchmark-method.md). The build finished with:
 
 ```text
    Compiling ch01-1-harness-core v0.1.0 (/workspace/steps/ch01-1-messages/crates/harness-core)
@@ -152,7 +141,7 @@ Nextest, after it finished compiling the tests:
      Summary [   0.004s] 2 tests run: 2 passed, 0 skipped
 ```
 
-Criterion prints a slope on the `time:` line. The mean in the table is the mean point estimate from that same run. The "change" line is a comparison with a previous baseline on this machine.
+How to read the `time:` line is in [How the numbers were measured](appendix-benchmark-method.md). The mean in the table is the mean point estimate from that same run.
 
 ```text
     Finished `bench` profile [optimized] target(s) in 0.04s
@@ -172,9 +161,9 @@ Found 1 outliers among 10 measurements (10.00%)
 
 | Benchmark | Mean | Target | Machine |
 |---|---|---|---|
-| `serde_50_message_request` | 6.937 µs | < 1 ms | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0 |
+| `serde_50_message_request` | 6.937 µs | < 1 ms | [bench host](appendix-benchmark-method.md) |
 
-CI runs this step's tests on Ubuntu, macOS, and Windows. Criterion runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml). Each run uploads a JSON artifact, and a push to `main` appends the median to the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/). The table above is from this machine.
+Where these numbers were taken is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ### Milestone demo
 
@@ -319,7 +308,7 @@ Nextest:
      Summary [   0.086s] 4 tests run: 4 passed, 0 skipped
 ```
 
-The bench. `mock_turn_overhead` builds the event list. The `time:` line is the slope. The means are the point estimates from this run: 235.7 ns and 108.9 µs.
+The bench. `mock_turn_overhead` builds the event list. The means are the point estimates from this run: 235.7 ns and 108.9 µs.
 
 ```text
    Compiling ch01-2-harness-core v0.1.0 (/workspace/steps/ch01-2-provider/crates/harness-core)
@@ -347,10 +336,10 @@ mock_100_concurrent     time:   [107.23 µs 110.51 µs 112.81 µs]
 
 | Benchmark | Mean | Target | Machine |
 |---|---|---|---|
-| `mock_turn_overhead` | 235.7 ns | < 1 ms | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0 |
+| `mock_turn_overhead` | 235.7 ns | < 1 ms | [bench host](appendix-benchmark-method.md) |
 | `mock_100_concurrent` | 108.9 µs | < 50 ms | same machine |
 
-CI runs these tests on Ubuntu, macOS, and Windows. Criterion runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml). The median, low, and high land in the job summary and in a per-commit JSON artifact, and a push to `main` appends them to the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/). The table is from this machine.
+Where these numbers were taken is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ### Milestone demo
 
@@ -444,7 +433,7 @@ The CLI prints the content, then `model: …` when `Done` has one, then the ledg
 > - `Option<String>` is either `Some(value)` or `None`. It is the type for "the server might not have sent this."
 > - `if let Some(model) = &detailed.model` prints the line only when the field is present. A missing `usage` object stays `None` and the reply text is still kept.
 
-The integration tests do not use a real key. `wiremock` starts a local server. One test posts twice on the same client and checks the answered model and `usage`. Another checks that the request JSON has no `stream` field. Another checks the attribution headers. The CLI test points `ch01-harness ask` at `POST /v1/chat/completions` on that server and reads `model:` and `tokens:` from stdout. A missing `OPENROUTER_API_KEY` is a failed process whose stderr names the variable. All of this runs on Ubuntu, macOS, and Windows in CI.
+The integration tests do not use a real key. `wiremock` starts a local server. One test posts twice on the same client and checks the answered model and `usage`. Another checks that the request JSON has no `stream` field. Another checks the attribution headers. The CLI test points `ch01-harness ask` at `POST /v1/chat/completions` on that server and reads `model:` and `tokens:` from stdout. A missing `OPENROUTER_API_KEY` is a failed process whose stderr names the variable.
 
 > **Performance budget**
 >
@@ -611,9 +600,9 @@ build_request_and_parse_response
 
 | Benchmark | Mean | Target | Machine |
 |---|---|---|---|
-| `build_request_and_parse_response` | 2.133 µs | < 1 ms | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0 |
+| `build_request_and_parse_response` | 2.133 µs | < 1 ms | [bench host](appendix-benchmark-method.md) |
 
-CI runs these tests on Ubuntu, macOS, and Windows. Criterion runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml), and the median lands in the job summary and on the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/). The table is from this machine.
+Where these numbers were taken is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ### Milestone demo
 
@@ -763,9 +752,9 @@ parse_response_edges    time:   [785.72 ns 789.72 ns 797.38 ns]
 
 | Benchmark | Mean | Target | Machine |
 |---|---|---|---|
-| `parse_response_edges` | 792.7 ns | < 1 ms | 4 vCPU Intel Xeon (KVM), 16 GiB, Linux, rustc 1.99.0 |
+| `parse_response_edges` | 792.7 ns | < 1 ms | [bench host](appendix-benchmark-method.md) |
 
-CI runs these tests on Ubuntu, macOS, and Windows. Criterion runs on Ubuntu in the [Benchmarks workflow](https://github.com/agnathan/rust-agent-harness/actions/workflows/benchmarks.yml), and the median lands in the job summary and on the [benchmark dashboard](https://agnathan.github.io/rust-agent-harness/). The table is from this machine.
+Where these numbers were taken is in [How the numbers were measured](appendix-benchmark-method.md).
 
 ### Milestone demo
 
@@ -805,8 +794,6 @@ The catalog is [`docs/hermes-guardrails.md`](../docs/hermes-guardrails.md). This
 ## Chapter summary
 
 The harness can send one prompt and print one reply. Messages are OpenAI JSON. `Provider` hides the server. Every call, including the mock, emits the same `Event` values. The HTTP client is created once, pools connections, and can speak HTTP/2. OpenRouter is the default endpoint, `--model` selects a model id, and another `--base-url` still works for OpenAI, Ollama, and a local fake. A successful reply can name the model that answered, the token counts, and a USD cost when the server sent one. Those numbers accumulate on one agent. A slow call fails once, as a timeout, and is not retried here.
-
-[personal note: a moment where the compiler stopped me, and how I worked out what it wanted]
 
 ## What you implement
 

@@ -26,8 +26,6 @@ Lookup in a 50-tool registry was 13.96 ns. Building the available list for 50 to
 
 No live model call. The runs are the mock tools.
 
-[personal note]
-
 6/
 Next, Chapter 4: an MCP client, so a tool in another process can use this same registry.
 
@@ -46,8 +44,6 @@ Three steps:
 • read-only calls run together, up to 8, and a write runs alone
 
 Eight tools that each waited 20 ms finished in 21.4 ms together and 170.0 ms one at a time. A 50-tool lookup was 13.96 ns. I'm new to Rust, so trait objects, a boxed check, and a semaphore show up in short sidebars at the moment they're needed. Nothing in the chapter is a live model transcript.
-
-[personal note: one takeaway from writing this chapter]
 
 Next up: an MCP client. Read Chapter 3: [link]
 
